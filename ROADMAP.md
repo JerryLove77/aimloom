@@ -3,7 +3,8 @@
 Updated 2026-09-22. This is the repository-wide scheduling entry point.
 [Shared workspace design](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
 is the product authority. The website is designed in
-[the website and explorer spec](docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md).
+[the website and explorer spec](docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md),
+with the explorer as [amended for v0.1.5](docs/superpowers/specs/2026-09-22-website-explorer-design.md).
 
 ## Product position (user, 2026-09-22)
 
@@ -64,7 +65,12 @@ downloaded cannot be recalled.
 
 The update notice has not been seen end to end; the first chance is the next release.
 
-## v0.1.4 — the App core (decided 2026-09-22)
+## Released: v0.1.4 — the App core (2026-09-22)
+
+Released 2026-09-22 from `54668f4` (GitHub release `v0.1.4`; aimloom.dev recommends it and still
+serves 0.1.3). Accepted on `0.1.4-beta.2`; the release build itself was not opened on the tester's
+PC. Not yet seen: a 0.1.3 App offered 0.1.4 by its launch check, and a real beta release through
+the Settings switch.
 
 | ID | Deliverable | Status / next evidence |
 |---|---|---|
@@ -96,21 +102,34 @@ release, then the site is deployed once for all of it.
 
 ## v0.1.5 — the website explorer (EXP)
 
-Curated backgrounds, sounds and crosshairs to download from aimloom.dev. Designed and planned
-([Phase 2 plan](docs/superpowers/plans/2026-09-18-website-phase-2.md)); simplified on 2026-09-19;
-moved behind the App core on 2026-09-22 (user: 「网页探索页放在0.1.5」).
+Curated backgrounds, sounds and crosshairs to download from aimloom.dev, plus a link to them from
+the App. Moved behind the App core on 2026-09-22 (user: 「网页探索页放在0.1.5」). Decided with the
+user on 2026-09-22 and written down in
+[the explorer amendment](docs/superpowers/specs/2026-09-22-website-explorer-design.md):
 
-- **A download is the raw file.** The player drags it into the matching Aimloom section, or
-  copies it into the game folder and presses 刷新 — both supported since v0.1.1. There is no ZIP
-  manifest and no App import entry.
-- Before any code: amend the spec and the plan (they still carry the manifest task), then draw
-  the explorer's Figma frames.
-- Infrastructure is D1 for metadata and R2 for files, curated only, with a maintainer-only
-  publish command; the Worker already serves `/api/*`.
-- Content kinds to settle in the amended spec: themes, sounds, crosshairs (the PNG and its code),
-  and whether a Profile JSON is worth sharing. Enemy looks are gone: skins are the game's own.
+- **Three kinds, single files:** backgrounds, sounds, crosshairs (with the CS2 / VALORANT code
+  when there is one). A download is the raw file; the player drags it into the matching Aimloom
+  page, or copies it into the game folder and presses 刷新. No ZIP manifest, no Import entry, no
+  Profile JSON.
+- **Only content whose author has given permission.** The user asks the authors; the pages and
+  the publish command come first, content when permission exists.
+- **D1 for metadata** (the site's existing database), **R2 for files** behind `dl.aimloom.dev`,
+  published only by a maintainer command. Routes are added to the existing Worker.
+- **Download requests are counted** per file per day, with nothing about the requester; the
+  Privacy page says so.
 - **No sign-in and no uploads.** A verified Steam sign-in is built only with uploads (user,
   2026-09-20), and uploads are not in 0.1.5.
+- **The App gains a link** to the explorer on Theme, Sounds and Crosshair, released as
+  **`0.1.5-beta.N` through the beta channel**; the stable release stays 0.1.4 (user, 2026-09-22).
+
+| Step | Status |
+|---|---|
+| Amend the spec | **Done** 2026-09-22 |
+| Figma: list and detail, zh/en × desktop/phone | Next; code waits for the user's review |
+| Provision R2 and `dl.aimloom.dev`; the migration | After Figma |
+| Worker routes, pages, publish command | After Figma |
+| Content with permission | The user, in parallel |
+| App link; `0.1.5-beta.1` | After the explorer is live |
 
 ## After v0.1.5
 
