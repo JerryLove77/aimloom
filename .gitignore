@@ -31,3 +31,4 @@ packages/site/release-files/
 # Maintainer notes, never committed (see CLAUDE.md)
 CLAUDE.local.md
 private/
+.claude/settings.local.json
