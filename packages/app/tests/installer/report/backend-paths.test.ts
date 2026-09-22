@@ -37,8 +37,10 @@ describe('every path the App calls exists on the backend', () => {
 
   it('latest.json carries exactly the fields the update check reads, and nothing it ignores', async () => {
     // The site's real generator, not a fixture: a field renamed on one side must fail here.
-    const { GET } = await import('../../../../site/src/pages/latest.json.ts')
-    const served = Object.keys(await (GET() as Response).json()).sort()
+    // A variable specifier: the site is another workspace, loaded by Vite at test time.
+    const generator = root + 'packages/site/src/pages/latest.json.ts'
+    const { GET } = await import(/* @vite-ignore */ generator) as { GET(): Response }
+    const served = Object.keys(await GET().json()).sort()
     const check = /fn update_check_with\b[\s\S]*?\n}\n/.exec(readFileSync(root + 'packages/app/src-tauri/src/installer/commands.rs', 'utf8'))?.[0] ?? ''
     expect(check, 'update_check_with was not found in commands.rs').not.toBe('')
     const read = [...new Set([...check.matchAll(/\.get\("([a-z]+)"\)/g)].map(m => m[1]))].sort()
