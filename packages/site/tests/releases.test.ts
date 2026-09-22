@@ -140,18 +140,17 @@ describe('the committed releases.json', () => {
       expect(releases.releases.find(x => x.version === version)?.status, version).toBe('withdrawn')
     }
   })
-  it('recommends 0.1.3, now stable, with a Setup and a portable ZIP, both served by the site itself', () => {
-    // Both files were built once from ff2426f with the path-remapping build and accepted on the
-    // tester's PC. The Setup is not byte-reproducible, so these facts name the one file that
-    // exists. Change them only together. 0.1.3 moved from `beta` to `stable` status when the beta
-    // channel shipped (the beta line names testers' own line from here on).
+  it('recommends 0.1.4, stable, with a Setup and a portable ZIP, both served by the site itself', () => {
+    // Both files were built once from 54668f4 with the path-remapping build; 0.1.4-beta.2 from
+    // 856fb40 was the build accepted on the tester's PC. The Setup is not byte-reproducible, so
+    // these facts name the one file that exists. Change them only together.
     const r = recommendedRelease(releases)
     expect(r).toMatchObject({
-      version: '0.1.3', status: 'stable', bytes: 4_368_322, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.3.zip',
-      sha256: 'a2718b83bc4a70a22f6595e61fe9d2187d7c75eda2fa5ddc724bfb215f42d8c3',
+      version: '0.1.4', status: 'stable', bytes: 4_390_696, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.4.zip',
+      sha256: '8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14',
       setup: {
-        url: '/files/Aimloom-Setup-v0.1.3.exe', bytes: 3_156_835,
-        sha256: '59b0290806f60aaf5123f3e5720bd8f391bcadbfa95a573bc87ad603b0b675f7',
+        url: '/files/Aimloom-Setup-v0.1.4.exe', bytes: 3_172_457,
+        sha256: 'aef57e8284b3a68ebb0eb09bbcba10122c3b920e4c9c79bc3758e34369a0095a',
       },
     })
     expect(r?.contents).toContain('README.txt')
