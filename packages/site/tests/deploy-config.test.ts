@@ -30,10 +30,14 @@ describe('Worker deployment config', () => {
       expect((env.ratelimits as { name: string }[]).map(r => r.name).sort(), name).toEqual(['REPORT_LIMIT', 'STEAM_LIMIT'])
     }
   })
-  it('runs the script first for /api/* only: every page and release file stays a static asset', () => {
+  it('runs the script first for /api/*, the explorer and /d/* only: every other page and release file stays a static asset', () => {
     expect(config.main).toBe('src/worker/index.ts')
     expect(config.assets.binding).toBe('ASSETS')
-    expect(config.assets.run_worker_first).toEqual(['/api/*'])
+    expect(config.assets.run_worker_first).toEqual(['/api/*', '/zh/explore*', '/en/explore*', '/d/*'])
+  })
+  it('points both environments at the explorer\'s file origin; vars are not inherited, so preview repeats it', () => {
+    expect(config.vars).toEqual({ FILES_ORIGIN: 'https://dl.aimloom.dev' })
+    expect(config.env.preview.vars).toEqual({ FILES_ORIGIN: 'https://dl.aimloom.dev' })
   })
   it('binds production to its own database, to no bucket, and limits as the spec says', () => {
     expect(config.d1_databases[0]).toMatchObject({ binding: 'DB', database_name: 'aimloom', migrations_dir: 'migrations' })

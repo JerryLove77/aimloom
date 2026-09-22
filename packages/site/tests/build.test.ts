@@ -31,6 +31,20 @@ describe('build output', () => {
     expect(page('en/guide')).toContain('href="/zh/guide/"')
   })
 
+  it('links Explore from every page\'s nav, and builds the two shells the Worker fills', () => {
+    for (const r of routes) expect(page(r), r).toContain(r.startsWith('zh') ? '<a href="/zh/explore/">探索</a>' : '<a href="/en/explore/">Explore</a>')
+    for (const l of ['zh', 'en']) {
+      for (const shell of [`${l}/explore`, `${l}/explore/item-shell`]) {
+        const html = page(shell)
+        expect(html, shell).toContain('id="explore-root"'); expect(html, shell).toContain(`<a href="/${l}/explore/" aria-current="page">`)
+      }
+    }
+  })
+  it('allows the explorer\'s file origin for images and sound, and nothing else new', () => {
+    const headers = readFileSync(join(dist, '_headers'), 'utf8')
+    expect(headers).toContain("img-src 'self' data: https://dl.aimloom.dev; media-src 'self' https://dl.aimloom.dev;")
+  })
+
   it('loads nothing from the network', () => {
     for (const r of ['', ...routes]) {
       const html = page(r)
@@ -100,7 +114,7 @@ describe('build output', () => {
       const html = page(r)
       const toc = html.match(/<nav class="toc"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? ''
       const ids = [...toc.matchAll(/href="#([a-z-]+)"/g)].map(m => m[1])
-      expect(ids, r).toEqual(['versions', 'when', 'sent', 'never', 'kept', 'contact'])
+      expect(ids, r).toEqual(['versions', 'when', 'sent', 'never', 'kept', 'explore', 'contact'])
       for (const id of ids) expect(html, `${r}#${id}`).toContain(`id="${id}"`)
       expect(toc, r).toContain(r.startsWith('zh') ? '本页内容' : 'On this page')
     }

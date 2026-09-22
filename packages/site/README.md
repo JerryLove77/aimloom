@@ -88,10 +88,49 @@ pins both, and pins that no environment can claim the domain: wrangler **inherit
 `aimloom.dev` to the preview Worker; `npx wrangler triggers deploy --env=""` moved it back without
 uploading anything. Read a deploy's whole output and check https://aimloom.dev after any deploy.
 
-No R2 bucket or D1 database exists yet; the explorer (ROADMAP EXP) creates them, and this
-Worker's own D1 database (below) does not exist until it is created by hand either.
-Deploy production only when a real release is in `releases.json`, with its ZIP in
-`release-files/`.
+The D1 databases `aimloom` and `aimloom-preview` exist (the report backend, below). No R2 bucket
+exists yet; the explorer creates one (next section). Deploy production only when a real release is
+in `releases.json`, with its ZIP in `release-files/`.
+
+## The explorer (v0.1.5)
+
+Design: `docs/superpowers/specs/2026-09-22-website-explorer-design.md`. The Worker answers
+`/<lang>/explore/`, `/<lang>/explore/<slug>/`, `/d/<slug>` and `/api/explore/items` from the same D1
+database as reports (migration `0002_catalogue.sql`); the files are in the R2 bucket `aimloom-files`,
+served from its custom domain `dl.aimloom.dev` (`FILES_ORIGIN` in `wrangler.jsonc`). The Worker has
+no R2 binding: a download is a counted `302`.
+
+**Provisioning, once** (the maintainer, logged in with `wrangler login`):
+
+    npx wrangler r2 bucket create aimloom-files
+    # Dashboard → R2 → aimloom-files → Settings → Custom domains → add dl.aimloom.dev; keep r2.dev off.
+    npm run wrangler-config -w @kvk/site
+    cd packages/site
+    npx wrangler d1 migrations apply aimloom-preview --remote --config .wrangler.generated.jsonc --env preview
+    npx wrangler d1 migrations apply aimloom --remote --config .wrangler.generated.jsonc --env=""
+
+Apply the migration **before** deploying the Worker that reads it.
+
+**Publishing an item** — only content whose author has given permission; keep the evidence in the
+private records, never here. A folder holds `item.json` and exactly one file:
+
+    {
+      "slug": "night-blue", "kind": "theme",
+      "title": { "zh": "夜蓝", "en": "Night Blue" },
+      "summary": { "zh": "…", "en": "…" },
+      "author": "…", "authorUrl": "https://…",      // authorUrl optional, https only
+      "licence": "CC-BY-4.0",                       // an SPDX id, or "permission"
+      "code": "CSGO-…",                             // crosshairs only, optional
+      "featured": 1                                 // optional position in the Featured row
+    }
+
+    npm run site:publish -w @kvk/site -- <folder> --dry-run            # checks only, prints the plan
+    npm run site:publish -w @kvk/site -- <folder>                      # preview database
+    npm run site:publish -w @kvk/site -- <folder> --env production     # backs up to backups/ first
+
+Every check runs before anything is uploaded (the App's own file-name rules, `parseScheme` for a
+theme, a canonical ≤ 512 px PNG for a crosshair, a RIFF/WAVE or Ogg header and ≤ 5 MiB for a sound).
+A new file gets a new SHA-256 key; old objects are never overwritten or deleted by the command.
 
 ## The report backend
 
