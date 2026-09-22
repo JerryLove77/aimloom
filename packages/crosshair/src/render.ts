@@ -8,6 +8,9 @@ import { CrosshairError, type CrosshairWarning } from './errors';
 import type { Cs2Crosshair } from './cs2';
 import type { ValorantCrosshair, ValorantLine } from './valorant';
 import type { CrosshairProfile, CrosshairRect, CrosshairScene, ParsedCrosshair, RasterImage, RenderOptions } from './render-types';
+// Single source of truth for both games' preset palettes; the tuner's swatches (CUR-C2) draw
+// from the same tables via palette.ts, so a rendered color and its swatch can never diverge.
+import { CS2_PALETTE, VALORANT_PALETTE } from './palette';
 
 function invalid(message: string, en: string): never {
   throw new CrosshairError('INVALID_RENDER_OPTIONS', message, en);
@@ -73,14 +76,6 @@ function validateScene(scene: CrosshairScene): void {
   }
 }
 
-const CS2_COLORS: readonly (readonly [number, number, number])[] = [
-  [255, 0, 0], [0, 255, 0], [255, 255, 0], [0, 0, 255], [0, 255, 255],
-];
-const VALORANT_COLORS: readonly (readonly [number, number, number])[] = [
-  [255, 255, 255], [0, 255, 0], [127, 255, 0], [223, 255, 0],
-  [255, 255, 0], [0, 255, 255], [255, 0, 255], [255, 0, 0],
-];
-
 function addArms(rectangles: CrosshairRect[], gap: number, thickness: number,
   horizontal: number, vertical: number, opacity: number, noTop = false): void {
   if (thickness === 0) return;
@@ -117,7 +112,7 @@ function createCs2Scene(parsed: Cs2Crosshair, warnings: CrosshairWarning[]): Cro
   const outline = finite(settings.outline, 0, 2048, { zh: 'CS2 描边宽度', en: 'CS2 outline width' });
   const noTop = boolean(settings.tStyleEnabled, { zh: 'CS2 T 型准星', en: 'CS2 T-style crosshair' });
   const centerDot = boolean(settings.centerDotEnabled, { zh: 'CS2 中心点', en: 'CS2 center dot' });
-  const color = paletteIndex === 5 ? customColor : CS2_COLORS[paletteIndex]!;
+  const color = paletteIndex === 5 ? customColor : CS2_PALETTE[paletteIndex]!.rgb;
   const rectangles: CrosshairRect[] = [];
   addArms(rectangles, gap, thickness, length, length, 1, noTop);
   if (centerDot) addDot(rectangles, thickness, 1);
@@ -156,7 +151,7 @@ function createValorantScene(parsed: ValorantCrosshair, profile: CrosshairProfil
     color = [Number.parseInt(hex.slice(0, 2), 16), Number.parseInt(hex.slice(2, 4), 16),
       Number.parseInt(hex.slice(4, 6), 16), Number.parseInt(hex.slice(6, 8), 16)];
   } else {
-    const rgb = VALORANT_COLORS[paletteIndex]!;
+    const rgb = VALORANT_PALETTE[paletteIndex]!.rgb;
     color = [rgb[0], rgb[1], rgb[2], 255];
   }
   const outlineEnabled = boolean(settings.outlines, { zh: 'VALORANT 启用描边', en: 'VALORANT outlines enabled' });

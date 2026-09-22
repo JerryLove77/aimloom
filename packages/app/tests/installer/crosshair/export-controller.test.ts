@@ -118,6 +118,21 @@ describe('fine-tune (CUR-C2)', () => {
     expect(b.written[0]!.base64).toBe(tuned)
   })
 
+  it('a change that has a side effect on another control (VALORANT custom colour turning on useCustomColor) is not clobbered by re-applying the other, now-stale controls', async () => {
+    const controller = createCrosshairExportController(bridge(), 'D:/Game')
+    controller.setCode(VALORANT)
+    await controller.preview()
+    expect(controller.getState().values.useCustomColor).toBe(false)
+    controller.setTune('customColor', 'AABBCCDD')
+    const state = controller.getState()
+    expect(state.values.useCustomColor).toBe(true)
+    expect(state.values.customColor).toBe('AABBCCDD')
+    // Selecting a preset afterwards turns it back off, and only it.
+    controller.setTune('color', 3)
+    expect(controller.getState().values.useCustomColor).toBe(false)
+    expect(controller.getState().values.color).toBe(3)
+  })
+
   it('an edit to the code clears the tuning controls', async () => {
     const controller = createCrosshairExportController(bridge(), 'D:/Game')
     controller.setCode(CS2)
