@@ -14,6 +14,10 @@ describe('changelogEntries', () => {
   it('orders newest first by semver, not by string', () => {
     expect(changelogEntries(data, 'en').map(e => e.version)).toEqual(['0.1.10', '0.1.2', '0.1.0'])
   })
+  it('orders a release above its own betas, and betas by number', () => {
+    const withBetas: ReleaseData = { ...data, releases: [r('0.1.4-beta.1', 'beta', '2026-10-02'), r('0.1.4', 'stable', '2026-10-09'), r('0.1.4-beta.2', 'beta', '2026-10-05'), r('0.1.3', 'stable', '2026-09-22')] }
+    expect(changelogEntries(withBetas, 'en').map(e => e.version)).toEqual(['0.1.4', '0.1.4-beta.2', '0.1.4-beta.1', '0.1.3'])
+  })
   it('flags unreleased entries and localizes notes', () => {
     const [top] = changelogEntries(data, 'zh')
     expect(top).toMatchObject({ version: '0.1.10', released: false, date: null, notes: '说明 0.1.10' })

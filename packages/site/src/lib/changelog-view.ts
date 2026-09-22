@@ -1,16 +1,12 @@
-import type { ReleaseData, ReleaseStatus } from '../data/releases'
+import { isNewer, type ReleaseData, type ReleaseStatus } from '../data/releases'
 import type { Lang } from '../i18n'
 
 export interface ChangelogEntry { version: string; released: boolean; date: string | null; status: ReleaseStatus; notes: string; knownIssues: string[] }
 
-function semverParts(v: string): number[] { return v.split('.').map(p => Number.parseInt(p, 10) || 0) }
+// Semver precedence, prereleases included (0.1.4 > 0.1.4-beta.2 > 0.1.4-beta.1), shared with the
+// parser and latest.json so the three can never order versions differently.
 function compareSemverDesc(a: string, b: string): number {
-  const x = semverParts(a), y = semverParts(b)
-  for (let i = 0; i < Math.max(x.length, y.length); i++) {
-    const d = (y[i] ?? 0) - (x[i] ?? 0)
-    if (d !== 0) return d
-  }
-  return 0
+  return isNewer(a, b) ? -1 : isNewer(b, a) ? 1 : 0
 }
 
 export function changelogEntries(data: ReleaseData, lang: Lang): ChangelogEntry[] {
