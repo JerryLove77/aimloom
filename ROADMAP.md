@@ -124,12 +124,13 @@ user on 2026-09-22 and written down in
 
 | Step | Status |
 |---|---|
-| Amend the spec | **Done** 2026-09-22 |
-| Figma: list and detail, zh/en × desktop/phone | Next; code waits for the user's review |
-| Provision R2 and `dl.aimloom.dev`; the migration | After Figma |
-| Worker routes, pages, publish command | After Figma |
+| Amend the spec | **Done** 2026-09-22; §10 records what changed while building |
+| Figma: list and detail, zh/en × desktop/phone | **Drawn** 2026-09-22 (round 1); the user moved on to code |
+| Worker routes, pages, migration, publish command | **Built** 2026-09-22: site suites (node and workerd), axe at 1280/390 on a local Worker with fake sample items. Not deployed |
+| App link on Theme, Sounds, Crosshair (`installer_open_explore`) | **Built** 2026-09-22: Rust and App tests, checked in the browser demo. Not yet seen on Windows |
+| Provision R2 `aimloom-files` + `dl.aimloom.dev`; apply the migration | Next — the maintainer's Cloudflare account (site README, "The explorer") |
 | Content with permission | The user, in parallel |
-| App link; `0.1.5-beta.1` | After the explorer is live |
+| Deploy the site; `0.1.5-beta.1` through the beta channel | After provisioning and the first permitted content |
 
 ## After v0.1.5
 

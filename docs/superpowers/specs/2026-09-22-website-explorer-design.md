@@ -1,7 +1,8 @@
 # Website explorer (v0.1.5) — amendment to the 2026-09-17 website design
 
-Date: 2026-09-22. Status: **decisions taken with the user on 2026-09-22; not designed in Figma,
-not built.** Roadmap entry: v0.1.5 — the website explorer (EXP).
+Date: 2026-09-22. Status: **decisions taken with the user on 2026-09-22; drawn in Figma (round 1)
+and built the same day. Not provisioned (R2, `dl.aimloom.dev`), not deployed, no real content yet.**
+§10 lists where the build departs from the first draft of this document. Roadmap entry: v0.1.5 — the website explorer (EXP).
 
 This document amends [the 2026-09-17 website design](2026-09-17-aimloom-website-and-explore-design.md).
 It **replaces** that document's §3 (the explorer), §5 (data layer) and §6 (the ZIP contract and
@@ -56,10 +57,11 @@ No page claims the file was checked in the game unless the maintainer saw it the
 
 ### 2.3 Previews
 
-- **Background:** the App's approximate colour preview, rendered in the browser from the theme's
-  JSON by the same browser-safe code the App uses, with the App's "approximate" caption.
+- **Background:** the App's approximate colour preview (`renderSchemePreview`), rendered once per
+  language by the publish command and served as an SVG image beside the file.
 - **Crosshair:** the PNG on a dark and a light swatch, as the crosshair tool shows it.
-- **Sound:** a play / stop button; nothing plays without a click.
+- **Sound:** on a card, a Listen / Stop button; on the detail page, the browser's own player with
+  `preload="none"`. Nothing plays without a click.
 
 ### 2.4 Navigation
 
@@ -195,3 +197,26 @@ It exports the database to a gitignored `backups/` before each production publis
 - **Tags** (training purpose) are left out of 0.1.5; single files rarely have one purpose.
 - **Community uploads** remain the roadmap's UPLOAD item, with the Steam sign-in and moderation.
 - Whether the App's own Explore page (APP-NAV) reads this same API is decided when it is designed.
+
+## 10. As built (2026-09-22)
+
+Where the implementation departs from the first draft above, and why:
+
+- **Search is `LIKE`, not FTS5.** SQLite's default tokenizer does not split Chinese, so a two-character
+  Chinese query would find nothing; the catalogue is small enough for `LIKE` over titles, summaries
+  and file names (`%` and `_` escaped).
+- **Theme previews are rendered at publish time**, not in the browser: the page needs no script and no
+  cross-origin fetch of the theme file, and the SVG (theme text escaped by the renderer) is served
+  as an image, so it cannot run anything on the page.
+- **One bucket.** Preview and production both read `aimloom-files` through `dl.aimloom.dev`
+  (`FILES_ORIGIN`); keys are content-addressed and immutable, so a preview publish cannot disturb
+  production, and there is no second bucket or domain to provision.
+- **The report link is an email** to `feedback@aimloom.dev` with the item named in the subject, not a
+  GitHub issue: players need no GitHub account, and GitHub is often unreachable from mainland China.
+- **No waveform on sound cards.** Drawing one honestly means decoding the audio at publish time; the
+  card shows a Listen button and the file name instead of a picture that is not the real sound.
+- **The crosshair tool is opened with `#code=…`**, a URL fragment, so the code never reaches the
+  server and the tool's "nothing is uploaded" stays true.
+- **The detail page shell** is prerendered at `/<lang>/explore/item-shell/`; that slug is reserved.
+- **The App link** sits on its own line under each list (the Figma draft put it beside the count).
+
