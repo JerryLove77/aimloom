@@ -66,11 +66,11 @@ describe('Enemy page', () => {
     expect(f.plans[0]).toMatchObject({ shape: 'cylindrical', model: 'Ghost', skin: 'Default' })
   })
 
-  it('取消更改 discards the pick without planning anything', async () => {
+  it('退出 discards the pick without planning anything', async () => {
     const f = fixtures()
     render(tree(f))
     fireEvent.click(await screen.findByRole('button', { name: /^Ghost/ }))
-    fireEvent.click(screen.getByRole('button', { name: '取消更改' }))
+    fireEvent.click(screen.getByRole('button', { name: '退出' }))
     expect(screen.getByRole('button', { name: '应用皮肤' })).toBeDisabled()
     expect(f.plans).toEqual([])
   })

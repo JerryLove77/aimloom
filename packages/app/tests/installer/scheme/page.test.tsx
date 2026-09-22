@@ -58,7 +58,7 @@ describe('Theme page', () => {
     expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('当前使用Clean Dark')
   })
 
-  it('selecting a theme only previews it; 取消更改 returns to no pending change', async () => {
+  it('selecting a theme only previews it; 退出 returns to no pending change', async () => {
     const f = fixtures()
     render(tree(f))
     const apply = await screen.findByRole('button', { name: '应用背景' })
@@ -67,7 +67,7 @@ describe('Theme page', () => {
     expect(screen.getByRole('button', { name: 'Blue Room 预览' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('已选，未应用Blue Room')
     expect(apply).toBeEnabled()
-    fireEvent.click(screen.getByRole('button', { name: '取消更改' }))
+    fireEvent.click(screen.getByRole('button', { name: '退出' }))
     expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('待应用无')
     expect(apply).toBeDisabled()
     expect(f.planCalls).toEqual([])

@@ -141,7 +141,7 @@ export function createAudioController(bridge: AudioBridge, storage: GameRootStor
     },
     /** Leaves the editor. Drafts survive, so another event's pending edit is not lost. */
     close(): void { publish({ event: null, draft: [], error: null }) },
-    /** 取消更改: discard only the selected event's draft. */
+    /** 退出: discard only the selected event's draft. */
     discard(): void {
       const event = state.event
       if (!event || state.applying || state.unresolved) return

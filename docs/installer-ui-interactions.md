@@ -60,7 +60,7 @@ Every button touches exactly one, and its label and note say which:
 3. **A Profile draft** — changed by the name field and by a sheet's 用于此组合; discarded by
    取消编辑; never written to disk on its own.
 4. **A section's pending choice** — a selected tile or an edited audio list, shown as
-   「已选，未应用」; discarded by 取消更改.
+   「已选，未应用」; discarded by 退出 / "Exit" (leaving the choice, never an undo of an applied change).
 5. **A sheet's temporary choice** — lives only while the sheet is open.
 
 `StatusStrip` states 1 and 4 side by side on every game-side section. Tags carry a glyph and
