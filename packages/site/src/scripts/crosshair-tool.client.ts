@@ -12,10 +12,9 @@ import {
   previewFromCode, previewWithTune, downloadFileName, errorText, warningText, readAllValues,
   getTuningParams, type ParsedCrosshair, type TuneValue, type TuningParam, type CrosshairGame,
 } from '../lib/crosshair-tool'
-import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor } from '../../../crosshair/src/palette'
 import {
-  TUNE_CUSTOM_ALPHA, TUNE_CUSTOM_COLOR_PICKER, TUNE_CUSTOM_SWATCH, dependencyDisabled,
-  tuneLabel, PALETTE_OWNED_IDS,
+  TUNE_CUSTOM_ALPHA, TUNE_CUSTOM_COLOR_PICKER, dependencyDisabled,
+  tuneLabel, PALETTE_OWNED_IDS, paletteState,
 } from '../lib/crosshair-labels'
 
 type Lang = 'zh' | 'en'
@@ -167,7 +166,7 @@ export function mountCrosshairTool(): void {
     const label = tuneLabel(game, param.id, lang)
     const disabled = dependencyDisabled(game, param.id, currentValues())
     const row = document.createElement('div')
-    row.className = param.kind === 'boolean' ? 'cx-tune-row cx-tune-switch' : 'cx-tune-row cx-tune-slider'
+    row.className = (param.kind === 'boolean' ? 'cx-tune-row cx-tune-switch' : 'cx-tune-row cx-tune-slider') + (disabled ? ' is-disabled' : '')
     const span = document.createElement('span')
     span.textContent = label
     row.appendChild(span)
@@ -276,54 +275,51 @@ export function mountCrosshairTool(): void {
   }
 
   function buildPaletteControl(game: CrosshairGame, values: Record<string, TuneValue>): HTMLElement {
-    const label = tuneLabel(game, 'color', lang)
-    const palette: readonly PaletteColor[] = game === 'cs2' ? CS2_PALETTE : VALORANT_PALETTE
-    const colorIndex = typeof values.color === 'number' ? values.color : 0
-    const isCustom = game === 'cs2' ? colorIndex >= palette.length : values.useCustomColor === true
+    const state = paletteState(game, values, lang)
     const disabled = dependencyDisabled(game, 'color', values)
+    const paletteLength = state.swatches.length
 
     const container = document.createElement('div')
     const row = document.createElement('div')
-    row.className = 'cx-tune-row cx-tune-palette-row'
+    row.className = 'cx-tune-row cx-tune-palette-row' + (disabled ? ' is-disabled' : '')
     const span = document.createElement('span')
-    span.textContent = label
+    span.textContent = state.label
     row.appendChild(span)
     const group = document.createElement('div')
     group.className = 'cx-tune-palette'
     group.setAttribute('role', 'radiogroup')
-    group.setAttribute('aria-label', label)
+    group.setAttribute('aria-label', state.label)
 
-    palette.forEach((entry, index) => {
-      const name = lang === 'zh' ? entry.nameZh : entry.nameEn
+    for (const swatch of state.swatches) {
       const button = document.createElement('button')
       button.type = 'button'
       button.setAttribute('role', 'radio')
-      button.setAttribute('aria-checked', String(!isCustom && colorIndex === index))
+      button.setAttribute('aria-checked', String(swatch.checked))
       button.className = 'cx-swatch-btn'
       button.disabled = disabled
-      button.setAttribute('aria-label', name)
-      button.title = name
-      button.style.backgroundColor = `rgb(${entry.rgb[0]}, ${entry.rgb[1]}, ${entry.rgb[2]})`
-      button.addEventListener('click', () => onTune('color', index))
+      button.setAttribute('aria-label', swatch.name)
+      button.title = swatch.name
+      button.style.backgroundColor = `rgb(${swatch.rgb[0]}, ${swatch.rgb[1]}, ${swatch.rgb[2]})`
+      button.addEventListener('click', () => onTune('color', swatch.index))
       group.appendChild(button)
-    })
+    }
     const customButton = document.createElement('button')
     customButton.type = 'button'
     customButton.setAttribute('role', 'radio')
-    customButton.setAttribute('aria-checked', String(isCustom))
+    customButton.setAttribute('aria-checked', String(state.custom.checked))
     customButton.className = 'cx-swatch-btn cx-swatch-custom'
     customButton.disabled = disabled
-    customButton.setAttribute('aria-label', TUNE_CUSTOM_SWATCH[lang])
-    customButton.title = TUNE_CUSTOM_SWATCH[lang]
+    customButton.setAttribute('aria-label', state.custom.name)
+    customButton.title = state.custom.name
     customButton.textContent = '?'
     customButton.addEventListener('click', () => {
-      if (game === 'cs2') onTune('color', palette.length)
+      if (game === 'cs2') onTune('color', paletteLength)
       else onTune('customColor', typeof values.customColor === 'string' && values.customColor ? values.customColor : 'FFFFFFFF')
     })
     group.appendChild(customButton)
     row.appendChild(group)
     container.appendChild(row)
-    if (isCustom) container.appendChild(buildCustomColorControl(game, values, disabled))
+    if (state.custom.checked) container.appendChild(buildCustomColorControl(game, values, disabled))
     return container
   }
 

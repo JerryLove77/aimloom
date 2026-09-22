@@ -6,6 +6,9 @@
  * the client-side island (built with no framework) needs it as a plain runtime table rather than
  * Astro's server-side `t()`.
  */
+import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor } from '../../../crosshair/src/palette'
+import type { TuneValue } from '../../../crosshair/src/tuning'
+
 export interface Bilingual { zh: string; en: string }
 
 export const TUNE_HEADING: Bilingual = { zh: '微调', en: 'Fine-tune' }
@@ -75,4 +78,28 @@ export function dependencyDisabled(game: 'cs2' | 'valorant', id: string, values:
   if (id.startsWith('inner.') && id !== 'inner.enabled') return values['inner.enabled'] !== true
   if (id.startsWith('outer.') && id !== 'outer.enabled') return values['outer.enabled'] !== true
   return false
+}
+
+export interface PaletteSwatch { index: number; rgb: readonly [number, number, number]; name: string; checked: boolean }
+export interface PaletteState { label: string; swatches: PaletteSwatch[]; custom: { name: string; checked: boolean } }
+
+/**
+ * The palette control's data, with no DOM: one entry per preset colour (name in the page's
+ * language, whether it is the selected one) plus the trailing "custom" entry — pure so it can be
+ * unit-tested directly. `src/scripts/crosshair-tool.client.ts` renders this as a `role="radiogroup"`
+ * of round swatch buttons, one per entry, matching `PaletteControl` in the App's
+ * `CodeExportDialog.tsx`.
+ */
+export function paletteState(game: 'cs2' | 'valorant', values: Record<string, TuneValue>, lang: 'zh' | 'en'): PaletteState {
+  const palette: readonly PaletteColor[] = game === 'cs2' ? CS2_PALETTE : VALORANT_PALETTE
+  const colorIndex = typeof values.color === 'number' ? values.color : 0
+  const isCustom = game === 'cs2' ? colorIndex >= palette.length : values.useCustomColor === true
+  return {
+    label: tuneLabel(game, 'color', lang),
+    swatches: palette.map((entry, index) => ({
+      index, rgb: entry.rgb, name: lang === 'zh' ? entry.nameZh : entry.nameEn,
+      checked: !isCustom && colorIndex === index,
+    })),
+    custom: { name: TUNE_CUSTOM_SWATCH[lang], checked: isCustom },
+  }
 }

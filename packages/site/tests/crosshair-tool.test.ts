@@ -3,7 +3,7 @@ import {
   previewFromCode, previewWithTune, downloadFileName, errorText, warningText, readAllValues,
   getTuningParams, CrosshairError,
 } from '../src/lib/crosshair-tool'
-import { tuneLabel, dependencyDisabled, PALETTE_OWNED_IDS } from '../src/lib/crosshair-labels'
+import { tuneLabel, dependencyDisabled, PALETTE_OWNED_IDS, paletteState } from '../src/lib/crosshair-labels'
 
 // From packages/crosshair/tests/fixtures/cs2.json and valorant.json (upstream published test
 // fixtures; see that folder's provenance note). Kept as literals here so this suite has no
@@ -110,6 +110,54 @@ describe('crosshair-labels', () => {
         if (PALETTE_OWNED_IDS[game].includes(param.id)) continue
         expect(tuneLabel(game, param.id, 'zh'), param.id).not.toBe(param.id)
         expect(tuneLabel(game, param.id, 'en'), param.id).not.toBe(param.id)
+      }
+    }
+  })
+})
+
+describe('paletteState', () => {
+  it('renders one swatch per CS2 preset plus a trailing custom entry, with the preset in use marked', () => {
+    const { parsed } = previewFromCode(CS2_CODE)
+    const values = readAllValues(parsed, getTuningParams('cs2'))
+    const state = paletteState('cs2', values, 'en')
+    expect(state.swatches).toHaveLength(5) // CS2_PALETTE
+    expect(state.swatches.map(s => s.index)).toEqual([0, 1, 2, 3, 4])
+    for (const swatch of state.swatches) expect(swatch.rgb).toHaveLength(3)
+    // exactly one entry (a preset, or custom) is checked
+    const checkedCount = state.swatches.filter(s => s.checked).length + (state.custom.checked ? 1 : 0)
+    expect(checkedCount).toBe(1)
+  })
+
+  it('marks the custom swatch once a CS2 colour index runs past the last preset', () => {
+    const { parsed } = previewFromCode(CS2_CODE)
+    const { parsed: tuned } = previewWithTune(parsed, { color: 5 }) // 0-4 are presets; 5 is custom
+    const values = readAllValues(tuned, getTuningParams('cs2'))
+    const state = paletteState('cs2', values, 'en')
+    expect(state.swatches.every(s => !s.checked)).toBe(true)
+    expect(state.custom.checked).toBe(true)
+  })
+
+  it('renders one swatch per VALORANT preset plus custom, switching on useCustomColor', () => {
+    const { parsed } = previewFromCode(VALORANT_CODE)
+    const baseValues = readAllValues(parsed, getTuningParams('valorant'))
+    const before = paletteState('valorant', baseValues, 'en')
+    expect(before.swatches).toHaveLength(8) // VALORANT_PALETTE
+
+    const { parsed: tuned } = previewWithTune(parsed, { customColor: 'FF0000FF' })
+    const values = readAllValues(tuned, getTuningParams('valorant'))
+    const after = paletteState('valorant', values, 'en')
+    expect(after.swatches.every(s => !s.checked)).toBe(true)
+    expect(after.custom.checked).toBe(true)
+  })
+
+  it('gives every preset an accessible, non-empty name in both languages', () => {
+    for (const game of ['cs2', 'valorant'] as const) {
+      const { parsed } = previewFromCode(game === 'cs2' ? CS2_CODE : VALORANT_CODE)
+      const values = readAllValues(parsed, getTuningParams(game))
+      for (const lang of ['zh', 'en'] as const) {
+        const state = paletteState(game, values, lang)
+        for (const swatch of state.swatches) expect(swatch.name, `${game} ${lang} #${swatch.index}`).not.toBe('')
+        expect(state.custom.name, `${game} ${lang} custom`).not.toBe('')
       }
     }
   })
