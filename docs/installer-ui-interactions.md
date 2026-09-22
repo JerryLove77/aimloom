@@ -347,3 +347,33 @@ reason in the player's language, that what they typed is still there, the addres
 text, and 「打开日志文件夹」. **Nothing retries automatically** — a failed send consumes the kept
 native report, so 「重试」 only returns to the form with everything intact; the next Send builds a
 genuinely new preview (the log tail may have moved).
+
+### Adding a file from a Profile sheet — 2026-09-22
+
+Theme's «更改» and Sounds' sheet (`ResourceSheet.tsx`, `AudioSheet.tsx`) can now add an outside
+file too, through the same `planFileAdd` chain the Theme and Sounds pages use (§ "Adding a file
+from outside the app", 2026-09-18) — reused unchanged, never a second write path.
+
+**The add sheet stacks on top of the Profile sheet, as a second, simultaneously-open `Dialog`,
+instead of hiding or closing the Profile sheet underneath it.** `Dialog.tsx`'s open-sheet signal
+(`isAnyDialogOpen`) is a *counter*, not a boolean, precisely because more than one sheet can be
+open at once; each `Dialog` instance scopes its own focus trap, Escape and Tab handling to its
+own subtree, so two open dialogs do not contend for focus. The alternative — toggling the
+Profile sheet's own `open` prop off while the add sheet is up — would re-run its
+opening `useEffect` on the way back and silently reset the player's in-progress choice (in
+particular AudioSheet's multi-event `temp` draft, which can hold edits to several events at
+once); that is exactly the state loss "A Profile sheet writes nothing on its own" (above) exists
+to prevent. The Profile sheet stays open, visible behind the add sheet's own backdrop, for the
+whole add.
+
+**`unknown` is reconciled inside the Profile sheet, not the add sheet.** An add whose result
+comes back `unknown` closes the nested add sheet — mirroring the page's own rule that an
+unresolved add closes its sheet — and the Profile sheet itself shows the page's own wording and
+its own 「核对结果」/"Check result" button, disabling choosing, 用于此组合/Cancel and further adds
+until reconciled. Reconciling calls `reconcile(operationId)` for the very operation that came
+back unresolved (kept by `ProfilesApp`, since only one Profile sheet is ever open) and then
+refreshes the same way a normal add does: Theme re-reads the game's installed list, Sounds
+re-reads its own folder. Nothing distinguishes "added" from "not added" beyond that refresh — the
+same as Theme and Sounds themselves, which never say which one it was, only show the list as it
+now stands. While unresolved, the whole Profile page locks too (`Save`/`取消编辑`/navigation),
+the same as an unresolved section page locks itself.

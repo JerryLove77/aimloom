@@ -236,10 +236,11 @@ describe('adding a file to a Profile sheet from my computer', () => {
     { name: 'Blue Room', file: 'Blue Room.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/Blue Room.json', readable: true, duplicateName: false },
   ]
   const addedTheme = { name: 'Blue', file: 'New Theme.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/New Theme.json', readable: true, duplicateName: false }
-  function gameWithAdd(options: { pickPath?: string | null; planFileAdd?: () => Promise<{ planId: string }> } = {}) {
+  function gameWithAdd(options: { pickPath?: string | null; planFileAdd?: () => Promise<{ planId: string }>; jobUnknown?: boolean; reconcileAdds?: boolean; reconcileFails?: boolean } = {}) {
     let added = false
     const planCalls: unknown[] = []
     const executeCalls: unknown[] = []
+    const reconcileCalls: string[] = []
     const game = {
       discover: async () => ({ candidates: ['D:/Game'] }),
       locate: async (gameRoot: string) => ({ gameRoot }),
@@ -248,12 +249,21 @@ describe('adding a file to a Profile sheet from my computer', () => {
       pickFolder: async () => null,
       planProfileApply: async () => { throw new Error('not used by these tests') },
       execute: async (input: unknown): Promise<Job> => { executeCalls.push(input); return { operationId: 'op', planId: 'plan-add', state: 'finished', progress: null, result: { status: 'completed' as const, batchId: null, items: [], errors: [], errorsEn: [] }, error: null } },
-      job: async (): Promise<Job> => ({ operationId: 'op', planId: 'plan-add', state: 'finished', progress: null, result: { status: 'completed' as const, batchId: null, items: [], errors: [], errorsEn: [] }, error: null }),
-      reconcile: async () => ({}),
-      planFileAdd: options.planFileAdd ?? (async (input: unknown) => { planCalls.push(input); added = true; return { planId: 'plan-add' } }),
+      job: async (): Promise<Job> => (options.jobUnknown
+        ? { operationId: 'op', planId: 'plan-add', state: 'unknown', progress: null, result: null, error: null }
+        : { operationId: 'op', planId: 'plan-add', state: 'finished', progress: null, result: { status: 'completed' as const, batchId: null, items: [], errors: [], errorsEn: [] }, error: null }),
+      // Reconciling the real add: the engine's own answer to "did it actually write". The test
+      // controls it directly, exactly as the real one could come back either way.
+      reconcile: async (operationId: string) => {
+        reconcileCalls.push(operationId)
+        if (options.reconcileFails) throw new Error('无法核对，请稍后重试')
+        if (options.reconcileAdds) added = true
+        return {}
+      },
+      planFileAdd: options.planFileAdd ?? (async (input: unknown) => { planCalls.push(input); if (!options.jobUnknown) added = true; return { planId: 'plan-add' } }),
       pickFile: async () => (options.pickPath !== undefined ? options.pickPath : 'C:/Users/Player1/Downloads/New Theme.json'),
     }
-    return { game, planCalls, executeCalls }
+    return { game, planCalls, executeCalls, reconcileCalls }
   }
   async function openThemeSheet(f: ReturnType<typeof fixtures>, game: ReturnType<typeof gameWithAdd>['game']) {
     render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={game} />)
@@ -313,5 +323,71 @@ describe('adding a file to a Profile sheet from my computer', () => {
     expect(planCalls).toEqual([])
     // The Profile sheet itself is untouched: still on the same list, nothing chosen.
     await within(sheet).findByRole('button', { name: /Blue Room/ })
+  })
+
+  // CLAUDE.md: "`unknown` is never success ... The UI stays locked until [reconciled]."
+  async function addUntilUnknown(f: ReturnType<typeof fixtures>, game: ReturnType<typeof gameWithAdd>['game']) {
+    const sheet = await openThemeSheet(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6dfb\u52a0\u4e3b\u9898\u2026' }))
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(2))
+    const addSheet = screen.getAllByRole('dialog')[1]!
+    await waitFor(() => expect(within(addSheet).getByRole('button', { name: '\u6dfb\u52a0\u5230\u6e38\u620f' })).toBeEnabled())
+    fireEvent.click(within(addSheet).getByRole('button', { name: '\u6dfb\u52a0\u5230\u6e38\u620f' }))
+    // An unknown result closes the nested add sheet and locks the Profile sheet behind it.
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1))
+    return sheet
+  }
+
+  it('an unknown add result locks the sheet and offers \u6838\u5bf9\u7ed3\u679c, disabling choosing and \u7528\u4e8e\u6b64\u7ec4\u5408', async () => {
+    const f = fixtures()
+    const { game } = gameWithAdd({ jobUnknown: true })
+    const sheet = await addUntilUnknown(f, game)
+    const reconcileButton = await within(sheet).findByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' })
+    expect(reconcileButton).toBeEnabled()
+    // The same page-level unknown wording, and the same "\u70b9\u300c\u6838\u5bf9\u7ed3\u679c\u300d" instruction.
+    expect(within(sheet).getByText(/\u6dfb\u52a0\u7ed3\u679c\u672a\u77e5/)).toBeVisible()
+    expect(within(sheet).getByRole('button', { name: '\u7528\u4e8e\u6b64\u7ec4\u5408' })).toBeDisabled()
+    expect(within(sheet).getByRole('button', { name: '\u53d6\u6d88' })).toBeDisabled()
+    expect(within(sheet).queryByRole('button', { name: 'Blue Room \u9884\u89c8' })).toBeNull()
+    // The whole Profile page locks too: Save and \u53d6\u6d88\u7f16\u8f91 stay disabled while unresolved.
+    expect(screen.getByRole('button', { name: '\u4fdd\u5b58\u7ec4\u5408' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '\u53d6\u6d88\u7f16\u8f91' })).toBeDisabled()
+  })
+
+  it('reconciling to "added" shows the new file, selectable, and unlocks the sheet', async () => {
+    const f = fixtures()
+    const { game, reconcileCalls } = gameWithAdd({ jobUnknown: true, reconcileAdds: true })
+    const sheet = await addUntilUnknown(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' }))
+    await waitFor(() => expect(within(sheet).queryByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' })).toBeNull())
+    expect(reconcileCalls).toHaveLength(1)
+    const added = await within(sheet).findByRole('button', { name: 'Blue \u9884\u89c8' })
+    fireEvent.click(added)
+    expect(within(sheet).getByRole('button', { name: '\u7528\u4e8e\u6b64\u7ec4\u5408' })).toBeEnabled()
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u7528\u4e8e\u6b64\u7ec4\u5408' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByRole('button', { name: '\u4fdd\u5b58\u7ec4\u5408' })).toBeEnabled()
+  })
+
+  it('reconciling to "not added" shows nothing new and unlocks the sheet', async () => {
+    const f = fixtures()
+    const { game, reconcileCalls } = gameWithAdd({ jobUnknown: true, reconcileAdds: false })
+    const sheet = await addUntilUnknown(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' }))
+    await waitFor(() => expect(within(sheet).queryByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' })).toBeNull())
+    expect(reconcileCalls).toHaveLength(1)
+    await within(sheet).findByRole('button', { name: /Blue Room/ })
+    expect(within(sheet).queryByRole('button', { name: 'Blue \u9884\u89c8' })).toBeNull()
+    expect(within(sheet).getByRole('button', { name: '\u53d6\u6d88' })).toBeEnabled()
+  })
+
+  it('a failed reconcile keeps the sheet locked so the player can retry \u6838\u5bf9\u7ed3\u679c', async () => {
+    const f = fixtures()
+    const { game } = gameWithAdd({ jobUnknown: true, reconcileFails: true })
+    const sheet = await addUntilUnknown(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' }))
+    expect(await within(sheet).findByText('\u65e0\u6cd5\u6838\u5bf9\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5')).toBeVisible()
+    expect(within(sheet).getByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' })).toBeEnabled()
+    expect(within(sheet).getByRole('button', { name: '\u7528\u4e8e\u6b64\u7ec4\u5408' })).toBeDisabled()
   })
 })

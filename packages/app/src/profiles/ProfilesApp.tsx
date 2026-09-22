@@ -156,14 +156,28 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
   // (`planFileAdd`), never a separate write. Each add gets a fresh operationId and a rising
   // revision, exactly like the Scheme and Audio controllers.
   const fileImportRevision = useRef(0)
+  // `unknown` is never success: the operationId of an unresolved add is kept here so 核对结果
+  // can reconcile the very same operation, exactly as `installer_reconcile` requires. Only one
+  // Profile sheet is ever open at a time, so one slot is enough.
+  const pendingImportOp = useRef<string | null>(null)
+  // A sheet's own unresolved add locks the whole Profile page -- navigation, save and further
+  // adds -- until reconciled, the same as an unresolved section page locks itself.
+  const [importUnresolved, setImportUnresolved] = useState(false)
   async function addFile(kind: FileAddKind, input: FileImportInput): Promise<FileAddOutcome> {
     if (!locate || !gameRoot) return { kind: 'refused', message: { key: 'profile.sheet.error.generic' } }
     const operationId = crypto.randomUUID()
     const outcome = await addFileToGame(locate, operationId, { gameRoot, kind, ...input, revision: ++fileImportRevision.current })
+    if (outcome.kind === 'unknown') { pendingImportOp.current = operationId; return outcome }
     // The game's own installed list (`installed`) is fetched once per sheet opening and cached;
     // forcing it back to null makes the existing effect re-read it, same as a fresh open would.
-    if (kind === 'theme' && (outcome.kind === 'added' || outcome.kind === 'unknown')) setInstalled(null)
+    if (kind === 'theme' && outcome.kind === 'added') setInstalled(null)
     return outcome
+  }
+  /** Reconciles the pending add's own operationId -- the only exit from `unknown`. */
+  async function reconcileImport(): Promise<void> {
+    if (!locate || !pendingImportOp.current) return
+    await locate.reconcile(pendingImportOp.current)
+    pendingImportOp.current = null
   }
   const { toast, tone, hide, show } = useToast(null)
   const dropHint = useFileDrop(fileDrops, { section: 'profile', active: isActive && sheet === null && deleting === null, busy: false, onFile: () => {}, onRefused: show })
@@ -173,7 +187,7 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
   const lastPage = Math.max(0, Math.ceil(matches.length / 12) - 1)
   const activePage = Math.min(page, lastPage)
   const applyLocked = applyState.phase === 'applying' || applyState.phase === 'unresolved'
-  const locked = state.saving || state.reading || state.busyId !== null || applyLocked
+  const locked = state.saving || state.reading || state.busyId !== null || applyLocked || importUnresolved
   const basePath = state.filePath ?? `${state.directory ?? '/profiles'}/${state.draft?.id ?? 'draft'}.json`
   if (!isActive) return null
   async function save() {
@@ -196,12 +210,16 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
       value={state.draft.audio} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('audio', gameRoot) : null}
       onAddFile={locate && gameRoot ? input => addFile('sound', input) : undefined}
       onPickFile={locate ? lang => locate.pickFile('sound', lang) : undefined}
+      onReconcile={locate ? reconcileImport : undefined}
+      onUnresolvedChange={setImportUnresolved}
       onConfirm={value => { if (editor.setComponent('audio', value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
     {state.draft && sheet && sheet !== 'audio' ? <ResourceSheet kind={sheet} open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
       value={state.draft[sheet]} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder(sheet, gameRoot) : null}
       installed={!installedError && installed?.kind === sheet ? installed.choices : null}
       onAddFile={locate && gameRoot ? input => addFile('theme', input) : undefined}
       onPickFile={locate ? lang => locate.pickFile('theme', lang) : undefined}
+      onReconcile={locate ? reconcileImport : undefined}
+      onUnresolvedChange={setImportUnresolved}
       onAdded={() => setInstalled(null)}
       onConfirm={value => { if (editor.setComponent(sheet, value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
     <ApplyDialog state={applyState} current={currentGame}
@@ -217,8 +235,8 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
       headingRef={heading} demoNote={t('profile.demoNote')}
       titleExtra={state.draft && state.dirty ? <Tag kind="unsaved" /> : null}
       actions={state.draft ? <>
-        <Button disabled={state.saving} onClick={() => { editor.cancel(); setNotice(t('profile.cancelled.notice')) }}>{t('profile.cancelEdit')}</Button>
-        <Button variant="primary" disabled={state.saving || !state.dirty} onClick={() => void save()}>{state.saving ? t('profile.save.saving') : t('profile.save.button')}</Button></> : undefined}
+        <Button disabled={state.saving || importUnresolved} onClick={() => { editor.cancel(); setNotice(t('profile.cancelled.notice')) }}>{t('profile.cancelEdit')}</Button>
+        <Button variant="primary" disabled={state.saving || importUnresolved || !state.dirty} onClick={() => void save()}>{state.saving ? t('profile.save.saving') : t('profile.save.button')}</Button></> : undefined}
       actionNote={state.draft ? (state.dirty ? t('profile.save.note', { file: basePath.split(/[\\/]/).pop() ?? '' }) : t('profile.save.disabledNote')) : undefined}>
         {notice && !state.draft ? <p role="status" className="pr-status">{notice}</p> : null}
         {state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}

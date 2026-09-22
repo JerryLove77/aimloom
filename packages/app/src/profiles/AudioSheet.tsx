@@ -24,7 +24,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
  * Per-event audio for one Profile. Everything here is temporary until 用于此组合, which
  * writes the draft alone — nothing is saved to JSON, applied to the game, or auto-played.
  */
-export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, onAddFile, onPickFile, onConfirm, onCancel }: {
+export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onConfirm, onCancel }: {
   profileName: string
   profilePath: string
   value: ProfileAudio | null
@@ -41,6 +41,13 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   onAddFile?: ((input: FileImportInput) => Promise<FileAddOutcome>) | undefined
   /** Opens the native file picker, already filtered to sound files. */
   onPickFile?: ((lang: Lang) => Promise<string | null>) | undefined
+  /**
+   * Reconciles an add whose result came back `unknown` -- the only exit, per
+   * `installer_reconcile`. Absent has the same meaning as `onAddFile` absent.
+   */
+  onReconcile?: (() => Promise<void>) | undefined
+  /** Lifts "an add here is unresolved" so the caller can lock the whole Profile page too. */
+  onUnresolvedChange?: ((unresolved: boolean) => void) | undefined
   onConfirm: (value: ProfileAudio | null) => void
   onCancel: () => void
 }) {
@@ -63,7 +70,12 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   const [importPath, setImportPath] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<Msg | null>(null)
-  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setListen(null); setError(null); setFileErrors([]); setImportPath(null); setImportError(null) } }, [open, value])
+  // `unknown` is never success: this stays true, locking choosing/confirming/further adds, until
+  // 核对结果 reconciles the very operation that came back unresolved.
+  const [unresolved, setUnresolved] = useState(false)
+  const [reconciling, setReconciling] = useState(false)
+  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setListen(null); setError(null); setFileErrors([]); setImportPath(null); setImportError(null); setUnresolved(false) } }, [open, value])
+  useEffect(() => { onUnresolvedChange?.(unresolved) }, [unresolved, onUnresolvedChange])
   const eventFiles = temp?.[event]
   const mode = modeOf(eventFiles)
   const setEventFiles = (next: ProfileFileReference[] | undefined) => {
@@ -102,9 +114,23 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
       else if (defaultDirectory) await load(defaultDirectory)
       return true
     }
-    if (outcome.kind === 'unknown') { setImportError({ key: 'profile.sheet.importUnknown' }); return false }
+    // The same page-level rule applies here: an unknown result closes this add sheet and locks
+    // the Profile sheet behind it until 核对结果, exactly as Theme/Sounds lock their own page.
+    if (outcome.kind === 'unknown') { setImportPath(null); setUnresolved(true); setError({ key: 'audio.error.importUnknown' }); return false }
     setImportError(outcome.message)
     return false
+  }
+  async function reconcileImport() {
+    if (!onReconcile) return
+    setReconciling(true)
+    try {
+      await onReconcile()
+      setUnresolved(false)
+      setError(null)
+      if (directory) await load(directory)
+      else if (defaultDirectory) await load(defaultDirectory)
+    } catch (reason) { setError(errorMsg(reason, { key: 'audio.error.reconcileFailed' })) }
+    finally { setReconciling(false) }
   }
   // With no folder chosen the sheet used to open on nothing, so the player had to go find one
   // before they could see any sound. The folder they almost always want is the game's own.
@@ -121,8 +147,14 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     ;[next[index], next[target]] = [next[target]!, next[index]!]
     setEventFiles(next)
   }
-  return <Dialog variant="sheet" open={open} title={t('profile.sheet.title', { name: profileName, noun: t('audio.noun') })} onClose={onCancel}>
+  return <Dialog variant="sheet" open={open} title={t('profile.sheet.title', { name: profileName, noun: t('audio.noun') })} onClose={() => { if (!unresolved) onCancel() }}>
     <p className="ws-note">{t('profile.sheet.note', { name: profileName, noun: t('audio.noun') })}</p>
+    {importPath ? <ImportSheet key={importPath} kind="sound" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.audioSheet.dirPlaceholder')}
+      installed={files.map(file => ({ name: file.name, file: importFileName(file.path) }))} assets={assets} busy={importing} error={importError}
+      preview={<AssetPreview kind="audio" reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
+      onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
+    {unresolved ? <Notice tone="warning"><p>{msg(error ?? { key: 'audio.error.importUnknown' })}</p>
+      <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void reconcileImport()}>{reconciling ? t('audio.status.loading') : t('audio.reconcile')}</Button></p></Notice> : <>
     <div className="pr-audio-event"><label htmlFor="sheet-audio-event">{t('profile.audioSheet.eventLabel')}</label>
       <select id="sheet-audio-event" value={event} onChange={e => { setEvent(e.target.value as AudioEvent); setListen(null) }}>
         {AUDIO_EVENTS.map(key => <option key={key} value={key}>{EVENTS[key]}{same(temp?.[key], value?.[key]) ? '' : t('profile.audioSheet.changedSuffix')}</option>)}
@@ -143,17 +175,14 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     {listen ? <AssetPreview key={listen.path} kind="audio" reference={listen} profilePath={profilePath} assets={assets} /> : null}
     <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.audioSheet.dirPlaceholder')}</span><Button variant="ghost" onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button>
       {onPickFile ? <Button variant="ghost" disabled={importing} onClick={() => void pickAndOpenImport()}>{t('audio.addSound')}</Button> : null}</div>
-    {importPath ? <ImportSheet key={importPath} kind="sound" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.audioSheet.dirPlaceholder')}
-      installed={files.map(file => ({ name: file.name, file: importFileName(file.path) }))} assets={assets} busy={importing} error={importError}
-      preview={<AssetPreview kind="audio" reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
-      onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
     <div className="pr-sheet-list">{files.map(file => <div className="pr-sheet-row" key={file.path}><span><strong>{file.name}</strong><small>{file.path}</small></span>
       {eventFiles?.some(item => item.path === file.path) ? <Tag kind="temporary">{t('audio.advanced.inList')}</Tag> : null}
       <Button aria-label={t('profile.audioSheet.addAria', { name: file.name })} disabled={(eventFiles?.length ?? 0) >= MAX_AUDIO_FILES} onClick={() => setEventFiles([...(eventFiles ?? []), file])}>{t('profile.audioSheet.add')}</Button></div>)}</div>
+    </>}
     <div className="ki-dialog-actions"><span className="ws-note">{changed ? t('common.tag.changed') : t('profile.sheet.unchanged')}</span>
-      <Button data-safe-focus onClick={onCancel}>{t('import.cancel')}</Button>
-      <Button variant="primary" disabled={!changed} onClick={() => onConfirm(temp)}>{t('profile.sheet.confirm')}</Button></div>
+      <Button data-safe-focus disabled={unresolved} onClick={onCancel}>{t('import.cancel')}</Button>
+      <Button variant="primary" disabled={!changed || unresolved} onClick={() => onConfirm(temp)}>{t('profile.sheet.confirm')}</Button></div>
   </Dialog>
 }

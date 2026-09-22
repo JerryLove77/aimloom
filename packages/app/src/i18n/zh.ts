@@ -520,7 +520,6 @@ export const zh = {
   'profile.sheet.confirm': '用于此组合',
   'profile.sheet.browseDemo': '浏览演示素材',
   'profile.sheet.error.generic': '操作失败，请重试。',
-  'profile.sheet.importUnknown': '添加结果未知：无法确认文件是否已经写入。稍后重新打开这个组合项查看文件是否已添加。',
 
   'profile.audioSheet.event.kill': '击杀',
   'profile.audioSheet.event.spawn': '生成',

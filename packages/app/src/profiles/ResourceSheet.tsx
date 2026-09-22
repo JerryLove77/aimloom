@@ -26,7 +26,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
  * 用于此组合 hands it back, and even that writes the draft alone — nothing is saved to the
  * Profile's JSON and nothing is applied to the game.
  */
-export function ResourceSheet({ kind, profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, installed = null, onAddFile, onPickFile, onAdded, onConfirm, onCancel }: {
+export function ResourceSheet({ kind, profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, installed = null, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onAdded, onConfirm, onCancel }: {
   kind: SingleKind
   profileName: string
   profilePath: string
@@ -49,6 +49,13 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   onAddFile?: ((input: FileImportInput) => Promise<FileAddOutcome>) | undefined
   /** Opens the native file picker for this kind, already filtered by the caller. */
   onPickFile?: ((lang: Lang) => Promise<string | null>) | undefined
+  /**
+   * Reconciles an add whose result came back `unknown` -- the only exit, per
+   * `installer_reconcile`. Absent has the same meaning as `onAddFile` absent.
+   */
+  onReconcile?: (() => Promise<void>) | undefined
+  /** Lifts "an add here is unresolved" so the caller can lock the whole Profile page too. */
+  onUnresolvedChange?: ((unresolved: boolean) => void) | undefined
   /** Called after a successful add, so the caller can refresh what the game has installed. */
   onAdded?: () => void
   onConfirm: (value: ProfileFileReference | null) => void
@@ -71,7 +78,12 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const [importPath, setImportPath] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<Msg | null>(null)
-  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null); setImportPath(null); setImportError(null) } }, [open, value])
+  // `unknown` is never success: this stays true, locking choosing/confirming/further adds, until
+  // 核对结果 reconciles the very operation that came back unresolved.
+  const [unresolved, setUnresolved] = useState(false)
+  const [reconciling, setReconciling] = useState(false)
+  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null); setImportPath(null); setImportError(null); setUnresolved(false) } }, [open, value])
+  useEffect(() => { onUnresolvedChange?.(unresolved) }, [unresolved, onUnresolvedChange])
   async function load(path: string) {
     const own = ++request.current
     setLoading(true); setError(null); setFiles([]); setFileErrors([])
@@ -109,9 +121,22 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
     const outcome = await onAddFile(input)
     setImporting(false)
     if (outcome.kind === 'added') { setImportPath(null); onAdded?.(); return true }
-    if (outcome.kind === 'unknown') { setImportError({ key: 'profile.sheet.importUnknown' }); return false }
+    // The same page-level rule applies here: an unknown result closes this add sheet and locks
+    // the Profile sheet behind it until 核对结果, exactly as Theme/Sounds lock their own page.
+    if (outcome.kind === 'unknown') { setImportPath(null); setUnresolved(true); setError({ key: 'scheme.error.importUnknown' }); return false }
     setImportError(outcome.message)
     return false
+  }
+  async function reconcileImport() {
+    if (!onReconcile) return
+    setReconciling(true)
+    try {
+      await onReconcile()
+      setUnresolved(false)
+      setError(null)
+      onAdded?.()
+    } catch (reason) { setError(errorMsg(reason, { key: 'scheme.error.reconcileFailed' })) }
+    finally { setReconciling(false) }
   }
   // Everything selectable, by path: the folder listing, the game's own list when there is one,
   // and the Profile's existing reference even when its folder is not on screen.
@@ -130,35 +155,38 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const noun = t(NOUN_KEY[kind])
   // The grid's own shape: the sheet only adds which tile is staged right now.
   const tiles: TileChoice[] = (installed ?? []).map(item => ({ ...item, pending: choice === item.path }))
-  return <Dialog variant="sheet" open={open} title={t('profile.sheet.title', { name: profileName, noun })} onClose={onCancel}>
+  return <Dialog variant="sheet" open={open} title={t('profile.sheet.title', { name: profileName, noun })} onClose={() => { if (!unresolved) onCancel() }}>
     <p className="ws-note">{t('profile.sheet.note', { name: profileName, noun })}</p>
     <div className="pr-sheet-preview">{chosen
       ? <AssetPreview key={chosen.path} kind={kind} reference={chosen} profilePath={profilePath} assets={assets} onStatus={status => setReady(status === 'ready')} />
       : <div className="ws-preview-large">{t('profile.resource.keepHint', { noun })}</div>}</div>
-    {installed ? null : <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.resource.dirPlaceholder')}</span><Button variant="ghost" disabled={loading} onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button></div>}
-    {onPickFile ? <div className="cx-picker-source"><Button variant="ghost" disabled={loading || importing} onClick={() => void pickAndOpenImport()}>{t('scheme.addTheme')}</Button></div> : null}
+    {installed ? null : <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.resource.dirPlaceholder')}</span><Button variant="ghost" disabled={loading || unresolved} onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button></div>}
+    {onPickFile ? <div className="cx-picker-source"><Button variant="ghost" disabled={loading || importing || unresolved} onClick={() => void pickAndOpenImport()}>{t('scheme.addTheme')}</Button></div> : null}
     {importPath ? <ImportSheet key={importPath} kind="theme" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.resource.dirPlaceholder')}
       installed={(installed ?? []).map(item => ({ name: item.label === item.file ? null : item.label, file: item.file }))} assets={assets} busy={importing} error={importError}
       preview={<AssetPreview kind={kind} reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
       onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
+    {unresolved ? <Notice tone="warning"><p>{msg(error ?? { key: 'scheme.error.importUnknown' })}</p>
+      <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void reconcileImport()}>{reconciling ? t('scheme.status.loading') : t('scheme.reconcile')}</Button></p></Notice> : <>
     {installed ? null : <><label className="pr-sr-only" htmlFor={`sheet-search-${kind}`}>{t('profile.resource.searchLabel')}</label></>}
     {installed ? null : <input id={`sheet-search-${kind}`} className="pr-sheet-search" type="search" placeholder={t('profile.resource.searchLabel')} value={search} onChange={event => setSearch(event.target.value)} />}
     {loading ? <p role="status">{t('profile.resource.loading')}</p> : null}
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
     <div className="pr-sheet-list" role="radiogroup" aria-label={t('profile.resource.filesAria', { noun })}>
-      <label className="pr-sheet-row"><input type="radio" name={`sheet-${kind}`} checked={choice === KEEP} onChange={() => setChoice(KEEP)} /><span><strong>{t('profile.resource.keepTitle', { noun })}</strong><small>{t('profile.resource.keepHint', { noun })}</small></span>{value === null ? <Tag kind="saved">{t('profile.resource.currentRefTag')}</Tag> : null}{choice === KEEP && value !== null ? <Tag kind="temporary" /> : null}</label>
-      {installed ? null : listed.map(file => <label className="pr-sheet-row" key={file.path}><input type="radio" name={`sheet-${kind}`} checked={choice === file.path} onChange={() => { setReady(false); setChoice(file.path) }} />
+      <label className="pr-sheet-row"><input type="radio" name={`sheet-${kind}`} checked={choice === KEEP} disabled={unresolved} onChange={() => setChoice(KEEP)} /><span><strong>{t('profile.resource.keepTitle', { noun })}</strong><small>{t('profile.resource.keepHint', { noun })}</small></span>{value === null ? <Tag kind="saved">{t('profile.resource.currentRefTag')}</Tag> : null}{choice === KEEP && value !== null ? <Tag kind="temporary" /> : null}</label>
+      {installed ? null : listed.map(file => <label className="pr-sheet-row" key={file.path}><input type="radio" name={`sheet-${kind}`} checked={choice === file.path} disabled={unresolved} onChange={() => { setReady(false); setChoice(file.path) }} />
         <span><strong>{file.name}</strong><small>{file.path}</small></span>
         {value?.path === file.path ? <Tag kind="saved">{t('profile.resource.currentRefTag')}</Tag> : null}{choice === file.path && value?.path !== file.path ? <Tag kind="temporary" /> : null}</label>)}
     </div>
-    {installed ? <Tiles choices={tiles} page={page} pageSize={6} countKey="scheme.pagination.count"
+    {installed ? <Tiles choices={tiles} page={page} pageSize={6} countKey="scheme.pagination.count" disabled={unresolved}
       ariaLabel={item => t('scheme.tile.previewLabel', { label: item.label })}
       thumb={item => <AssetPreview key={item.path} kind={kind} reference={{ name: item.label, path: item.path }} profilePath={profilePath} assets={assets} />}
       onPage={setPage}
       onChoose={item => { setReady(true); setChoice(choice === item.path ? KEEP : item.path) }} /> : null}
+    </>}
     <div className="ki-dialog-actions"><span className="ws-note">{unchanged ? t('profile.sheet.unchanged') : chosen ? t('profile.resource.tempChosen', { name: chosen.name }) : t('profile.resource.tempKeep', { noun })}</span>
-      <Button data-safe-focus onClick={onCancel}>{t('import.cancel')}</Button>
-      <Button variant="primary" disabled={!confirmable} onClick={() => onConfirm(chosen)}>{t('profile.sheet.confirm')}</Button></div>
+      <Button data-safe-focus disabled={unresolved} onClick={onCancel}>{t('import.cancel')}</Button>
+      <Button variant="primary" disabled={!confirmable || unresolved} onClick={() => onConfirm(chosen)}>{t('profile.sheet.confirm')}</Button></div>
   </Dialog>
 }
