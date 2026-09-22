@@ -22,7 +22,7 @@
 Get the Setup or the portable ZIP from [aimloom.dev](https://aimloom.dev/en/download/), which lists
 each file's SHA-256. The same files are attached to the
 [GitHub release](https://github.com/JerryLove77/aimloom/releases/latest). The current release is
-**v0.1.3**.
+**v0.1.4**.
 
 ## Features
 
@@ -51,8 +51,11 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 
 ## Status
 
-- **Released:** v0.1.3 (2026-09-22) — in-App problem reports, an optional Steam account, a
-  launch update check, applying Profiles and enemy skins. What follows is in
+- **Released:** v0.1.4 (2026-09-22) — fine-tuning a pasted CS2 / VALORANT crosshair code, "Apply
+  and start the game" for a Profile, search and add-from-computer when choosing a Profile's
+  background and sounds, search on the Theme page, and a "Join the beta" switch in Settings.
+  v0.1.3 brought in-App problem reports, an optional Steam account, a launch update check,
+  applying Profiles and enemy skins. What follows is in
   [ROADMAP.md](../ROADMAP.md).
 - v0.1.1 and v0.1.2 are withdrawn: their `Aimloom.exe` carried the build machine's Windows user
   name in embedded source paths. From v0.1.3 the build remaps those paths and the packagers refuse

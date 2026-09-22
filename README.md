@@ -19,7 +19,7 @@
 ## 下载
 
 到 [aimloom.dev](https://aimloom.dev/zh/download/) 下载安装程序或便携版 ZIP，页面上有每个文件的 SHA-256。
-同样的文件也挂在 [GitHub Releases](https://github.com/JerryLove77/aimloom/releases/latest)。当前版本是 **v0.1.3**。
+同样的文件也挂在 [GitHub Releases](https://github.com/JerryLove77/aimloom/releases/latest)。当前版本是 **v0.1.4**。
 
 ## 功能
 
@@ -41,7 +41,7 @@ Aimloom 没有代码签名，第一次运行时 Windows SmartScreen 可能会提
 
 ## 状态
 
-- **已发布：** v0.1.3（2026-09-22）——应用内发送问题报告、可选的 Steam 账户、启动时检查更新、应用 Profile、敌人皮肤。后续计划见 [ROADMAP.md](ROADMAP.md)。
+- **已发布：** v0.1.4（2026-09-22）——粘贴 CS2 / VALORANT 准星代码后微调、Profile「应用并启动游戏」、Profile 里换背景和音效时可搜索和从电脑添加、背景页搜索、设置里的「参与 Beta 测试」。v0.1.3 带来了应用内问题报告、可选的 Steam 账户、启动时检查更新、应用 Profile 和敌人皮肤。后续计划见 [ROADMAP.md](ROADMAP.md)。
 - v0.1.1 和 v0.1.2 已下架：它们的 `Aimloom.exe` 里嵌着打包电脑的 Windows 用户名（在依赖库的源码路径里）。从 v0.1.3 起，打包时会替换这些路径，打包脚本也会拒绝仍带本机路径的 EXE。
 - 每个功能在真实电脑和真实游戏里看到了什么、还没看到什么，维护者另有验证记录，不公开。测试通过不等于「在游戏里能用」。
 

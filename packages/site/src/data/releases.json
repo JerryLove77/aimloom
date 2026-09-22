@@ -1,8 +1,52 @@
 {
   "schemaVersion": 1,
-  "recommended": "0.1.3",
+  "recommended": "0.1.4",
   "beta": null,
   "releases": [
+    {
+      "version": "0.1.4",
+      "status": "stable",
+      "date": "2026-09-22",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "PowerShell 7.0+",
+        "WebView2"
+      ],
+      "bytes": 4390696,
+      "sha256": "8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14",
+      "primaryUrl": "/files/Aimloom-v0.1.4.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "scripts\\",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "准星页可以微调：粘贴 CS2 或 VALORANT 的准星代码后，用滑块调长度、粗细、间隙、描边、颜色、中心点和透明度，在深色和浅色背景上实时预览，再作为新准星加进游戏。Profile 的应用对话框多了「应用并启动游戏」：应用后通过 Steam 直接打开 KovaaK。Profile 卡片改成新样式；在 Profile 里换背景和音效时可以搜索，也可以直接从电脑添加文件。背景页加了搜索。背景、音效、敌人页上放弃未应用选择的按钮改叫「退出」。「设置」里可以打开「参与 Beta 测试」，以后会提示测试版更新。",
+        "en": "The Crosshair page can fine-tune a pasted CS2 or VALORANT code: sliders for length, thickness, gap, outline, colour, centre dot and alpha, a live preview on a dark and a light background, then add it to the game as a new crosshair. The Profile apply dialog adds \"Apply and start the game\", which opens KovaaK through Steam after applying. Profile cards have a new layout; choosing a background or sounds inside a Profile has a search box and can add a file from your computer. The Theme page has a search box. On Theme, Sounds and Enemy look, the button that drops an unapplied choice now reads \"Cancel\". Settings has a \"Join the beta\" switch that offers beta updates."
+      },
+      "knownIssues": {
+        "zh": [
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "需要 PowerShell 7；Windows 自带的 PowerShell 5.1 不够用。安装程序可以用 winget 帮你装上，但这一步还没有在全新的电脑上验证过。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。",
+          "敌人皮肤的列表是按当前游戏版本内置的；游戏以后新增的皮肤，要等 Aimloom 更新后才能选。"
+        ],
+        "en": [
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "Needs PowerShell 7; the PowerShell 5.1 built into Windows is not enough. The installer can install it with winget, but that step has not been verified on a clean PC yet.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice.",
+          "The enemy skin list is built in for the current game version; skins the game adds later can be chosen once Aimloom is updated."
+        ]
+      },
+      "setup": {
+        "url": "/files/Aimloom-Setup-v0.1.4.exe",
+        "bytes": 3172457,
+        "sha256": "aef57e8284b3a68ebb0eb09bbcba10122c3b920e4c9c79bc3758e34369a0095a"
+      }
+    },
     {
       "version": "0.1.3",
       "status": "stable",
