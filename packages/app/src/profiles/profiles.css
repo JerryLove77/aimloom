@@ -14,10 +14,23 @@
 .pr-json { display:flex; flex-direction:column; gap:6px } .pr-json .ws-path { background:var(--ws-sidebar); border-radius:var(--ws-radius-row); padding:6px 10px }
 .pr-section-title { margin:0; font-size:15px; font-weight:600 } .pr-section-title small { font-size:12px; font-weight:400; color:var(--ki-secondary); margin-left:8px }
 .pr-slots { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px }
-.pr-slot { display:grid; grid-template-columns:minmax(0,1fr) auto auto; grid-template-rows:auto auto auto; column-gap:12px; align-items:center; padding:10px 12px; text-align:left; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-tile); color:var(--ki-text); font:13px var(--ki-body-font); cursor:pointer; transition:background var(--ki-motion) }
-.pr-slot:hover { background:var(--ws-hover) } .pr-slot-missing { border-color:var(--ki-error) }
-.pr-slot-kind { grid-column:1; font-size:11px; color:var(--ki-secondary) } .pr-slot strong { grid-column:1 } .pr-slot .ws-path { grid-column:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis }
-.pr-slot-tags { grid-column:2; grid-row:1 / 4; display:flex; gap:4px } .pr-slot-action { grid-column:3; grid-row:1 / 4; color:var(--ws-accent-text); font-weight:500 }
+/* The card: a corner chip, a preview that fills the body, and the name on a bottom line. An
+   orange outline (pr-slot-recorded) marks a card the Profile records, never by colour alone --
+   the bottom line's own text and the `keep`/`missing` tags carry the same distinction in words. */
+.pr-slot { display:flex; flex-direction:column; gap:10px; min-height:260px; padding:12px; text-align:left; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-tile); color:var(--ki-text); font:13px var(--ki-body-font); cursor:pointer; transition:background var(--ki-motion), border-color var(--ki-motion), box-shadow var(--ki-motion) }
+.pr-slot:hover { background:var(--ws-hover) }
+.pr-slot-recorded { border-color:var(--ki-accent); box-shadow:inset 0 0 0 1px var(--ki-accent) }
+.pr-slot-missing { border-color:var(--ki-error); box-shadow:inset 0 0 0 1px var(--ki-error) }
+.pr-slot-head { display:flex; align-items:center; justify-content:space-between; gap:8px }
+.pr-slot-kind { font-size:10px; font-weight:600; letter-spacing:.05em; color:var(--ws-accent-text); background:var(--ws-selected); border-radius:999px; padding:3px 9px }
+.pr-slot-tags { display:flex; gap:4px }
+.pr-slot-body { flex:1; display:flex; min-height:0 }
+.pr-slot-body .pr-preview { flex:1; width:100%; margin:0 }
+.pr-slot-audio-list { flex:1; width:100%; margin:0; padding:12px; list-style:none; display:flex; flex-direction:column; gap:6px; overflow:auto; font-size:12px; color:var(--ki-secondary); background:var(--ki-surface); border-radius:var(--ws-radius-tile) }
+.pr-slot-audio-list li { overflow-wrap:anywhere }
+.pr-slot-foot { display:flex; align-items:center; justify-content:space-between; gap:8px }
+.pr-slot-foot strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:550 }
+.pr-slot-action { flex-shrink:0; color:var(--ws-accent-text); font-weight:500 }
 .pr-sheet-preview .ws-preview-large, .pr-sheet-preview img, .pr-sheet-preview svg { width:100%; height:200px; object-fit:contain; border-radius:var(--ws-radius-tile) }
 .pr-sheet-search { width:100%; padding:6px 10px; border:1px solid var(--ki-control); border-radius:var(--ws-radius-row); font:13px var(--ki-body-font); background:var(--ki-surface); color:var(--ki-text) }
 .pr-sheet-list { display:flex; flex-direction:column; gap:2px; flex:1; overflow:auto; min-height:120px }

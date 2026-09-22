@@ -19,9 +19,11 @@ import type { TileChoice } from '../workspace/Tiles'
 import type { AudioList, SchemeList } from '../installer/contracts'
 import { browserStorage } from '../i18n'
 import { plural, useLang, useMsg, useT, type Lang, type MessageKey } from '../i18n'
-import { resolveProfileAssetPath, type ProfileFileReference, type TrainingProfile } from './model'
+import { resolveProfileAssetPath, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
 import { readCurrentGame, type CurrentGame } from './current-game'
-import { describeAudio, describeFile } from './describe'
+import { describeAudio, describeEvent, describeFile, eventLabel } from './describe'
+import { AUDIO_EVENTS } from './audio/model'
+import { AssetPreview } from './AssetPreview'
 import { addFileToGame, type FileAddOutcome, type FileImportInput } from '../workspace/file-import'
 import type { FileAddKind, PlanFileAddRequest } from '../installer/contracts'
 import './profiles.css'
@@ -55,6 +57,12 @@ function nothingToApply(profile: TrainingProfile): boolean {
   if (profile.scheme !== null) return false
   if (!profile.audio) return true
   return Object.values(profile.audio).every(files => !files || files.length === 0)
+}
+/** Whether the Sounds component records any file at all -- the same "any event non-empty" test
+ * `describeAudio` and `nothingToApply` already use, so the card's outline, tag and name line
+ * agree with each other. */
+function audioRecorded(audio: ProfileAudio | null): boolean {
+  return !!audio && Object.values(audio).some(files => files && files.length > 0)
 }
 /** Stands in for `locate` when the caller has none, so Apply always has a bridge to call into
  * even though its button stays disabled in that case (no game folder was ever wired in). */
@@ -264,7 +272,7 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
             <div className="pr-name-field"><label htmlFor="profile-name">{t('profile.name.label')}</label><input ref={nameInput} id="profile-name" value={state.draft.name} onChange={e => editor.setName(e.target.value)} disabled={state.saving} aria-invalid={!!state.nameError} aria-describedby={state.nameError ? 'profile-name-error' : undefined} maxLength={128} />{state.nameError ? <p id="profile-name-error" className="pr-error">{msg(state.nameError)}</p> : null}</div>
             <div className="pr-json"><span className="ws-muted">{t('profile.savePath.label')}</span><span className="ws-path">{basePath}</span></div>
           </div>
-          <h2 className="pr-section-title">{t('profile.contents.heading')} <small>{t('profile.contents.hint')}</small></h2>
+          <h2 className="pr-section-title">{t('profile.contents.heading')}</h2>
           <div className="pr-slots">{components.map(kind => <Slot key={kind} kind={kind} profile={state.draft!} current={currentGame} profilePath={basePath} assets={assets} onOpen={() => setSheet(kind)} />)}</div>
           <p className="ws-note">{t('profile.draft.persistNote')}</p>
         </form> : <>
@@ -278,7 +286,13 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
   )
 }
 
-/** One component of the draft, as a row that opens its chooser. Read-only apart from the click. */
+/**
+ * One component of the draft, as a card that opens its chooser: a corner chip naming the card, a
+ * preview filling the body, and the name on a bottom line. An orange outline (`pr-slot-recorded`)
+ * marks a card the Profile records, as opposed to one that keeps the current game setting -- that
+ * second state also reads in the bottom line's own text (「保持当前 · X」) and the `keep` tag, never
+ * by the outline colour alone.
+ */
 function Slot({ kind, profile, current, profilePath, assets, onOpen }: {
   kind: ProfileComponent; profile: TrainingProfile; current: CurrentGame | null; profilePath: string; assets: ProfileAssetBridge; onOpen: () => void
 }) {
@@ -293,18 +307,20 @@ function Slot({ kind, profile, current, profilePath, assets, onOpen }: {
     assets.read(kind, resolveProfileAssetPath(profilePath, reference.path)).catch(() => { if (!cancelled) setMissing(true) })
     return () => { cancelled = true }
   }, [kind, value, profilePath, assets])
-  const keep = value === null
+  const keep = kind === 'scheme' ? value === null : !audioRecorded(profile.audio)
   const noun = t(subtitleKeys[kind])
   const label = t(labelKeys[kind])
   // English section names already say what the subtitle says (Sounds / Sounds); show the label alone then.
   const subtitle = noun.toLocaleLowerCase().startsWith(label.toLocaleLowerCase()) ? null : noun
-  const file = summary(profile, kind, current, t)
-  const detail = keep ? t('profile.slot.noRecordDetail', { noun: t(nounKeys[kind]) }) : kind === 'audio' ? t('profile.slot.audioDetail') : (value as ProfileFileReference).path
-  return <button type="button" className={`pr-slot${missing ? ' pr-slot-missing' : ''}`} aria-label={subtitle ? t('profile.slot.aria', { label, noun: subtitle, detail: file }) : t('profile.slot.ariaLabelOnly', { label, detail: file })} onClick={onOpen}>
-    <span className="pr-slot-kind">{subtitle ? t('profile.slot.kind', { label: label.toUpperCase(), noun: subtitle }) : label.toUpperCase()}</span>
-    <strong>{file}</strong>
-    <span className="ws-path">{missing ? t('profile.slot.missingDetail', { detail }) : detail}</span>
-    <span className="pr-slot-tags">{keep ? <Tag kind="keep" /> : null}{missing ? <Tag kind="missing" /> : null}</span>
-    <span className="pr-slot-action" aria-hidden="true">{t('profile.slot.change')}</span>
+  const name = summary(profile, kind, current, t)
+  const emptyBody = t('profile.slot.noRecordDetail', { noun: t(nounKeys[kind]) })
+  return <button type="button" className={`pr-slot${keep ? '' : ' pr-slot-recorded'}${missing ? ' pr-slot-missing' : ''}`} aria-label={subtitle ? t('profile.slot.aria', { label, noun: subtitle, detail: name }) : t('profile.slot.ariaLabelOnly', { label, detail: name })} onClick={onOpen}>
+    <span className="pr-slot-head"><span className="pr-slot-kind">{label.toUpperCase()}</span><span className="pr-slot-tags">{keep ? <Tag kind="keep" /> : null}{missing ? <Tag kind="missing" /> : null}</span></span>
+    <span className="pr-slot-body">{kind === 'scheme'
+      ? <AssetPreview kind="scheme" reference={value as ProfileFileReference | null} profilePath={profilePath} assets={assets} emptyLabel={emptyBody} />
+      : audioRecorded(profile.audio)
+        ? <ul className="pr-slot-audio-list">{AUDIO_EVENTS.map(event => <li key={event}>{t('profile.eventSounds', { event: eventLabel(event, t), names: describeEvent(event, profile.audio, current, t) })}</li>)}</ul>
+        : <div className="pr-preview pr-preview-empty">{emptyBody}</div>}</span>
+    <span className="pr-slot-foot"><strong>{name}</strong><span className="pr-slot-action" aria-hidden="true">{t('profile.slot.change')}</span></span>
   </button>
 }

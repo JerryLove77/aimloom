@@ -15,9 +15,12 @@ export interface AssetPreviewProps {
   profilePath: string
   assets: ProfileAssetBridge
   onStatus?: (status: Status) => void
+  /** What a reference-less preview says. Defaults to the bare 「保持当前」 tag word; a Profile
+   * card passes the fuller sentence naming what stays unrecorded. */
+  emptyLabel?: string
 }
 interface Preview { token: object; url: string; status: Status; message?: Msg | undefined }
-export function AssetPreview({ kind, reference, profilePath, assets, onStatus }: AssetPreviewProps) {
+export function AssetPreview({ kind, reference, profilePath, assets, onStatus, emptyLabel }: AssetPreviewProps) {
   const { lang } = useLang()
   const t = useT()
   const msg = useMsg()
@@ -89,7 +92,7 @@ export function AssetPreview({ kind, reference, profilePath, assets, onStatus }:
     })()
     return () => { current.current = null; clearTimeout(timer); player = audio.current; release() }
   }, [kind, path, profilePath, assets, lang])
-  if (!reference) return <div className="pr-preview pr-preview-empty">{t('common.tag.keep')}</div>
+  if (!reference) return <div className="pr-preview pr-preview-empty">{emptyLabel ?? t('common.tag.keep')}</div>
   const valid = preview?.token === current.current
   const status = valid ? preview.status : 'loading'
   const active = (token: object) => current.current === token
