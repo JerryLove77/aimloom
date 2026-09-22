@@ -48,6 +48,8 @@ function fixtures(profiles: TrainingProfile[] = [fullProfile()]) {
   let planImpl: (input: { gameRoot: string; id: string; revision: number }) => Promise<Preview> = async input => preview(input)
   let jobImpl: () => Promise<Job> = async () => finishedJob('completed')
   let reconcileCalls = 0
+  let launchCalls = 0
+  let launchImpl: () => Promise<void> = async () => {}
   const game: ProfileGameBridge = {
     discover: async () => ({ candidates: [GAME_ROOT] }),
     locate: async (root: string) => ({ gameRoot: root }),
@@ -60,12 +62,15 @@ function fixtures(profiles: TrainingProfile[] = [fullProfile()]) {
     reconcile: async () => { reconcileCalls += 1; return {} },
     planFileAdd: async () => ({ planId: 'plan-add' }),
     pickFile: async () => null,
+    launchGame: async () => { launchCalls += 1; return launchImpl() },
   }
   return {
     bridge, assets, game, planCalls, executeCalls,
     setPlanImpl: (fn: typeof planImpl) => { planImpl = fn },
     setJobImpl: (fn: typeof jobImpl) => { jobImpl = fn },
+    setLaunchImpl: (fn: typeof launchImpl) => { launchImpl = fn },
     reconcileCalls: () => reconcileCalls,
+    launchCalls: () => launchCalls,
     library: () => library,
   }
 }
@@ -213,6 +218,52 @@ describe('applying a saved Profile', () => {
     await waitFor(() => expect(f.reconcileCalls()).toBe(1))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(screen.getByRole('button', { name: '删除 每日训练' })).toBeEnabled()
+  })
+
+  it('应用并启动游戏 runs the identical apply as 确认应用 and then launches the game exactly once', async () => {
+    const f = fixtures()
+    render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
+    fireEvent.click(await screen.findByRole('button', { name: '应用 每日训练' }))
+    const launch = await screen.findByRole('button', { name: '应用并启动游戏' })
+    fireEvent.click(launch)
+    await waitFor(() => expect(f.executeCalls).toHaveLength(1))
+    expect(f.executeCalls[0]!.confirmation).toBe('install')
+    expect(f.executeCalls[0]!.allowConflicts).toBe(false)
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await screen.findByText('每日训练 已应用，正在启动游戏；如果没有自动启动，请手动打开游戏。')
+    expect(f.launchCalls()).toBe(1)
+  })
+
+  it('a failed apply never launches the game', async () => {
+    const f = fixtures()
+    f.setJobImpl(async () => ({ operationId: 'op-1', planId: 'plan-1', state: 'failed', progress: null, result: null, error: { code: 'ENGINE_ERROR', message: '写入失败。', messageEn: 'The write failed.', path: null } }))
+    render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
+    fireEvent.click(await screen.findByRole('button', { name: '应用 每日训练' }))
+    fireEvent.click(await screen.findByRole('button', { name: '应用并启动游戏' }))
+    await screen.findByText('写入失败。')
+    expect(f.launchCalls()).toBe(0)
+  })
+
+  it('a rejected launch still shows the apply as done, with the open-it-yourself line', async () => {
+    const f = fixtures()
+    f.setLaunchImpl(async () => { throw new Error('steam not running') })
+    render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
+    fireEvent.click(await screen.findByRole('button', { name: '应用 每日训练' }))
+    fireEvent.click(await screen.findByRole('button', { name: '应用并启动游戏' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await screen.findByText('每日训练 已应用，正在启动游戏；如果没有自动启动，请手动打开游戏。')
+    expect(f.launchCalls()).toBe(1)
+  })
+
+  it('the game-running refusal is unchanged: a refused plan offers no launch button either', async () => {
+    const f = fixtures()
+    f.setPlanImpl(async () => { throw new InstallerFailure({ code: 'ENGINE_ERROR', message: 'KovaaK 正在运行，请先退出。', messageEn: 'KovaaK is running; quit it first.', path: null }) })
+    render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
+    fireEvent.click(await screen.findByRole('button', { name: '应用 每日训练' }))
+    await screen.findByText('KovaaK 正在运行，请先退出。')
+    expect(screen.queryByRole('button', { name: '确认应用' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '应用并启动游戏' })).toBeNull()
+    expect(f.launchCalls()).toBe(0)
   })
 
   it('offers the same locate affordance as the sections when no game folder is known', async () => {

@@ -658,6 +658,36 @@ pub async fn installer_open_download(lang: String, channel: String) -> Result<()
         .map_err(|e| Issue::worker(format!("native folder task failed: {e}")))?
 }
 
+/// The Steam run URL for KovaaK (appid 824270), built here and nowhere else -- the front end
+/// sends no target at all, so there is nothing for the UI to override. Mirrors `download_url`'s
+/// role for `installer_open_download`: a fixed, validated address is what ever reaches
+/// `explorer.exe`, never a string carried in from a command argument.
+const STEAM_LAUNCH_URL: &str = "steam://rungameid/824270";
+
+/// Best effort, deliberately: this answers `Ok(())` once `explorer.exe` accepted the Steam URL,
+/// never once KovaaK has actually started -- that is unknowable from here, and a failed launch
+/// must never be read as a failed apply. The caller applies the Profile first and only calls this
+/// after that apply finished successfully.
+fn installer_launch_game_blocking() -> Result<(), Issue> {
+    #[cfg(not(target_os = "windows"))]
+    {
+        return Err(Issue::plain(ErrorCode::UnsupportedPlatform, "the game can be launched only on Windows"));
+    }
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer.exe").arg(STEAM_LAUNCH_URL).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
+            .spawn().map_err(|e| Issue::plain(ErrorCode::EngineError, format!("could not start the game: {e}")))?;
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub async fn installer_launch_game() -> Result<(), Issue> {
+    tauri::async_runtime::spawn_blocking(installer_launch_game_blocking)
+        .await
+        .map_err(|e| Issue::worker(format!("native launch task failed: {e}")))?
+}
+
 /// Best-effort OS facts for the report; nothing here is exercised by this crate's test suite,
 /// which runs on macOS. `attach_log` is threaded through so a report that will not carry the log
 /// never pays for reading `worker.log`.
@@ -762,6 +792,7 @@ pub fn run() {
             installer_app_info,
             installer_open_logs,
             installer_open_download,
+            installer_launch_game,
         ])
         .setup(|app| {
             // The window is declared in tauri.installer.conf.json with the plain "Aimloom"
@@ -1203,6 +1234,22 @@ mod tests {
     fn open_download_refuses_an_invalid_channel_before_touching_the_platform_arm() {
         let issue = installer_open_download_blocking("en".into(), "nightly".into()).unwrap_err();
         assert_eq!(issue.code, ErrorCode::InvalidPath);
+    }
+
+    // ---- installer_launch_game ---------------------------------------------------------------
+
+    #[test]
+    fn steam_launch_url_is_the_kovaak_run_url_and_nothing_else() {
+        assert_eq!(STEAM_LAUNCH_URL, "steam://rungameid/824270");
+    }
+
+    #[test]
+    fn launch_game_is_unsupported_off_windows() {
+        #[cfg(not(target_os = "windows"))]
+        {
+            let issue = installer_launch_game_blocking().unwrap_err();
+            assert_eq!(issue.code, ErrorCode::UnsupportedPlatform);
+        }
     }
 
     // ---- installer_open_logs -----------------------------------------------------------------

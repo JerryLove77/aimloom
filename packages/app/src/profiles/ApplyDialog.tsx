@@ -13,12 +13,16 @@ import { describeEvent, describeFile, eventLabel } from './describe'
  * current-configuration section (Scheme's controller in particular); an unknown outcome keeps
  * this dialog open and locked until 核对结果, exactly as a section locks itself.
  */
-export function ApplyDialog({ state, current, onChooseGameRoot, onChooseFolder, onConfirm, onCancel, onReconcile }: {
+export function ApplyDialog({ state, current, launching, onChooseGameRoot, onChooseFolder, onConfirm, onConfirmAndLaunch, onCancel, onReconcile }: {
   state: ApplyState
   current: CurrentGame | null
+  /** True while the running apply was started by 应用并启动游戏, not by 确认应用. */
+  launching: boolean
   onChooseGameRoot: (root: string) => void
   onChooseFolder: () => void
   onConfirm: () => void
+  /** Runs the identical apply as `onConfirm`; only a successful apply then launches the game. */
+  onConfirmAndLaunch: () => void
   onCancel: () => void
   onReconcile: () => void
 }) {
@@ -49,7 +53,8 @@ export function ApplyDialog({ state, current, onChooseGameRoot, onChooseFolder, 
       <Button variant="primary" onClick={onReconcile}>{t('profile.apply.reconcile')}</Button>
     </div> : state.phase === 'ready' || applying ? <div className="ki-dialog-actions">
       <Button data-safe-focus disabled={applying} onClick={onCancel}>{t('import.cancel')}</Button>
-      {state.canConfirm ? <Button variant="primary" disabled={applying} onClick={onConfirm}>{applying ? t('profile.apply.working') : t('profile.apply.confirmButton')}</Button> : null}
+      {state.canConfirm ? <Button variant="primary" disabled={applying} onClick={onConfirm}>{applying && !launching ? t('profile.apply.working') : t('profile.apply.confirmButton')}</Button> : null}
+      {state.canConfirm ? <Button variant="primary" disabled={applying} onClick={onConfirmAndLaunch}>{applying && launching ? t('profile.apply.working') : t('profile.apply.launchButton')}</Button> : null}
     </div> : null}
   </Dialog>
 }

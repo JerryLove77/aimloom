@@ -661,6 +661,7 @@ export const en: Record<keyof typeof zh, string> = {
   'profile.apply.note.closeGame': 'Quit KovaaK first: if the game is open, it overwrites the change when it exits. The change takes effect the next time the game starts.',
   'profile.apply.note.backup': 'The current settings file is backed up first.',
   'profile.apply.confirmButton': 'Apply',
+  'profile.apply.launchButton': 'Apply and start the game',
   'profile.apply.working': 'Applying…',
   'profile.apply.locating': 'Locating the game folder…',
   'profile.apply.planning': 'Checking the Profile…',
@@ -673,6 +674,7 @@ export const en: Record<keyof typeof zh, string> = {
   'profile.apply.error.unresolved': 'The result is unknown and is being checked; do not leave this page.',
   'profile.apply.error.reconcileFailed': 'Checking failed; try again.',
   'profile.apply.done': '{name} applied; it takes effect the next time the game starts.',
+  'profile.apply.doneAndLaunching': '{name} applied; the game is starting. If it does not start, open it yourself.',
   'profile.apply.reconciled': 'The application result has been checked.',
 
   // installer.* — src/installer: the legacy Quick import utility, its issues and help.

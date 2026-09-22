@@ -164,6 +164,12 @@ export interface InstallerBridge {
   openLogs(): Promise<void>
   /** Takes only the language and channel: the App builds the address, never the UI. */
   openDownload(lang: Lang, channel: 'stable' | 'beta'): Promise<void>
+  /**
+   * Best effort: opens `steam://rungameid/824270`, exactly the way `openDownload` opens a fixed
+   * address, with no target from the UI. Resolves once the launch was *issued*, never once the
+   * game is known to have started; a rejection must never be read as the Profile apply failing.
+   */
+  launchGame(): Promise<void>
   /** The App's own label and channel, for the Settings version line. Never fails. */
   appInfo(): Promise<AppInfo>
 }

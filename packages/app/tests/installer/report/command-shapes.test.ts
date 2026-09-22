@@ -30,4 +30,10 @@ describe('what each native command answers has one shape, on both sides', () => 
   it('the fixture names exactly the five commands that answer with data', () => {
     expect(keys(fixture)).toEqual(['installer_account_resolve', 'installer_app_info', 'installer_report_preview', 'installer_report_send', 'installer_update_check'])
   })
+
+  // installer_launch_game answers `Ok(())`/undefined on both sides, like installer_open_logs and
+  // installer_open_download -- it belongs beside them, never in the data fixture above.
+  it('installer_launch_game answers with nothing, on both sides', async () => {
+    expect(await bridge.launchGame()).toBeUndefined()
+  })
 })

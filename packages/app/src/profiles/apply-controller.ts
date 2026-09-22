@@ -12,6 +12,8 @@ export interface ApplyBridge extends LocateBridge {
   execute(input: ExecuteRequest): Promise<Job>
   job(operationId: string): Promise<Job>
   reconcile(operationId: string): Promise<unknown>
+  /** Best effort; a rejection here must never turn a successful apply into a failure. */
+  launchGame(): Promise<void>
 }
 
 export type ApplyPhase = 'idle' | 'locating' | 'needs-location' | 'planning' | 'ready' | 'applying' | 'unresolved'
@@ -123,8 +125,13 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
     /**
      * Executes the previewed plan. Returns the outcome so the caller can raise a library-wide
      * notice; on a completed/no-change result the dialog resets to `idle` on its own.
+     *
+     * `launch` asks that, once (and only once) the apply itself finished with `completed` or
+     * `no-change`, the game is started too. Launching is best effort: a rejection from
+     * `bridge.launchGame()` is swallowed here and never changes the returned outcome -- a
+     * successful apply stays successful whether or not the game actually started.
      */
-    async confirm(): Promise<ApplyOutcome> {
+    async confirm(launch = false): Promise<ApplyOutcome> {
       if (state.phase !== 'ready' || !planId || !state.profile) return 'failed'
       const mine = session
       const id = crypto.randomUUID()
@@ -151,6 +158,7 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
           operationId = null
           planId = null
           publish(idle())
+          if (launch) { try { await bridge.launchGame() } catch { /* best effort: never turns a successful apply into a failure */ } }
           return status
         }
         await replanAfter(incompleteMsg(status), mine)

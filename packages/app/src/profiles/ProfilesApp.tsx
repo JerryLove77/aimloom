@@ -66,6 +66,7 @@ const unavailableApplyBridge: ApplyBridge = {
   execute: async () => { throw new Error('no game bridge') },
   job: async () => { throw new Error('no game bridge') },
   reconcile: async () => { throw new Error('no game bridge') },
+  launchGame: async () => { throw new Error('no game bridge') },
 }
 
 export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage() }: {
@@ -92,6 +93,8 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [notice, setNotice] = useState('')
+  /** Which of the apply dialog's two buttons is running, so only that one shows a working label. */
+  const [applyIntent, setApplyIntent] = useState<'apply' | 'launch' | null>(null)
   const searchInput = useRef<HTMLInputElement>(null)
   const nameInput = useRef<HTMLInputElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -197,8 +200,22 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
   }
   async function applyConfirm() {
     const name = applyState.profile?.name ?? t('profile.draft.fallbackName')
-    const outcome = await applyController.confirm()
+    setApplyIntent('apply')
+    const outcome = await applyController.confirm(false)
+    setApplyIntent(null)
     if (outcome === 'completed' || outcome === 'no-change') { setNotice(t('profile.apply.done', { name })); setCurrentStamp(n => n + 1) }
+  }
+  /**
+   * Runs the identical apply -- `confirm(true)` asks the controller to launch the game only
+   * once that apply itself finished with `completed`/`no-change`. A failed or refused apply
+   * launches nothing and shows the same error path `applyConfirm` shows.
+   */
+  async function applyConfirmAndLaunch() {
+    const name = applyState.profile?.name ?? t('profile.draft.fallbackName')
+    setApplyIntent('launch')
+    const outcome = await applyController.confirm(true)
+    setApplyIntent(null)
+    if (outcome === 'completed' || outcome === 'no-change') { setNotice(t('profile.apply.doneAndLaunching', { name })); setCurrentStamp(n => n + 1) }
   }
   async function applyReconcile() {
     if (await applyController.reconcile()) setNotice(t('profile.apply.reconciled'))
@@ -222,10 +239,11 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
       onUnresolvedChange={setImportUnresolved}
       onAdded={() => setInstalled(null)}
       onConfirm={value => { if (editor.setComponent(sheet, value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
-    <ApplyDialog state={applyState} current={currentGame}
+    <ApplyDialog state={applyState} current={currentGame} launching={applyIntent === 'launch'}
       onChooseGameRoot={root => void applyController.chooseGameRoot(root)}
       onChooseFolder={() => void applyController.chooseFolder(lang)}
       onConfirm={() => void applyConfirm()}
+      onConfirmAndLaunch={() => void applyConfirmAndLaunch()}
       onCancel={() => applyController.close()}
       onReconcile={() => void applyReconcile()} />
     </>} active="profile" onSelect={onSelectSection ?? (() => setSheet(null))} isDemo={isDemo} locked={locked} onOpenInstaller={onOpenInstaller}

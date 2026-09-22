@@ -31,6 +31,7 @@ export function createNativeBridge():InstallerBridge {
     reportPreview:input=>call('installer_report_preview',{input}),reportSend:sha256=>call('installer_report_send',{sha256}),
     accountResolve:url=>call('installer_account_resolve',{url}),updateCheck:beta=>call('installer_update_check',{beta}),
     openLogs:()=>call('installer_open_logs'),openDownload:(lang,channel)=>call('installer_open_download',{lang,channel}),
+    launchGame:()=>call('installer_launch_game'),
     appInfo:()=>call('installer_app_info'),
   }
 }
