@@ -54,7 +54,7 @@ export function ApplyDialog({ state, current, launching, onChooseGameRoot, onCho
     </div> : state.phase === 'ready' || applying ? <div className="ki-dialog-actions">
       <Button data-safe-focus disabled={applying} onClick={onCancel}>{t('import.cancel')}</Button>
       {state.canConfirm ? <Button variant="primary" disabled={applying} onClick={onConfirm}>{applying && !launching ? t('profile.apply.working') : t('profile.apply.confirmButton')}</Button> : null}
-      {state.canConfirm ? <Button variant="primary" disabled={applying} onClick={onConfirmAndLaunch}>{applying && launching ? t('profile.apply.working') : t('profile.apply.launchButton')}</Button> : null}
+      {state.canConfirm ? <Button variant="secondary" disabled={applying} onClick={onConfirmAndLaunch}>{applying && launching ? t('profile.apply.working') : t('profile.apply.launchButton')}</Button> : null}
     </div> : null}
   </Dialog>
 }
