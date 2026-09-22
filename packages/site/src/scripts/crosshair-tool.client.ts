@@ -204,16 +204,27 @@ export function mountCrosshairTool(): void {
     return row
   }
 
+  /** Right-aligned wrapper matching `.cx-tune-controls`' column, so the picker lines up under the
+   * palette swatches above it instead of sitting at the row's left edge. */
+  function pickerRow(): { row: HTMLElement; picker: HTMLInputElement } {
+    const row = document.createElement('div')
+    row.className = 'cx-tune-custom-color-row'
+    const inner = document.createElement('div')
+    inner.className = 'cx-tune-custom-color'
+    const picker = document.createElement('input')
+    picker.type = 'color'
+    inner.appendChild(picker)
+    row.appendChild(inner)
+    return { row, picker }
+  }
+
   function buildCustomColorControl(game: CrosshairGame, values: Record<string, TuneValue>, disabled: boolean): HTMLElement {
     const wrap = document.createElement('div')
     if (game === 'cs2') {
       const red = typeof values.red === 'number' ? values.red : 0
       const green = typeof values.green === 'number' ? values.green : 0
       const blue = typeof values.blue === 'number' ? values.blue : 0
-      const row = document.createElement('div')
-      row.className = 'cx-tune-custom-color'
-      const picker = document.createElement('input')
-      picker.type = 'color'
+      const { row, picker } = pickerRow()
       picker.setAttribute('aria-label', TUNE_CUSTOM_COLOR_PICKER[lang])
       picker.disabled = disabled
       picker.value = rgbToHex6(red, green, blue)
@@ -230,21 +241,16 @@ export function mountCrosshairTool(): void {
           refreshTuneUi(parsed.game)
         } catch (error) { showError(errorText(error, lang)) }
       })
-      row.appendChild(picker)
       wrap.appendChild(row)
       return wrap
     }
     const hex8 = typeof values.customColor === 'string' && values.customColor ? values.customColor : 'FFFFFFFF'
     const alpha = valorantAlpha(hex8)
-    const row = document.createElement('div')
-    row.className = 'cx-tune-custom-color'
-    const picker = document.createElement('input')
-    picker.type = 'color'
+    const { row, picker } = pickerRow()
     picker.setAttribute('aria-label', TUNE_CUSTOM_COLOR_PICKER[lang])
     picker.disabled = disabled
     picker.value = `#${hex8.slice(0, 6)}`
     picker.addEventListener('input', () => onTune('customColor', composeValorantHex(picker.value, alpha)))
-    row.appendChild(picker)
     wrap.appendChild(row)
 
     const alphaRow = document.createElement('div')
@@ -285,6 +291,8 @@ export function mountCrosshairTool(): void {
     const span = document.createElement('span')
     span.textContent = state.label
     row.appendChild(span)
+    const controls = document.createElement('span')
+    controls.className = 'cx-tune-controls'
     const group = document.createElement('div')
     group.className = 'cx-tune-palette'
     group.setAttribute('role', 'radiogroup')
@@ -311,13 +319,13 @@ export function mountCrosshairTool(): void {
     customButton.disabled = disabled
     customButton.setAttribute('aria-label', state.custom.name)
     customButton.title = state.custom.name
-    customButton.textContent = '?'
     customButton.addEventListener('click', () => {
       if (game === 'cs2') onTune('color', paletteLength)
       else onTune('customColor', typeof values.customColor === 'string' && values.customColor ? values.customColor : 'FFFFFFFF')
     })
     group.appendChild(customButton)
-    row.appendChild(group)
+    controls.appendChild(group)
+    row.appendChild(controls)
     container.appendChild(row)
     if (state.custom.checked) container.appendChild(buildCustomColorControl(game, values, disabled))
     return container
