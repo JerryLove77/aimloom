@@ -104,15 +104,21 @@ function CustomColorControl({ game, values, disabled, onChange }: {
   }
   const hex8 = typeof values.customColor === 'string' && values.customColor ? values.customColor : 'FFFFFFFF'
   const alpha = valorantAlpha(hex8)
-  return <div className="cx-tune-custom-color">
-    <input type="color" aria-label={pickerLabel} disabled={disabled} value={`#${hex8.slice(0, 6)}`}
-      onChange={event => onChange('customColor', composeValorantHex(event.target.value, alpha))} />
-    <span className="cx-tune-controls">
-      <input type="range" aria-label={t('crosshair.tune.customAlpha')} min={0} max={1} step={0.01} value={alpha} disabled={disabled}
-        onChange={event => onChange('customColor', composeValorantHex(hex8.slice(0, 6), Number(event.target.value)))} />
-      <span className="cx-tune-value">{alpha.toFixed(2)}</span>
-    </span>
-  </div>
+  const alphaLabel = t('crosshair.tune.customAlpha')
+  return <>
+    <div className="cx-tune-custom-color">
+      <input type="color" aria-label={pickerLabel} disabled={disabled} value={`#${hex8.slice(0, 6)}`}
+        onChange={event => onChange('customColor', composeValorantHex(event.target.value, alpha))} />
+    </div>
+    <div className="cx-tune-row cx-tune-slider">
+      <span>{alphaLabel}</span>
+      <span className="cx-tune-controls">
+        <input type="range" aria-label={alphaLabel} min={0} max={1} step={0.01} value={alpha} disabled={disabled}
+          onChange={event => onChange('customColor', composeValorantHex(hex8.slice(0, 6), Number(event.target.value)))} />
+        <span className="cx-tune-value">{alpha.toFixed(2)}</span>
+      </span>
+    </div>
+  </>
 }
 
 /**
