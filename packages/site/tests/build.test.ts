@@ -12,9 +12,9 @@ beforeAll(() => {
 }, 180_000)
 
 describe('build output', () => {
-  const routes = ['zh', 'zh/download', 'zh/guide', 'zh/changelog', 'zh/privacy', 'en', 'en/download', 'en/guide', 'en/changelog', 'en/privacy']
+  const routes = ['zh', 'zh/download', 'zh/guide', 'zh/crosshair', 'zh/changelog', 'zh/privacy', 'en', 'en/download', 'en/guide', 'en/crosshair', 'en/changelog', 'en/privacy']
 
-  it('emits the chooser and ten localized pages', () => {
+  it('emits the chooser and twelve localized pages', () => {
     expect(existsSync(join(dist, 'index.html'))).toBe(true)
     for (const r of routes) expect(existsSync(join(dist, r, 'index.html')), r).toBe(true)
   })
@@ -164,6 +164,28 @@ describe('build output', () => {
   it('the English pages say the app is bilingual, not Chinese-only', () => {
     expect(page('en')).toMatch(/The app is in Chinese and English/)
     expect(page('en')).not.toMatch(/The app(&#39;|')s interface is in Chinese\./)
+  })
+
+  it('crosshair tool page states it runs locally, never uploads, and links to the App download', () => {
+    for (const r of ['zh/crosshair', 'en/crosshair']) {
+      const html = page(r)
+      expect(html, r).toContain('id="cx-app"')
+      expect(html, r).toContain('id="cx-code"')
+      expect(html, r).toContain('id="cx-download-btn"')
+      expect(html, r).toContain(`href="/${r.split('/')[0]}/download/"`)
+    }
+    expect(page('zh/crosshair')).toContain('不会上传')
+    expect(page('en/crosshair')).toMatch(/nothing is uploaded/i)
+    expect(page('zh/crosshair')).toContain('静态近似')
+    expect(page('en/crosshair')).toMatch(/static approximation/i)
+  })
+  it('crosshair tool page loads its interactive script only from the site itself', () => {
+    for (const r of ['zh/crosshair', 'en/crosshair']) {
+      const html = page(r)
+      const scripts = [...html.matchAll(/<script[^>]*\ssrc="([^"]+)"/g)].map(m => m[1]!)
+      expect(scripts.length, r).toBeGreaterThan(0)
+      for (const src of scripts) expect(src, r).toMatch(/^\/_astro\//)
+    }
   })
 
   it('ships the security headers file with the assets', () => {

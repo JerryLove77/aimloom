@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro'
+import { LANGS, localizePath, t, type Lang } from '../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+---
+<Base lang={lang} path="/crosshair" title={t(lang, 'crosshair.title')} description={t(lang, 'crosshair.description')}>
+  <div class="page-header"><h1>{t(lang, 'crosshair.title')}</h1><p>{t(lang, 'crosshair.intro')}</p></div>
+
+  <section id="tool" class="section stack">
+    <div class="panel cx-panel" id="cx-app" data-lang={lang}>
+      <div class="cx-name-field">
+        <label for="cx-code">{t(lang, 'crosshair.code.label')}</label>
+        <textarea id="cx-code" rows="3" maxlength="4096" spellcheck="false" placeholder={t(lang, 'crosshair.code.placeholder')}></textarea>
+      </div>
+      <button type="button" id="cx-preview-btn" class="button button--primary" disabled>{t(lang, 'crosshair.preview')}</button>
+
+      <div id="cx-error" class="notice cx-notice-error" hidden>
+        <p><strong>{t(lang, 'crosshair.error.heading')}</strong></p>
+        <p id="cx-error-text"></p>
+      </div>
+
+      <div id="cx-swatches" class="cx-swatches" hidden>
+        <figure class="cx-swatch cx-swatch-dark"><img id="cx-img-dark" alt="" /><figcaption>{t(lang, 'crosshair.tune.dark')}</figcaption></figure>
+        <figure class="cx-swatch cx-swatch-light"><img id="cx-img-light" alt="" /><figcaption>{t(lang, 'crosshair.tune.light')}</figcaption></figure>
+      </div>
+      <p id="cx-size" class="small muted" hidden></p>
+
+      <div id="cx-warnings" class="notice cx-notice-warning" hidden>
+        <ul id="cx-warnings-list"></ul>
+      </div>
+
+      <div id="cx-tune" class="cx-tune" hidden>
+        <div class="cx-tune-head">
+          <h3>{t(lang, 'crosshair.tune.heading')}</h3>
+          <button type="button" id="cx-reset-btn" class="button button--secondary" disabled>{t(lang, 'crosshair.tune.reset')}</button>
+        </div>
+        <div id="cx-tune-controls"></div>
+      </div>
+
+      <button type="button" id="cx-download-btn" class="button button--primary" disabled>{t(lang, 'crosshair.download')}</button>
+    </div>
+
+    <div class="notice stack--tight">
+      <p>{t(lang, 'crosshair.disclaimer.approx')}</p>
+      <p>{t(lang, 'crosshair.disclaimer.privacy')}</p>
+      <p>{t(lang, 'crosshair.disclaimer.usage')}</p>
+      <p>{t(lang, 'crosshair.disclaimer.app')} <a class="link-strong" href={localizePath(lang, '/download')}>{t(lang, 'crosshair.disclaimer.appLink')}</a></p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { mountCrosshairTool } from '../../scripts/crosshair-tool.client'
+  mountCrosshairTool()
+</script>
+
+<style>
+  .cx-panel { gap: var(--al-space-4); }
+  .cx-name-field { display: flex; flex-direction: column; gap: var(--al-space-2); }
+  .cx-name-field label { font-weight: 700; }
+  #cx-code { width: 100%; font-family: var(--al-font-mono); font-size: 14px; padding: var(--al-space-3); border-radius: var(--al-radius-control); border: 2px solid var(--al-slate); resize: vertical; }
+  .cx-notice-error { border-left-color: #c0392b; }
+  .cx-notice-warning { border-left-color: var(--al-slate); }
+  .cx-swatches { display: grid; grid-template-columns: 1fr 1fr; gap: var(--al-space-4); }
+  .cx-swatch { margin: 0; display: flex; flex-direction: column; gap: var(--al-space-2); align-items: center; }
+  .cx-swatch img { width: 100%; max-width: 220px; aspect-ratio: 1 / 1; border-radius: var(--al-radius-control); }
+  .cx-swatch-dark img { background: #1a1a1c; }
+  .cx-swatch-light img { background: #f2f2f2; }
+  .cx-tune { display: flex; flex-direction: column; gap: var(--al-space-3); }
+  .cx-tune-head { display: flex; align-items: center; justify-content: space-between; gap: var(--al-space-3); }
+  .cx-tune-row { display: flex; align-items: center; justify-content: space-between; gap: var(--al-space-3); padding-block: var(--al-space-1); }
+  .cx-tune-controls { display: flex; align-items: center; gap: var(--al-space-2); }
+  .cx-tune-value { font-family: var(--al-font-mono); font-size: 13px; min-width: 3.5em; text-align: right; }
+  .cx-tune-palette-row { align-items: flex-start; }
+  .cx-tune-palette { display: flex; flex-wrap: wrap; gap: var(--al-space-2); }
+  .cx-swatch-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--al-ink); cursor: pointer; padding: 0; }
+  .cx-swatch-btn[aria-checked="true"] { outline: 3px solid var(--al-papaya); outline-offset: 2px; }
+  .cx-swatch-custom { background: var(--al-paper); display: grid; place-items: center; font-weight: 900; }
+  .cx-tune-custom-color { display: flex; align-items: center; gap: var(--al-space-2); }
+  @media (max-width: 720px) {
+    .cx-swatches { grid-template-columns: 1fr; }
+    .cx-tune-row { flex-wrap: wrap; }
+  }
+</style>
