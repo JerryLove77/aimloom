@@ -658,6 +658,40 @@ pub async fn installer_open_download(lang: String, channel: String) -> Result<()
         .map_err(|e| Issue::worker(format!("native folder task failed: {e}")))?
 }
 
+/// The explorer on aimloom.dev, opened on one kind's tab. Like `download_url`, the address is
+/// built here from a fixed language and kind; the UI never sends a URL.
+fn explore_url(lang: &str, kind: &str) -> Result<String, Issue> {
+    if !matches!(lang, "zh" | "en") {
+        return Err(Issue::new(ErrorCode::InvalidPath, "lang 必须是 \"zh\" 或 \"en\"。", "lang must be \"zh\" or \"en\"."));
+    }
+    if !matches!(kind, "theme" | "sound" | "crosshair") {
+        return Err(Issue::new(ErrorCode::InvalidPath, "kind 必须是 \"theme\"、\"sound\" 或 \"crosshair\"。", "kind must be \"theme\", \"sound\" or \"crosshair\"."));
+    }
+    Ok(format!("https://aimloom.dev/{lang}/explore/?kind={kind}"))
+}
+
+fn installer_open_explore_blocking(lang: String, kind: String) -> Result<(), Issue> {
+    let url = explore_url(&lang, &kind)?;
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = url;
+        return Err(Issue::plain(ErrorCode::UnsupportedPlatform, "the explorer can be opened only on Windows"));
+    }
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer.exe").arg(&url).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null())
+            .spawn().map_err(|e| Issue::plain(ErrorCode::EngineError, format!("could not open the explorer: {e}")))?;
+        Ok(())
+    }
+}
+
+#[tauri::command]
+pub async fn installer_open_explore(lang: String, kind: String) -> Result<(), Issue> {
+    tauri::async_runtime::spawn_blocking(move || installer_open_explore_blocking(lang, kind))
+        .await
+        .map_err(|e| Issue::worker(format!("native explorer task failed: {e}")))?
+}
+
 /// The Steam run URL for KovaaK (appid 824270), built here and nowhere else -- the front end
 /// sends no target at all, so there is nothing for the UI to override. Mirrors `download_url`'s
 /// role for `installer_open_download`: a fixed, validated address is what ever reaches
@@ -792,6 +826,7 @@ pub fn run() {
             installer_app_info,
             installer_open_logs,
             installer_open_download,
+            installer_open_explore,
             installer_launch_game,
         ])
         .setup(|app| {
@@ -1233,6 +1268,26 @@ mod tests {
     #[test]
     fn open_download_refuses_an_invalid_channel_before_touching_the_platform_arm() {
         let issue = installer_open_download_blocking("en".into(), "nightly".into()).unwrap_err();
+        assert_eq!(issue.code, ErrorCode::InvalidPath);
+    }
+
+    // ---- installer_open_explore ------------------------------------------------------------
+
+    #[test]
+    fn explore_url_opens_one_kind_in_one_language_and_nothing_else() {
+        assert_eq!(explore_url("zh", "theme").unwrap(), "https://aimloom.dev/zh/explore/?kind=theme");
+        assert_eq!(explore_url("en", "sound").unwrap(), "https://aimloom.dev/en/explore/?kind=sound");
+        assert_eq!(explore_url("en", "crosshair").unwrap(), "https://aimloom.dev/en/explore/?kind=crosshair");
+        for (lang, kind) in [("fr", "theme"), ("en", "enemy"), ("en", "https://evil.example/"), ("zh", "theme&x=1")] {
+            let issue = explore_url(lang, kind).unwrap_err();
+            assert_eq!(issue.code, ErrorCode::InvalidPath);
+            assert!(!has_cjk(&issue.message_en));
+        }
+    }
+
+    #[test]
+    fn open_explore_refuses_a_bad_kind_before_touching_the_platform_arm() {
+        let issue = installer_open_explore_blocking("en".into(), "enemy".into()).unwrap_err();
         assert_eq!(issue.code, ErrorCode::InvalidPath);
     }
 

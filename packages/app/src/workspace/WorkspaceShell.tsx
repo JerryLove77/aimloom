@@ -6,7 +6,7 @@ import { SettingsPopover } from './SettingsPopover'
 import { updateAvailableKey } from './update-text'
 import { useT, type Lang, type MessageKey } from '../i18n'
 import type { FileDropHint } from './file-drop'
-import type { AppInfo, SteamAccount, UpdateCheck } from '../installer/contracts'
+import type { AppInfo, ExploreKind, SteamAccount, UpdateCheck } from '../installer/contracts'
 import './workspace.css'
 
 export type WorkspaceSection = 'profile' | 'scheme' | 'audio' | 'crosshair' | 'enemy'
@@ -37,6 +37,7 @@ export const SettingsState = createContext<{
   accountResolve(url: string): Promise<SteamAccount>
   openLogs(): Promise<void>
   openDownload(lang: Lang, channel: 'stable' | 'beta'): Promise<void>
+  openExplore(lang: Lang, kind: ExploreKind): Promise<void>
   update: UpdateCheck | null
   /** Whether the sidebar button should show its small dot: `update.newer` and the popover has not yet opened this session. */
   updateDot: boolean
@@ -59,6 +60,7 @@ export const SettingsState = createContext<{
   accountResolve: () => Promise.reject(new Error('no bridge')),
   openLogs: () => Promise.resolve(),
   openDownload: () => Promise.resolve(),
+  openExplore: () => Promise.resolve(),
   update: null,
   updateDot: false,
   appInfo: null,

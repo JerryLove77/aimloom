@@ -213,6 +213,7 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
     async updateCheck(){return {latest:null,newer:false,channel:'stable' as const}},
     async openLogs(){/* Demo intentionally has no OS/file effect. */},
     async openDownload(){/* Demo intentionally has no OS/file effect. */},
+    async openExplore(){/* Demo intentionally has no OS/file effect. */},
     // Records the call (visible in the console) and changes nothing: the browser demo can never
     // really start KovaaK through Steam.
     async launchGame(){console.info('[demo] launchGame: steam://rungameid/824270')},

@@ -86,6 +86,7 @@ describe('the reporting, account and update commands', () => {
     ['reportSend', (b: ReturnType<typeof createNativeBridge>) => b.reportSend('a'.repeat(64)), 'installer_report_send', { sha256: 'a'.repeat(64) }],
     ['accountResolve', (b: ReturnType<typeof createNativeBridge>) => b.accountResolve('https://steamcommunity.com/id/x'), 'installer_account_resolve', { url: 'https://steamcommunity.com/id/x' }],
     ['openDownload', (b: ReturnType<typeof createNativeBridge>) => b.openDownload('zh', 'stable'), 'installer_open_download', { lang: 'zh', channel: 'stable' }],
+    ['openExplore', (b: ReturnType<typeof createNativeBridge>) => b.openExplore('en', 'sound'), 'installer_open_explore', { lang: 'en', kind: 'sound' }],
     ['updateCheck', (b: ReturnType<typeof createNativeBridge>) => b.updateCheck(true), 'installer_update_check', { beta: true }],
   ])('%s invokes its command with exactly its arguments', async (_name, call, command, args) => {
     await call(createNativeBridge())

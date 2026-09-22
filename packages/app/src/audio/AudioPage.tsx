@@ -6,6 +6,7 @@ import { StatusStrip, Tag, Toast, useToast } from '../workspace/ui'
 import { ImportSheet } from '../workspace/ImportSheet'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import { SearchBox } from '../workspace/SearchBox'
+import { ExploreLink } from '../workspace/ExploreLink'
 import { createAudioController, AUDIO_EVENTS, AUDIO_TAB_KEYS, type AudioBridge } from './controller'
 import { createAudioPreview } from '../profiles/audio/preview'
 import { assetMime, type ProfileAssetBridge } from '../profiles/assets'
@@ -195,6 +196,7 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
                 </div>
               })}
               {query && !shownSounds.length ? <p className="ws-note">{t('audio.sounds.noMatch', { query })}</p> : null}
+              <ExploreLink kind="sound" />
             </div>
             {audition.status === 'error' ? <Notice tone="error"><p>{msg(audition.message)}</p></Notice> : null}
           </section>

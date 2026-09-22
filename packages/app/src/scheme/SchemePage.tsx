@@ -7,6 +7,7 @@ import { ImportSheet } from '../workspace/ImportSheet'
 import { importFileName } from '../workspace/import-check'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import { SearchBox } from '../workspace/SearchBox'
+import { ExploreLink } from '../workspace/ExploreLink'
 import { createSchemeController, type SchemeBridge } from './controller'
 import { SchemePreview } from './SchemePreview'
 import { Tiles, type TileChoice } from '../workspace/Tiles'
@@ -138,6 +139,7 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
               }}
               empty={query ? undefined : <div className="pr-empty"><span aria-hidden="true">▱</span><h2>{t('scheme.empty.title')}</h2><p>{t('scheme.empty.body')}</p></div>} />
             {query && !choices.length ? <p className="ws-note">{t('scheme.search.noMatch', { query })}</p> : null}
+            <ExploreLink kind="theme" />
           </div>
           <section className="ws-panel" aria-label={t('scheme.panel.ariaLabel')}>
             <div className="ws-panel-head"><h2>{t('scheme.panel.heading')}</h2>{shown ? <Tag kind={pending ? (state.applying ? 'working' : 'pending') : 'current'} /> : null}</div>
