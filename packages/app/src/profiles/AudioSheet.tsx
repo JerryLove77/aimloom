@@ -3,12 +3,15 @@ import { Button } from '../installer/components/Button'
 import { Dialog } from '../installer/components/Dialog'
 import { Notice } from '../installer/components/Notice'
 import { Tag } from '../workspace/ui'
-import { plural, useLang, useMsg, useT, type Msg } from '../i18n'
+import { plural, useLang, useMsg, useT, type Lang, type Msg } from '../i18n'
 import { errorMsg } from '../workspace/issue-text'
 import { AssetPreview } from './AssetPreview'
 import { AUDIO_EVENTS, MAX_AUDIO_FILES, type AudioEvent } from './audio/model'
 import type { ProfileAudio, ProfileFileReference } from './model'
 import type { ProfileAssetBridge } from './assets'
+import { ImportSheet } from '../workspace/ImportSheet'
+import { importFileName } from '../workspace/import-check'
+import type { FileAddOutcome, FileImportInput } from '../workspace/file-import'
 
 type Mode = 'keep' | 'none' | 'files'
 const modeOf = (files: ProfileFileReference[] | undefined): Mode => (files === undefined ? 'keep' : files.length ? 'files' : 'none')
@@ -21,7 +24,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
  * Per-event audio for one Profile. Everything here is temporary until 用于此组合, which
  * writes the draft alone — nothing is saved to JSON, applied to the game, or auto-played.
  */
-export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, onConfirm, onCancel }: {
+export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, onAddFile, onPickFile, onConfirm, onCancel }: {
   profileName: string
   profilePath: string
   value: ProfileAudio | null
@@ -30,6 +33,14 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   open: boolean
   /** The game's own sounds folder, so the sheet opens on what is installed instead of empty. */
   defaultDirectory?: string | null
+  /**
+   * Adds an outside sound to the game through the existing byte-exact plan path
+   * (`planFileAdd`). Absent means the caller has no game bridge wired in, so the button is not
+   * offered -- the same best-effort fallback every other Profile game read already uses.
+   */
+  onAddFile?: ((input: FileImportInput) => Promise<FileAddOutcome>) | undefined
+  /** Opens the native file picker, already filtered to sound files. */
+  onPickFile?: ((lang: Lang) => Promise<string | null>) | undefined
   onConfirm: (value: ProfileAudio | null) => void
   onCancel: () => void
 }) {
@@ -48,7 +59,11 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   const [fileErrors, setFileErrors] = useState<{ fileName: string; message: Msg }[]>([])
   const [error, setError] = useState<Msg | null>(null)
   const request = useRef(0)
-  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setListen(null); setError(null); setFileErrors([]) } }, [open, value])
+  // The outside file being confirmed in the nested add sheet. Nothing is written until 添加到游戏.
+  const [importPath, setImportPath] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState<Msg | null>(null)
+  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setListen(null); setError(null); setFileErrors([]); setImportPath(null); setImportError(null) } }, [open, value])
   const eventFiles = temp?.[event]
   const mode = modeOf(eventFiles)
   const setEventFiles = (next: ProfileFileReference[] | undefined) => {
@@ -69,6 +84,27 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   }
   async function browse() {
     try { const path = await assets.chooseDirectory('audio', lang); if (path) await load(path) } catch (reason) { setError(errorMsg(reason, GENERIC)) }
+  }
+  async function pickAndOpenImport() {
+    if (!onPickFile) return
+    try { const path = await onPickFile(lang); if (path) { setImportError(null); setImportPath(path) } }
+    catch (reason) { setError(errorMsg(reason, GENERIC)) }
+  }
+  async function addImport(input: FileImportInput): Promise<boolean> {
+    if (!onAddFile) return false
+    setImporting(true); setImportError(null)
+    const outcome = await onAddFile(input)
+    setImporting(false)
+    if (outcome.kind === 'added') {
+      setImportPath(null)
+      // The new sound must appear in this sheet's own list, so re-read the folder it landed in.
+      if (directory) await load(directory)
+      else if (defaultDirectory) await load(defaultDirectory)
+      return true
+    }
+    if (outcome.kind === 'unknown') { setImportError({ key: 'profile.sheet.importUnknown' }); return false }
+    setImportError(outcome.message)
+    return false
   }
   // With no folder chosen the sheet used to open on nothing, so the player had to go find one
   // before they could see any sound. The folder they almost always want is the game's own.
@@ -105,7 +141,12 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
       <Button variant="ghost" aria-label={t('profile.audioSheet.removeAria', { index: index + 1 })} onClick={() => setEventFiles(eventFiles.filter((_, i) => i !== index))}>{t('audio.remove')}</Button>
     </div>)}</div> : null}
     {listen ? <AssetPreview key={listen.path} kind="audio" reference={listen} profilePath={profilePath} assets={assets} /> : null}
-    <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.audioSheet.dirPlaceholder')}</span><Button variant="ghost" onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button></div>
+    <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.audioSheet.dirPlaceholder')}</span><Button variant="ghost" onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button>
+      {onPickFile ? <Button variant="ghost" disabled={importing} onClick={() => void pickAndOpenImport()}>{t('audio.addSound')}</Button> : null}</div>
+    {importPath ? <ImportSheet key={importPath} kind="sound" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.audioSheet.dirPlaceholder')}
+      installed={files.map(file => ({ name: file.name, file: importFileName(file.path) }))} assets={assets} busy={importing} error={importError}
+      preview={<AssetPreview kind="audio" reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
+      onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
     <div className="pr-sheet-list">{files.map(file => <div className="pr-sheet-row" key={file.path}><span><strong>{file.name}</strong><small>{file.path}</small></span>

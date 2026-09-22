@@ -3,12 +3,15 @@ import { Button } from '../installer/components/Button'
 import { Dialog } from '../installer/components/Dialog'
 import { Notice } from '../installer/components/Notice'
 import { Tag } from '../workspace/ui'
-import { plural, useLang, useMsg, useT, type Msg } from '../i18n'
+import { plural, useLang, useMsg, useT, type Lang, type Msg } from '../i18n'
 import { errorMsg } from '../workspace/issue-text'
 import { AssetPreview } from './AssetPreview'
 import { Tiles, type TileChoice } from '../workspace/Tiles'
 import { resolveProfileAssetPath, type ProfileFileReference } from './model'
 import type { ProfileAssetBridge } from './assets'
+import { ImportSheet } from '../workspace/ImportSheet'
+import { importFileName } from '../workspace/import-check'
+import type { FileAddOutcome, FileImportInput } from '../workspace/file-import'
 
 type SingleKind = 'scheme'
 // The lowercase noun, not the section's title: it stands mid-sentence ("does not change the current theme").
@@ -23,7 +26,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
  * 用于此组合 hands it back, and even that writes the draft alone — nothing is saved to the
  * Profile's JSON and nothing is applied to the game.
  */
-export function ResourceSheet({ kind, profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, installed = null, onConfirm, onCancel }: {
+export function ResourceSheet({ kind, profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, installed = null, onAddFile, onPickFile, onAdded, onConfirm, onCancel }: {
   kind: SingleKind
   profileName: string
   profilePath: string
@@ -38,6 +41,16 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
    * null the sheet falls back to browsing a folder, which is what it always did.
    */
   installed?: { file: string; label: string; detail: string; path: string; selectable: boolean; reason?: string | undefined; current?: boolean; duplicate?: boolean }[] | null
+  /**
+   * Adds an outside file to the game through the existing byte-exact plan path (`planFileAdd`).
+   * Absent means the caller has no game bridge wired in, so the button is not offered -- the
+   * same best-effort fallback every other Profile game read already uses.
+   */
+  onAddFile?: ((input: FileImportInput) => Promise<FileAddOutcome>) | undefined
+  /** Opens the native file picker for this kind, already filtered by the caller. */
+  onPickFile?: ((lang: Lang) => Promise<string | null>) | undefined
+  /** Called after a successful add, so the caller can refresh what the game has installed. */
+  onAdded?: () => void
   onConfirm: (value: ProfileFileReference | null) => void
   onCancel: () => void
 }) {
@@ -54,7 +67,11 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const [ready, setReady] = useState(false)
   const [page, setPage] = useState(0)
   const request = useRef(0)
-  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null) } }, [open, value])
+  // The outside file being confirmed in the nested add sheet. Nothing is written until 添加到游戏.
+  const [importPath, setImportPath] = useState<string | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState<Msg | null>(null)
+  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null); setImportPath(null); setImportError(null) } }, [open, value])
   async function load(path: string) {
     const own = ++request.current
     setLoading(true); setError(null); setFiles([]); setFileErrors([])
@@ -81,6 +98,21 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   async function browse() {
     try { const path = await assets.chooseDirectory(kind, lang); if (path) await load(path) } catch (reason) { setError(errorMsg(reason, GENERIC)) }
   }
+  async function pickAndOpenImport() {
+    if (!onPickFile) return
+    try { const path = await onPickFile(lang); if (path) { setImportError(null); setImportPath(path) } }
+    catch (reason) { setError(errorMsg(reason, GENERIC)) }
+  }
+  async function addImport(input: FileImportInput): Promise<boolean> {
+    if (!onAddFile) return false
+    setImporting(true); setImportError(null)
+    const outcome = await onAddFile(input)
+    setImporting(false)
+    if (outcome.kind === 'added') { setImportPath(null); onAdded?.(); return true }
+    if (outcome.kind === 'unknown') { setImportError({ key: 'profile.sheet.importUnknown' }); return false }
+    setImportError(outcome.message)
+    return false
+  }
   // Everything selectable, by path: the folder listing, the game's own list when there is one,
   // and the Profile's existing reference even when its folder is not on screen.
   // A reference names the FILE, not the theme's display name: `file`, never `label`.
@@ -104,6 +136,11 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
       ? <AssetPreview key={chosen.path} kind={kind} reference={chosen} profilePath={profilePath} assets={assets} onStatus={status => setReady(status === 'ready')} />
       : <div className="ws-preview-large">{t('profile.resource.keepHint', { noun })}</div>}</div>
     {installed ? null : <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.resource.dirPlaceholder')}</span><Button variant="ghost" disabled={loading} onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button></div>}
+    {onPickFile ? <div className="cx-picker-source"><Button variant="ghost" disabled={loading || importing} onClick={() => void pickAndOpenImport()}>{t('scheme.addTheme')}</Button></div> : null}
+    {importPath ? <ImportSheet key={importPath} kind="theme" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.resource.dirPlaceholder')}
+      installed={(installed ?? []).map(item => ({ name: item.label === item.file ? null : item.label, file: item.file }))} assets={assets} busy={importing} error={importError}
+      preview={<AssetPreview kind={kind} reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
+      onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
     {installed ? null : <><label className="pr-sr-only" htmlFor={`sheet-search-${kind}`}>{t('profile.resource.searchLabel')}</label></>}
     {installed ? null : <input id={`sheet-search-${kind}`} className="pr-sheet-search" type="search" placeholder={t('profile.resource.searchLabel')} value={search} onChange={event => setSearch(event.target.value)} />}
     {loading ? <p role="status">{t('profile.resource.loading')}</p> : null}

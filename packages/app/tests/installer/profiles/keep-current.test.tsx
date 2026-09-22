@@ -32,6 +32,7 @@ function setup(profiles: TrainingProfile[], readable = true) {
     pickFolder: async () => null,
     planProfileApply: async input => ({ planId: 'p', revision: input.revision, kind: 'install', location: { gameRoot: input.gameRoot, backupRoot: 'C:/b', gameState: 'closed' }, packRoot: null, categories: ['primary'], sourceId: null, rows: [], skipped: [] }),
     execute: refuse, job: refuse, reconcile: refuse,
+    planFileAdd: refuse, pickFile: async () => null,
   }
   render(<ProfilesApp bridge={bridge} assets={assets} locate={game} />)
 }

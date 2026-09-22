@@ -58,6 +58,8 @@ function fixtures(profiles: TrainingProfile[] = [fullProfile()]) {
     execute: async input => { executeCalls.push(input); return { operationId: input.operationId, planId: input.planId, state: 'running', progress: null, result: null, error: null } },
     job: async () => jobImpl(),
     reconcile: async () => { reconcileCalls += 1; return {} },
+    planFileAdd: async () => ({ planId: 'plan-add' }),
+    pickFile: async () => null,
   }
   return {
     bridge, assets, game, planCalls, executeCalls,

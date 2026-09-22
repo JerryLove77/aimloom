@@ -112,6 +112,34 @@ describe('Theme page', () => {
     expect(screen.getByRole('button', { name: 'Clean Dark 预览' })).toBeDisabled()
   })
 
+  it('filters themes by name or file name as the player types, without touching the pending selection', async () => {
+    const f = fixtures()
+    render(tree(f))
+    fireEvent.click(await screen.findByRole('button', { name: 'Blue Room 预览' }))
+    expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('已选，未应用Blue Room')
+    const search = screen.getByRole('searchbox', { name: '搜索主题' })
+    fireEvent.change(search, { target: { value: 'clean' } })
+    expect(screen.getByRole('button', { name: 'Clean Dark 预览' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Blue Room 预览' })).toBeNull()
+    // Filtering never touches the pending selection or the current mark, which the controller owns.
+    expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('已选，未应用Blue Room')
+    fireEvent.change(search, { target: { value: 'zzz' } })
+    expect(screen.getByText(/没有匹配「zzz」的主题/)).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: '清空搜索' }))
+    expect(screen.getByRole('button', { name: 'Blue Room 预览' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Clean Dark 预览' })).toBeVisible()
+    expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('已选，未应用Blue Room')
+  })
+
+  it('matches themes by file name too, case-insensitively', async () => {
+    const f = fixtures()
+    render(tree(f))
+    const search = await screen.findByRole('searchbox', { name: '搜索主题' })
+    fireEvent.change(search, { target: { value: 'BROKEN' } })
+    expect(screen.getByRole('button', { name: 'Broken.json 预览' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Clean Dark 预览' })).toBeNull()
+  })
+
   it('renders nothing while another section is active so a Profile draft survives', () => {
     const f = fixtures()
     render(<SchemePage bridge={f.bridge} assets={f.assets} isActive={false} section={'profile' as WorkspaceSection} onSelect={() => {}} />)
