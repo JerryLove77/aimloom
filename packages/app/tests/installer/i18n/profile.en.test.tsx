@@ -41,10 +41,11 @@ describe('the Profile section in English', () => {
     const editButton = await screen.findByRole('button', { name: /Edit 日常跟枪/ })
     fireEvent.click(editButton)
     await screen.findByRole('heading', { name: 'Edit Profile', level: 1 })
-    // Sounds shows the label alone; only Theme adds a subtitle that says something the name no
-    // longer does. A Profile no longer has an Enemy card.
+    // The visible chip is the card's own label, nothing more -- the preview and the name below it
+    // carry the content. A Profile no longer has an Enemy card.
     const kinds = [...document.querySelectorAll('.pr-slot-kind')].map(node => node.textContent)
-    expect(kinds).toEqual(['THEME · Background and environment', 'SOUNDS'])
+    expect(kinds).toEqual(['THEME', 'SOUNDS'])
+    // The fuller subtitle a screen reader hears still says something the visible chip does not.
     await screen.findByRole('button', { name: /^Theme Background and environment: Blue-room\.json$/ })
   })
 
