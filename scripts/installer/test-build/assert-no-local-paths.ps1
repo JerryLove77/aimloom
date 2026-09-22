@@ -44,6 +44,7 @@ function Assert-KvkNoLocalPaths {
         if ($count -gt 0) { $hits.Add("$($rule.Key): $count hit(s)") }
     }
     if ($hits.Count -gt 0) {
-        throw "$Path embeds a local build path and must not ship. " + ($hits -join '; ')
+        # The file name only: a full path can itself contain the user name this check protects.
+        throw "$([IO.Path]::GetFileName($Path)) embeds a local build path and must not ship. " + ($hits -join '; ')
     }
 }
