@@ -9,6 +9,7 @@ import { errorMsg } from '../workspace/issue-text'
 import { importFileName, stemOf } from '../workspace/import-check'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import { SearchBox } from '../workspace/SearchBox'
+import { ExploreLink } from '../workspace/ExploreLink'
 import { createCrosshairController, type CrosshairBridge } from './controller'
 import { CodeExportDialog } from './CodeExportDialog'
 import type { CrosshairExportBridge } from './export-controller'
@@ -177,6 +178,7 @@ export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true,
               <span className="ws-tile-copy"><strong>{item.file}</strong></span>
             </button>)}</div>
           {query && !shown.length ? <p className="ws-note">{t('crosshair.search.noMatch', { query })}</p> : null}
+          <ExploreLink kind="crosshair" />
           {!state.slots.length ? <div className="pr-empty"><span aria-hidden="true">⊕</span><h2>{t('crosshair.empty.title')}</h2><p>{t('crosshair.empty.body')}</p></div> : null}
         </section>
       </> : null}

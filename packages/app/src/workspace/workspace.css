@@ -129,3 +129,8 @@
 .ws-report-preview { margin:6px 0 0; padding:10px; max-height:220px; overflow:auto; white-space:pre-wrap; word-break:break-word; font:12px var(--ki-mono-font); border:1px solid var(--ki-line); border-radius:var(--ws-radius-row); background:var(--ws-sidebar); color:var(--ki-text) }
 .ws-report-result { margin:0; font-size:15px; font-weight:600 }
 .ws-report-number { margin:0; font:13px var(--ki-mono-font); color:var(--ki-text) }
+
+/* The line under a section's list that opens aimloom.dev's explorer (spec 2026-09-22 §7). */
+.profiles-app .ws-explore-link { display: flex; justify-content: flex-end; margin: 8px 0 0; }
+.profiles-app .ws-explore-link button { background: none; border: 0; padding: 2px 0; font: inherit; font-size: 13px; font-weight: 500; color: var(--ki-text); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.profiles-app .ws-explore-link button span { color: var(--ki-muted); text-decoration: none; }

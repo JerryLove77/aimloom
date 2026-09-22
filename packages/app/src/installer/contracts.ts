@@ -6,6 +6,9 @@ export type Outcome = 'completed'|'no-change'|'rolled-back'|'recovery-required'|
 export type ErrorCode = 'INVALID_PATH'|'INVALID_PACK'|'GAME_RUNNING'|'GAME_STATE_UNKNOWN'|
   'PLAN_STALE'|'PLAN_MISSING'|'BACKUP_INVALID'|'CONFLICT'|'UNOWNED_FILE'|
   'RECOVERY_REQUIRED'|'BUSY'|'UNSUPPORTED_PLATFORM'|'WORKER_UNAVAILABLE'|'ENGINE_ERROR'
+/** The explorer's tabs on aimloom.dev that the App links to (spec 2026-09-22 §7). */
+export type ExploreKind = 'theme' | 'sound' | 'crosshair'
+
 export interface Issue { code: ErrorCode; message: string; messageEn: string; path: string|null }
 export interface Location {
   gameRoot: string; backupRoot: string; gameState: GameState
@@ -164,6 +167,8 @@ export interface InstallerBridge {
   openLogs(): Promise<void>
   /** Takes only the language and channel: the App builds the address, never the UI. */
   openDownload(lang: Lang, channel: 'stable' | 'beta'): Promise<void>
+  /** Opens aimloom.dev's explorer on one kind's tab. Takes only the language and kind: the App builds the address. */
+  openExplore(lang: Lang, kind: ExploreKind): Promise<void>
   /**
    * Best effort: opens `steam://rungameid/824270`, exactly the way `openDownload` opens a fixed
    * address, with no target from the UI. Resolves once the launch was *issued*, never once the

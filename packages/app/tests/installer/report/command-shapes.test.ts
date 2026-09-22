@@ -36,4 +36,7 @@ describe('what each native command answers has one shape, on both sides', () => 
   it('installer_launch_game answers with nothing, on both sides', async () => {
     expect(await bridge.launchGame()).toBeUndefined()
   })
+  it('installer_open_explore answers with nothing, on both sides', async () => {
+    expect(await bridge.openExplore('zh', 'theme')).toBeUndefined()
+  })
 })

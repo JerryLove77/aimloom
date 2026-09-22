@@ -106,7 +106,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
   return <WorkspaceStatus.Provider value={{ profileUnsaved }}>
     <SettingsState.Provider value={{
       anchor, open: (a: HTMLElement) => { setAnchor(a); setEverOpened(true) }, close: () => { const a = anchor; setAnchor(null); a?.focus() },
-      storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge),
+      storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge), openExplore: bridge.openExplore.bind(bridge),
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
       <ProfilesApp bridge={profileBridge} assets={assetBridge} locate={bridge} isDemo={isDemo} isActive={!installer && section === 'profile'} onSelectSection={setSection} onOpenInstaller={open} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />

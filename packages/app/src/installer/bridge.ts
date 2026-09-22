@@ -30,7 +30,7 @@ export function createNativeBridge():InstallerBridge {
     pickFolder:(kind,lang)=>call('installer_pick_folder',{kind,lang}),pickFile:(kind,lang)=>call('installer_pick_file',{kind,lang}),openBackup:gameRoot=>call('installer_open_backup',{gameRoot}),
     reportPreview:input=>call('installer_report_preview',{input}),reportSend:sha256=>call('installer_report_send',{sha256}),
     accountResolve:url=>call('installer_account_resolve',{url}),updateCheck:beta=>call('installer_update_check',{beta}),
-    openLogs:()=>call('installer_open_logs'),openDownload:(lang,channel)=>call('installer_open_download',{lang,channel}),
+    openLogs:()=>call('installer_open_logs'),openDownload:(lang,channel)=>call('installer_open_download',{lang,channel}),openExplore:(lang,kind)=>call('installer_open_explore',{lang,kind}),
     launchGame:()=>call('installer_launch_game'),
     appInfo:()=>call('installer_app_info'),
   }

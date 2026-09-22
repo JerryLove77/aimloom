@@ -141,7 +141,7 @@ React  packages/app/src/installer/
   controller.ts   single owner of every state transition; pages/ are presentation only
   bridge.ts       @tauri-apps/api invoke      demo-bridge.ts   browser fake, no filesystem
         │  8 engine commands: installer_read / _profile / _execute / _job / _reconcile / _pick_folder / _pick_file / _open_backup
-        │  + 8 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _launch_game / _app_info
+        │  + 9 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info
 Rust   packages/app/src-tauri/src/installer/
   commands.rs     validates every op in AND out; owns plan→gameRoot ownership and operationId idempotency
   worker.rs       spawns ONE pwsh 7 child; JSONL over stdin/stdout, v=1, 16 MiB line cap
