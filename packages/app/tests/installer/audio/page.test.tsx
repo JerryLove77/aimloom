@@ -75,7 +75,7 @@ describe('Audio page', () => {
     expect(screen.getByRole('button', { name: /^生成音效/ }).querySelector('.au-tab-dot')).toBeNull()
   })
 
-  it('picking a sound row marks the event 待应用; 取消更改 restores the binding', async () => {
+  it('picking a sound row marks the event 待应用; 退出 restores the binding', async () => {
     const f = fixtures()
     render(tree(f))
     const row = await screen.findByRole('button', { name: '用 hit' })
@@ -88,7 +88,7 @@ describe('Audio page', () => {
     expect(row).toHaveTextContent('已选，未应用')
     const apply = screen.getByRole('button', { name: '应用音效' })
     expect(apply).toBeEnabled()
-    fireEvent.click(screen.getByRole('button', { name: '取消更改' }))
+    fireEvent.click(screen.getByRole('button', { name: '退出' }))
     expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('待应用无')
     expect(apply).toBeDisabled()
     expect(f.plans).toEqual([])

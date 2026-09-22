@@ -74,7 +74,7 @@ describe('enemy controller', () => {
     expect(await controller.apply()).toBe(false)
   })
 
-  it('取消更改 discards only the active shape\'s pending pick', async () => {
+  it('退出 discards only the active shape\'s pending pick', async () => {
     const controller = createEnemyController(bridge())
     await controller.load()
     controller.open(skins[1]!) // Ghost, pending for cylindrical
