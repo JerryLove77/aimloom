@@ -307,6 +307,10 @@ UTF-16LE. The refusal prints only the rule and a hit count, never the matched te
 `docs/v0.1.x-design.md` the original product scope. `DESIGN.md` is the installer's visual and token
 contract, and `ROADMAP.md` is the schedule.
 
+The README exists in two languages, following the user's choice: `README.md` is Simplified Chinese
+(GitHub's default page) and `docs/README_EN.md` is English, each linking to the other on its
+language line. They say the same things; change both in the same commit.
+
 This project is strict about evidence: a claim separates what was *actually observed* from what is
 still pending, and the README never advertises unshipped capability. "Fixture tests pass" is not
 "works in the real game"; "installed the file" is not "the game displays or plays it".
