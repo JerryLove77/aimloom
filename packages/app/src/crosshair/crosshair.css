@@ -24,6 +24,21 @@
 .cx-single .ws-tile-thumb, .cx-single .cx-compare-image { width: 100%; height: 200px; object-fit: contain; image-rendering: pixelated; background: transparent; }
 .cx-single > .cx-compare-image { border-radius: var(--ws-radius-tile); background: #1f1f22; color: #e5e5e5; font-size: 13px; }
 
+/* CUR-C2 fine-tune section inside the paste-a-code sheet. */
+.cx-tune-swatches { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+.cx-tune-swatch { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 10px; border-radius: var(--ws-radius-tile); font-size: 12px; }
+.cx-tune-swatch img { width: 100%; height: 120px; object-fit: contain; image-rendering: pixelated; }
+.cx-tune-swatch-dark { background: #1a1a1c; color: #e5e5e5; }
+.cx-tune-swatch-light { background: #f2f2f2; color: #1a1a1c; border: 1px solid var(--ki-line); }
+.cx-tune { border: 1px solid var(--ki-line); border-radius: var(--ws-radius-panel); padding: 12px 14px; margin: 12px 0; display: flex; flex-direction: column; gap: 8px; }
+.cx-tune-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cx-tune-head h3 { margin: 0; font-size: 14px; }
+.cx-tune-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.cx-tune-controls { display: flex; align-items: center; gap: 8px; flex: 1; justify-content: flex-end; }
+.cx-tune-slider input[type="range"] { flex: 1; max-width: 160px; }
+.cx-tune-value { min-width: 3ch; text-align: right; color: var(--ki-secondary); font-variant-numeric: tabular-nums; }
+.cx-tune-color input { width: 110px; font-family: var(--ki-mono-font); text-transform: uppercase; }
+
 /* The two ways in: large cards that lead the page. */
 .cx-entries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
 .cx-entry { display: flex; align-items: center; gap: 14px; padding: 18px 20px; text-align: left; background: var(--ki-surface); border: 1px solid var(--ki-line); border-radius: var(--ws-radius-panel); color: var(--ki-text); font: 14px var(--ki-body-font); cursor: pointer; transition: background var(--ki-motion), border-color var(--ki-motion); }

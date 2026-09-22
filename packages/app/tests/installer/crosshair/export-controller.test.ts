@@ -55,6 +55,81 @@ describe('crosshair code rendering', () => {
   })
 })
 
+describe('fine-tune (CUR-C2)', () => {
+  it('exposes CS2 parameters and their values once previewed, and changing one updates the preview', async () => {
+    const controller = createCrosshairExportController(bridge(), 'D:/Game')
+    controller.setCode(CS2)
+    await controller.preview()
+    const before = controller.getState()
+    expect(before.game).toBe('cs2')
+    expect(before.params.some(p => p.id === 'length')).toBe(true)
+    expect(before.tuned).toBe(false)
+    const pngBefore = before.pngBase64
+    controller.setTune('length', 9)
+    const after = controller.getState()
+    expect(after.values.length).toBe(9)
+    expect(after.tuned).toBe(true)
+    expect(after.pngBase64).not.toBeNull()
+    expect(after.pngBase64).not.toBe(pngBefore)
+  })
+
+  it('exposes VALORANT primary parameters', async () => {
+    const controller = createCrosshairExportController(bridge(), 'D:/Game')
+    controller.setCode(VALORANT)
+    await controller.preview()
+    const state = controller.getState()
+    expect(state.game).toBe('valorant')
+    expect(state.params.some(p => p.id === 'inner.length')).toBe(true)
+    expect(state.params.some(p => p.id === 'outer.offset')).toBe(true)
+  })
+
+  it('reset restores every control and the render to the pasted code', async () => {
+    const controller = createCrosshairExportController(bridge(), 'D:/Game')
+    controller.setCode(CS2)
+    await controller.preview()
+    const originalPng = controller.getState().pngBase64
+    controller.setTune('length', 9)
+    controller.setTune('color', 3)
+    expect(controller.getState().tuned).toBe(true)
+    controller.resetTune()
+    const state = controller.getState()
+    expect(state.tuned).toBe(false)
+    expect(state.pngBase64).toBe(originalPng)
+  })
+
+  it('the code text itself is never changed by tuning', async () => {
+    const controller = createCrosshairExportController(bridge(), 'D:/Game')
+    controller.setCode(CS2)
+    await controller.preview()
+    controller.setTune('length', 2)
+    expect(controller.getState().code).toBe(CS2)
+  })
+
+  it('saveAs and the pngBase64 used for adding reflect the tuned bytes after a change', async () => {
+    const b = bridge()
+    const controller = createCrosshairExportController(b, 'D:/Game')
+    controller.setCode(CS2)
+    await controller.preview()
+    const untuned = controller.getState().pngBase64
+    controller.setTune('thickness', 5)
+    const tuned = controller.getState().pngBase64
+    expect(tuned).not.toBe(untuned)
+    await controller.saveAs('mine.png', 'zh')
+    expect(b.written[0]!.base64).toBe(tuned)
+  })
+
+  it('an edit to the code clears the tuning controls', async () => {
+    const controller = createCrosshairExportController(bridge(), 'D:/Game')
+    controller.setCode(CS2)
+    await controller.preview()
+    controller.setCode(`${CS2} `)
+    const state = controller.getState()
+    expect(state.game).toBeNull()
+    expect(state.params).toEqual([])
+    expect(state.values).toEqual({})
+  })
+})
+
 describe('saving the PNG somewhere else', () => {
   it('saveAs picks a folder, then exports once under the given name', async () => {
     const b = bridge()
