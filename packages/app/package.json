@@ -1,0 +1,33 @@
+{
+  "name": "@kvk/app",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "npm run dev:installer",
+    "build": "npm run build:installer",
+    "typecheck": "tsc --noEmit",
+    "dev:installer": "vite --mode installer --host 127.0.0.1",
+    "build:installer": "vite build --mode installer",
+    "dev:installer:app": "node scripts/installer-native.mjs dev",
+    "build:installer:app": "node scripts/installer-native.mjs build",
+    "build:installer:windows": "node scripts/installer-native.mjs build"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "2.11.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.4",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.7",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@vitejs/plugin-react": "5.2.0",
+    "jsdom": "30.0.1",
+    "typescript": "^5.5.0",
+    "vite": "7.3.6"
+  }
+}

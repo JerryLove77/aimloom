@@ -1,0 +1,33 @@
+/* Audio current-configuration page: the six events on the left, the selected one on the right. */
+/* The six events as one row of tabs above a full-width editor. */
+.au-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px }
+.au-tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--ki-surface); border: 1px solid var(--ki-line); border-radius: var(--ws-radius-pill); color: var(--ki-text); font: 600 13px var(--ki-body-font); white-space: nowrap; cursor: pointer; transition: background var(--ki-motion) }
+.au-tab:hover:not(:disabled) { background: var(--ws-hover) }
+.au-tab[aria-pressed="true"] { background: var(--ws-selected); border-color: var(--ki-accent); box-shadow: inset 0 0 0 1px var(--ki-accent); color: var(--ws-accent-text) }
+.au-tab:disabled { cursor: not-allowed; opacity: .55 }
+/* A pending edit on that event. The words are in the tab's accessible name. */
+.au-tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ki-accent) }
+.au-editor { position: static }
+.au-draft { background: var(--ws-sidebar); border-radius:var(--ws-radius-tile); padding: 8px 10px; display: flex; flex-direction: column; gap: 2px }
+.au-draft-head, .au-draft-row { display: flex; align-items: center; gap: 4px; min-height: 28px }
+.au-draft-head strong, .au-draft-row > span { flex: 1 }
+.au-sounds { display: flex; flex-direction: column }
+.au-sound { display: flex; align-items: center; gap: 8px; padding: 2px 6px 2px 4px; border-radius:var(--ws-radius-row) }
+.au-sound > .au-sound-copy { padding: 6px }
+/* The row itself is the control: one click means "use this sound". */
+.au-pick { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 6px; text-align: left; background: transparent; border: 1px solid transparent; border-radius:var(--ws-radius-row); color: var(--ki-text); font: 13px var(--ki-body-font); cursor: pointer; transition: background var(--ki-motion) }
+.au-pick:hover:not(:disabled) { background: var(--ws-hover) }
+.au-pick[aria-pressed="true"] { background: var(--ws-selected); border-color: var(--ki-accent) }
+.au-pick:disabled { cursor: not-allowed; opacity: .55 }
+.au-toolbar { display: flex; align-items: center; gap: 8px }
+.au-toolbar .pr-search { flex: 1; max-width: none }
+.au-advanced { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: transparent; border: 0; border-radius:var(--ws-radius-row); color: var(--ws-accent-text); font: 13px var(--ki-body-font); cursor: pointer }
+.au-advanced:hover:not(:disabled) { background: var(--ws-hover) }
+.au-advanced:disabled { cursor: default; color: var(--ki-secondary) }
+.au-sound-playing { background: var(--ws-sidebar) }
+.au-sound-copy { flex: 1; display: flex; flex-direction: column; min-width: 0 }
+.au-sound-copy small { font-size: 12px; color: var(--ki-secondary) }
+/* Sound names are file names: long, and often without a single space. */
+.au-sound-copy strong, .au-sound-copy small { overflow-wrap: anywhere }
+.au-pick .ws-tag, .au-sound > .ws-tag { flex: none }
+.au-import-audition { display:flex; align-items:center; gap:10px; flex-wrap:wrap }

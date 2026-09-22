@@ -1,0 +1,60 @@
+{
+	"themeName": "Legacy Sample",
+	"wallMaterial": "CONCRETE",
+	"wallRoughness": 1,
+	"wallMetallic": 1,
+	"wallFullBright": 0.2,
+	"wallTint":
+	{
+		"x": 0.1,
+		"y": 0.1,
+		"z": 0.1
+	},
+	"floorMaterial": "CONCRETE",
+	"floorRoughness": 1,
+	"floorMetallic": 1,
+	"floorFullBright": 0,
+	"floorTint":
+	{
+		"x": 0.1,
+		"y": 0.1,
+		"z": 0.1
+	},
+	"overrideEnemyHeadColor": true,
+	"overrideEnemyBodyColor": true,
+	"setEnemyBodyColorAsAttackColor": false,
+	"enemyColorRoughness": 0.6,
+	"enemyColorMetallic": 1,
+	"enemyColorFullBright": 0.6,
+	"enemyHeadColor":
+	{
+		"x": 1,
+		"y": 0.17,
+		"z": 0.17
+	},
+	"enemyBodyColor":
+	{
+		"x": 1,
+		"y": 1,
+		"z": 1
+	},
+	"skyPresetId": 1,
+	"cloudCoverId": 3,
+	"solidSkyColor": false,
+	"sunVisible": true,
+	"skyColor":
+	{
+		"b": 127,
+		"g": 127,
+		"r": 127,
+		"a": 255
+	},
+	"teamGlowUpHead": 1,
+	"teamGlowUpBody": 1,
+	"enemyGlowUpHead": 1,
+	"enemyGlowUpBody": 1,
+	"enemyGlowUpHeadOnHit": 1,
+	"enemyGlowUpBodyOnHit": 1,
+	"enemyGlowUpHeadOnLookAt": 1,
+	"enemyGlowUpBodyOnLookAt": 1
+}

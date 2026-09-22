@@ -1,0 +1,45 @@
+# Allowlist the Linux browser-development and TypeScript-test inputs.
+**
+!package.json
+!package-lock.json
+!THIRD_PARTY_NOTICES.md
+!vitest.config.ts
+!packages/
+!packages/app/
+!packages/app/package.json
+!packages/app/tsconfig.json
+!packages/app/vite.config.ts
+!packages/app/installer.html
+!packages/app/src/
+!packages/app/src/**
+!packages/app/scripts/
+!packages/app/scripts/**
+!packages/app/tests/
+!packages/app/tests/**
+!packages/core/
+!packages/core/**
+!packages/crosshair/
+!packages/crosshair/**
+!KVK Settings 2025/
+!KVK Settings 2025/Themes/
+!KVK Settings 2025/Themes/**
+!KVK Settings 2025/PrimaryUserSettings.json
+!KVK Settings 2025/UI.json
+!KVK Settings 2025/Palette.ini
+!KVK Settings 2025/readme.txt
+
+# Never let nested host dependencies, outputs or local credentials enter an image.
+**/node_modules
+**/dist
+**/dist-installer
+**/target
+**/*.tsbuildinfo
+**/.DS_Store
+**/.git
+**/.codex
+**/.agents
+**/.env
+**/.env.*
+**/.npmrc
+**/*.pem
+**/*.key

@@ -1,0 +1,259 @@
+# Aimloom roadmap
+
+Updated 2026-09-22. This is the repository-wide scheduling entry point.
+[Shared workspace design](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
+is the product authority. The website is designed in
+[the website and explorer spec](docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md).
+
+## Product position (user, 2026-09-22)
+
+Aimloom's core is three things: **pasting CS2 / VALORANT crosshair codes into KovaaK, managing
+the game's files more directly than the game does, and combining them into Profiles.** Each has a
+known weakness today, and the versions below are ordered by them: no crosshair tuning; no search
+on Theme and Sounds; and nothing can switch while the game runs.
+
+The last one is a boundary, not a defect. The game reads `PrimaryUserSettings.json` when it
+starts, keeps the settings in memory, and **rewrites the whole file when it exits** (seen on the
+tester's PC on 2026-09-21: a skin applied while the game ran was gone after it quit). Only the game
+can change what is in its memory, so Aimloom will never switch a theme, sound or skin as fast as
+the game's own menus. **Aimloom changes the game before it starts, and does what the game cannot.**
+It does not try to change a running game. Consequences:
+
+- Theme, Sounds, Enemy and Profile apply require the game closed, at preview and at write.
+- Crosshair and file adds may run while the game is open: they only place files.
+- The way to change a whole setup quickly is to launch the game from a Profile (PF-LAUNCH).
+
+The App has five sections, named **Profile, Theme, Sounds, Crosshair, Enemy** where a player sees
+them (Enemy look in English) while the code keeps `scheme` / `audio`. Profile manages reusable
+combinations (Theme and Sounds); each other section manages one part of the game's current
+configuration. Quick import (一键拖入; code and routes keep `installer`) stays a utility outside
+the five.
+
+- **Profiles.** One JSON file per Profile holding {name, path} records; audio keeps records per
+  event. Profile Save writes JSON, never the game; 应用 applies the saved JSON as one batch.
+- **Game writes.** Every game write goes through the PowerShell engine: backup first, a
+  recoverable transaction, never overwriting unowned files.
+- **Adding files.** Files can be added from outside the App (picker or drag-and-drop) and are
+  copied byte for byte.
+
+## Released
+
+- **v0.1.1** (2026-09-19): the first Aimloom App — [soft-launch note](docs/superpowers/notes/2026-09-19-windows-soft-launch-test.md).
+- **v0.1.2** (2026-09-20): the App in English with a Settings popover, and the Setup —
+  [English App note](docs/superpowers/notes/2026-09-19-english-app-verification.md),
+  [Setup note](docs/superpowers/notes/2026-09-20-setup-windows-verification.md).
+
+## v0.1.3 — built, unreleased (`feature/v013-app`, test build `0.1.3-test.8`)
+
+Spec: [reports, account, updates](docs/superpowers/specs/2026-09-20-aimloom-reports-account-updates-design.md);
+plans (a) [backend and site](docs/superpowers/plans/2026-09-20-v013-backend-and-site.md) — live
+since 2026-09-21 — and (b) [the App](docs/superpowers/plans/2026-09-21-v013-app.md); evidence in
+[the verification note](docs/superpowers/notes/2026-09-21-v013-app-verification.md).
+
+What it ships:
+- in-App bug reports with a preview of exactly what is sent (REPORT, FEEDBACK-APP), an optional
+  Steam account (ACCOUNT), and a launch update check — the App's first network use, one origin;
+- **applying a saved Profile** (PF3), and 「保持当前 · name」 showing what is kept;
+- **Enemy = the game's Skin Browser** (CUR-E2), and Profile no longer manages the enemy;
+- **the game-closed rule for settings writes**, and Apply about ten times faster;
+- the installer page renamed 一键拖入 / Quick import; Steam-aware game discovery; older themes
+  apply (CUR-S1 closed).
+
+Remaining, each on the user's word, in this order:
+1. ~~`test.8` on the screen~~ — seen 2026-09-22: speed acceptable, Apply refuses with the game open.
+2. The site: ~~deploy the corrected Privacy page~~ — deployed 2026-09-22 (version
+   `77a42fd3`; only the two Privacy pages changed, downloads byte-identical). Still with the
+   release: 安装与恢复 → 一键拖入, `releases.json` and `latest.json` pointed at 0.1.3.
+3. Release: build the ZIP and the Setup **once** on the tester's PC (the Setup is not
+   reproducible), the user accepts them, GitHub release, docs, branch deleted.
+
+LOG and UNK (below) were meant for 0.1.3 and are not fixed; they move to 0.1.4 unless the user
+wants them first.
+
+## v0.1.4 — the App core (decided 2026-09-22)
+
+| ID | Deliverable | Status / next evidence |
+|---|---|---|
+| BETA | **A beta channel**, so beta testers and release users are told apart (user, 2026-09-22). Versions like `0.1.4-beta.1`; a channel-aware update check (a beta build is offered beta updates, a release build never is); a visible Beta mark in the title and Settings; reports tagged with the channel so beta feedback is separable; **the player opts in from Settings, as on Steam** (user, 2026-09-22): a 「参与 Beta 测试」 switch makes the update check follow the beta line and its download button open the beta package; off, it follows the release line and offers the way back once a newer release exists. The App has no auto-update, so installing stays a manual download either way. The build itself carries its channel (`VERSION.txt`), and the Beta mark and report tag follow the build, not the switch. The site's Download page lists the beta package as a secondary link; no separate beta page. Same app id, same data folder: beta and release share Profiles and backups, and a beta install upgrades to the release in place. What exists already: `package-test-build.ps1 -Channel test`, `VERSION.txt` shown in Settings, `latest.json`, the version label on reports | Not designed. Needs a short spec: the `latest.json` shape (a `beta` entry or a second file), site copy, Setup behaviour. **First item of 0.1.4**, so everything below reaches testers as `0.1.4-beta.N` |
+| SEARCH | Search boxes on Theme and Sounds (Crosshair and Profile already have one; the `pr-search` pattern in `packages/app/src/crosshair/CrosshairPage.tsx`) | Small; 31 themes on the tester's PC made the lack hurt |
+| PF-ADD | Profile's 「更改」 sheet gets "add from my computer", reusing `planFileAdd` ([HANDOFF](HANDOFF.md) Entry 2b) | Approved 2026-09-20, never built |
+| PF-LAUNCH | **「用这个 Profile 启动游戏」 / "Start the game with this Profile".** Game closed → apply the Profile (the existing `planProfileApply`) → start KovaaK through Steam (`steam://rungameid/824270`). Game open → says to quit first. Steam not running → applies and tells the player to start the game | Chosen over RESTART on 2026-09-22. Needs a small spec: how Rust issues the launch, what "applied" waits for, wording |
+| CUR-C2 | **Crosshair tuner.** Paste a CS2 / VALORANT code → sliders for what that game exposes (length, thickness, gap, outline, colour, centre dot, alpha) → live preview on a dark and a light swatch → save as a new PNG through the existing add path. **No export back to a code, no drawing from a blank canvas** (user, 2026-09-22). See the notes after this table | Figma first. **Evidence first:** does the game list a PNG added while it runs? Never observed |
+| PF-CARDS | Profile cards in the Crosshair X layout ([HANDOFF](HANDOFF.md) Entry 2c): chip, preview filling the card, name at the bottom; two cards now (Theme, Sounds) | Figma first, in the same pass as CUR-C2 |
+| LOG | `worker.log` keeps the worker's stderr in the console code page (GBK on a Chinese Windows) | Observed 2026-09-19 |
+| UNK | Two plain `throw`s in `Invoke-KvkInstall` (a lock failure, an unfinished batch) happen before any write but surface as `unknown` | Code reading; not observed in use |
+| PF4 | A → B → A → undo acceptance pass across Theme, Sounds, Enemy and Profile on the real game | Possible now that settings writes require the game closed |
+
+Order inside 0.1.4: BETA → SEARCH + PF-ADD + LOG + UNK (small; one beta build) → PF-LAUNCH →
+CUR-C2 with PF-CARDS → PF4 → release.
+
+**CUR-C2 — how it can be built:**
+- `packages/crosshair` already parses both games' codes into a model and renders a PNG. The
+  tuner exposes that model as controls with a live preview, then 添加到游戏 through the existing
+  add path, so a tuned crosshair is an ordinary PNG in `crosshairs\`.
+- Each game gets its own parameter set, named as that game names them; a VALORANT code and a
+  CS2 code do not share a panel.
+- Out of scope: exporting the result as a code, and starting without a code.
+- To settle in design: how closely the render matches each game, and what "reset to the pasted
+  code" does.
+
+## v0.1.5 — the website explorer (EXP)
+
+Curated backgrounds, sounds and crosshairs to download from aimloom.dev. Designed and planned
+([Phase 2 plan](docs/superpowers/plans/2026-09-18-website-phase-2.md)); simplified on 2026-09-19;
+moved behind the App core on 2026-09-22 (user: 「网页探索页放在0.1.5」).
+
+- **A download is the raw file.** The player drags it into the matching Aimloom section, or
+  copies it into the game folder and presses 刷新 — both supported since v0.1.1. There is no ZIP
+  manifest and no App import entry.
+- Before any code: amend the spec and the plan (they still carry the manifest task), then draw
+  the explorer's Figma frames.
+- Infrastructure is D1 for metadata and R2 for files, curated only, with a maintainer-only
+  publish command; the Worker already serves `/api/*`.
+- Content kinds to settle in the amended spec: themes, sounds, crosshairs (the PNG and its code),
+  and whether a Profile JSON is worth sharing. Enemy looks are gone: skins are the game's own.
+- **No sign-in and no uploads.** A verified Steam sign-in is built only with uploads (user,
+  2026-09-20), and uploads are not in 0.1.5.
+
+## After v0.1.5
+
+| ID | Deliverable | Status |
+|---|---|---|
+| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; ordered after the website explorer on 2026-09-22 (user: 「app探索页放在0.1.5后面」); not designed |
+| INSTALL-REDESIGN | **Quick import redesigned**, landing with APP-NAV — see the notes after this table | Decided by the user 2026-09-21; not designed |
+| UPLOAD | Community uploads to the explorer, with the verified Steam sign-in that only this needs, and moderation | Only if wanted; the catalogue design recorded what it brings back (submission and report tables, identity, moderation) |
+
+**APP-NAV — the shell the user described (2026-09-21):**
+- The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
+  a player changes about their own game) and **探索 / Explore** (what a player gets from
+  elsewhere).
+- **Quick import moves onto the Explore page.** It belongs with getting content from outside, not
+  beside the editors — which is also why its own redesign (below) comes with this move, not
+  before it.
+- **The website's explorer ships first.** The App's Explore page follows its design, so the
+  catalog and its shape are settled on the web before the App renders them.
+- Open, to decide when this is designed: whether the App's Explore reads the same catalog as the
+  website and downloads in place, or opens the site; and whether Profile (组合管理) sits under
+  更改配置 or stays its own thing. Neither was stated, so neither should be assumed.
+- This supersedes the flat five-section navigation that CLAUDE.md and the 2026-09-15
+  repository-wide design describe. **Those say five sections today and are still correct today;**
+  update them when APP-NAV lands, not before.
+
+**INSTALL-REDESIGN — Quick import gets redesigned (user, 2026-09-21):**
+- The user's direction, verbatim: 「安装与恢复要改个名，叫一键加载之类的，而且不要让用户选择很多就是
+  拖文件进来，然后我们提前设好备份，不让用户选来选去很麻烦」.
+- **Renamed on 2026-09-21: 一键拖入 / "Quick import".** The user's reason: 安装与恢复 read as
+  installing and restoring *Aimloom itself*. The Chinese is the user's; the English is a first
+  choice that nobody has reviewed. The page behind the name is still the old wizard — the
+  drag-in redesign below has not started — so for now the name promises more than the page does.
+  The website keeps 安装与恢复 until v0.1.3 is released, because it describes v0.1.2.
+- **Drag files in; stop asking.** Today the page makes the player find a pack folder, read a
+  catalog of categories with counts, tick the ones they want, then review a preview. The new
+  shape is: drop the files, we work out what they are, done.
+- **The backup is arranged ahead of time, and never a question.** The engine already does this —
+  per-path first-protection (首次保护状态, permanent) plus a per-batch install backup — so this
+  is about removing it from the player's attention, not about building it.
+- **A dropped file whose target already exists is NOT added, and the player is told** (user,
+  2026-09-21). This is what `planFileAdd` already does, so no invariant has to give: nothing is
+  overwritten, nothing is auto-renamed, and the player finds out rather than wondering. The
+  design work is the wording and where the notice sits, not the rule.
+- **Restore becomes its own one-click action** (user, 2026-09-21): 一件恢复, with each backup
+  shown under a time-stamped name, and **the player picks which one**. Restore keeps a choice
+  precisely because it is the one thing in the App that deletes files — the engine's rules for
+  it are untouched, including the game-closed requirement and the unowned-file hard stop.
+- Still to answer when it is designed: *many files at once.* Dropping a folder means many plans
+  or one new multi-file plan; the engine's batch is all-or-nothing, which is the right default
+  but has to be stated.
+- What must survive any redesign, because the engine and the tests enforce it: unowned files are
+  a hard stop even with conflict permission; install operations can never set `allowConflicts`;
+  an unfinished batch forces recovery before a new install; `unknown` is never success and
+  `installer_reconcile` is the only exit; and the game-closed requirement applies here (the
+  `-AllowRunningGame` exception is for file placements on the current-configuration pages,
+  never for install or restore).
+
+## Later
+
+| ID | Deliverable | Status |
+|---|---|---|
+| CUR-S2 | **AI-generated scenes for Theme** — describe the room you want and get a background theme | Not designed. See the notes after this table |
+| RESTART | 「应用并重启游戏」: with the game open, ask it to close normally (never a kill), wait for it to exit and write its settings, apply, then start it through Steam. Give up and write nothing if it has not exited in about 15 s | Designed in outline on 2026-09-22, then set aside for PF-LAUNCH the same day: a restart is not faster than switching in the game. **Before building:** the user must approve changing the rule "never force-close" to "a normal close request the player confirmed, never a kill". Do RELOAD-CHECK first |
+| RELOAD-CHECK | Does KovaaK re-read the settings file while it runs (e.g. when the Skin Browser opens)? If it does, some changes need no restart | Not tested; believed not |
+| CUSTOM-SKINS | Enemy skins from the player's own images | **Impossible unless the game is shown to load a skin from outside the pak.** See the notes after this table |
+| LOGO | A logo and wordmark that carry the name's weaving meaning: interlaced lines, or a crosshair drawn as woven threads | The user's direction, 2026-09-19; Figma first. The site footer already explains the name ("Aim + loom: …") |
+| PUB | Public source release | Deferred on 2026-09-19. The plan is AGPL-3.0, a clean history (no session links, a noreply author), CI and a secret scan. The method is chosen when it happens |
+| CHINA | Reaching players in mainland China | Answered 2026-09-21, nothing to build yet. See the notes after this table |
+| LW0–LW2 | Windows local-browser launcher and transport | Superseded in practice by the Tauri App; kept only for its [delivery plan](docs/superpowers/plans/2026-09-13-local-web-ui-delivery.md)'s access-control notes |
+
+**CUR-S2 — the boundary to settle first:**
+- The App is offline except for its three v0.1.3 calls to `aimloom.dev`, so where the model runs
+  is the first decision. The options:
+  - generation on the website, producing a theme `.json` the player drags in — the App stays as
+    it is;
+  - the App calling an AI service with the player's own key;
+  - a local model.
+- Whatever generates it, the output is an ordinary theme file that must pass `parseScheme` and
+  include the fields 应用背景 needs. It enters the game through the existing `planFileAdd`
+  path, with its duplicate-name refusal.
+- Needs a brainstorm and a spec before a plan.
+
+**CUSTOM-SKINS — what the surveys found ([research note](docs/research/kovaak-skin-browser.md)):**
+- 2026-09-19: the enemy settings hold colours, glow, outline and material only; no image folder
+  besides `crosshairs\`; scenarios reference built-in textures only.
+- 2026-09-21: the game's Skin Browser (Esc menu) offers per-shape skins. The choice is stored in
+  `PrimaryUserSettings.json` → `characterModelOverride.{Cylindrical,Cuboid,Spheroid}` →
+  `{characterModel, characterSkin}`. The skins themselves exist only inside the 6.9 GB pak: 15
+  rows in the DataTable `CharacterSkinPreviewViewModelDataTable`, 3 for every shape and 12
+  humanoid-only. No skin image is anywhere on disk. This is what CUR-E2 (done) chooses among.
+- The next evidence, if ever wanted: the game loading a texture or mesh from outside the pak
+  (a Workshop item, the map editor). Until then, nothing to build.
+
+**CHINA — answered 2026-09-21, nothing to build yet:**
+- The user asked whether Supabase or Vercel would help reach players in mainland China. **No.**
+  Supabase is AWS-hosted and reported unreachable from there; Vercel has no mainland point of
+  presence and `*.vercel.app` is DNS-poisoned with SNI blocking. Both converge on the same gate
+  as Cloudflare — an ICP filing plus an in-China delivery layer — so switching costs a migration
+  and buys nothing.
+- The App is offline-first and all three of its network calls degrade gracefully, and Steam
+  resolution is **server-side**, so a China player never needs `steamcommunity.com` (which is
+  blocked there) — only `aimloom.dev`. What a China player actually cannot do is **download
+  the App in the first place**, and later browse the explorer.
+- The order, when it is wanted: measure from a real China connection first (free), then mirror
+  the download with its SHA-256 published, then a fallback origin in the App (`ORIGIN` is one
+  const in `net.rs`), and only then an in-China deployment.
+- Full reasoning and verification steps: [mainland-China access](docs/superpowers/plans/2026-09-21-mainland-china-access.md).
+
+## Done
+
+| ID | Deliverable |
+|---|---|
+| PF1 / PF2 | Profiles: one JSON per Profile, library and editor with file previews |
+| PF3 | Applying a saved Profile: one batch, any missing file refuses everything (v0.1.3) |
+| KEEP-NAMES | 「保持当前 · name」: the library, the editor and the apply dialog name what is kept (v0.1.3) |
+| CUR-S / CUR-A / CUR-C / CUR-E | The four current-configuration pages. Audio picks by row, with event tabs; Crosshair is built around adding a code or a PNG |
+| CUR-S1 | Older themes that lack ceiling or ramp fields apply the fields they have (v0.1.3; 29 of 31 themes accepted, from 14) |
+| CUR-E2 | Enemy = the game's Skin Browser, per shape, from the game's own 15 skins; the colour feature and Profile's enemy slot removed (v0.1.3) |
+| GAME-CLOSED | Every writer of `PrimaryUserSettings.json` requires the game closed, at preview and at write; reading the backups went from 12 s to 2.4 s (v0.1.3) |
+| STEAM-DISCOVERY | The game is found through Steam's library list (registry + `libraryfolders.vdf`, app id 824270), not by guessing folders (v0.1.3) |
+| IMP | Adding themes, sounds and crosshairs from outside the app: picker and drag-and-drop, byte-for-byte, undoable |
+| NAME | The product is named Aimloom (the Chinese name was dropped on 2026-09-19); the data folder moved to `%LOCALAPPDATA%\Aimloom` without splitting data |
+| W1 / W2 | The bilingual product website, designed in Figma, serving the release |
+| A2 / release | v0.1.1: built on Windows from `main`, browser-download gate passed, released 2026-09-19 |
+| I18N | The App in English, with a Settings popover (Follow Windows / 中文 / English); engine, native and package messages carry both languages. Released in v0.1.2 |
+| SETUP | `Aimloom-Setup-v0.1.2.exe`: per-user install, refuses the data folder, offers PowerShell 7 with consent, upgrades in place; the ZIP stays as the portable download. Released in v0.1.2, 2026-09-20 |
+
+## Boundaries
+
+- Reuse the existing component implementations and the PowerShell backup/restore; no second
+  writer.
+- Preserve sensitivity, DPI, FOV, gameplay, unrelated components and original source assets.
+- Preview is read-only. Every game write keeps its checks, stale-source protection,
+  confirmation and honest recovery status.
+- **Aimloom does not try to change a running game.** Every writer of `PrimaryUserSettings.json`
+  requires the game closed; the running-game waiver (`-AllowRunningGame`) is only for writes that
+  place files — crosshair replace/add and theme/sound adds — and never for install or restore.
+- The App talks to one origin, `aimloom.dev`, for reports, the Steam account and the update
+  check, and degrades without it; anything beyond that is a visible design decision (see CUR-S2).
+- **No code-signing certificate** (user, 2026-09-20): Aimloom will not buy one. The SmartScreen prompt stays a
+  known issue, explained on the Download page and in the Guide; do not propose signing again.
+- Windows is the player target. Mac, browser and Docker are development and preview hosts.
+  Players need no Docker, WSL or Node.

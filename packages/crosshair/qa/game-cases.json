@@ -1,0 +1,62 @@
+[
+  {
+    "id": "simple-cross",
+    "title": "绿色基础十字",
+    "code": "0;s;1;P;c;1;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1b;0",
+    "provenance": {
+      "kind": "external-fixture",
+      "reference": "https://github.com/genesy/crosshair-codes/blob/ddb7aaae72fae7e3185f6043869e89f5716e5e1e/src/samplecrosshairs.ts#L20"
+    },
+    "inspect": "四条绿色线，中央留空，无描边；检查透明背景和居中。"
+  },
+  {
+    "id": "center-dot",
+    "title": "白色中心点",
+    "code": "0;P;h;0;d;1;z;2;a;1;f;0;0b;0;1b;0",
+    "provenance": {
+      "kind": "synthetic-calibration",
+      "reference": "Aimloom: explicit white 2x2 dot, lines disabled; not a source-game capture."
+    },
+    "inspect": "只有居中的白色小方点，没有四条线或不透明底框。"
+  },
+  {
+    "id": "outlined-cross",
+    "title": "青色描边十字",
+    "code": "0;P;c;5;h;1;t;1;o;1;f;0;0l;4;0o;2;0a;1;0f;0;1b;0",
+    "provenance": {
+      "kind": "synthetic-calibration",
+      "reference": "Aimloom: cyan cross with explicit opaque outline; not a source-game capture."
+    },
+    "inspect": "青色线条外侧有黑色描边；分别在较亮和较暗背景观察。"
+  },
+  {
+    "id": "half-alpha",
+    "title": "半透明粉色十字",
+    "code": "0;P;c;8;u;FF99FF80;b;1;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1b;0",
+    "provenance": {
+      "kind": "synthetic-calibration",
+      "reference": "Aimloom: custom RGBA FF99FF80; not a source-game capture."
+    },
+    "inspect": "线条 alpha 为 128/255；场景应透过线条可见，不应出现黑底。"
+  },
+  {
+    "id": "t-style",
+    "title": "CS2 T 型与中心点",
+    "code": "CSGO-Cn37R-YE7vo-pLCAL-aURmZ-z6zkG",
+    "provenance": {
+      "kind": "external-fixture",
+      "reference": "https://github.com/akiver/csgo-sharecode/blob/753f16fe97f9bbb121fb56675b40f035ad403d05/src/index.test.ts"
+    },
+    "inspect": "紫色左右、下方线和中心点，没有上方线；CS2 外观仍为静态近似。"
+  },
+  {
+    "id": "odd-thickness",
+    "title": "奇数粗细细线",
+    "code": "0;P;c;1;h;0;f;0;0t;1;0l;4;0o;2;0a;1;0f;0;1b;0",
+    "provenance": {
+      "kind": "synthetic-calibration",
+      "reference": "Aimloom: thickness 1 with the existing half-pixel raster policy; not a source-game capture."
+    },
+    "inspect": "记录细线边缘、模糊或不对称及实际游戏缩放；不据此直接声称原游戏像素一致。"
+  }
+]

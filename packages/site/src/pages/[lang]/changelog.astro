@@ -1,0 +1,36 @@
+---
+import Base from '../../layouts/Base.astro'
+import { LANGS, localizePath, t, type Lang } from '../../i18n'
+import { releases } from '../../data/releases'
+import { changelogEntries } from '../../lib/changelog-view'
+import { statusLabel } from '../../lib/download-view'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+const entries = changelogEntries(releases, lang)
+---
+<Base lang={lang} path="/changelog" title={t(lang, 'changelog.title')} description={t(lang, 'changelog.description')}>
+  <div class="page-header">
+    <h1>{t(lang, 'changelog.title')}</h1>
+    <p>{t(lang, 'changelog.description')}</p>
+  </div>
+
+  <div class="section stack">
+    {entries.map(e => (
+      <article id={`v${e.version}`} class="panel">
+        <div class="row">
+          <h2 style="font-size:28px">v{e.version}</h2>
+          <span class="status-tag">{e.released ? `${statusLabel(e.status, lang)} · ${e.date}` : t(lang, 'changelog.unreleased')}</span>
+        </div>
+        <h3 style="font-size:16px">{t(lang, 'changelog.improvements')}</h3>
+        <p class="muted">{e.notes}</p>
+        {e.knownIssues.length > 0 && (
+          <>
+            <h3 style="font-size:16px">{t(lang, 'changelog.known')}</h3>
+            <ul class="bullets">{e.knownIssues.map(k => <li>{k}</li>)}</ul>
+          </>
+        )}
+        {e.released && <p class="link-strong"><a href={localizePath(lang, '/download')}>{t(lang, 'changelog.download')}</a></p>}
+      </article>
+    ))}
+  </div>
+</Base>

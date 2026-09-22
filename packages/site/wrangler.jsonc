@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "aimloom-site",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-09-01",
+  "routes": [{ "pattern": "aimloom.dev", "custom_domain": true }],
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": ["/api/*"]
+  },
+  // `triggers` (and `observability`, below) are INHERITED by every environment — unlike bindings —
+  // so this is deliberately not repeated under `env.preview`; wrangler's own field table
+  // (wrangler-dist/cli.js, `triggers: inheritable(...)`) confirms it, and `deploy-config.test.ts` pins it.
+  // Deletes reports older than 180 days once a day, so the Privacy page's promise holds even in a week
+  // with no reports at all — the request-path DELETE in reports.ts only prunes when one arrives.
+  "triggers": { "crons": ["17 4 * * *"] },
+  // No Workers Logs retention: the Privacy page says no IP address is stored, and Workers Logs would
+  // capture request metadata (including it) if ever switched on. Also inherited; see the note above.
+  "observability": { "enabled": false },
+  "d1_databases": [
+    // Placeholder id: the real one lives in an untracked local file, never here (see README,
+    // "Deploying the Worker"). scripts/wrangler-config.mjs substitutes it into a generated,
+    // gitignored config at deploy time.
+    { "binding": "DB", "database_name": "aimloom", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
+  "send_email": [{ "name": "MAIL" }],
+  "ratelimits": [
+    { "name": "REPORT_LIMIT", "namespace_id": "2001", "simple": { "limit": 3, "period": 60 } },
+    { "name": "STEAM_LIMIT", "namespace_id": "2002", "simple": { "limit": 10, "period": 60 } }
+  ],
+  "env": {
+    "preview": {
+      "routes": [],
+      "observability": { "enabled": false },
+      "d1_databases": [
+        // Placeholder id: see the note on the production entry above.
+        { "binding": "DB", "database_name": "aimloom-preview", "database_id": "00000000-0000-0000-0000-000000000001", "migrations_dir": "migrations" }
+      ],
+      "send_email": [{ "name": "MAIL" }],
+      "ratelimits": [
+        { "name": "REPORT_LIMIT", "namespace_id": "2101", "simple": { "limit": 3, "period": 60 } },
+        { "name": "STEAM_LIMIT", "namespace_id": "2102", "simple": { "limit": 10, "period": 60 } }
+      ]
+    }
+  }
+}

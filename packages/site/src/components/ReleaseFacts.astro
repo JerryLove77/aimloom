@@ -1,0 +1,19 @@
+---
+import type { DownloadView } from '../lib/download-view'
+import { t, type Lang } from '../i18n'
+interface Props { lang: Lang; view: Extract<DownloadView, { kind: 'beta' | 'stable' }> }
+const { lang, view } = Astro.props
+---
+<dl class="facts">
+  <dt>{t(lang, 'download.facts.version')}</dt><dd>{view.version}</dd>
+  <dt>{t(lang, 'download.facts.date')}</dt><dd>{view.date}</dd>
+  <dt>{t(lang, view.setup !== null ? 'download.facts.setup' : 'download.facts.size')}</dt>
+  <dd>{view.setup !== null ? <>{view.setup.size} · SHA-256 <code>{view.setup.sha256}</code></> : view.size}</dd>
+  <dt>{t(lang, 'download.facts.platform')}</dt><dd>{view.platform}</dd>
+  <dt>{t(lang, 'download.facts.requires')}</dt><dd>{view.requires.join(' · ')}</dd>
+  <dt>{t(lang, view.setup !== null ? 'download.facts.zip' : 'download.facts.sha256')}</dt>
+  <dd>{view.setup !== null && <>{view.size} · SHA-256 </>}<code>{view.sha256}</code></dd>
+  <dt>{t(lang, view.setup !== null ? 'download.facts.contents.portable' : 'download.facts.contents')}</dt>
+  <dd><ul>{view.contents.map(c => <li><code>{c}</code></li>)}</ul></dd>
+</dl>
+{view.setup !== null && <p class="muted">{t(lang, 'download.portable.note')}</p>}

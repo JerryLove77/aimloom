@@ -1,0 +1,27 @@
+{
+  "name": "@kvk/crosshair",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts",
+    "./service": "./src/service.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "generate": "tsx cli/generate.ts",
+    "prepare:test-kit": "node --import tsx cli/prepare-test-kit.ts",
+    "prepare:pack": "node --import tsx cli/prepare-pack.ts"
+  },
+  "dependencies": { "pngjs": "7.0.0" },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/pngjs": "6.0.5",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

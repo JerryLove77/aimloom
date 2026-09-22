@@ -1,0 +1,29 @@
+---
+import { LANG_STORAGE_KEY } from '../i18n'
+import { zh } from '../i18n/zh'
+import { en } from '../i18n/en'
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aimloom</title>
+    <meta name="robots" content="noindex" />
+    <link rel="alternate" hreflang="zh-CN" href="/zh/" />
+    <link rel="alternate" hreflang="en" href="/en/" />
+    <noscript><meta http-equiv="refresh" content="0; url=/zh/" /></noscript>
+  </head>
+  <body>
+    <h1>{zh['chooser.title']}</h1>
+    <p><a href="/zh/" lang="zh-CN">{zh['chooser.zh']}</a> · <a href="/en/" lang="en">{en['chooser.en']}</a></p>
+    <script is:inline define:vars={{ key: LANG_STORAGE_KEY }}>
+      // Spec §2.1: explicit URL first (we are at the bare root, so none), then the saved
+      // choice, then the browser language.
+      let saved = null
+      try { saved = localStorage.getItem(key) } catch {}
+      const lang = saved === 'zh' || saved === 'en' ? saved : (/^zh\b/i.test(navigator.language) ? 'zh' : 'en')
+      location.replace('/' + lang + '/' + location.search + location.hash)
+    </script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+[package]
+name = "app"
+version = "0.1.3"
+description = "Aimloom - KovaaK configuration manager for Windows"
+edition = "2021"
+rust-version = "1.77.2"
+license = "AGPL-3.0-only"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[features]
+default = ["installer-ui"]
+installer-ui = []
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+tauri = { version = "2.11.5", features = [] }
+tauri-plugin-dialog = "2.7.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ureq = { version = "=3.2.1", default-features = false, features = ["rustls", "json"] }
+# Already in the tree transitively (via rustls' chain) at this exact version; pinned explicitly
+# because the report payload's SHA-256 (the preview-equals-sent guarantee) is a direct dependency
+# of this crate now, not an incidental transitive one.
+sha2 = "=0.10.9"

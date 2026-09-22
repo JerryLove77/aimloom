@@ -1,0 +1,11 @@
+/* Canonical runtime tokens for the isolated installer entry. DESIGN.md mirrors these. */
+/* :root too, so html/body (the ground behind the app) read the same --ki-bg. */
+:root, .kvk-installer {
+ /* The same colours as the workspace (workspace.css, .profiles-app); tests/installer/theme.test.tsx keeps them equal. */
+ --ki-bg:#F7F6F3; --ki-surface:#FFFFFF; --ki-raised:#FFFFFF; --ki-text:#111111; --ki-secondary:#6B6B6B; --ki-muted:#6B6B6B; --ki-line:#DEDAD2; --ki-control:#C4C0B8; --ki-accent:#FF8000; --ki-accent-hover:#EB7600; --ki-on-accent:#111111; --ki-focus:#A84F00; --ki-success:#1E6B43; --ki-warning:#7A5200; --ki-error:#B3261E;
+ /* Small text and icons: brand orange on white is about 2.5:1, this is about 5.5:1. The mark and the progress ring keep --ki-accent. */
+ --ki-accent-text:#A84F00;
+ --ki-body-font:'Microsoft YaHei UI','Microsoft YaHei','PingFang SC',system-ui,sans-serif; --ki-display-font:'Bahnschrift','Segoe UI',system-ui,sans-serif; --ki-mono-font:'Cascadia Mono','Consolas',ui-monospace,monospace;
+ --ki-radius:12px; --ki-control-radius:8px; --ki-motion:130ms; --ki-modal-shadow:0 1px 3px #00000014, 0 12px 32px #0000001f; --ki-overlay:#1111112e;
+ color-scheme:light;
+}

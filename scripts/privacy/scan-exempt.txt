@@ -1,0 +1,39 @@
+# Paths that scripts/privacy/denyscan.py's --staged/--tree modes skip, passed via --exempt.
+#
+# Found 2026-09-22 while wiring the pre-commit hook and CI privacy job: a blanket denylist
+# scan of every tracked file's full content collides with two kinds of content this
+# repository legitimately, permanently carries:
+#
+#   1. Private evidence and planning records (CHECKPOINT.md, HANDOFF.md,
+#      docs/superpowers/**, docs/design/**, docs/testing/**, docs/handoffs/**, promo/**,
+#      .superpowers/**, the real KVK Settings 2025/** corpus, scripts/public/** itself). All
+#      of these are excluded from every export by scripts/public/allow.txt's `!` rules, so a
+#      denylisted identifier inside them can never reach the public mirror -- the risk
+#      denyscan exists to catch simply does not apply to a path that can never be exported.
+#
+#   2. (removed 2026-09-22) packages/site/wrangler.jsonc and packages/site/README.md used to
+#      carry the real Cloudflare database ids and account subdomain, substituted away only at
+#      export time. Since 2026-09-22 wrangler.jsonc carries placeholder D1 database ids and
+#      README.md no longer names the subdomain; the real ids live in an untracked local file
+#      (~/.config/aimloom/site.json, read by packages/site/scripts/wrangler-config.mjs) that is
+#      never part of this repository. Both files now scan clean like any other tracked file.
+#
+# A denylisted string appearing anywhere else in the tree is still a hard stop. If a new
+# real identifier ever needs to live in one of these files, add it to the private denylist
+# as normal -- exemption is by path, not by value.
+
+# 1. never exported (see scripts/public/allow.txt's excludes). CLAUDE.md and ROADMAP.md are
+# also excluded, but they are meant to already read as if published (CLAUDE.md's own
+# Privacy section says so) and currently do -- deliberately left OFF this list so denyscan
+# still watches them.
+CHECKPOINT.md
+HANDOFF.md
+docs/superpowers/**
+docs/handoffs/**
+docs/testing/evidence/**
+docs/testing/**
+docs/design/**
+promo/**
+.superpowers/**
+KVK Settings 2025/**
+scripts/public/**

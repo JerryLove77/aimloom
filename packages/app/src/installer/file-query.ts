@@ -1,0 +1,4 @@
+import type { FileRow } from './contracts';
+export const FILE_PAGE_SIZE = 30;
+const order: Record<FileRow['action'], number> = { replace: 0, restore: 1, delete: 2, create: 3, skip: 4 };
+export function queryFiles(rows: FileRow[], query: string, changesOnly: boolean, page: number) { const q = query.trim().toLocaleLowerCase('zh-CN'); const matched = rows.filter(r => (!changesOnly || ['replace', 'restore', 'delete'].includes(r.action)) && (!q || `${r.target} ${r.source ?? ''}`.toLocaleLowerCase('zh-CN').includes(q))).sort((a, b) => order[a.action] - order[b.action] || a.target.localeCompare(b.target, 'zh-CN')); const pages = Math.max(1, Math.ceil(matched.length / FILE_PAGE_SIZE)); const safePage = Math.min(Math.max(1, page), pages); return { rows: matched.slice((safePage - 1) * FILE_PAGE_SIZE, safePage * FILE_PAGE_SIZE), total: matched.length, page: safePage, pages }; }

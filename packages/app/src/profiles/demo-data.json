@@ -1,0 +1,5 @@
+{
+  "profiles": { "daily": "日常跟枪", "focus": "专注练习" },
+  "schemes": { "blue": "蓝色训练室", "warm": "暖色训练室" },
+  "enemy": "演示敌人"
+}

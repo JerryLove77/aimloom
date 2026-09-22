@@ -1,0 +1,46 @@
+---
+import ReleaseFacts from './ReleaseFacts.astro'
+import { statusLabel, type DownloadView } from '../lib/download-view'
+import { localizePath, t, type Lang } from '../i18n'
+interface Props { lang: Lang; view: DownloadView; compact?: boolean }
+const { lang, view, compact = false } = Astro.props
+---
+{view.kind === 'none' && <p class="notice">{t(lang, 'download.preparing.title')}</p>}
+
+{view.kind === 'preparing' && compact && (
+  <div class="stack stack--tight" data-download-state="preparing">
+    <span class="status-tag">{statusLabel('preparing', lang)}</span>
+    <p class="notice">
+      <span class="mono">v{view.version} · {view.platform} · {view.requires.join(' · ')}</span><br />
+      {t(lang, 'download.preparing.title')}{lang === 'zh' ? '。' : '. '}{t(lang, 'download.preparing.links')}{' '}
+      <a href={localizePath(lang, '/guide')}>{t(lang, 'nav.guide')}</a>{' · '}<a href={localizePath(lang, '/changelog')}>{t(lang, 'nav.changelog')}</a>
+    </p>
+  </div>
+)}
+
+{view.kind === 'preparing' && !compact && (
+  <div class="panel" data-download-state="preparing">
+    <p class="row"><span class="status-tag">{statusLabel('preparing', lang)}</span><span class="mono">v{view.version} · {view.platform} · {view.requires.join(' · ')}</span></p>
+    <h3>{t(lang, 'download.preparing.title')}</h3>
+    <p class="muted">{t(lang, 'download.preparing.body')}</p>
+    <p>{t(lang, 'download.preparing.links')}</p>
+    <p class="row link-strong"><a href={localizePath(lang, '/guide')}>{t(lang, 'nav.guide')}</a><a href={localizePath(lang, '/changelog')}>{t(lang, 'nav.changelog')}</a></p>
+  </div>
+)}
+
+{(view.kind === 'beta' || view.kind === 'stable') && (
+  <div class={compact ? 'stack stack--tight' : 'panel'} data-download-state={view.kind}>
+    <span class="status-tag">{statusLabel(view.kind, lang)} · v{view.version}</span>
+    {view.kind === 'beta' && <p class="notice">{t(lang, 'download.beta.notice')}</p>}
+    <p class="row">
+      {view.setup !== null && <a class="button button--primary" href={view.setup.url} download>{t(lang, 'download.setup')}</a>}
+      {view.setup !== null && !compact && <a class="button button--secondary" href={view.primaryUrl} download>{t(lang, 'download.portable')}</a>}
+      {view.setup === null && <a class="button button--primary" href={view.primaryUrl} download>{t(lang, 'download.primary')}</a>}
+      {!compact && view.mirrorUrl !== null && <a class="button button--secondary" href={view.mirrorUrl}>{t(lang, 'download.mirror')}</a>}
+    </p>
+    {!compact && <ReleaseFacts lang={lang} view={view} />}
+    {!compact && view.knownIssues.length > 0 && (
+      <div class="stack stack--tight"><h3>{t(lang, 'download.known')}</h3><ul class="bullets">{view.knownIssues.map(k => <li>{k}</li>)}</ul></div>
+    )}
+  </div>
+)}

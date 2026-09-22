@@ -1,0 +1,127 @@
+# Continuous checks for every push and pull request. Read-only: no deploy, no release, no secrets.
+#
+# What this covers, and what it cannot: the three Vitest projects, both typechecks, the site's
+# Node and workerd suites, the Python packaging tests, the Rust suite on Linux and on Windows, and
+# the sixteen PowerShell suites on a real Windows with PowerShell 7 — the ones that could only run
+# on the tester's PC before. It does not build the Setup (built once, on the tester's PC), does not
+# run the suites that need an extracted release ZIP, and cannot observe the game.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_MANIFEST: packages/app/src-tauri/Cargo.toml
+
+jobs:
+  node:
+    name: Vitest, typecheck, site, Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # The jsdom suites die on localStorage under Node 26; 24 is the development host's version.
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run test:site
+      - run: python3 -m unittest discover -s scripts/installer/tests -p 'test_*.py'
+      - run: python3 -m unittest discover -s scripts/privacy -p 'test_*.py'
+
+  rust-linux:
+    name: Rust (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tauri's Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/app/src-tauri
+      - run: cargo test --manifest-path "$CARGO_MANIFEST" --features installer-ui
+
+  privacy:
+    name: Privacy scan (gitleaks + identifier denylist)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download and verify gitleaks
+        run: |
+          set -euo pipefail
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          asset="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSLO "$base/$asset"
+          curl -sSLO "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep " $asset\$" "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar -xzf "$asset" gitleaks
+          chmod +x gitleaks
+      - name: gitleaks over the full history
+        run: ./gitleaks git --redact --no-banner --exit-code 1
+      - name: Identifier denylist scan
+        env:
+          PRIVACY_DENYLIST: ${{ secrets.PRIVACY_DENYLIST }}
+        run: |
+          if [ -z "${PRIVACY_DENYLIST:-}" ]; then
+            echo "PRIVACY_DENYLIST not available; identifier scan skipped"
+            exit 0
+          fi
+          python3 scripts/privacy/denyscan.py --tree --denylist-env PRIVACY_DENYLIST \
+            --exempt scripts/privacy/scan-exempt.txt
+
+  windows:
+    name: PowerShell suites and Rust (Windows)
+    runs-on: windows-latest
+    steps:
+      # Check out with LF line endings, as the release packages carry them (they are built from
+      # `git archive`). The runner's default converts to CRLF, and the fixtures embedded in the
+      # suites then stop matching their own "`n" edits.
+      - run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - name: PowerShell 7 is the worker's runtime
+        shell: pwsh
+        run: |
+          $PSVersionTable.PSVersion
+          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 is required.' }
+      - name: The sixteen PowerShell suites
+        shell: pwsh
+        run: |
+          # The same list as the tester's PC runs. distribution, gui-distribution and
+          # windows-entrypoints need an extracted release ZIP and are not here; crosshair-pack
+          # needs the gitignored asset folders.
+          $suites = 'audio','cli','crosshair-current','data-root','enemy','engine-observer','engine','gui-protocol','gui-recovery','import','package-build','profile-apply','profile-assets','profiles','scheme','target-lookup'
+          $failed = @()
+          foreach ($suite in $suites) {
+            Write-Host "::group::$suite"
+            & pwsh -NoProfile -File "scripts/installer/tests/$suite.test.ps1"
+            if ($LASTEXITCODE -ne 0) { $failed += $suite; Write-Host "::error::$suite exit $LASTEXITCODE" }
+            Write-Host '::endgroup::'
+          }
+          if ($failed.Count -gt 0) { throw "Failed suites: $($failed -join ', ')" }
+          Write-Host "All $($suites.Count) suites passed."
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/app/src-tauri
+      - shell: pwsh
+        run: cargo test --manifest-path "$env:CARGO_MANIFEST" --features installer-ui

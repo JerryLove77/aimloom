@@ -1,0 +1,51 @@
+﻿KovaaK 配置安装器 v0.1.0
+
+使用前
+1. 适用 Windows 10/11，需要先安装 PowerShell 7 或更新版本（pwsh）。
+2. 完整解压 ZIP，不要直接在压缩包内运行。无需 Node.js、Rust 或联网下载。
+3. 至少启动过一次 KovaaK 并正常退出，让游戏生成设置。安装和恢复前请关闭游戏。
+4. 双击“安装配置.cmd”。如果系统策略阻止 PowerShell，请根据屏幕错误检查下载来源、文件属性和组织策略；脚本不会改变执行策略，也不会自动申请管理员权限。
+
+安装
+向导会检测常见 Steam 目录；有多个安装时由你选择。也可以使用文件夹选择器或输入路径。
+游戏根目录应包含 FPSAimTrainer 子目录，例如：
+D:\SteamLibrary\steamapps\common\FPSAimTrainer
+选到内层 FPSAimTrainer 时，工具会尝试归一化并验证。验证失败会停止。
+
+向导展示默认随包目录；选择 n 可改用其他已解压配置包。
+默认安装主题、音效、准星。包内不存在的类别不可选，未知文件、ZIP 和备份文件会显示为跳过。
+UI.json（界面）、Palette.ini（配色）和 PrimaryUserSettings.json（完整设置）分别默认关闭。
+警告：完整设置会整体覆盖灵敏度、DPI、FOV 等 PrimaryUserSettings.json 中的设置；选择它意味着使用包内设置。原文件会备份，可恢复。
+
+核对页面列出游戏目录、Palette 独立目录、每个新增/覆盖/跳过文件和备份位置。只有明确输入 y 后才执行。最后确认处直接回车会取消；其他步骤输入 q 可取消。
+同名且内容不同的文件会先备份再替换；内容相同则跳过，不同名的个人文件保留。
+文件原样复制。素材仍需在游戏中选择主题、绑定音效、选择准星；复制不会自动启用素材。
+“完整设置”只指该 JSON，不包括 weaponsettings.ini，也不保证复刻作者全部武器音效。
+
+恢复
+退出游戏，双击“恢复配置.cmd”，选择对应游戏位置。
+默认选项撤销最近一次已完成安装，也可选择其他批次或“首次保护状态”。
+首次保护状态是每个文件第一次被工具接管之前的状态，不是游戏出厂设置。
+恢复不需要原配置包，但必须保留脚本、游戏目录和备份目录。
+恢复会预检备份和当前文件；若文件已被游戏或用户改动，会列出冲突并单独请求确认，允许后先另存当前文件再恢复。
+仅删除有记录且校验能够证明属于本次新增的文件，不清理无关文件或目录。
+有未完成操作时，工具先引导恢复，不开始新的安装。恢复完成后再重新运行安装入口。
+
+备份和失败处理
+备份永久保存在当前 Windows 用户的：
+%LOCALAPPDATA%\Aimloom\backups\<安装位置标识>\
+（旧版本使用的 KovaaKConfigInstaller 文件夹会在首次运行时自动改名为 Aimloom，内容不变。）
+Palette 位于：
+%LOCALAPPDATA%\FPSAimTrainer\Saved\Config\WindowsNoEditor\Palette.ini
+工具不会自动清理备份。不要删除、编辑或移动备份清单和内容。
+如果安装或恢复失败，请查看具体错误和“待处理”文件，保留备份，解决游戏运行、权限或文件冲突等原因后重试。
+显示 recovery-required 意味着仍有文件待恢复；不要把它理解为已经全部撤销。
+
+可选命令行（仍然需要交互确认）
+pwsh.exe -NoProfile -STA -File ".\scripts\kvk-config.ps1" -Mode Install -GameDir "D:\SteamLibrary\steamapps\common\FPSAimTrainer" -PackDir ".\KVK Settings 2025"
+pwsh.exe -NoProfile -STA -File ".\scripts\kvk-config.ps1" -Mode Restore -GameDir "D:\SteamLibrary\steamapps\common\FPSAimTrainer"
+源码仓库中的脚本位置是 scripts\installer\kvk-config.ps1；ZIP 中是 scripts\kvk-config.ps1。
+退出码：0 完成或无变化；1 错误/未完成恢复/安装已回滚；2 用户取消。
+
+发行验收
+v0.1.0 候选包的自动化验证不代表已经完成真实 Windows 游戏内素材显示、播放和恢复验收；实际验收状态请以随版本发布的验证记录为准。

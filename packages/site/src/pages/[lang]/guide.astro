@@ -1,0 +1,59 @@
+---
+import Base from '../../layouts/Base.astro'
+import { LANGS, t, type Lang, type MessageKey } from '../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+const sections: { id: string; title: MessageKey }[] = [
+  { id: 'install', title: 'guide.install.title' },
+  { id: 'apply', title: 'guide.apply.title' },
+  { id: 'add-files', title: 'guide.add.title' },
+  { id: 'in-game', title: 'guide.ingame.title' },
+  { id: 'backup', title: 'guide.backup.title' },
+  { id: 'trouble', title: 'guide.trouble.title' },
+]
+const steps = [1, 2, 3, 4, 5] as const
+---
+<Base lang={lang} path="/guide" title={t(lang, 'guide.title')} description={t(lang, 'guide.description')}>
+  <div class="page-header">
+    <h1>{t(lang, 'guide.title')}</h1>
+    <p>{t(lang, 'guide.description')}</p>
+  </div>
+
+  <div class="section guide">
+    <nav class="toc" aria-label={t(lang, 'guide.toc')}>
+      <p class="small muted">{t(lang, 'guide.toc')}</p>
+      <ul>{sections.map(s => <li><a href={`#${s.id}`}>{t(lang, s.title)}</a></li>)}</ul>
+    </nav>
+
+    <div class="guide__sections">
+      <section id="install">
+        <h2>{t(lang, 'guide.install.title')}</h2>
+        <ol class="steps">{steps.map(n => <li><span>{t(lang, `guide.install.${n}`)}</span></li>)}</ol>
+      </section>
+      <section id="apply">
+        <h2>{t(lang, 'guide.apply.title')}</h2>
+        <p class="notice">{t(lang, 'guide.apply.body')}</p>
+      </section>
+      <section id="add-files">
+        <h2>{t(lang, 'guide.add.title')}</h2>
+        <p>{t(lang, 'guide.add.body')}</p>
+      </section>
+      <section id="in-game">
+        <h2>{t(lang, 'guide.ingame.title')}</h2>
+        <p>{t(lang, 'guide.ingame.body')}</p>
+      </section>
+      <section id="backup">
+        <h2>{t(lang, 'guide.backup.title')}</h2>
+        <p>{t(lang, 'guide.backup.body')}</p>
+      </section>
+      <section id="trouble">
+        <h2>{t(lang, 'guide.trouble.title')}</h2>
+        <ul class="bullets">
+          <li>{t(lang, 'guide.trouble.pwsh')}</li>
+          <li>{t(lang, 'guide.trouble.running')}</li>
+          <li>{t(lang, 'guide.trouble.report')}</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</Base>

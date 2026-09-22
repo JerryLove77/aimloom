@@ -1,0 +1,115 @@
+import { StrictMode } from 'react'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { cleanup, fireEvent, render, screen, waitFor, act } from '@testing-library/react'
+import { AssetPreview } from '../../../src/profiles/AssetPreview'
+import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
+const assets: ProfileAssetBridge = { chooseDirectory: vi.fn(), list: vi.fn(), read: vi.fn() }
+const reference = { name: '准星', path: 'a.png' }
+beforeEach(() => {
+  vi.mocked(assets.read).mockReset().mockResolvedValue(bytes)
+  vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:preview'), revokeObjectURL: vi.fn() }))
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
+})
+afterEach(() => { cleanup(); vi.restoreAllMocks() })
+it('keeps null references without reading', () => {
+  render(<AssetPreview kind="crosshair" reference={null} profilePath="/profiles/p.json" assets={assets} />)
+  expect(screen.getByText('保持当前')).toBeTruthy()
+  expect(assets.read).not.toHaveBeenCalled()
+})
+it('waits for valid dimensions, avoids callback-driven refetch and releases its URL', async () => {
+  const status = vi.fn()
+  const props = { kind: 'crosshair' as const, reference, profilePath: '/profiles/p.json', assets }
+  const view = render(<AssetPreview {...props} onStatus={status} />)
+  const img = await screen.findByRole('img')
+  expect(assets.read).toHaveBeenCalledWith('crosshair', '/profiles/a.png')
+  expect(status).not.toHaveBeenCalledWith('ready')
+  Object.defineProperties(img, { naturalWidth: { value: 64 }, naturalHeight: { value: 64 } })
+  fireEvent.load(img)
+  expect(status).toHaveBeenLastCalledWith('ready')
+  view.rerender(<AssetPreview {...props} onStatus={() => {}} />)
+  expect(assets.read).toHaveBeenCalledTimes(1)
+  view.unmount()
+  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview')
+})
+it('reports read and decode failures', async () => {
+  vi.mocked(assets.read).mockRejectedValueOnce(new Error('missing'))
+  const view = render(<AssetPreview kind="crosshair" reference={reference} profilePath="/p.json" assets={assets} />)
+  await screen.findByRole('alert')
+  view.rerender(<AssetPreview kind="crosshair" reference={{ name: 'b', path: 'b.png' }} profilePath="/p.json" assets={assets} />)
+  fireEvent.error(await screen.findByRole('img'))
+  await screen.findByRole('alert')
+  expect(URL.revokeObjectURL).toHaveBeenCalled()
+})
+it('ignores a previous slow response', async () => {
+  let resolve!: (value: Uint8Array) => void
+  vi.mocked(assets.read).mockImplementationOnce(() => new Promise(yes => { resolve = yes }))
+  const view = render(<AssetPreview kind="crosshair" reference={reference} profilePath="/p.json" assets={assets} />)
+  view.rerender(<AssetPreview kind="crosshair" reference={null} profilePath="/p.json" assets={assets} />)
+  await act(async () => resolve(bytes))
+  expect(screen.getByText('保持当前')).toBeTruthy()
+  expect(URL.createObjectURL).not.toHaveBeenCalled()
+})
+it('audio uses manual controls, waits for decoding, and stops on unmount', async () => {
+  const status = vi.fn()
+  const view = render(<AssetPreview kind="audio" reference={{ name: 'a', path: 'a.wav' }} profilePath="/p.json" assets={assets} onStatus={status} />)
+  await waitFor(() => expect(view.container.querySelector('audio')).toBeTruthy())
+  const player = view.container.querySelector('audio')!
+  expect(player.controls).toBe(true)
+  expect(player.autoplay).toBe(false)
+  expect(status).not.toHaveBeenCalledWith('ready')
+  fireEvent.canPlay(player)
+  expect(status).toHaveBeenLastCalledWith('ready')
+  view.unmount()
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
+  expect(URL.revokeObjectURL).toHaveBeenCalled()
+})
+it('rejects invalid PNG dimensions and cannot revive an errored preview', async () => {
+  const status = vi.fn()
+  render(<AssetPreview kind="crosshair" reference={reference} profilePath="/p.json" assets={assets} onStatus={status} />)
+  const image = await screen.findByRole('img')
+  fireEvent.load(image)
+  expect(status).toHaveBeenLastCalledWith('error')
+  Object.defineProperties(image, { naturalWidth: { value: 32 }, naturalHeight: { value: 32 } })
+  fireEvent.load(image)
+  expect(status).toHaveBeenLastCalledWith('error')
+})
+it('does not accept image events from a superseded candidate', async () => {
+  const status = vi.fn()
+  const view = render(<AssetPreview kind="crosshair" reference={reference} profilePath="/p.json" assets={assets} onStatus={status} />)
+  const old = await screen.findByRole('img')
+  view.rerender(<AssetPreview kind="crosshair" reference={{ name: 'b', path: 'b.png' }} profilePath="/p.json" assets={assets} onStatus={status} />)
+  await screen.findByRole('img')
+  fireEvent.error(old)
+  expect(status).toHaveBeenLastCalledWith('loading')
+})
+it('renders enemy documents through an isolated SVG blob and rejects invalid JSON', async () => {
+  vi.mocked(assets.read).mockResolvedValueOnce(new TextEncoder().encode(JSON.stringify({ schemaVersion: 1, kind: 'enemy-appearance', name: '<script>', appearance: {} })))
+  const view = render(<AssetPreview kind="enemy" reference={{ name: '敌人', path: 'enemy.json' }} profilePath="/p.json" assets={assets} />)
+  const image = await screen.findByRole('img')
+  expect(image.getAttribute('src')).toBe('blob:preview')
+  expect(view.container.querySelector('svg')).toBeNull()
+  expect(vi.mocked(URL.createObjectURL).mock.calls[0]![0]).toMatchObject({ type: 'image/svg+xml' })
+  vi.mocked(assets.read).mockResolvedValueOnce(new TextEncoder().encode('{}'))
+  view.rerender(<AssetPreview kind="enemy" reference={{ name: '坏文件', path: 'bad.json' }} profilePath="/p.json" assets={assets} />)
+  await screen.findByRole('alert')
+})
+
+it('preserves the audio source through StrictMode ref replay and unloads on actual unmount', async () => {
+  const status = vi.fn()
+  const view = render(<StrictMode><AssetPreview kind="audio" reference={{ name: '音效', path: 'a.wav' }} profilePath="/p.json" assets={assets} onStatus={status} /></StrictMode>)
+  await waitFor(() => expect(view.container.querySelector('audio')).toBeTruthy())
+  const player = view.container.querySelector('audio')!
+  expect(player.getAttribute('src')).toBe('blob:preview')
+  expect(player.src).toBe('blob:preview')
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+  fireEvent.canPlay(player)
+  expect(status).toHaveBeenLastCalledWith('ready')
+  view.unmount()
+  expect(player.getAttribute('src')).toBeNull()
+  expect(HTMLMediaElement.prototype.pause).toHaveBeenCalled()
+  expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1)
+  fireEvent.canPlay(player)
+  expect(status).toHaveBeenLastCalledWith('ready')
+})

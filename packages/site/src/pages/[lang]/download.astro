@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro'
+import DownloadBlock from '../../components/DownloadBlock.astro'
+import { LANGS, t, type Lang } from '../../i18n'
+import { recommendedRelease, releases } from '../../data/releases'
+import { downloadView } from '../../lib/download-view'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+const view = downloadView(recommendedRelease(releases), lang)
+---
+<Base lang={lang} path="/download" title={t(lang, 'download.title')} description={t(lang, 'download.description')}>
+  <div class="page-header"><h1>{t(lang, 'download.title')}</h1></div>
+
+  <section id="recommended" class="section stack stack--tight">
+    <h2>{t(lang, 'download.recommended')}</h2>
+    <DownloadBlock lang={lang} view={view} />
+  </section>
+
+  {(view.kind === 'beta' || view.kind === 'stable') && (
+    <section id="first-step" class="section stack stack--tight">
+      <h2>{t(lang, 'download.first.title')}</h2>
+      <p>{t(lang, view.setup !== null ? 'download.first.body.setup' : 'download.first.body')}</p>
+    </section>
+  )}
+
+  <!-- The repository is private: no source link is rendered until a public URL exists. -->
+  <section id="source" class="section stack stack--tight">
+    <h2>{t(lang, 'download.source.title')}</h2>
+    <p class="muted">{t(lang, 'download.source.body')}</p>
+  </section>
+</Base>

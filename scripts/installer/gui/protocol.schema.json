@@ -1,0 +1,998 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "$id": "https://kvk.local/installer/protocol.schema.json",
+ "title": "KVK installer worker request",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "v",
+  "requestId",
+  "op",
+  "args"
+ ],
+ "properties": {
+  "v": {
+   "const": 1
+  },
+  "requestId": {
+   "type": "string",
+   "minLength": 1
+  },
+  "op": {
+   "enum": [
+    "discover",
+    "locate",
+    "catalog",
+    "backups",
+    "gameState",
+    "planInstall",
+    "planRestore",
+    "execute",
+    "profileList",
+    "profileRead",
+    "profileSave",
+    "profileDelete",
+    "profileAssetList",
+    "profileAssetRead",
+    "schemeList",
+    "planScheme",
+    "audioList",
+    "planAudio",
+    "crosshairList",
+    "planCrosshair",
+    "planCrosshairAdd",
+    "planFileAdd",
+    "exportFile",
+    "enemyList",
+    "planEnemy",
+    "planProfileApply"
+   ]
+  },
+  "args": {
+   "type": "object"
+  }
+ },
+ "allOf": [
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "enum": [
+       "discover",
+       "gameState",
+       "profileList"
+      ]
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "additionalProperties": false,
+      "maxProperties": 0
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "enum": [
+       "locate",
+       "backups",
+       "schemeList",
+       "audioList",
+       "crosshairList",
+       "enemyList"
+      ]
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/gameRoot"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "catalog"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/packRoot"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planInstall"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planInstall"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planRestore"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planRestore"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "execute"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/execute"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "enum": [
+       "profileRead",
+       "profileDelete"
+      ]
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/profileIdArgs"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "profileSave"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "profile"
+      ],
+      "properties": {
+       "profile": {
+        "$ref": "#/$defs/profile"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "profileAssetList"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "kind",
+       "directory"
+      ],
+      "properties": {
+       "kind": {
+        "enum": [
+         "scheme",
+         "audio",
+         "crosshair",
+         "enemy"
+        ]
+       },
+       "directory": {
+        "$ref": "#/$defs/profileFile"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "profileAssetRead"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+       "kind",
+       "path"
+      ],
+      "properties": {
+       "kind": {
+        "enum": [
+         "scheme",
+         "audio",
+         "crosshair",
+         "enemy"
+        ]
+       },
+       "path": {
+        "$ref": "#/$defs/profileFile"
+       }
+      }
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planScheme"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planScheme"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planAudio"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planAudio"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planCrosshair"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planCrosshair"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planCrosshairAdd"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planCrosshair"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planFileAdd"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planFileAdd"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "exportFile"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/exportFile"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planEnemy"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planEnemy"
+     }
+    }
+   }
+  },
+  {
+   "if": {
+    "properties": {
+     "op": {
+      "const": "planProfileApply"
+     }
+    }
+   },
+   "then": {
+    "properties": {
+     "args": {
+      "$ref": "#/$defs/planProfileApply"
+     }
+    }
+   }
+  }
+ ],
+ "$defs": {
+  "profileId": {
+   "type": "string",
+   "pattern": "^[a-z0-9][a-z0-9_-]{0,63}(?![\\s\\S])",
+   "not": {
+    "enum": [
+     "con",
+     "prn",
+     "aux",
+     "nul",
+     "com1",
+     "com2",
+     "com3",
+     "com4",
+     "com5",
+     "com6",
+     "com7",
+     "com8",
+     "com9",
+     "lpt1",
+     "lpt2",
+     "lpt3",
+     "lpt4",
+     "lpt5",
+     "lpt6",
+     "lpt7",
+     "lpt8",
+     "lpt9"
+    ]
+   }
+  },
+  "profileIdArgs": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "id"
+   ],
+   "properties": {
+    "id": {
+     "$ref": "#/$defs/profileId"
+    }
+   }
+  },
+  "profileFile": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 4096,
+   "pattern": "^(?![\\s\\S]*[\\u0000\\r\\n])(?![\\\\/]{2}[?.][\\\\/])(?!(?![a-zA-Z]:[\\\\/])[a-zA-Z][a-zA-Z0-9+.-]*:)(?=[\\s\\S]*\\S)",
+   "$comment": "Runtime validation also rejects all URI schemes except a drive letter followed by a slash; enforces UTF-16 lengths and 256 KiB serialized JSON."
+  },
+  "profileFileInfo": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "name",
+    "path"
+   ],
+   "properties": {
+    "name": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 4096,
+     "pattern": "^(?![\\s\\S]*[\\u0000\\r\\n])(?=[\\s\\S]*\\S)"
+    },
+    "path": {
+     "$ref": "#/$defs/profileFile"
+    }
+   }
+  },
+  "profileJsonReference": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "allOf": [
+      {
+       "$ref": "#/$defs/profileFileInfo"
+      },
+      {
+       "properties": {
+        "path": {
+         "pattern": "\\.[jJ][sS][oO][nN](?![\\s\\S])"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "profilePngReference": {
+   "anyOf": [
+    {
+     "type": "null"
+    },
+    {
+     "allOf": [
+      {
+       "$ref": "#/$defs/profileFileInfo"
+      },
+      {
+       "properties": {
+        "path": {
+         "pattern": "\\.[pP][nN][gG](?![\\s\\S])"
+        }
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "profileAudioFiles": {
+   "type": "array",
+   "maxItems": 64,
+   "items": {
+    "allOf": [
+     {
+      "$ref": "#/$defs/profileFileInfo"
+     },
+     {
+      "properties": {
+       "path": {
+        "pattern": "\\.([wW][aA][vV]|[oO][gG][gG])(?![\\s\\S])"
+       }
+      }
+     }
+    ]
+   }
+  },
+  "profile": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "scheme",
+    "audio",
+    "crosshair",
+    "enemy"
+   ],
+   "properties": {
+    "schemaVersion": {
+     "type": "integer",
+     "const": 1
+    },
+    "id": {
+     "$ref": "#/$defs/profileId"
+    },
+    "name": {
+     "type": "string",
+     "maxLength": 128,
+     "pattern": "^(?![\\s\\S]*[\\u0000\\r\\n])(?=[\\s\\S]*\\S)"
+    },
+    "scheme": {
+     "$ref": "#/$defs/profileJsonReference"
+    },
+    "audio": {
+     "type": [
+      "object",
+      "null"
+     ],
+     "additionalProperties": false,
+     "properties": {
+      "kill": {
+       "$ref": "#/$defs/profileAudioFiles"
+      },
+      "spawn": {
+       "$ref": "#/$defs/profileAudioFiles"
+      },
+      "mbsGood": {
+       "$ref": "#/$defs/profileAudioFiles"
+      },
+      "mbsOkay": {
+       "$ref": "#/$defs/profileAudioFiles"
+      },
+      "mbsBad": {
+       "$ref": "#/$defs/profileAudioFiles"
+      },
+      "mbsChangeNow": {
+       "$ref": "#/$defs/profileAudioFiles"
+      }
+     }
+    },
+    "crosshair": {
+     "$ref": "#/$defs/profilePngReference"
+    },
+    "enemy": {
+     "$ref": "#/$defs/profileJsonReference"
+    }
+   }
+  },
+  "nonEmpty": {
+   "type": "string",
+   "minLength": 1
+  },
+  "category": {
+   "enum": [
+    "themes",
+    "sounds",
+    "crosshairs",
+    "ui",
+    "palette",
+    "primary"
+   ]
+  },
+  "gameRoot": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    }
+   }
+  },
+  "packRoot": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "packRoot"
+   ],
+   "properties": {
+    "packRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    }
+   }
+  },
+  "planInstall": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "packRoot",
+    "categories",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "packRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "categories": {
+     "type": "array",
+     "minItems": 1,
+     "uniqueItems": true,
+     "items": {
+      "$ref": "#/$defs/category"
+     }
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "planRestore": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "sourceId",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "sourceId": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "execute": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "operationId",
+    "planId",
+    "confirmation",
+    "allowConflicts"
+   ],
+   "properties": {
+    "operationId": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "planId": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "confirmation": {
+     "enum": [
+      "install",
+      "restore"
+     ]
+    },
+    "allowConflicts": {
+     "type": "boolean"
+    }
+   }
+  },
+  "themeFile": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 255,
+   "pattern": "^[^\\\\/:*?\"<>|\\u0000-\\u001f]+\\.json$",
+   "$comment": "A theme file name inside the game Themes directory; the worker resolves the directory itself."
+  },
+  "planScheme": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "file",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "file": {
+     "$ref": "#/$defs/themeFile"
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "audioEvent": {
+   "enum": [
+    "kill",
+    "spawn",
+    "mbsGood",
+    "mbsOkay",
+    "mbsBad",
+    "mbsChangeNow"
+   ]
+  },
+  "soundName": {
+   "type": "string",
+   "minLength": 1,
+   "maxLength": 200,
+   "pattern": "^[^;\\\\/:*?\"<>|\\u0000-\\u001f]+$",
+   "$comment": "A sound file's base name inside the game sounds directory; the worker resolves it."
+  },
+  "planAudio": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "event",
+    "names",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "event": {
+     "$ref": "#/$defs/audioEvent"
+    },
+    "names": {
+     "type": "array",
+     "maxItems": 64,
+     "items": {
+      "$ref": "#/$defs/soundName"
+     },
+     "$comment": "Kill and Spawn accept an ordered list; the four MBS events take exactly one name."
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "crosshairFile": {
+   "type": "string",
+   "minLength": 5,
+   "maxLength": 128,
+   "pattern": "^[^\\\\/:*?\"<>|\\u0000-\\u001f]+\\.png$",
+   "$comment": "A crosshair file name inside the game crosshairs directory; the worker resolves the directory."
+  },
+  "planCrosshair": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "file",
+    "pngBase64",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "file": {
+     "$ref": "#/$defs/crosshairFile"
+    },
+    "pngBase64": {
+     "type": "string",
+     "minLength": 4,
+     "maxLength": 2796204,
+     "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+     "$comment": "Canonical base64 of a 8-bit RGBA PNG within 512x512 and 2 MiB; the worker re-validates the header."
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   }
+  },
+  "soundFile": {
+   "type": "string",
+   "minLength": 5,
+   "maxLength": 128,
+   "pattern": "^[^;\\\\/:*?\"<>|\\u0000-\\u001f]+\\.([wW][aA][vV]|[oO][gG][gG])$",
+   "$comment": "A sound file name inside the game sounds directory. A sound is bound by its stem, and ';' separates names in the settings file."
+  },
+  "sha256": {
+   "type": "string",
+   "pattern": "^[a-f0-9]{64}$"
+  },
+  "planFileAdd": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "kind",
+    "sourcePath",
+    "sourceSha256",
+    "file",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "kind": {
+     "enum": [
+      "theme",
+      "sound"
+     ]
+    },
+    "sourcePath": {
+     "$ref": "#/$defs/profileFile",
+     "$comment": "A plain local file. The worker reads it under the same guards as a Profile asset and copies it byte for byte; the UI never sends the bytes."
+    },
+    "sourceSha256": {
+     "$ref": "#/$defs/sha256",
+     "$comment": "SHA-256 of the bytes the player previewed. The worker refuses a source that no longer matches."
+    },
+    "file": {
+     "type": "string",
+     "minLength": 5,
+     "maxLength": 128
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "allOf": [
+    {
+     "if": {
+      "properties": {
+       "kind": {
+        "const": "theme"
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "file": {
+        "$ref": "#/$defs/themeFile"
+       }
+      }
+     }
+    },
+    {
+     "if": {
+      "properties": {
+       "kind": {
+        "const": "sound"
+       }
+      }
+     },
+     "then": {
+      "properties": {
+       "file": {
+        "$ref": "#/$defs/soundFile"
+       }
+      }
+     }
+    }
+   ]
+  },
+  "exportFile": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "directory",
+    "fileName",
+    "base64",
+    "gameRoot"
+   ],
+   "properties": {
+    "directory": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "fileName": {
+     "$ref": "#/$defs/crosshairFile"
+    },
+    "base64": {
+     "type": "string",
+     "minLength": 4,
+     "maxLength": 2796204,
+     "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+     "$comment": "Canonical base64 of a 8-bit RGBA PNG within 512x512 and 2 MiB; the worker re-validates the header."
+    },
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    }
+   }
+  },
+  "planEnemy": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "shape",
+    "model",
+    "skin",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "shape": {
+     "enum": [
+      "cylindrical",
+      "cuboid",
+      "spheroid"
+     ]
+    },
+    "model": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 64
+    },
+    "skin": {
+     "type": "string",
+     "minLength": 1,
+     "maxLength": 64
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "$comment": "shape/model/skin name one of the game's own Skin Browser catalog rows; the worker refuses a pair that is not in the catalog for that shape and writes nothing but the two matching strings inside characterModelOverride.<Shape>."
+  },
+  "planProfileApply": {
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+    "gameRoot",
+    "id",
+    "revision"
+   ],
+   "properties": {
+    "gameRoot": {
+     "$ref": "#/$defs/nonEmpty"
+    },
+    "id": {
+     "$ref": "#/$defs/profileId"
+    },
+    "revision": {
+     "type": "integer",
+     "minimum": 0
+    }
+   },
+   "$comment": "Applies the saved Profile named by id: its scheme, audio and enemy references are resolved against what is installed and merged into one settings-file edit. Never the open editor's draft."
+  }
+ }
+}

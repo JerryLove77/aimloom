@@ -1,0 +1,5 @@
+This is a synthetic, generated sample of a KVK Settings 2025 pack, built for the public
+export (scripts/public/export.py places it here). It is NOT a real player's data: all
+theme names, colors and settings values are invented, and no sensitivity/DPI/FOV value
+was copied from a real settings file. Tests that assert facts about the private repository's
+full corpus detect this marker file and skip with a stated reason.

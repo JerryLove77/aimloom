@@ -1,0 +1,33 @@
+---
+import { localizePath, otherLang, t, type Lang, LANG_STORAGE_KEY, HTML_LANG } from '../i18n'
+interface Props { lang: Lang; path: string }
+const { lang, path } = Astro.props
+const other = otherLang(lang)
+const entries = [
+  { logical: '/#features', href: `${localizePath(lang, '/')}#features`, label: t(lang, 'nav.features') },
+  { logical: '/guide', href: localizePath(lang, '/guide'), label: t(lang, 'nav.guide') },
+  { logical: '/changelog', href: localizePath(lang, '/changelog'), label: t(lang, 'nav.changelog') },
+]
+---
+<header class="nav">
+  <a class="nav__brand" href={localizePath(lang, '/')}>{t(lang, 'site.name')}</a>
+  <nav aria-label={lang === 'zh' ? '主导航' : 'Main'}>
+    <ul class="nav__links">
+      {entries.map(e => <li><a href={e.href} aria-current={path === e.logical ? 'page' : undefined}>{e.label}</a></li>)}
+    </ul>
+  </nav>
+  <div class="nav__actions">
+    <a class="button button--primary" href={localizePath(lang, '/download')} aria-current={path === '/download' ? 'page' : undefined}>{t(lang, 'nav.download')}</a>
+    <a class="nav__lang" id="lang-switch" href={localizePath(other, path)} hreflang={HTML_LANG[other]} aria-label={t(lang, 'nav.lang.aria')}>
+      <span class="is-current">{t(lang, 'nav.lang.current')}</span><span class="sep" aria-hidden="true">/</span><span lang={HTML_LANG[other]}>{t(lang, 'nav.lang.switch')}</span>
+    </a>
+  </div>
+</header>
+<script is:inline define:vars={{ other, key: LANG_STORAGE_KEY }}>
+  // Spec §2.1: switching keeps the page, anchor and query, and remembers the choice.
+  const link = document.getElementById('lang-switch')
+  link.addEventListener('click', () => {
+    try { localStorage.setItem(key, other) } catch {}
+    link.href = link.getAttribute('href').split(/[?#]/)[0] + location.search + location.hash
+  })
+</script>

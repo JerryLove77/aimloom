@@ -1,0 +1,42 @@
+/* Crosshair current-configuration page. Light workspace tokens only; the dark surfaces
+   below are deliberate preview backdrops because crosshair art is usually white. */
+
+/* Tiles: the game's PNGs sit on a dark, unscaled backdrop inside the shared tile. */
+.cx-tile .ws-tile-thumb { object-fit: contain; background: #1a1a1c; image-rendering: pixelated; }
+
+/* Before/after comparison in a file's sheet; .cx-single shows one image. */
+.cx-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; }
+.cx-compare figure { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 10px; border-radius:var(--ws-radius-tile); background: #1f1f22; color: #e5e5e5; font-size: 12px; }
+.cx-compare .ws-tile-thumb { width: 100%; height: 160px; object-fit: contain; image-rendering: pixelated; background: transparent; }
+.cx-compare-image { width: 100%; height: 160px; object-fit: contain; image-rendering: pixelated; display: grid; place-items: center; }
+
+/* Shared with the 粘贴准星代码 sheet. */
+.cx-note { color: var(--ki-secondary); font-size: 13px; margin: 6px 0; }
+.cx-picked { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border: 1px solid var(--ki-line); border-radius:var(--ws-radius-row); margin: 8px 0; }
+.cx-name-field { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; }
+.cx-name-field label { font-size: 13px; }
+.cx-name-field input { font-family: inherit; font-size: 14px; padding: 8px 10px; border: 1px solid var(--ki-line); border-radius:var(--ws-radius-row); background: var(--ki-surface); color: var(--ki-text); }
+.cx-name-field textarea { font-family: var(--ki-mono-font); font-size: 13px; padding: 8px 10px; border: 1px solid var(--ki-line); border-radius:var(--ws-radius-row); background: var(--ki-surface); color: var(--ki-text); resize: vertical; }
+.cx-code-preview { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+.cx-code-preview img { width: 128px; height: 128px; image-rendering: pixelated; background: repeating-conic-gradient(#20252e 0 25%, #171b22 0 50%) 0 0 / 16px 16px; border-radius:var(--ws-radius-tile); }
+.cx-single { display: grid; margin: 0; }
+.cx-single figure { margin: 0; display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 10px; border-radius: var(--ws-radius-tile); background: #1f1f22; color: #e5e5e5; font-size: 12px; }
+.cx-single .ws-tile-thumb, .cx-single .cx-compare-image { width: 100%; height: 200px; object-fit: contain; image-rendering: pixelated; background: transparent; }
+.cx-single > .cx-compare-image { border-radius: var(--ws-radius-tile); background: #1f1f22; color: #e5e5e5; font-size: 13px; }
+
+/* The two ways in: large cards that lead the page. */
+.cx-entries { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+.cx-entry { display: flex; align-items: center; gap: 14px; padding: 18px 20px; text-align: left; background: var(--ki-surface); border: 1px solid var(--ki-line); border-radius: var(--ws-radius-panel); color: var(--ki-text); font: 14px var(--ki-body-font); cursor: pointer; transition: background var(--ki-motion), border-color var(--ki-motion); }
+.cx-entry:hover:not(:disabled) { background: var(--ws-selected); border-color: var(--ki-accent); }
+.cx-entry:disabled { cursor: not-allowed; opacity: .55; }
+.cx-entry-icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border-radius: var(--ws-radius-tile); background: var(--ws-selected); color: var(--ws-accent-text); font-size: 22px; }
+.cx-entry-copy { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cx-entry-copy strong { font-size: 16px; font-weight: 700; }
+.cx-entry-copy small { color: var(--ki-secondary); font-size: 13px; }
+
+/* The crosshairs already in the game, below the two cards. */
+.cx-installed-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cx-installed-head h2 { flex: 1; margin: 0; font-size: 17px; }
+.cx-installed-head .pr-search { max-width: 260px; }
+.cx-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+@media (max-width: 700px) { .cx-entries { grid-template-columns: 1fr; } }

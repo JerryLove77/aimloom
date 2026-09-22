@@ -1,0 +1,69 @@
+[
+  {
+    "id": "green-static",
+    "source": "https://github.com/genesy/crosshair-codes/blob/ddb7aaae72fae7e3185f6043869e89f5716e5e1e/src/samplecrosshairs.ts#L20",
+    "code": "0;s;1;P;c;1;h;0;f;0;0l;4;0o;2;0a;1;0f;0;1b;0",
+    "expected": {
+      "global": { "advanced": true },
+      "primary": {
+        "color": 1, "useCustomColor": false, "outlines": false, "centerDot": false, "fadeOnFire": false,
+        "inner": { "length": 4, "thickness": 2, "offset": 2, "opacity": 1, "firingError": false },
+        "outer": { "enabled": false }
+      }
+    },
+    "fillRectangles": [[-6, -1, 4, 2], [2, -1, 4, 2], [-1, -6, 2, 4], [-1, 2, 2, 4]]
+  },
+  {
+    "id": "custom-pink-static",
+    "source": "https://github.com/genesy/crosshair-codes/blob/ddb7aaae72fae7e3185f6043869e89f5716e5e1e/src/samplecrosshairs.ts#L8",
+    "code": "0;P;c;8;u;FF99FFFF;h;0;b;1;0l;4;0o;1;0a;1;0f;0;1t;0;1l;0;1o;0;1a;0;1m;0;1f;0",
+    "expected": {
+      "primary": {
+        "color": 8, "useCustomColor": true, "customColor": "FF99FFFF", "outlines": false, "centerDot": false,
+        "inner": { "length": 4, "thickness": 2, "offset": 1, "opacity": 1, "firingError": false },
+        "outer": { "thickness": 0, "length": 0, "offset": 0, "opacity": 0 }
+      }
+    },
+    "fillRectangles": [[-5, -1, 4, 2], [1, -1, 4, 2], [-1, -5, 2, 4], [-1, 1, 2, 4]]
+  },
+  {
+    "id": "cyan-split-axes",
+    "source": "https://github.com/genesy/crosshair-codes/blob/ddb7aaae72fae7e3185f6043869e89f5716e5e1e/src/samplecrosshairs.ts#L22",
+    "code": "0;s;1;P;c;5;h;0;0l;5;0v;0;0g;1;0a;1;0f;0;1l;0;1v;4;1g;1;1o;2;1a;1;1m;0;1f;0;S;c;5;o;1",
+    "expected": {
+      "primary": {
+        "color": 5, "outlines": false, "centerDot": false,
+        "inner": { "length": 5, "verticalLength": 0, "independentVerticalLength": true, "thickness": 2, "offset": 3, "opacity": 1, "firingError": false },
+        "outer": { "length": 0, "verticalLength": 4, "independentVerticalLength": true, "thickness": 2, "offset": 2, "opacity": 1, "firingError": false, "movementError": false }
+      },
+      "sniper": { "color": 5, "dotOpacity": 1 }
+    },
+    "fillRectangles": [[-8, -1, 5, 2], [3, -1, 5, 2], [-1, -6, 2, 4], [-1, 2, 2, 4]]
+  },
+  {
+    "id": "independent-ads-dot",
+    "source": "https://github.com/genesy/crosshair-codes/blob/ddb7aaae72fae7e3185f6043869e89f5716e5e1e/src/samplecrosshairs.ts#L32",
+    "code": "0;p;0;s;1;P;h;0;0l;4;0o;0;0a;1;0f;0;1b;0;A;o;1;d;1;0b;0;1b;0",
+    "expected": {
+      "global": { "usePrimaryForAds": false, "advanced": true },
+      "ads": {
+        "color": 0, "outlines": true, "outlineThickness": 1, "outlineOpacity": 1,
+        "centerDot": true, "dotThickness": 2, "dotOpacity": 1,
+        "inner": { "enabled": false }, "outer": { "enabled": false }
+      }
+    },
+    "adsFillRectangles": [[-1, -1, 2, 2]]
+  },
+  {
+    "id": "named-white-with-stale-black-custom-color",
+    "source": "https://gist.github.com/gwynnnplaine/99cb522e4b5830bfb3b2ff0e34a40dc9/fbfa88fc4af837b812779512af6d9bd45da12148#file-crosshairs-md-L10",
+    "code": "0;P;u;000000FF;h;0;f;0;0b;0;1l;3;1o;0;1a;1;1m;0;1f;0",
+    "expected": { "primary": { "color": 0, "customColor": "000000FF", "useCustomColor": false } }
+  },
+  {
+    "id": "named-cyan-with-stale-pink-custom-color",
+    "source": "https://gist.github.com/gwynnnplaine/99cb522e4b5830bfb3b2ff0e34a40dc9/fbfa88fc4af837b812779512af6d9bd45da12148#file-crosshairs-md-L4",
+    "code": "0;P;c;5;u;FF5A97FF;o;1;d;1;f;0;0l;2;0o;0;0a;1;0f;0;1b;0",
+    "expected": { "primary": { "color": 5, "customColor": "FF5A97FF", "useCustomColor": false } }
+  }
+]

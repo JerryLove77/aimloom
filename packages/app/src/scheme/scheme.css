@@ -1,0 +1,8 @@
+/* Shared "locate the game folder" controls for the four current-configuration pages.
+   Colors come from the workspace tokens; the old --kvk-* fallbacks were dark-theme values. */
+
+.sc-locate { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin: 8px 0 }
+.sc-candidate { font: 13px var(--ki-body-font); padding: 8px 12px; border: 1px solid var(--ki-control); border-radius: var(--ki-control-radius); background: var(--ki-surface); color: var(--ki-text); cursor: pointer }
+.sc-candidate:hover:not(:disabled) { background: var(--ws-hover) }
+.sc-candidate:disabled { cursor: not-allowed; opacity: .55 }
+.sc-preview-loading, .sc-preview-error { color: var(--ki-secondary); font-size: 13px; padding: 24px 0; text-align: center }

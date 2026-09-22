@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "installer",
+  "description": "Window lifecycle access for the isolated installer UI",
+  "windows": ["installer"],
+  "permissions": ["core:default"]
+}

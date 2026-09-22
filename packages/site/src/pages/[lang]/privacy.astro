@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro'
+import { LANGS, t, type Lang, type MessageKey } from '../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+const sections: { id: string; title: MessageKey; body?: MessageKey; list?: MessageKey[] }[] = [
+  { id: 'versions', title: 'privacy.versions.title', body: 'privacy.versions.body' },
+  { id: 'when', title: 'privacy.when.title', list: ['privacy.when.report', 'privacy.when.account', 'privacy.when.update'] },
+  { id: 'sent', title: 'privacy.sent.title', body: 'privacy.sent.body' },
+  { id: 'never', title: 'privacy.never.title', body: 'privacy.never.body' },
+  { id: 'kept', title: 'privacy.kept.title', body: 'privacy.kept.body' },
+  { id: 'contact', title: 'privacy.contact.title', body: 'privacy.contact.body' },
+]
+---
+<Base lang={lang} path="/privacy" title={t(lang, 'privacy.title')} description={t(lang, 'privacy.description')}>
+  <div class="page-header">
+    <h1>{t(lang, 'privacy.title')}</h1>
+    <p>{t(lang, 'privacy.description')}</p>
+  </div>
+
+  <div class="section guide">
+    <nav class="toc" aria-label={t(lang, 'guide.toc')}>
+      <p class="small muted">{t(lang, 'guide.toc')}</p>
+      <ul>{sections.map(s => <li><a href={`#${s.id}`}>{t(lang, s.title)}</a></li>)}</ul>
+    </nav>
+
+    <div class="guide__sections">
+      {sections.map(s => (
+        <section id={s.id}>
+          <h2>{t(lang, s.title)}</h2>
+          {s.list
+            ? <ol class="steps">{s.list.map(key => <li><span>{t(lang, key)}</span></li>)}</ol>
+            : <p class="notice">{t(lang, s.body as MessageKey)}</p>}
+        </section>
+      ))}
+    </div>
+  </div>
+</Base>

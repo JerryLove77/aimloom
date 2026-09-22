@@ -1,0 +1,28 @@
+/* Values recorded in docs/design/figma/README.md (collection "Tokens", mode Light). */
+:root {
+  --al-gulf: #8bc4d6;
+  --al-gulf-deep: #5da4bd;
+  --al-papaya: #ff8000;
+  --al-papaya-deep: #d96a00;
+  --al-ink: #182126;
+  --al-warm: #f4f1e8;
+  --al-slate: #56666d;
+  --al-paper: #ffffff;
+
+  --al-space-1: 4px;  --al-space-2: 8px;  --al-space-3: 12px; --al-space-4: 16px;
+  --al-space-5: 24px; --al-space-6: 32px; --al-space-7: 48px; --al-space-8: 72px;
+
+  --al-radius-control: 10px;
+  --al-radius-panel: 20px;
+  --al-radius-pill: 999px;
+
+  --al-font-body: "PingFang SC", "Microsoft YaHei UI", "Noto Sans CJK SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --al-font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --al-motion-fast: 150ms;
+  --al-gutter: 80px;
+  --al-section-y: 72px;
+}
+@media (max-width: 720px) {
+  :root { --al-gutter: 16px; --al-section-y: 40px; }
+}

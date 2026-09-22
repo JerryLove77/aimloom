@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "recommended": "0.1.2",
+  "releases": [
+    {
+      "version": "0.1.2",
+      "status": "beta",
+      "date": "2026-09-20",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "PowerShell 7.0+",
+        "WebView2"
+      ],
+      "bytes": 3329758,
+      "sha256": "c6d5b60aea25c5b0f8f91e401a4d31cb5711626a995d5fb8ace228f292e31371",
+      "primaryUrl": "/files/Aimloom-v0.1.2.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "scripts\\",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "新增安装程序：运行后从开始菜单打开 Aimloom；没有 PowerShell 7 时，它会问你要不要用 winget 装上。App 新增英文界面：第一次打开跟随 Windows 显示语言，可以在左下角的「设置」里切换。两个栏目改用 KovaaK 自己的叫法：Theme 和 Sounds。「安装与恢复」页换成了和其他页面同一套浅色。便携版 ZIP 照常提供，两种方式共用同一份备份和 Profile。",
+        "en": "New: an installer. Run it, then open Aimloom from the Start menu; if PowerShell 7 is missing, it offers to install it with winget. The app now has an English interface: the first launch follows the Windows display language, and Settings at the bottom left switches it. Two sections are named after KovaaK's own words: Theme and Sounds. Install & restore now uses the same light colours as the other pages. The portable ZIP is still offered; both share the same backups and Profiles."
+      },
+      "knownIssues": {
+        "zh": [
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "需要 PowerShell 7；Windows 自带的 PowerShell 5.1 不够用。安装程序可以用 winget 帮你装上，但这一步还没有在全新的电脑上验证过。",
+          "大约五分之一的主题缺少天花板或斜坡的设置，暂时不能用作背景：应用时会被拒绝，不会写入任何文件。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。",
+          "游戏运行时应用的改动是否立即生效、退出游戏后是否保留，还没有验证；建议关闭游戏后再应用。"
+        ],
+        "en": [
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "Needs PowerShell 7; the PowerShell 5.1 built into Windows is not enough. The installer can install it with winget, but that step has not been verified on a clean PC yet.",
+          "About one theme in five lacks the ceiling or ramp settings and cannot be used as a background yet: applying it is refused and nothing is written.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice.",
+          "Whether a change applied while the game runs takes effect at once, or survives quitting the game, is not verified yet; apply with the game closed."
+        ]
+      },
+      "setup": {
+        "url": "/files/Aimloom-Setup-v0.1.2.exe",
+        "bytes": 2365929,
+        "sha256": "7eb0cddb76ff5957a940cf39eada79836d234096ba1950e95c5e5f4c9f9a0da9"
+      }
+    },
+    {
+      "version": "0.1.1",
+      "status": "beta",
+      "date": "2026-09-19",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "PowerShell 7.0+",
+        "WebView2"
+      ],
+      "bytes": 3281812,
+      "sha256": "35b69259d026868ccfb358b719eb256b2b45ab703ed287e661c8883d4a875158",
+      "primaryUrl": "/files/Aimloom-v0.1.1.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "scripts\\",
+        "使用说明.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "第一个公开的测试版。背景、音效、准星、敌人外观四个配置页：先预览，再应用，写入前自动备份，可撤销。可以从外部添加主题、音效和准星（选择文件或拖进窗口），把 CS2 / VALORANT 准星代码转成 PNG 直接加进游戏，并把常用组合存成训练 Profile。",
+        "en": "The first public beta. Four pages — background, sounds, crosshair and enemy look — where you preview first and then apply, with a backup before every write and undo at any time. Add themes, sounds and crosshairs from outside (pick a file or drag it in), turn CS2 / VALORANT crosshair codes into PNGs added straight to the game, and save the combinations you use as training Profiles."
+      },
+      "knownIssues": {
+        "zh": [
+          "没有代码签名证书：第一次打开时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "需要 PowerShell 7；Windows 自带的 PowerShell 5.1 不够用。",
+          "大约五分之一的主题缺少天花板或斜坡的设置，暂时不能用作背景：应用时会被拒绝，不会写入任何文件。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。",
+          "游戏运行时应用的改动是否立即生效、退出游戏后是否保留，还没有验证；建议关闭游戏后再应用。"
+        ],
+        "en": [
+          "No code-signing certificate: the first launch shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "Needs PowerShell 7; the PowerShell 5.1 built into Windows is not enough.",
+          "About one theme in five lacks the ceiling or ramp settings and cannot be used as a background yet: applying it is refused and nothing is written.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice.",
+          "Whether a change applied while the game runs takes effect at once, or survives quitting the game, is not verified yet; apply with the game closed."
+        ]
+      },
+      "setup": null
+    }
+  ]
+}

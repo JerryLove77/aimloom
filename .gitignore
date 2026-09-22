@@ -1,0 +1,33 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.firecrawl/
+.serena/
+
+# Windows installer development and build outputs
+packages/app/dist-installer/
+packages/app/src-tauri/target/
+packages/app/src-tauri/gen/
+packages/app/src-tauri/webview2/
+packages/app/public/fixture-dump.json
+
+# 配置包中的二进制素材不进版本库。
+# 语料后续会整批替换，而 git 永远保留旧副本——8MB 的 .ogg 换几次仓库就废了。
+# 测试所需的音效与准星文件由 tests/helpers/fixture.ts 现场生成，
+# 且刻意构造了比真实语料更狠的边界文件名。
+# Themes/ 与三个配置文件保留：它们是解析器的真实语料，且只有 560K。
+KVK Settings 2025/sounds/
+KVK Settings 2025/crosshairs/
+KVK Settings 2025/*.zip
+packages/site/dist/
+packages/site/.astro/
+packages/site/.wrangler/
+packages/site/.wrangler.generated.jsonc
+packages/site/backups/
+# Release ZIPs staged into dist/files at deploy time; they live on the GitHub release, not in git.
+packages/site/release-files/
+
+# Maintainer notes, never committed (see CLAUDE.md)
+CLAUDE.local.md
+private/

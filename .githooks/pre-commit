@@ -1,0 +1,50 @@
+#!/bin/sh
+# Pre-commit privacy gate. Enable with: git config core.hooksPath .githooks
+#
+# Three checks, in order, any one of which blocks the commit:
+#   1. no path under private/, and no file named deny.txt, is staged
+#   2. scripts/privacy/denyscan.py --staged --optional (skips cleanly if no denylist is
+#      configured on this machine; never fails the commit for a missing denylist)
+#   3. gitleaks git --pre-commit --staged --redact --no-banner (hard requirement: fails
+#      the commit with install instructions if gitleaks is not on PATH)
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+# --- 1. refuse private/ and deny.txt being added or modified, however they got staged.
+#        --diff-filter=d excludes pure deletions: removing deny.txt from tracking (e.g. the
+#        2026-09-22 export.py migration) is not blocked -- its content never enters the tree.
+staged_paths=$(git diff --cached --name-only --diff-filter=d -z | tr '\0' '\n')
+bad_paths=$(printf '%s\n' "$staged_paths" | grep -E '(^|/)private/|(^|/)deny\.txt$' || true)
+if [ -n "$bad_paths" ]; then
+  echo "pre-commit: refusing to commit path(s) that must never enter this repository's history:" >&2
+  printf '%s\n' "$bad_paths" >&2
+  exit 1
+fi
+
+# --- 2. identifier denylist scan (optional: only runs if a denylist is configured) ---
+if ! python3 "$repo_root/scripts/privacy/denyscan.py" --staged --optional \
+    --exempt "$repo_root/scripts/privacy/scan-exempt.txt"; then
+  echo "pre-commit: denyscan found a denylisted identifier in the staged changes (see above)." >&2
+  exit 1
+fi
+
+# --- 3. gitleaks (hard requirement) ---
+if ! command -v gitleaks >/dev/null 2>&1; then
+  cat >&2 <<'EOF'
+pre-commit: gitleaks is not installed, and this hook will not commit without it.
+Install it, then retry:
+  macOS:   brew install gitleaks
+  Linux:   see https://github.com/gitleaks/gitleaks#installing
+  Windows: see https://github.com/gitleaks/gitleaks#installing
+EOF
+  exit 1
+fi
+
+if ! gitleaks git --pre-commit --staged --redact --no-banner; then
+  echo "pre-commit: gitleaks found a potential secret in the staged changes (see above)." >&2
+  exit 1
+fi
+
+exit 0

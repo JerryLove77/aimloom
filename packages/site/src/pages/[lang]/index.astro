@@ -1,0 +1,82 @@
+---
+import Base from '../../layouts/Base.astro'
+import DownloadBlock from '../../components/DownloadBlock.astro'
+import Scene from '../../components/Scene.astro'
+import { LANGS, localizePath, t, type Lang } from '../../i18n'
+import { recommendedRelease, releases } from '../../data/releases'
+import { showcase } from '../../data/showcase'
+import { downloadView } from '../../lib/download-view'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+const view = downloadView(recommendedRelease(releases), lang)
+const features = ['sections', 'import', 'crosshair', 'profile'] as const
+const flow = [1, 2, 3, 4] as const
+const faqs = ['os', 'sens', 'pack', 'restore', 'net'] as const
+---
+<Base lang={lang} path="/" title={t(lang, 'site.tagline')} description={t(lang, 'site.description')}>
+  <section id="hero" class="section section--gulf hero">
+    <div class="hero__copy">
+      <h1>{t(lang, 'home.hero.title')}</h1>
+      <p>{t(lang, 'home.hero.body')}</p>
+      <DownloadBlock lang={lang} view={view} compact />
+      <p class="row">
+        <a class="button button--secondary" href={localizePath(lang, '/guide')}>{t(lang, 'home.hero.secondary')}</a>
+        <span class="small">{t(lang, 'home.hero.platform')}</span>
+      </p>
+    </div>
+    <Scene />
+  </section>
+
+  {showcase.length > 0 && (
+    <section id="showcase" class="section stack">
+      <h2>{t(lang, 'home.showcase.title')}</h2>
+      <p class="muted">{t(lang, 'home.showcase.body')}</p>
+      <ul class="cards" style="list-style:none;padding:0">
+        {showcase.map(item => (
+          <li>
+            <figure class="card">
+              <img src={`/${item.file}`} alt={item.alt[lang]} loading="lazy" width="960" height="540" style="width:100%;height:auto;border-radius:var(--al-radius-control)" />
+              <figcaption class="muted">{item.caption[lang]}</figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section id="features" class="section stack">
+    <h2>{t(lang, 'home.features.title')}</h2>
+    <div class="cards">
+      {features.map(f => (
+        <article class="card">
+          <h3>{t(lang, `home.features.${f}.title`)}</h3>
+          <p>{t(lang, `home.features.${f}.body`)}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <section id="flow" class="section stack">
+    <h2>{t(lang, 'home.flow.title')}</h2>
+    <ol class="steps">{flow.map(n => <li><span>{t(lang, `home.flow.${n}`)}</span></li>)}</ol>
+    <p class="notice">{t(lang, 'home.flow.note')}</p>
+  </section>
+
+  <section id="faq" class="section stack stack--tight faq">
+    <h2>{t(lang, 'home.faq.title')}</h2>
+    <div>
+      {faqs.map(q => (
+        <details>
+          <summary>{t(lang, `home.faq.${q}.q`)}</summary>
+          <p>{t(lang, `home.faq.${q}.a`)}</p>
+        </details>
+      ))}
+    </div>
+    <p class="link-strong"><a href={localizePath(lang, '/guide')}>{t(lang, 'home.faq.more')} →</a></p>
+  </section>
+
+  <section id="closing" class="section section--gulf stack">
+    <h2>{t(lang, 'home.closing.title')}</h2>
+    <DownloadBlock lang={lang} view={view} compact />
+  </section>
+</Base>

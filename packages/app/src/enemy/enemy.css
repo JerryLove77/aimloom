@@ -1,0 +1,16 @@
+/* Enemy skin current-configuration page: the three Skin Browser shapes as a row of tabs
+   above a text-only list, mirroring Audio's event tabs and pick rows (au-tabs/au-pick). */
+.em-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 14px }
+.em-tab { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--ki-surface); border: 1px solid var(--ki-line); border-radius: var(--ws-radius-pill); color: var(--ki-text); font: 600 13px var(--ki-body-font); white-space: nowrap; cursor: pointer; transition: background var(--ki-motion) }
+.em-tab:hover:not(:disabled) { background: var(--ws-hover) }
+.em-tab[aria-pressed="true"] { background: var(--ws-selected); border-color: var(--ki-accent); box-shadow: inset 0 0 0 1px var(--ki-accent); color: var(--ws-accent-text) }
+.em-tab:disabled { cursor: not-allowed; opacity: .55 }
+/* A pending pick on that shape. The words are in the tab's accessible name. */
+.em-tab-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ki-accent) }
+.em-skins { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none }
+.em-skins > li { display: block }
+/* The row itself is the control: one click means "use this skin". */
+.em-pick { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: var(--ws-radius-row); color: var(--ki-text); font: 13px var(--ki-body-font); cursor: pointer; transition: background var(--ki-motion) }
+.em-pick:hover:not(:disabled) { background: var(--ws-hover) }
+.em-pick[aria-pressed="true"] { background: var(--ws-selected); border-color: var(--ki-accent) }
+.em-pick:disabled { cursor: not-allowed; opacity: .55 }

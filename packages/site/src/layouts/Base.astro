@@ -1,0 +1,34 @@
+---
+import '../styles/tokens.css'
+import '../styles/global.css'
+import Nav from '../components/Nav.astro'
+import { HTML_LANG, LANGS, localizePath, t, type Lang } from '../i18n'
+interface Props { lang: Lang; title: string; description: string; path: '/' | '/download' | '/guide' | '/changelog' | '/privacy' }
+const { lang, title, description, path } = Astro.props
+/** Where the name comes from. Shown untranslated on both languages' pages (user, 2026-09-19). */
+const NAME_ORIGIN = 'Aim + loom: weave your background, sounds, crosshair and enemy look into one setup.'
+/** A Cloudflare Email Routing address on the site's own domain; it forwards, so no personal address is published. */
+const FEEDBACK_EMAIL = 'feedback@aimloom.dev'
+---
+<!doctype html>
+<html lang={HTML_LANG[lang]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} · {t(lang, 'site.name')}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {LANGS.map(l => <link rel="alternate" hreflang={HTML_LANG[l]} href={localizePath(l, path)} />)}
+  </head>
+  <body>
+    <a class="skip" href="#main">{t(lang, 'nav.skip')}</a>
+    <Nav lang={lang} path={path} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <footer class="footer">
+      <p lang="en">{NAME_ORIGIN}</p>
+      <p>{t(lang, 'footer.feedback')}<a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a> · <a href={localizePath(lang, '/privacy')}>{t(lang, 'footer.privacy')}</a></p>
+    </footer>
+  </body>
+</html>
