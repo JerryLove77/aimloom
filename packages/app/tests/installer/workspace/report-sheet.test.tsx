@@ -302,7 +302,7 @@ describe('ReportSheet', () => {
       return <SettingsState.Provider value={{
         anchor, open: setAnchor, close: () => setAnchor(null), storage: null,
         accountResolve: () => Promise.reject(new Error('no bridge')), openLogs: () => Promise.resolve(), openDownload: () => Promise.resolve(),
-        update: null, updateDot: false, openReport, rootOverlay: null,
+        update: null, updateDot: false, appInfo: null, betaOn: false, setBetaOn: () => {}, openReport, rootOverlay: null,
       }}>
         <WorkspaceShell active="scheme" onSelect={() => {}} isDemo={false} locked eyebrow="eyebrow" title="title" scope="scope">
           <div />

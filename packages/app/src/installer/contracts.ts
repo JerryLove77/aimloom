@@ -114,11 +114,17 @@ export interface ReportInput {
 export interface SteamAccount { steamId: string; name: string }
 /** Exactly the bytes that `reportSend` will transmit, with the hash that ties the two together. */
 export interface ReportPreview { text: string; sha256: string; bytes: number }
+/** The line a build or an offered update belongs to. Mirrors Rust's `channel()`/`AppInfo`. */
+export type Channel = 'stable' | 'beta' | 'test'
+/** What `installer_app_info` answers -- never fails; on any doubt, the compiled version and `stable`. */
+export interface AppInfo { label: string; channel: Channel }
 /**
  * `latest` is null whenever no answer could be trusted -- offline, a non-200, an unparsable body.
- * An update check never becomes an error the player has to dismiss.
+ * An update check never becomes an error the player has to dismiss. `channel` says which line
+ * `latest` belongs to (`stable` when nothing newer was offered either, so the "up to date" line
+ * still has a stable version to show).
  */
-export interface UpdateCheck { latest: string | null; newer: boolean }
+export interface UpdateCheck { latest: string | null; newer: boolean; channel: 'stable' | 'beta' }
 
 export interface InstallerBridge {
   discover(): Promise<Discovery>
@@ -153,10 +159,13 @@ export interface InstallerBridge {
   /** Sends the kept report. A hash that no longer matches the kept one is `PLAN_STALE`. */
   reportSend(sha256: string): Promise<{ number: string }>
   accountResolve(url: string): Promise<SteamAccount>
-  updateCheck(): Promise<UpdateCheck>
+  /** `beta` is the player's Join-the-beta switch; considers the beta line only when it is true. */
+  updateCheck(beta: boolean): Promise<UpdateCheck>
   openLogs(): Promise<void>
-  /** Takes only the language: the App builds the address, never the UI. */
-  openDownload(lang: Lang): Promise<void>
+  /** Takes only the language and channel: the App builds the address, never the UI. */
+  openDownload(lang: Lang, channel: 'stable' | 'beta'): Promise<void>
+  /** The App's own label and channel, for the Settings version line. Never fails. */
+  appInfo(): Promise<AppInfo>
 }
 
 export class InstallerFailure extends Error {

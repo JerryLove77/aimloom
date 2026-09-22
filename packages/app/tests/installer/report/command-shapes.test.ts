@@ -24,9 +24,10 @@ describe('what each native command answers has one shape, on both sides', () => 
   it('installer_report_preview', async () => expect(keys(await bridge.reportPreview(input))).toEqual(keys(fixture.installer_report_preview)))
   it('installer_report_send', async () => expect(keys(await bridge.reportSend('0'.repeat(64)))).toEqual(keys(fixture.installer_report_send)))
   it('installer_account_resolve', async () => expect(keys(await bridge.accountResolve('https://steamcommunity.com/id/x'))).toEqual(keys(fixture.installer_account_resolve)))
-  it('installer_update_check', async () => expect(keys(await bridge.updateCheck())).toEqual(keys(fixture.installer_update_check)))
+  it('installer_update_check', async () => expect(keys(await bridge.updateCheck(false))).toEqual(keys(fixture.installer_update_check)))
+  it('installer_app_info', async () => expect(keys(await bridge.appInfo())).toEqual(keys(fixture.installer_app_info)))
 
-  it('the fixture names exactly the four commands that answer with data', () => {
-    expect(keys(fixture)).toEqual(['installer_account_resolve', 'installer_report_preview', 'installer_report_send', 'installer_update_check'])
+  it('the fixture names exactly the five commands that answer with data', () => {
+    expect(keys(fixture)).toEqual(['installer_account_resolve', 'installer_app_info', 'installer_report_preview', 'installer_report_send', 'installer_update_check'])
   })
 })

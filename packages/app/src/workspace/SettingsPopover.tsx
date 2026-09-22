@@ -3,6 +3,7 @@ import { LANGUAGE_NAMES, useLang, useMsg, useT, type LangChoice, type Msg } from
 import { errorMsg } from './issue-text'
 import { readAccount, writeAccount, looksLikeSteamUrl, type Account } from './account'
 import { readUpdatesEnabled, writeUpdatesEnabled } from './updates'
+import { updateAvailableKey } from './update-text'
 import { SettingsState } from './WorkspaceShell'
 
 /** feedback@aimloom.dev, unwrapped: plain selectable text, never a button or a mailto link. Shared with ReportSheet's failure view. */
@@ -112,14 +113,22 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
         <input type="checkbox" checked={updatesOn} onChange={e => toggleUpdates(e.target.checked)} />
         <span>{t('settings.updates.check')}</span>
       </label>
+      <label className="ws-settings-switch">
+        <input type="checkbox" checked={settings.betaOn} onChange={e => settings.setBetaOn(e.target.checked)} />
+        <span>{t('settings.updates.beta')}</span>
+      </label>
+      <p className="ws-muted">{t('settings.updates.beta.hint')}</p>
       {update && update.latest !== null ? (update.newer
         ? <p className="ws-settings-update">
-            {t('settings.updates.available', { version: update.latest })}{' '}
-            <button type="button" className="ki-button ki-button-secondary" onClick={() => { void settings.openDownload(lang) }}>{t('settings.updates.download')}</button>
+            {t(updateAvailableKey(update), { version: update.latest })}{' '}
+            <button type="button" className="ki-button ki-button-secondary" onClick={() => { void settings.openDownload(lang, update.channel) }}>{t('settings.updates.download')}</button>
           </p>
         : <p className="ws-settings-update">{t('settings.updates.current')}</p>) : null}
     </section>
 
-    <p className="ws-settings-version">{t('settings.version', { version: __APP_VERSION__ })}</p>
+    <p className="ws-settings-version">
+      {t('settings.version', { version: settings.appInfo?.label ?? __APP_VERSION__ })}
+      {settings.appInfo?.channel === 'beta' ? <span className="ws-tag ws-tag-pending ws-settings-beta-tag">{t('settings.version.beta')}</span> : null}
+    </p>
   </div>
 }

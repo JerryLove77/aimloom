@@ -69,6 +69,7 @@
 .ws-settings-switch { display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer }
 .ws-settings-update { display:flex; align-items:center; gap:8px; flex-wrap:wrap }
 .ws-update-dot { display:inline-block; width:6px; height:6px; margin-left:6px; border-radius:50%; background:var(--ki-accent) }
+.ws-settings-beta-tag { margin-left:6px }
 .ws-toast > span { color:#8cd9a6 }
 .ws-columns { display:grid; grid-template-columns:minmax(0,1fr) 440px; gap:20px; align-items:start }
 .ws-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px }

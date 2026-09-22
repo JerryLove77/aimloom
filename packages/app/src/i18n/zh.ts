@@ -20,10 +20,14 @@ export const zh = {
   'settings.feedback.openLogsFailed': '无法打开日志文件夹。',
   'settings.updates': '更新',
   'settings.updates.check': '启动时检查新版本',
+  'settings.updates.beta': '参与 Beta 测试',
+  'settings.updates.beta.hint': '打开后会提示测试版更新；测试版可能不稳定，可以随时关掉回到正式版。',
   'settings.updates.current': '已是最新版本。',
   'settings.updates.available': '有新版本 v{version}。',
+  'settings.updates.available.beta': '有新的测试版 v{version}。',
   'settings.updates.download': '去下载',
   'settings.version': 'Aimloom v{version}',
+  'settings.version.beta': 'Beta',
 
   // report.* — ReportSheet.tsx: the "send a bug report" sheet, opened from Settings.
   'report.title': '发送问题报告',

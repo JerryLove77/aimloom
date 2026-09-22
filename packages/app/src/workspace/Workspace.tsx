@@ -14,7 +14,8 @@ import { resolveGameRoot } from './game-root'
 import { noFileDrops, type FileDropSource } from './file-drop'
 import { browserStorage, useLang } from '../i18n'
 import { readUpdatesEnabled } from './updates'
-import type { InstallerBridge, UpdateCheck } from '../installer/contracts'
+import { readBetaEnabled, writeBetaEnabled } from './beta'
+import type { AppInfo, InstallerBridge, UpdateCheck } from '../installer/contracts'
 import type { ProfileBridge } from '../profiles/bridge'
 import type { ProfileAssetBridge } from '../profiles/assets'
 
@@ -31,6 +32,10 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
   const [profileUnsaved, setProfileUnsaved] = useState(false)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [update, setUpdate] = useState<UpdateCheck | null>(null)
+  const [appInfo, setAppInfo] = useState<AppInfo | null>(null)
+  // Null until `appInfo` has answered: the switch's own default (on for a beta build, off
+  // otherwise) is not known before then, so the update check waits rather than guessing off.
+  const [betaOn, setBetaOnState] = useState<boolean | null>(null)
   const [reportOpen, setReportOpen] = useState(false)
   // Lives for the whole session, not per mount of the sheet: closing (Cancel/Esc) must keep the
   // draft, so the controller cannot be recreated the next time the sheet opens (ruling B3).
@@ -41,15 +46,27 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
   // after the popover closes again. "Session" is this component's own lifetime -- nothing is
   // persisted, so the dot returns on the next launch if the version is still newer.
   const [everOpened, setEverOpened] = useState(false)
+  // `installer_app_info` never fails, but a demo/test bridge is free to reject it, so this still
+  // falls back rather than leaving the beta switch stuck at "unknown" forever.
+  useEffect(() => {
+    let cancelled = false
+    bridge.appInfo()
+      .then(info => { if (cancelled) return; setAppInfo(info); setBetaOnState(readBetaEnabled(storage, info.channel === 'beta')) })
+      .catch(() => { if (cancelled) return; setAppInfo({ label: '', channel: 'stable' }); setBetaOnState(readBetaEnabled(storage, false)) })
+    return () => { cancelled = true }
+  }, [bridge, storage])
+  const setBetaOn = (on: boolean) => { setBetaOnState(on); writeBetaEnabled(storage, on) }
+
   useEffect(() => {
     if (!readUpdatesEnabled(storage)) return
+    if (betaOn === null) return // the build's channel (and so the switch's default) is not known yet
     let cancelled = false
-    bridge.updateCheck()
+    bridge.updateCheck(betaOn)
       .then(result => { if (!cancelled) setUpdate(result) })
-      .catch(() => { if (!cancelled) setUpdate({ latest: null, newer: false }) })
+      .catch(() => { if (!cancelled) setUpdate({ latest: null, newer: false, channel: 'stable' }) })
     return () => { cancelled = true }
-    // Runs once at launch; a later switch flip takes effect next launch, by design.
-  }, [bridge, storage])
+    // Re-runs whenever the beta switch changes, by design (beta channel design §4).
+  }, [bridge, storage, betaOn])
   // Whether the game was actually found, for the report's `game.found` -- never "a folder is
   // remembered", which a stale remembered folder for an uninstalled game would turn into a false
   // "yes", and a player who only used Quick import (nothing remembered yet) into a false "no".
@@ -90,7 +107,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
     <SettingsState.Provider value={{
       anchor, open: (a: HTMLElement) => { setAnchor(a); setEverOpened(true) }, close: () => { const a = anchor; setAnchor(null); a?.focus() },
       storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge),
-      update, updateDot, openReport, rootOverlay,
+      update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
       <ProfilesApp bridge={profileBridge} assets={assetBridge} locate={bridge} isDemo={isDemo} isActive={!installer && section === 'profile'} onSelectSection={setSection} onOpenInstaller={open} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
       <SchemePage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={!installer && section === 'scheme'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />

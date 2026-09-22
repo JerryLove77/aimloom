@@ -210,9 +210,10 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
     async reportPreview(input){const text=`Aimloom demo report\n${input.description??''}`;return {text,sha256:'0'.repeat(64),bytes:new TextEncoder().encode(text).length}},
     async reportSend(){return {number:'AL-DEMO-0000'}},
     async accountResolve(){return {steamId:'76561190000000000',name:'Demo Player'}},
-    async updateCheck(){return {latest:null,newer:false}},
+    async updateCheck(){return {latest:null,newer:false,channel:'stable' as const}},
     async openLogs(){/* Demo intentionally has no OS/file effect. */},
     async openDownload(){/* Demo intentionally has no OS/file effect. */},
+    async appInfo(){return {label:__APP_VERSION__,channel:'stable' as const}},
   }
   return bridge
 }

@@ -128,19 +128,86 @@ describe('Settings', () => {
     expect(settingsStorage.m.get('aimloom.updates')).toBe('off')
   })
 
-  it('with a newer version the download line appears and calls openDownload with the current language', async () => {
+  describe('the beta switch', () => {
+    it('defaults off for a stable build', async () => {
+      app()
+      fireEvent.click(settingsButton())
+      const dialog = screen.getByRole('dialog')
+      await waitFor(() => expect(within(dialog).getByRole('checkbox', { name: '参与 Beta 测试' })).not.toBeChecked())
+    })
+
+    it('defaults on for a beta build', async () => {
+      const bridge = { ...createDemoBridge(), appInfo: vi.fn().mockResolvedValue({ label: '0.1.4-beta.1', channel: 'beta' }) }
+      app({ bridge })
+      fireEvent.click(settingsButton())
+      const dialog = screen.getByRole('dialog')
+      await waitFor(() => expect(within(dialog).getByRole('checkbox', { name: '参与 Beta 测试' })).toBeChecked())
+    })
+
+    it('a stored value wins over the build default', async () => {
+      const settingsStorage = memory()
+      settingsStorage.setItem('aimloom.beta', 'on')
+      app({ settingsStorage })
+      fireEvent.click(settingsButton())
+      const dialog = screen.getByRole('dialog')
+      await waitFor(() => expect(within(dialog).getByRole('checkbox', { name: '参与 Beta 测试' })).toBeChecked())
+    })
+
+    it('changing it stores the choice and re-runs the update check', async () => {
+      const updateCheck = vi.fn().mockResolvedValue({ latest: null, newer: false, channel: 'stable' })
+      const { settingsStorage } = app({ bridge: { ...createDemoBridge(), updateCheck } })
+      fireEvent.click(settingsButton())
+      const dialog = screen.getByRole('dialog')
+      await waitFor(() => expect(updateCheck).toHaveBeenCalledWith(false))
+      const checkbox = within(dialog).getByRole('checkbox', { name: '参与 Beta 测试' })
+      fireEvent.click(checkbox)
+      expect(checkbox).toBeChecked()
+      await waitFor(() => expect(updateCheck).toHaveBeenCalledWith(true))
+      expect(settingsStorage.m.get('aimloom.beta')).toBe('on')
+    })
+
+    it('shows the real label and a Beta tag for a beta build', async () => {
+      const bridge = { ...createDemoBridge(), appInfo: vi.fn().mockResolvedValue({ label: '0.1.4-beta.1', channel: 'beta' }) }
+      app({ bridge })
+      fireEvent.click(settingsButton())
+      const dialog = screen.getByRole('dialog')
+      await waitFor(() => expect(within(dialog).getByText('Aimloom v0.1.4-beta.1')).toBeInTheDocument())
+      expect(within(dialog).getByText('Beta')).toBeInTheDocument()
+    })
+
+    it('shows no Beta tag for a stable build', async () => {
+      app()
+      fireEvent.click(settingsButton())
+      const dialog = screen.getByRole('dialog')
+      await waitFor(() => expect(within(dialog).getByText(`Aimloom v${__APP_VERSION__}`)).toBeInTheDocument())
+      expect(within(dialog).queryByText('Beta')).toBeNull()
+    })
+  })
+
+  it('with a newer stable version the download line appears and calls openDownload with the current language and channel', async () => {
     const openDownload = vi.fn().mockResolvedValue(undefined)
-    const bridge = { ...createDemoBridge(), updateCheck: vi.fn().mockResolvedValue({ latest: '0.9.9', newer: true }), openDownload }
+    const bridge = { ...createDemoBridge(), updateCheck: vi.fn().mockResolvedValue({ latest: '0.9.9', newer: true, channel: 'stable' }), openDownload }
     app({ bridge })
     fireEvent.click(settingsButton())
     const dialog = screen.getByRole('dialog')
     await waitFor(() => expect(within(dialog).getByText('有新版本 v0.9.9。')).toBeInTheDocument())
     fireEvent.click(within(dialog).getByRole('button', { name: '去下载' }))
-    expect(openDownload).toHaveBeenCalledWith('zh')
+    expect(openDownload).toHaveBeenCalledWith('zh', 'stable')
+  })
+
+  it('with a newer beta the notice names the line and opens the download at the beta channel', async () => {
+    const openDownload = vi.fn().mockResolvedValue(undefined)
+    const bridge = { ...createDemoBridge(), updateCheck: vi.fn().mockResolvedValue({ latest: '0.1.5-beta.1', newer: true, channel: 'beta' }), openDownload }
+    app({ bridge })
+    fireEvent.click(settingsButton())
+    const dialog = screen.getByRole('dialog')
+    await waitFor(() => expect(within(dialog).getByText('有新的测试版 v0.1.5-beta.1。')).toBeInTheDocument())
+    fireEvent.click(within(dialog).getByRole('button', { name: '去下载' }))
+    expect(openDownload).toHaveBeenCalledWith('zh', 'beta')
   })
 
   it('the Settings button shows the dot only when newer is true', async () => {
-    const bridge = { ...createDemoBridge(), updateCheck: vi.fn().mockResolvedValue({ latest: '0.9.9', newer: true }) }
+    const bridge = { ...createDemoBridge(), updateCheck: vi.fn().mockResolvedValue({ latest: '0.9.9', newer: true, channel: 'stable' }) }
     app({ bridge })
     await waitFor(() => expect(document.querySelector('.ws-update-dot')).toBeInTheDocument())
   })
