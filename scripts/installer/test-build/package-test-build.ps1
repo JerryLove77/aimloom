@@ -26,6 +26,11 @@ pwsh -NoProfile -File scripts\installer\test-build\package-test-build.ps1 `
 pwsh -NoProfile -File scripts\installer\test-build\package-test-build.ps1 `
     -Exe packages\app\src-tauri\target\x86_64-pc-windows-msvc\release\Aimloom.exe `
     -Version 0.1.2 -Channel release -Commit abc1234 -OutRoot $HOME\Desktop
+
+.EXAMPLE
+pwsh -NoProfile -File scripts\installer\test-build\package-test-build.ps1 `
+    -Exe packages\app\src-tauri\target\x86_64-pc-windows-msvc\release\Aimloom.exe `
+    -Version 0.1.4-beta.1 -Channel beta -Commit abc1234 -OutRoot $HOME\Desktop
 #>
 [CmdletBinding()]
 param(
@@ -33,7 +38,7 @@ param(
     [Parameter(Mandatory)][string]$Version,
     [Parameter(Mandatory)][string]$Commit,
     [Parameter(Mandatory)][string]$OutRoot,
-    [ValidateSet('test', 'release')][string]$Channel = 'test',
+    [ValidateSet('test', 'beta', 'release')][string]$Channel = 'test',
     [string]$SourceRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..')).Path
 )
 $ErrorActionPreference = 'Stop'
@@ -54,6 +59,9 @@ if ($Channel -eq 'release' -and $Version -cne $appVersion) {
 }
 if ($Channel -eq 'test' -and $Version -cnotmatch ('^' + [regex]::Escape($appVersion) + '-test\.\d+$')) {
     throw "A test build is labelled $appVersion-test.N; got '$Version'. Use -Channel release for $appVersion."
+}
+if ($Channel -eq 'beta' -and $Version -cnotmatch ('^' + [regex]::Escape($appVersion) + '-beta\.[1-9]\d*$')) {
+    throw "A beta build is labelled $appVersion-beta.N (N a positive integer); got '$Version'. Use -Channel test for $appVersion-test.N or -Channel release for $appVersion."
 }
 # A real build states its version; the tests' four-byte stand-in has none.
 $exeVersion = (Get-Item -LiteralPath $Exe).VersionInfo.ProductVersion

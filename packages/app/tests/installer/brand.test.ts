@@ -43,7 +43,7 @@ describe('the product is named Aimloom wherever a player can see it', () => {
     const surfaces = [
       ...files(join(app, 'src')).filter(path => /\.(tsx?|css|html)$/.test(path)),
       join(app, 'src-tauri/tauri.conf.json'), join(app, 'src-tauri/tauri.installer.conf.json'), join(app, 'installer.html'),
-      join(repo, 'scripts/installer/test-build/channels/test/使用说明.txt'), join(repo, 'scripts/installer/test-build/channels/release/使用说明.txt'),
+      join(repo, 'scripts/installer/test-build/channels/test/使用说明.txt'), join(repo, 'scripts/installer/test-build/channels/beta/使用说明.txt'), join(repo, 'scripts/installer/test-build/channels/release/使用说明.txt'),
       join(repo, 'packages/crosshair/cli/prepare-pack.ts'),
     ]
     expect(surfaces.filter(path => readFileSync(path, 'utf8').includes('瞄织')).map(path => path.slice(repo.length))).toEqual([])
@@ -55,7 +55,7 @@ describe('the product is named Aimloom wherever a player can see it', () => {
     expect(hits.map(path => path.slice(app.length))).toEqual([])
   })
 
-  for (const channel of ['test', 'release']) {
+  for (const channel of ['test', 'beta', 'release']) {
     it(`the ${channel} package ships Aimloom.exe and its readme says so`, () => {
       const readme = read(repo, `scripts/installer/test-build/channels/${channel}/使用说明.txt`)
       expect(readme).toContain('Aimloom.exe')
@@ -79,6 +79,23 @@ describe('the product is named Aimloom wherever a player can see it', () => {
     expect(read(repo, 'scripts/installer/test-build/channels/release/使用说明.txt')).not.toContain('测试')
     // The English twin must not call a release build a test either.
     expect(read(repo, 'scripts/installer/test-build/channels/release/README.txt')).not.toMatch(/test build/i)
+  })
+
+  it('the beta readme says it is a beta, not an internal test build, and how to go back to stable', () => {
+    const zh = read(repo, 'scripts/installer/test-build/channels/beta/使用说明.txt')
+    const en = read(repo, 'scripts/installer/test-build/channels/beta/README.txt')
+    expect(zh).toContain('测试版')
+    expect(en).toContain('Beta')
+    expect(en).not.toMatch(/test build/i)
+    // Shares Profiles/backups with the stable App, per the beta design (2026-09-22).
+    expect(zh).toContain('%LOCALAPPDATA%\\Aimloom')
+    expect(en).toContain('%LOCALAPPDATA%\\Aimloom')
+    // How a player sends a report: the exact Settings wording from packages/app/src/i18n.
+    expect(zh).toContain('发送问题报告')
+    expect(en).toContain('Send a report')
+    // How a player goes back to stable.
+    expect(zh).toContain('参与 Beta 测试')
+    expect(en).toContain('Join the beta')
   })
 
   it('the release readmes tell the reader where the language setting is', () => {

@@ -1,0 +1,36 @@
+Aimloom Beta {{VERSION}}
+
+KovaaK setup manager: background, sounds, crosshair, enemy look, and training Profiles. This is
+a beta build, opted into from Settings; it can be rough, so please report anything that breaks.
+
+[Before you start]
+- Windows 10 or 11 (64-bit)
+- PowerShell 7: if you do not have it, run winget install --id Microsoft.PowerShell
+  in Terminal, or download it from https://aka.ms/powershell, then reopen this app
+- WebView2: built into Windows 11; on Windows 10, if the window does not open,
+  install the Microsoft Edge WebView2 Runtime
+
+[How to open]
+1. Put this whole folder anywhere, not inside the game folder. Do not take Aimloom.exe
+   out on its own: it needs the scripts folder beside it.
+2. Double-click Aimloom.exe.
+3. If a blue "Windows protected your PC" screen appears: choose More info, then Run anyway.
+   Aimloom has no code-signing certificate, so Windows does not recognize it.
+
+[Before you use it]
+- Close KovaaK before writing to the game files.
+- Every write is backed up first; Quick import at the bottom left undoes it.
+- Backups and Profiles are kept in %LOCALAPPDATA%\Aimloom, shared with the stable App.
+- Which crosshair you use is chosen in the game.
+- The language follows Windows; change it in Settings at the bottom left.
+
+[Please report problems]
+Open Settings at the bottom left and choose "Send a report...". Include:
+1. a screenshot
+2. VERSION.txt from this folder
+3. the log file worker.log: paste %LOCALAPPDATA%\Aimloom\logs into the
+   File Explorer address bar and press Enter to open that folder
+
+[Going back to stable]
+Install the stable Setup from https://aimloom.dev over this build, then in Settings turn off
+"Join the beta" so you are not offered another beta.

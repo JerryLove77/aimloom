@@ -66,11 +66,33 @@ Test-Case 'a release build carries the app version and a readme with no test wor
     Assert ($englishBytes[0] -eq 0xEF -and $englishBytes[1] -eq 0xBB -and $englishBytes[2] -eq 0xBF) 'Notepad needs README.txt as UTF-8 with a BOM'
 }
 
+Test-Case 'a beta build is labelled as a beta everywhere a player looks' {
+    $result = Invoke-Packager @{ Version = "$appVersion-beta.3"; Channel = 'beta' }
+    Assert ((Split-Path $result.Folder -Leaf) -ceq "Aimloom-v$appVersion-beta.3") "Wrong folder: $($result.Folder)"
+    Assert ([IO.File]::Exists("$($result.Folder).zip")) 'The ZIP must sit beside the folder'
+    $readme = Get-Content -LiteralPath (Join-Path $result.Folder '使用说明.txt') -Raw
+    Assert ($readme.Contains('Beta') -and $readme.Contains("$appVersion-beta.3")) 'The beta readme must say Beta and name its version'
+    Assert (-not $readme.Contains('{{')) 'A readme placeholder was left unfilled'
+    Assert ((Get-Content -LiteralPath (Join-Path $result.Folder 'VERSION.txt') -First 1) -ceq "Aimloom $appVersion-beta.3") 'VERSION.txt must name the build'
+    $englishPath = Join-Path $result.Folder 'README.txt'
+    Assert ([IO.File]::Exists($englishPath)) 'A beta build must ship the English README.txt too'
+    $english = Get-Content -LiteralPath $englishPath -Raw
+    Assert (-not $english.Contains('{{')) 'A README.txt placeholder was left unfilled'
+    Assert ($english.Contains('Beta') -and $english.Contains("$appVersion-beta.3")) 'README.txt must say Beta and name its version'
+    Assert (-not ($english -match 'test build')) 'The beta README must not call itself a test build'
+    foreach ($fact in @('Aimloom.exe', 'PowerShell 7', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\Aimloom')) {
+        Assert ($english.Contains($fact)) "README.txt must say: $fact"
+    }
+}
+
 Test-Case 'a label that disagrees with the app version or the channel is refused' {
     Expect-Refusal { Invoke-Packager @{ Version = '9.9.9'; Channel = 'release' } } $appVersion
     Expect-Refusal { Invoke-Packager @{ Version = '9.9.9-test.1' } } $appVersion
     Expect-Refusal { Invoke-Packager @{ Version = "$appVersion-test.1"; Channel = 'release' } } 'release'
     Expect-Refusal { Invoke-Packager @{ Version = $appVersion } } 'test'
+    Expect-Refusal { Invoke-Packager @{ Version = "$appVersion-beta"; Channel = 'beta' } } $appVersion
+    Expect-Refusal { Invoke-Packager @{ Version = '9.9.9-beta.1'; Channel = 'beta' } } $appVersion
+    Expect-Refusal { Invoke-Packager @{ Version = "$appVersion-test.1"; Channel = 'beta' } } 'beta'
 }
 $setupPackager = Join-Path (Split-Path $PSScriptRoot -Parent) 'test-build/package-setup.ps1'
 
