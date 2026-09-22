@@ -96,9 +96,11 @@ const lang = Astro.params.lang as Lang
   .cx-tune-row input:disabled { cursor: not-allowed; opacity: 0.55; }
 
   /* Colour swatches: one round button per preset, filled with that colour, plus a final
-     "custom" swatch — matches the App tuner's PaletteControl. */
-  .cx-tune-palette-row { grid-template-columns: 1fr; row-gap: var(--al-space-2); }
-  .cx-tune-palette { display: flex; flex-wrap: wrap; gap: var(--al-space-2); }
+     "custom" swatch — matches the App tuner's PaletteControl. The palette and the custom-colour
+     picker below it live in the row's right-hand `.cx-tune-controls` column, same as every other
+     control, so the section reads as aligned rows rather than one ragged one. */
+  .cx-tune-palette-row .cx-tune-controls { flex-wrap: wrap; }
+  .cx-tune-palette { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--al-space-2); }
   .cx-swatch-btn {
     width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
     border: 2px solid rgb(24 33 38 / 35%); cursor: pointer; padding: 0; appearance: none;
@@ -106,7 +108,10 @@ const lang = Astro.params.lang as Lang
   .cx-swatch-btn:hover:not(:disabled) { border-color: var(--al-ink); }
   .cx-swatch-btn[aria-checked="true"] { border-color: var(--al-ink); outline: 3px solid var(--al-papaya); outline-offset: 2px; }
   .cx-swatch-btn:disabled { cursor: not-allowed; opacity: 0.45; }
-  .cx-swatch-custom { background: var(--al-paper); display: grid; place-items: center; font-weight: 900; color: var(--al-ink); }
+  /* A colour-wheel fill instead of a "?" glyph: no text renders inside, but the accessible name
+     ("Custom" / "自定义") stays on the button's aria-label for screen readers. */
+  .cx-swatch-custom { background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red); }
+  .cx-tune-custom-color-row { display: flex; justify-content: flex-end; }
   .cx-tune-custom-color { display: flex; align-items: center; gap: var(--al-space-3); }
   .cx-tune-custom-color input[type="color"] { width: 40px; height: 32px; padding: 0; border: 2px solid rgb(24 33 38 / 35%); border-radius: 6px; background: none; cursor: pointer; }
 
@@ -117,8 +122,8 @@ const lang = Astro.params.lang as Lang
     .cx-swatch img { max-width: 100%; }
     .cx-tune-head { flex-wrap: wrap; }
     .cx-tune-row { grid-template-columns: 1fr; row-gap: var(--al-space-2); }
-    .cx-tune-controls { justify-content: space-between; }
+    .cx-tune-controls, .cx-tune-palette { justify-content: flex-start; }
+    .cx-tune-custom-color-row { justify-content: flex-start; }
     .cx-tune-row input[type="range"] { width: 100%; max-width: none; flex: 1; }
-    .cx-tune-palette-row .cx-tune-controls { justify-content: flex-start; }
   }
 </style>
