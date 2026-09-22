@@ -5,7 +5,7 @@ export type DownloadView =
   | { kind: 'none' }
   | { kind: 'preparing'; version: string; platform: string; requires: string[] }
   | {
-      kind: 'beta' | 'stable'; version: string; date: string; size: string; sha256: string
+      kind: 'beta' | 'stable' | 'withdrawn'; version: string; date: string; size: string; sha256: string
       platform: string; requires: string[]; contents: string[]; primaryUrl: string; mirrorUrl: string | null
       knownIssues: string[]; notes: string; setup: { url: string; size: string; sha256: string } | null
     }

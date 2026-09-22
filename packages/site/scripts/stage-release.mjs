@@ -36,7 +36,8 @@ export function stageRelease({ dist, source, releasesPath }) {
   const data = JSON.parse(readFileSync(releasesPath, 'utf8'))
   const staged = []
   for (const release of data.releases) {
-    if (release.status === 'preparing') continue
+    // A withdrawn release is a changelog record only: its files are no longer served.
+    if (release.status === 'preparing' || release.status === 'withdrawn') continue
     if (typeof release.primaryUrl === 'string' && SITE_FILE.test(release.primaryUrl)) {
       staged.push(stageOne(release, basename(release.primaryUrl), release.bytes, release.sha256, dist, source))
     }

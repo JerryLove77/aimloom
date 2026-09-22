@@ -31,6 +31,13 @@ describe('parseReleases', () => {
   it('rejects a recommended version that no entry has', () => {
     expect(() => parseReleases(wrap(stable, '9.9.9'))).toThrow(/recommended/)
   })
+  it('keeps a withdrawn release as a record, with its download facts', () => {
+    expect(parseReleases(wrap({ ...stable, status: 'withdrawn' }, null)).releases[0]?.status).toBe('withdrawn')
+    expect(() => parseReleases(wrap({ ...stable, status: 'withdrawn', sha256: null }, null))).toThrow(/sha256/)
+  })
+  it('refuses to recommend a withdrawn release', () => {
+    expect(() => parseReleases(wrap({ ...stable, status: 'withdrawn' }))).toThrow(/withdrawn/)
+  })
   it('rejects duplicate versions', () => {
     expect(() => parseReleases({ schemaVersion: 1, recommended: null, releases: [stable, stable] })).toThrow(/duplicate/)
   })
@@ -89,24 +96,22 @@ describe('the committed releases.json', () => {
   it('parses', () => {
     expect(releases.schemaVersion).toBe(1)
   })
-  it('still lists 0.1.1, whose ZIP the site keeps serving', () => {
-    // docs/superpowers/notes/2026-09-19-windows-soft-launch-test.md. Change these facts only together.
-    expect(releases.releases.find(x => x.version === '0.1.1')).toMatchObject({
-      status: 'beta', bytes: 3_281_812, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.1.zip', setup: null,
-      sha256: '35b69259d026868ccfb358b719eb256b2b45ab703ed287e661c8883d4a875158',
-    })
+  it('keeps 0.1.1 and 0.1.2 as withdrawn records: their Aimloom.exe carries the builder\'s Windows user name', () => {
+    for (const version of ['0.1.1', '0.1.2']) {
+      expect(releases.releases.find(x => x.version === version)?.status, version).toBe('withdrawn')
+    }
   })
-  it('recommends 0.1.2, a beta with a Setup and a portable ZIP, both served by the site itself', () => {
-    // Both files (rc.2) were built once on the tester's PC from 3ff5be8 and checked there
-    // (docs/superpowers/notes/2026-09-20-setup-windows-verification.md). The Setup is not
-    // byte-reproducible, so these facts name the one file that exists. Change them only together.
+  it('recommends 0.1.3, a beta with a Setup and a portable ZIP, both served by the site itself', () => {
+    // Both files were built once from ff2426f with the path-remapping build and accepted on the
+    // tester's PC. The Setup is not byte-reproducible, so these facts name the one file that
+    // exists. Change them only together.
     const r = recommendedRelease(releases)
     expect(r).toMatchObject({
-      version: '0.1.2', status: 'beta', bytes: 3_329_758, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.2.zip',
-      sha256: 'c6d5b60aea25c5b0f8f91e401a4d31cb5711626a995d5fb8ace228f292e31371',
+      version: '0.1.3', status: 'beta', bytes: 4_368_322, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.3.zip',
+      sha256: 'a2718b83bc4a70a22f6595e61fe9d2187d7c75eda2fa5ddc724bfb215f42d8c3',
       setup: {
-        url: '/files/Aimloom-Setup-v0.1.2.exe', bytes: 2_365_929,
-        sha256: '7eb0cddb76ff5957a940cf39eada79836d234096ba1950e95c5e5f4c9f9a0da9',
+        url: '/files/Aimloom-Setup-v0.1.3.exe', bytes: 3_156_835,
+        sha256: '59b0290806f60aaf5123f3e5720bd8f391bcadbfa95a573bc87ad603b0b675f7',
       },
     })
     expect(r?.contents).toContain('README.txt')

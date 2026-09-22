@@ -49,6 +49,7 @@ export const zh = {
   'download.status.preparing': '准备中',
   'download.status.beta': '测试版',
   'download.status.stable': '正式版',
+  'download.status.withdrawn': '已下架',
   'download.preparing.title': '正式安装包尚未发布',
   'download.preparing.body': '当前版本正在完成 Windows 实机验收。发布后这里会出现下载链接、文件大小和 SHA-256 校验值。在此之前没有可用的安装包。',
   'download.preparing.links': '你可以先阅读使用帮助，或查看更新记录。',

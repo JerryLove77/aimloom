@@ -1,10 +1,54 @@
 {
   "schemaVersion": 1,
-  "recommended": "0.1.2",
+  "recommended": "0.1.3",
   "releases": [
     {
-      "version": "0.1.2",
+      "version": "0.1.3",
       "status": "beta",
+      "date": "2026-09-22",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "PowerShell 7.0+",
+        "WebView2"
+      ],
+      "bytes": 4368322,
+      "sha256": "a2718b83bc4a70a22f6595e61fe9d2187d7c75eda2fa5ddc724bfb215f42d8c3",
+      "primaryUrl": "/files/Aimloom-v0.1.3.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "scripts\\",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "Profile 可以「应用」了：一次把保存的背景和音效写入游戏；Profile 只存背景和音效，列表里直接显示「保持当前」保持的是哪一个。Enemy 页改成游戏自带「皮肤浏览器」的皮肤：人形、方块、球各选一个。改设置（背景、音效、皮肤、Profile）前必须退出游戏，游戏开着时会拒绝写入，因为游戏退出时会覆盖掉改动；应用也快了很多。可以在「设置」里发送问题报告、添加 Steam 账户（可选），启动时会检查有没有新版本（可关闭）。更多老格式主题可以用作背景。能从 Steam 的游戏库里找到游戏。「安装与恢复」改名为「一键拖入」。",
+        "en": "Profiles can now be applied: \"Apply\" writes the saved background and sounds to the game at once; a Profile holds the background and sounds, and the list names what \"Keep current\" keeps. The Enemy look page now sets the game's own Skin Browser skins: one each for humanoid, cube and sphere. Changing settings (background, sounds, skin, Profile) needs the game closed: while it runs, Aimloom refuses to write, because the game overwrites the change when it exits. Applying is much faster. Settings can send a problem report and add an optional Steam account, and the App checks for a new version at launch (you can turn this off). More older themes can be used as a background. The game is found through Steam's library list. \"Install & restore\" is now \"Quick import\"."
+      },
+      "knownIssues": {
+        "zh": [
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "需要 PowerShell 7；Windows 自带的 PowerShell 5.1 不够用。安装程序可以用 winget 帮你装上，但这一步还没有在全新的电脑上验证过。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。",
+          "敌人皮肤的列表是按当前游戏版本内置的；游戏以后新增的皮肤，要等 Aimloom 更新后才能选。"
+        ],
+        "en": [
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "Needs PowerShell 7; the PowerShell 5.1 built into Windows is not enough. The installer can install it with winget, but that step has not been verified on a clean PC yet.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice.",
+          "The enemy skin list is built in for the current game version; skins the game adds later can be chosen once Aimloom is updated."
+        ]
+      },
+      "setup": {
+        "url": "/files/Aimloom-Setup-v0.1.3.exe",
+        "bytes": 3156835,
+        "sha256": "59b0290806f60aaf5123f3e5720bd8f391bcadbfa95a573bc87ad603b0b675f7"
+      }
+    },
+    {
+      "version": "0.1.2",
+      "status": "withdrawn",
       "date": "2026-09-20",
       "platform": "Windows 10/11 x64",
       "requires": [
@@ -50,7 +94,7 @@
     },
     {
       "version": "0.1.1",
-      "status": "beta",
+      "status": "withdrawn",
       "date": "2026-09-19",
       "platform": "Windows 10/11 x64",
       "requires": [

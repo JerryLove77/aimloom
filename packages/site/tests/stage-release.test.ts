@@ -44,6 +44,12 @@ describe('stageRelease', () => {
       expect(run(setup(release))).toEqual([])
     }
   })
+  it('does not stage a withdrawn release: its files are no longer served', () => {
+    const s = setup({ status: 'withdrawn' })
+    writeFileSync(join(s.source, 'Aimloom-v0.1.1.zip'), zip)
+    expect(run(s)).toEqual([])
+    expect(existsSync(s.staged)).toBe(false)
+  })
   it('refuses to run before the site is built', () => {
     const s = setup()
     expect(() => stageRelease({ dist: join(s.dist, 'missing'), source: s.source, releasesPath: s.releasesPath })).toThrow(/astro build/)
