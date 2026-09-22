@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatBytes, parseReleases, recommendedRelease, releases } from '../src/data/releases'
+import { betaRelease, formatBytes, parseReleases, recommendedRelease, releases } from '../src/data/releases'
 
 const preparing = {
   version: '0.1.0', status: 'preparing', date: null, platform: 'Windows 10/11 x64',
@@ -14,7 +14,7 @@ const wrap = (r: unknown, recommended: string | null = '0.1.0') => ({ schemaVers
 
 describe('parseReleases', () => {
   it('accepts a preparing release with every download fact null', () => {
-    expect(parseReleases(wrap(preparing)).releases[0]?.status).toBe('preparing')
+    expect(parseReleases(wrap(preparing, null)).releases[0]?.status).toBe('preparing')
   })
   it('rejects a preparing release that carries a URL', () => {
     expect(() => parseReleases(wrap({ ...preparing, primaryUrl: 'https://x/y.zip' }))).toThrow(/preparing/)
@@ -38,6 +38,9 @@ describe('parseReleases', () => {
   it('refuses to recommend a withdrawn release', () => {
     expect(() => parseReleases(wrap({ ...stable, status: 'withdrawn' }))).toThrow(/withdrawn/)
   })
+  it('refuses to recommend a release that is not stable', () => {
+    expect(() => parseReleases(wrap({ ...stable, status: 'beta' }))).toThrow(/recommended.*stable/)
+  })
   it('rejects duplicate versions', () => {
     expect(() => parseReleases({ schemaVersion: 1, recommended: null, releases: [stable, stable] })).toThrow(/duplicate/)
   })
@@ -45,7 +48,7 @@ describe('parseReleases', () => {
     expect(() => parseReleases({ ...wrap(stable), extra: 1 })).toThrow(/unknown/)
   })
   it('accepts a beta without a mirror while the repository is private', () => {
-    expect(parseReleases(wrap({ ...stable, status: 'beta', mirrorUrl: null })).releases[0]?.mirrorUrl).toBeNull()
+    expect(parseReleases(wrap({ ...stable, status: 'beta', mirrorUrl: null }, null)).releases[0]?.mirrorUrl).toBeNull()
   })
   it('accepts a ZIP served from the site itself under /files/', () => {
     expect(parseReleases(wrap({ ...stable, primaryUrl: '/files/Aimloom-v0.1.0.zip' })).releases[0]?.primaryUrl).toBe('/files/Aimloom-v0.1.0.zip')
@@ -76,6 +79,31 @@ describe('parseReleases', () => {
   it('rejects a Setup on a release still in preparation', () => {
     expect(() => parseReleases(wrap({ ...preparing, setup: setupFile }))).toThrow(/setup/)
   })
+
+  it('treats an absent beta key, and an explicit beta: null, the same way', () => {
+    expect(parseReleases(wrap(stable)).beta).toBeNull()
+    expect(parseReleases({ schemaVersion: 1, recommended: '0.1.0', beta: null, releases: [stable] }).beta).toBeNull()
+  })
+  it('accepts a beta field naming a beta release newer than a stable recommended', () => {
+    const beta = { ...stable, version: '0.1.1', status: 'beta' }
+    const data = parseReleases({ schemaVersion: 1, recommended: '0.1.0', beta: '0.1.1', releases: [stable, beta] })
+    expect(data.beta).toBe('0.1.1')
+  })
+  it('rejects a beta field naming a release that is not itself beta', () => {
+    const notBeta = { ...stable, version: '0.1.1', status: 'stable' }
+    expect(() => parseReleases({ schemaVersion: 1, recommended: '0.1.0', beta: '0.1.1', releases: [stable, notBeta] })).toThrow(/beta 0\.1\.1 must name a beta release/)
+  })
+  it('rejects a beta field naming no release', () => {
+    expect(() => parseReleases({ schemaVersion: 1, recommended: '0.1.0', beta: '9.9.9', releases: [stable] })).toThrow(/beta 9\.9\.9 names no release/)
+  })
+  it('rejects a beta that is not newer than recommended', () => {
+    const beta = { ...stable, version: '0.1.0-beta.1', status: 'beta' }
+    expect(() => parseReleases({ schemaVersion: 1, recommended: '0.1.0', beta: '0.1.0-beta.1', releases: [stable, beta] })).toThrow(/beta 0\.1\.0-beta\.1 must be newer than recommended 0\.1\.0/)
+  })
+  it('accepts a beta field with no recommended to compare against', () => {
+    const beta = { ...stable, version: '0.1.1', status: 'beta' }
+    expect(parseReleases({ schemaVersion: 1, recommended: null, beta: '0.1.1', releases: [beta] }).beta).toBe('0.1.1')
+  })
 })
 
 describe('recommendedRelease', () => {
@@ -84,6 +112,17 @@ describe('recommendedRelease', () => {
   })
   it('returns null when recommended is null', () => {
     expect(recommendedRelease(parseReleases(wrap(stable, null)))).toBeNull()
+  })
+})
+
+describe('betaRelease', () => {
+  it('returns the entry named by beta', () => {
+    const beta = { ...stable, version: '0.1.1', status: 'beta' }
+    const data = parseReleases({ schemaVersion: 1, recommended: '0.1.0', beta: '0.1.1', releases: [stable, beta] })
+    expect(betaRelease(data)?.version).toBe('0.1.1')
+  })
+  it('returns null when beta is null', () => {
+    expect(betaRelease(parseReleases(wrap(stable)))).toBeNull()
   })
 })
 
@@ -101,13 +140,14 @@ describe('the committed releases.json', () => {
       expect(releases.releases.find(x => x.version === version)?.status, version).toBe('withdrawn')
     }
   })
-  it('recommends 0.1.3, a beta with a Setup and a portable ZIP, both served by the site itself', () => {
+  it('recommends 0.1.3, now stable, with a Setup and a portable ZIP, both served by the site itself', () => {
     // Both files were built once from ff2426f with the path-remapping build and accepted on the
     // tester's PC. The Setup is not byte-reproducible, so these facts name the one file that
-    // exists. Change them only together.
+    // exists. Change them only together. 0.1.3 moved from `beta` to `stable` status when the beta
+    // channel shipped (the beta line names testers' own line from here on).
     const r = recommendedRelease(releases)
     expect(r).toMatchObject({
-      version: '0.1.3', status: 'beta', bytes: 4_368_322, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.3.zip',
+      version: '0.1.3', status: 'stable', bytes: 4_368_322, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.3.zip',
       sha256: 'a2718b83bc4a70a22f6595e61fe9d2187d7c75eda2fa5ddc724bfb215f42d8c3',
       setup: {
         url: '/files/Aimloom-Setup-v0.1.3.exe', bytes: 3_156_835,
@@ -122,5 +162,9 @@ describe('the committed releases.json', () => {
   })
   it('lists no release that was never published', () => {
     expect(releases.releases.map(r => r.version)).not.toContain('0.1.0')
+  })
+  it('carries no beta yet', () => {
+    expect(releases.beta).toBeNull()
+    expect(betaRelease(releases)).toBeNull()
   })
 })

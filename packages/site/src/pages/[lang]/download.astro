@@ -3,10 +3,11 @@ import Base from '../../layouts/Base.astro'
 import DownloadBlock from '../../components/DownloadBlock.astro'
 import { LANGS, t, type Lang } from '../../i18n'
 import { recommendedRelease, releases } from '../../data/releases'
-import { downloadView } from '../../lib/download-view'
+import { betaDownloadView, downloadView } from '../../lib/download-view'
 export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
 const lang = Astro.params.lang as Lang
 const view = downloadView(recommendedRelease(releases), lang)
+const betaView = betaDownloadView(releases, lang)
 ---
 <Base lang={lang} path="/download" title={t(lang, 'download.title')} description={t(lang, 'download.description')}>
   <div class="page-header"><h1>{t(lang, 'download.title')}</h1></div>
@@ -20,6 +21,13 @@ const view = downloadView(recommendedRelease(releases), lang)
     <section id="first-step" class="section stack stack--tight">
       <h2>{t(lang, 'download.first.title')}</h2>
       <p>{t(lang, view.setup !== null ? 'download.first.body.setup' : 'download.first.body')}</p>
+    </section>
+  )}
+
+  {betaView !== null && (
+    <section id="beta" class="section stack stack--tight">
+      <h2>{t(lang, 'download.beta.title')}</h2>
+      <DownloadBlock lang={lang} view={betaView} />
     </section>
   )}
 

@@ -50,21 +50,22 @@ describe('build output', () => {
   it('home offers the 0.1.3 Setup from the site itself, in the hero and the closing block, and no ZIP', () => {
     for (const r of ['zh', 'en']) {
       const html = page(r)
-      expect(html.match(/data-download-state="beta"/g)?.length, r).toBe(2)
+      expect(html.match(/data-download-state="stable"/g)?.length, r).toBe(2)
       expect(html.match(/<a[^>]+href="\/files\/Aimloom-Setup-v0\.1\.3\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
       expect(html, r).not.toMatch(/href="[^"]+\.zip"/)
     }
     expect(page('en')).toContain('One setup for each way you train.')
   })
-  it('download page shows the beta, the Setup first and the portable ZIP second, both hashes, and no source link', () => {
+  it('download page shows the stable release, the Setup first and the portable ZIP second, both hashes, and no source link', () => {
     for (const r of ['zh/download', 'en/download']) {
       const html = page(r)
-      expect(html, r).toContain('data-download-state="beta"')
+      expect(html, r).toContain('data-download-state="stable"')
       expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="/files/Aimloom-Setup-v0.1.3.exe"', 'href="/files/Aimloom-v0.1.3.zip"'])
       expect(html, r).toContain('59b0290806f60aaf5123f3e5720bd8f391bcadbfa95a573bc87ad603b0b675f7')
       expect(html, r).toContain('a2718b83bc4a70a22f6595e61fe9d2187d7c75eda2fa5ddc724bfb215f42d8c3')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')
+      expect(html, r).not.toContain('id="beta"')
       expect(html, r).not.toMatch(/github\.com/)
     }
   })
@@ -119,7 +120,7 @@ describe('build output', () => {
     expect(html.indexOf('v0.1.3')).toBeGreaterThan(-1)
     expect(html.indexOf('v0.1.3')).toBeLessThan(html.indexOf('v0.1.2'))
     expect(html.indexOf('v0.1.2')).toBeLessThan(html.indexOf('v0.1.1'))
-    expect(html).toContain('Beta · 2026-09-22')
+    expect(html).toContain('Stable · 2026-09-22')
     expect(html).toContain('Withdrawn · 2026-09-20')
     expect(html).toContain('Withdrawn · 2026-09-19')
     expect(html).toContain('href="/en/download/"')
@@ -171,15 +172,18 @@ describe('build output', () => {
     expect(headers).toContain('X-Content-Type-Options: nosniff')
   })
 
-  it('publishes latest.json with the recommended version, uncached, as a static file', () => {
+  it('publishes latest.json with the recommended version and the beta field, uncached, as a static file', () => {
     const latest = JSON.parse(readFileSync(join(dist, 'latest.json'), 'utf8'))
     const data = JSON.parse(readFileSync(join(root, 'src', 'data', 'releases.json'), 'utf8'))
     const release = (data.releases as { version: string; status: string }[]).find(r => r.version === data.recommended) ?? null
     // Mirrors src/pages/latest.json.ts's own condition: `preparing` (or no recommendation at all) means
     // no download exists yet, so the endpoint must answer `null`, not a version the App cannot fetch.
     // The `preparing` branch itself is unit-tested with a stub in tests/latest-json.test.ts, since the
-    // real releases.json's recommendation is currently `beta` and this build fixture can't reach it.
-    expect(latest).toEqual({ version: release !== null && release.status !== 'preparing' ? release.version : null })
+    // real releases.json currently recommends a release and this build fixture can't reach it.
+    // The committed releases.json currently has no beta, so this also pins `beta: null` here; the
+    // beta-present and finished-beta cases are unit-tested with stubs in
+    // tests/latest-json-beta.test.ts and tests/latest-json-finished-beta.test.ts.
+    expect(latest).toEqual({ version: release !== null && release.status !== 'preparing' ? release.version : null, beta: data.beta ?? null })
     expect(readFileSync(join(dist, '_headers'), 'utf8')).toMatch(/^\/latest\.json\n {2}Cache-Control: no-cache$/m)
   })
 })

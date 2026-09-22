@@ -8,7 +8,7 @@ const r = (version: string, status: Release['status'], date: string | null): Rel
   mirrorUrl: status === 'preparing' ? null : 'https://b', contents: [], notes: { zh: `说明 ${version}`, en: `Notes ${version}` },
   knownIssues: { zh: [], en: ['known'] }, setup: null,
 })
-const data: ReleaseData = { schemaVersion: 1, recommended: null, releases: [r('0.1.0', 'stable', '2026-10-01'), r('0.1.10', 'preparing', null), r('0.1.2', 'beta', '2026-11-01')] }
+const data: ReleaseData = { schemaVersion: 1, recommended: null, beta: null, releases: [r('0.1.0', 'stable', '2026-10-01'), r('0.1.10', 'preparing', null), r('0.1.2', 'beta', '2026-11-01')] }
 
 describe('changelogEntries', () => {
   it('orders newest first by semver, not by string', () => {
