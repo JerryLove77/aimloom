@@ -582,7 +582,6 @@ export const zh = {
 
   'profile.resource.keepHint': '应用组合时不改动{noun}',
   'profile.resource.dirPlaceholder': '先选择存放文件的文件夹',
-  'profile.resource.searchLabel': '搜索文件名',
   'profile.resource.loading': '正在读取文件…',
   'profile.resource.fileErrorsSummary': '{count} 个文件未能使用',
   'profile.resource.fileErrorsSummary.one': '{count} 个文件未能使用',

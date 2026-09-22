@@ -32,7 +32,6 @@
 .pr-slot-foot strong { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:550 }
 .pr-slot-action { flex-shrink:0; color:var(--ws-accent-text); font-weight:500 }
 .pr-sheet-preview .ws-preview-large, .pr-sheet-preview img, .pr-sheet-preview svg { width:100%; height:200px; object-fit:contain; border-radius:var(--ws-radius-tile) }
-.pr-sheet-search { width:100%; padding:6px 10px; border:1px solid var(--ki-control); border-radius:var(--ws-radius-row); font:13px var(--ki-body-font); background:var(--ki-surface); color:var(--ki-text) }
 .pr-sheet-list { display:flex; flex-direction:column; gap:2px; flex:1; overflow:auto; min-height:120px }
 .pr-sheet-row { display:flex; align-items:center; gap:10px; padding:6px 8px; border-radius:var(--ws-radius-row); cursor:pointer }
 .pr-sheet-row:hover { background:var(--ws-hover) } .pr-sheet-row:has(input:checked) { background:var(--ws-selected); box-shadow:inset 0 0 0 1.5px var(--ki-accent) }
