@@ -55,31 +55,70 @@ const lang = Astro.params.lang as Lang
   mountCrosshairTool()
 </script>
 
-<style>
-  .cx-panel { gap: var(--al-space-4); }
+<style is:global>
+  /* Dynamic controls (src/scripts/crosshair-tool.client.ts) are created with `document.createElement`
+     after the page renders, so they never get Astro's per-component `data-astro-cid-*` attribute —
+     a scoped <style> would silently never match them. This block stays global on purpose; every
+     selector is prefixed `cx-` or scoped to #cx-app, so it cannot leak onto the rest of the site. */
+  #cx-app.cx-panel { gap: var(--al-space-5); }
   .cx-name-field { display: flex; flex-direction: column; gap: var(--al-space-2); }
   .cx-name-field label { font-weight: 700; }
   #cx-code { width: 100%; font-family: var(--al-font-mono); font-size: 14px; padding: var(--al-space-3); border-radius: var(--al-radius-control); border: 2px solid var(--al-slate); resize: vertical; }
+  #cx-code:focus-visible { border-color: var(--al-papaya); }
   .cx-notice-error { border-left-color: #c0392b; }
   .cx-notice-warning { border-left-color: var(--al-slate); }
+
   .cx-swatches { display: grid; grid-template-columns: 1fr 1fr; gap: var(--al-space-4); }
   .cx-swatch { margin: 0; display: flex; flex-direction: column; gap: var(--al-space-2); align-items: center; }
-  .cx-swatch img { width: 100%; max-width: 220px; aspect-ratio: 1 / 1; border-radius: var(--al-radius-control); }
+  .cx-swatch img { width: 100%; max-width: 220px; aspect-ratio: 1 / 1; border-radius: var(--al-radius-control); box-shadow: inset 0 0 0 1px rgb(24 33 38 / 12%); }
   .cx-swatch-dark img { background: #1a1a1c; }
   .cx-swatch-light img { background: #f2f2f2; }
-  .cx-tune { display: flex; flex-direction: column; gap: var(--al-space-3); }
-  .cx-tune-head { display: flex; align-items: center; justify-content: space-between; gap: var(--al-space-3); }
-  .cx-tune-row { display: flex; align-items: center; justify-content: space-between; gap: var(--al-space-3); padding-block: var(--al-space-1); }
-  .cx-tune-controls { display: flex; align-items: center; gap: var(--al-space-2); }
-  .cx-tune-value { font-family: var(--al-font-mono); font-size: 13px; min-width: 3.5em; text-align: right; }
-  .cx-tune-palette-row { align-items: flex-start; }
+
+  /* The fine-tune block reads as its own card inside the tool panel, like the App's sheet. */
+  .cx-tune { display: flex; flex-direction: column; gap: 2px; background: var(--al-warm); border-radius: var(--al-radius-control); padding: var(--al-space-4); }
+  .cx-tune-head { display: flex; align-items: center; justify-content: space-between; gap: var(--al-space-3); padding-bottom: var(--al-space-3); margin-bottom: var(--al-space-2); border-bottom: 2px solid rgb(24 33 38 / 10%); }
+  .cx-tune-head h3 { font-size: 18px; }
+  .cx-tune-head .button { padding: var(--al-space-2) var(--al-space-4); font-size: 14px; }
+
+  .cx-tune-row {
+    display: grid; grid-template-columns: minmax(96px, 1fr) auto; align-items: center;
+    column-gap: var(--al-space-4); row-gap: var(--al-space-1);
+    padding-block: var(--al-space-2); border-bottom: 1px solid rgb(24 33 38 / 8%);
+  }
+  .cx-tune-row:last-child { border-bottom: none; }
+  .cx-tune-row > span:first-child { font-size: 15px; font-weight: 500; }
+  .cx-tune-row.is-disabled > span:first-child { color: var(--al-slate); }
+  .cx-tune-controls { display: flex; align-items: center; justify-content: flex-end; gap: var(--al-space-3); }
+  .cx-tune-value { font-family: var(--al-font-mono); font-size: 13px; color: var(--al-slate); min-width: 3.2em; text-align: right; }
+
+  .cx-tune-row input[type="range"] { width: 150px; max-width: 40vw; accent-color: var(--al-papaya); }
+  .cx-tune-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--al-papaya); cursor: pointer; }
+  .cx-tune-row input:disabled { cursor: not-allowed; opacity: 0.55; }
+
+  /* Colour swatches: one round button per preset, filled with that colour, plus a final
+     "custom" swatch — matches the App tuner's PaletteControl. */
+  .cx-tune-palette-row { grid-template-columns: 1fr; row-gap: var(--al-space-2); }
   .cx-tune-palette { display: flex; flex-wrap: wrap; gap: var(--al-space-2); }
-  .cx-swatch-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--al-ink); cursor: pointer; padding: 0; }
-  .cx-swatch-btn[aria-checked="true"] { outline: 3px solid var(--al-papaya); outline-offset: 2px; }
-  .cx-swatch-custom { background: var(--al-paper); display: grid; place-items: center; font-weight: 900; }
-  .cx-tune-custom-color { display: flex; align-items: center; gap: var(--al-space-2); }
+  .cx-swatch-btn {
+    width: 32px; height: 32px; min-width: 32px; border-radius: 50%;
+    border: 2px solid rgb(24 33 38 / 35%); cursor: pointer; padding: 0; appearance: none;
+  }
+  .cx-swatch-btn:hover:not(:disabled) { border-color: var(--al-ink); }
+  .cx-swatch-btn[aria-checked="true"] { border-color: var(--al-ink); outline: 3px solid var(--al-papaya); outline-offset: 2px; }
+  .cx-swatch-btn:disabled { cursor: not-allowed; opacity: 0.45; }
+  .cx-swatch-custom { background: var(--al-paper); display: grid; place-items: center; font-weight: 900; color: var(--al-ink); }
+  .cx-tune-custom-color { display: flex; align-items: center; gap: var(--al-space-3); }
+  .cx-tune-custom-color input[type="color"] { width: 40px; height: 32px; padding: 0; border: 2px solid rgb(24 33 38 / 35%); border-radius: 6px; background: none; cursor: pointer; }
+
+  #cx-preview-btn, #cx-download-btn { width: 100%; }
+
   @media (max-width: 720px) {
     .cx-swatches { grid-template-columns: 1fr; }
-    .cx-tune-row { flex-wrap: wrap; }
+    .cx-swatch img { max-width: 100%; }
+    .cx-tune-head { flex-wrap: wrap; }
+    .cx-tune-row { grid-template-columns: 1fr; row-gap: var(--al-space-2); }
+    .cx-tune-controls { justify-content: space-between; }
+    .cx-tune-row input[type="range"] { width: 100%; max-width: none; flex: 1; }
+    .cx-tune-palette-row .cx-tune-controls { justify-content: flex-start; }
   }
 </style>
