@@ -1,96 +1,89 @@
+<div align="center">
+
 # Aimloom
 
-A Windows app for [KovaaK's](https://store.steampowered.com/app/824270/) players: put a CS2 or
-VALORANT crosshair code into the game, manage its themes, sounds, crosshairs and enemy skins in one
-place, and save combinations you like as Profiles. Free, bilingual (中文 / English).
+[![CI](https://github.com/JerryLove77/aimloom/actions/workflows/ci.yml/badge.svg)](https://github.com/JerryLove77/aimloom/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/JerryLove77/aimloom?label=release)](https://github.com/JerryLove77/aimloom/releases/latest)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D4)](https://aimloom.dev)
 
-**Download:** [aimloom.dev](https://aimloom.dev) — the Setup or the portable ZIP, with their
-SHA-256. The current release is **v0.1.3**.
+> 给 [KovaaK's](https://store.steampowered.com/app/824270/) 玩家的 Windows 工具：把 CS2 / VALORANT 准星代码放进游戏，
+> 集中管理主题、音效、准星和敌人皮肤，把喜欢的组合存成 Profile。免费，中英双语。
 
-> 给 KovaaK 玩家的 Windows 工具：把 CS2 / VALORANT 准星代码放进游戏，集中管理主题、音效、准星和
-> 敌人皮肤，把喜欢的组合存成 Profile。免费，中英双语。下载请到 [aimloom.dev](https://aimloom.dev)。
+[**下载**](https://aimloom.dev/zh/download/) · [**功能**](#功能) · [**运行要求**](#运行要求) · [**开发**](#开发) · [**路线图**](ROADMAP.md)
 
-## What it does
+简体中文 | [English](docs/README_EN.md)
 
-- **Crosshair** — paste a CS2 or VALORANT share code and get a PNG crosshair in the game's
-  folder, or add a PNG of your own. You pick it in the game's settings.
-- **Theme, Sounds** — see the themes and sounds installed in the game, preview them, and apply
-  one. Add new ones from your computer by picking or dragging a file.
-- **Enemy** — choose the game's own enemy skins per shape, as its Skin Browser does.
-- **Profile** — save a theme and a set of sounds as one named combination, and apply it in one
-  step.
-- **Quick import** — bring a whole pack of files into the game at once.
+</div>
 
-Every change is backed up before it is written and can be undone. Aimloom never touches your
-sensitivity, DPI or FOV, and it only changes the game while the game is closed: KovaaK rewrites its
-settings when it exits, so a change made while it runs would be lost.
+## 下载
 
-## Requirements
+到 [aimloom.dev](https://aimloom.dev/zh/download/) 下载安装程序或便携版 ZIP，页面上有每个文件的 SHA-256。
+同样的文件也挂在 [GitHub Releases](https://github.com/JerryLove77/aimloom/releases/latest)。当前版本是 **v0.1.3**。
 
-- Windows 10 or 11, x64.
-- **PowerShell 7** — the Setup offers to install it through winget if it is missing.
-- WebView2, which Windows 10/11 normally has.
+## 功能
 
-Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose *More info* →
-*Run anyway*. The download page gives each file's SHA-256 so you can check what you got.
+- **准星（Crosshair）**：粘贴 CS2 或 VALORANT 的准星代码，生成 PNG 准星放进游戏文件夹；也可以添加自己的 PNG。用哪个准星在游戏设置里选。
+- **背景、音效（Theme、Sounds）**：列出游戏里已有的主题和音效，预览后应用；从电脑选择或直接拖入文件，就能添加新的。
+- **敌人（Enemy）**：和游戏自带的「皮肤浏览器」一样，给人形、方块、球三种形状各选一个游戏自带的皮肤。
+- **Profile**：把一套背景和音效存成一个命名的组合，之后一步应用。
+- **一键拖入（Quick import）**：一次把整包文件放进游戏。
 
-## Status
+每次写入前都会先备份，随时可以撤销。Aimloom 不会改你的灵敏度、DPI 和 FOV，而且只在游戏关闭时修改：KovaaK 退出时会重写它的设置文件，游戏开着时改的会被覆盖掉。
 
-- **Released:** v0.1.3 (2026-09-22) — in-App problem reports, an optional Steam account, a
-  launch update check, applying Profiles and enemy skins. What follows is in
-  [ROADMAP.md](ROADMAP.md).
-- v0.1.1 and v0.1.2 are withdrawn: their `Aimloom.exe` carried the build machine's Windows user
-  name in embedded source paths. From v0.1.3 the build remaps those paths and the packagers refuse
-  an EXE that still contains one.
-- What has and has not been observed on a real PC and in the real game is recorded, feature by
-  feature, in verification notes the maintainer keeps privately. A test passing is not claimed
-  as "works in the game".
+## 运行要求
 
-## Repository
+- Windows 10 或 11，64 位。
+- **PowerShell 7**：没有的话，安装程序会提出用 winget 帮你装。
+- WebView2，Windows 10/11 一般都自带。
 
-| Path | What it is |
+Aimloom 没有代码签名，第一次运行时 Windows SmartScreen 可能会提示：点「更多信息」→「仍要运行」。下载页给出了每个文件的 SHA-256，可以用来核对下载的文件。
+
+## 状态
+
+- **已发布：** v0.1.3（2026-09-22）——应用内发送问题报告、可选的 Steam 账户、启动时检查更新、应用 Profile、敌人皮肤。后续计划见 [ROADMAP.md](ROADMAP.md)。
+- v0.1.1 和 v0.1.2 已下架：它们的 `Aimloom.exe` 里嵌着打包电脑的 Windows 用户名（在依赖库的源码路径里）。从 v0.1.3 起，打包时会替换这些路径，打包脚本也会拒绝仍带本机路径的 EXE。
+- 每个功能在真实电脑和真实游戏里看到了什么、还没看到什么，维护者另有验证记录，不公开。测试通过不等于「在游戏里能用」。
+
+## 仓库结构
+
+| 路径 | 内容 |
 |---|---|
-| `packages/app` | The App: React front end, Tauri (Rust) shell |
-| `scripts/installer` | The PowerShell engine — every write to the game goes through it |
-| `packages/crosshair` | CS2 / VALORANT crosshair code parser and PNG renderer |
-| `packages/core` | TypeScript settings library (parked) |
-| `packages/site` | The aimloom.dev website and its Cloudflare Worker |
-| `docs/` | Design documents (`superpowers/specs/`), research, the UI interaction contract |
+| `packages/app` | App：React 前端，Tauri（Rust）外壳 |
+| `scripts/installer` | PowerShell 引擎，所有写入游戏的操作都经过它 |
+| `packages/crosshair` | CS2 / VALORANT 准星代码解析和 PNG 渲染 |
+| `packages/core` | TypeScript 设置库（暂停开发） |
+| `packages/site` | aimloom.dev 官网和它的 Cloudflare Worker |
+| `docs/` | 设计文档（`superpowers/specs/`）、技术研究、界面交互规范 |
 
-`CLAUDE.md` is the contributor guide: the request stack, the invariants the tests enforce, and
-every command. `DESIGN.md` is the visual contract.
+`CLAUDE.md` 是贡献者指南（英文）：请求链路、测试守着的不变量，以及所有命令。`DESIGN.md` 是界面视觉规范。
 
-### Develop
+## 开发
 
-The App targets Windows; a Mac or Linux machine runs the browser demo and the tests.
+App 的目标平台是 Windows；Mac 或 Linux 可以跑浏览器演示和测试。
 
 ```sh
 npm ci
-npm test                                  # Vitest: App, @kvk/core, crosshair
+npm test                                  # Vitest：App、@kvk/core、crosshair
 npm run typecheck
-npm run dev:installer -w @kvk/app         # browser demo at http://127.0.0.1:5173/installer.html; touches no files
+npm run dev:installer -w @kvk/app         # 浏览器演示 http://127.0.0.1:5173/installer.html，不会改动任何文件
 cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installer-ui
 ```
 
-The PowerShell suites need PowerShell 7 and run on Windows (CI runs all sixteen on every push):
+PowerShell 测试需要 PowerShell 7，在 Windows 上运行（CI 每次 push 都会跑全部十六个套件）：
 
 ```powershell
 pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
 ```
 
-The release packages cannot be built from a Git checkout: the sound and crosshair assets they
-ship are not in the repository, and `scripts/installer/release-inventory.json` stops a build that
-lacks any of them.
+发布包不能直接从 Git 仓库构建：发布包里的音效和准星素材不在仓库里，`scripts/installer/release-inventory.json` 会让缺少其中任何一个的构建停下来。
 
-Enable the privacy pre-commit hook once per checkout (it scans staged changes for known
-identifiers and secrets before every commit; see `.githooks/pre-commit`):
+每个 checkout 都要先启用一次隐私提交钩子（每次提交前扫描暂存的改动，查找已知的身份信息和密钥，见 `.githooks/pre-commit`）：
 
 ```sh
 git config core.hooksPath .githooks
 ```
 
-## License
+## 许可证
 
-[GNU AGPL-3.0](LICENSE). Third-party code and its licences are listed in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). KovaaK's is a trademark of its owners; Aimloom
-is not affiliated with it.
+[GNU AGPL-3.0](LICENSE)。第三方代码及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。KovaaK's 是其所有者的商标，Aimloom 与其没有关联。
