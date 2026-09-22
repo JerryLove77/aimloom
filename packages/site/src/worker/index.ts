@@ -3,6 +3,7 @@ import { fail } from './http'
 import { handleReport, deleteExpired } from './reports'
 import { handleSteamResolve } from './steam'
 import { notify } from './notify'
+import { handleExplore } from './explore'
 
 /** `null` lets the request through. The address is the key and is written nowhere (spec §5.4). */
 export async function limited(limit: RateLimit, request: Request, failOpen: boolean): Promise<Response | null> {
@@ -18,8 +19,10 @@ export async function limited(limit: RateLimit, request: Request, failOpen: bool
 export default {
   async fetch(request: Request, env: AppEnv, ctx: ExecutionContext): Promise<Response> {
     const { pathname } = new URL(request.url)
-    // Only /api/* runs this script first (wrangler.jsonc). Anything else that reaches it matched no
-    // static asset, so the asset handler answers with the site's 404 page.
+    // Only /api/*, the explorer's pages and /d/* run this script first (wrangler.jsonc). Anything
+    // else that reaches it matched no static asset, so the asset handler answers with the 404 page.
+    const explore = await handleExplore(request, env, ctx)
+    if (explore) return explore
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
     if (pathname === '/api/reports') return (await limited(env.REPORT_LIMIT, request, true)) ?? handleReport(request, env, ctx, { afterStore: notify })
     if (pathname === '/api/steam/resolve') return (await limited(env.STEAM_LIMIT, request, false)) ?? handleSteamResolve(request)

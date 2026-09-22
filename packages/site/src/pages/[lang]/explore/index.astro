@@ -1,0 +1,14 @@
+---
+// The list page's shell. The Worker answers /<lang>/explore/ itself: it reads the catalogue and
+// fills #explore-root (spec 2026-09-22 §4). Without the Worker this shell shows only the header.
+import Base from '../../../layouts/Base.astro'
+import '../../../styles/explore.css'
+import { LANGS, t, type Lang } from '../../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+---
+<Base lang={lang} path="/explore" title={t(lang, 'explore.title')} description={t(lang, 'explore.description')}>
+  <div class="page-header"><h1>{t(lang, 'explore.title')}</h1><p>{t(lang, 'explore.intro')}</p></div>
+  <div class="section stack ex" id="explore-root"></div>
+</Base>
+<script>import '../../../scripts/explore.client'</script>

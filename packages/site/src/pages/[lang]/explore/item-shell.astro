@@ -1,0 +1,14 @@
+---
+// The detail page's shell, served only through the Worker for /<lang>/explore/<slug>/ (spec
+// 2026-09-22 §4). `item-shell` is therefore a reserved slug: the publish command refuses it, and
+// the Worker answers this path itself with a 404.
+import Base from '../../../layouts/Base.astro'
+import '../../../styles/explore.css'
+import { LANGS, t, type Lang } from '../../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+---
+<Base lang={lang} path="/explore" title={t(lang, 'explore.title')} description={t(lang, 'explore.description')}>
+  <div class="section stack ex ex--detail" id="explore-root"></div>
+</Base>
+<script>import '../../../scripts/explore.client'</script>

@@ -15,6 +15,8 @@ export interface AppEnv {
   MAIL: SendEmail
   REPORT_LIMIT: RateLimit
   STEAM_LIMIT: RateLimit
+  /** Where the explorer's files are served from: the R2 bucket's custom domain (spec 2026-09-22 §4). */
+  FILES_ORIGIN: string
   /** The owner's mailbox. A secret: `wrangler secret put REPORT_TO`. Never in git. */
   REPORT_TO: string
 }

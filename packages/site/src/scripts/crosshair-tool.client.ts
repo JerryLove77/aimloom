@@ -337,6 +337,10 @@ export function mountCrosshairTool(): void {
     showError(null)
   })
   previewBtn.disabled = true
+  // Explore links here as #code=<code>. A fragment never reaches the server, so the tool's "nothing
+  // is uploaded" stays true; the code only fills the box, and the visitor still presses Preview.
+  const fromLink = new URLSearchParams(location.hash.slice(1)).get('code')
+  if (fromLink && fromLink.length <= 4096) { codeInput.value = fromLink; previewBtn.disabled = fromLink.trim().length === 0 }
 
   previewBtn.addEventListener('click', () => {
     reset()
