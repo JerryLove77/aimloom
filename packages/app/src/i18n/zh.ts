@@ -670,6 +670,7 @@ export const zh = {
   'profile.apply.note.closeGame': '请先退出 KovaaK：游戏开着时，它退出时会把改动覆盖掉。改动在下次启动游戏时生效。',
   'profile.apply.note.backup': '应用前会先备份当前的设置文件。',
   'profile.apply.confirmButton': '确认应用',
+  'profile.apply.launchButton': '应用并启动游戏',
   'profile.apply.working': '应用中…',
   'profile.apply.locating': '正在定位游戏目录…',
   'profile.apply.planning': '正在核对 Profile 内容…',
@@ -682,6 +683,7 @@ export const zh = {
   'profile.apply.error.unresolved': '操作结果未知，正在核对；请勿离开此页面。',
   'profile.apply.error.reconcileFailed': '核对失败，请重试。',
   'profile.apply.done': '{name} 已应用；下次启动游戏时生效。',
+  'profile.apply.doneAndLaunching': '{name} 已应用，正在启动游戏；如果没有自动启动，请手动打开游戏。',
   'profile.apply.reconciled': '已核对应用结果。',
 
   // installer.* — src/installer: the legacy Quick import utility, its issues and help.

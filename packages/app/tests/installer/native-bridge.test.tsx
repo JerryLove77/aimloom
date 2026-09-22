@@ -70,7 +70,7 @@ describe('native bridge file import', () => {
 })
 
 
-// The seven commands that never touch the engine. What matters here is the command NAME and the exact argument object:
+// The eight commands that never touch the engine. What matters here is the command NAME and the exact argument object:
 // Rust validates both, and a silent mismatch would only surface on Windows.
 describe('the reporting, account and update commands', () => {
   beforeEach(() => { invoke.mockReset().mockResolvedValue(undefined) })
@@ -94,6 +94,7 @@ describe('the reporting, account and update commands', () => {
 
   it.each([
     ['openLogs', (b: ReturnType<typeof createNativeBridge>) => b.openLogs(), 'installer_open_logs'],
+    ['launchGame', (b: ReturnType<typeof createNativeBridge>) => b.launchGame(), 'installer_launch_game'],
     ['appInfo', (b: ReturnType<typeof createNativeBridge>) => b.appInfo(), 'installer_app_info'],
   ])('%s invokes its command with no arguments at all', async (_name, call, command) => {
     await call(createNativeBridge())

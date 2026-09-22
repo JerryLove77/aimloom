@@ -186,6 +186,7 @@ describe('a resource sheet shows what the game already has', () => {
       reconcile: async () => { throw new Error('not used by these tests') },
       planFileAdd: options.planFileAdd ?? (async () => { throw new Error('not used by these tests') }),
       pickFile: async () => (options.pickPath !== undefined ? options.pickPath : null),
+      launchGame: async () => { throw new Error('not used by these tests') },
     }
   }
 
@@ -262,6 +263,7 @@ describe('adding a file to a Profile sheet from my computer', () => {
       },
       planFileAdd: options.planFileAdd ?? (async (input: unknown) => { planCalls.push(input); if (!options.jobUnknown) added = true; return { planId: 'plan-add' } }),
       pickFile: async () => (options.pickPath !== undefined ? options.pickPath : 'C:/Users/Player1/Downloads/New Theme.json'),
+      launchGame: async () => { throw new Error('not used by these tests') },
     }
     return { game, planCalls, executeCalls, reconcileCalls }
   }
