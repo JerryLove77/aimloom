@@ -511,7 +511,6 @@ export const en: Record<keyof typeof zh, string> = {
   'profile.sheet.confirm': 'Use for this combination',
   'profile.sheet.browseDemo': 'Browse demo assets',
   'profile.sheet.error.generic': 'The action failed. Try again.',
-  'profile.sheet.importUnknown': 'The add result is unknown: it\'s not clear whether the file was written. Reopen this item later to see whether it was added.',
 
   'profile.audioSheet.event.kill': 'Kill',
   'profile.audioSheet.event.spawn': 'Spawn',
