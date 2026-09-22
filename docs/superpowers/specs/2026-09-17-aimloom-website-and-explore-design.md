@@ -4,6 +4,10 @@ Date: 2026-09-17. Branch: `feature/web`. Status: **design approved in conversati
 2026-09-17, infrastructure settled 2026-09-18; Phase 1 implemented on `feature/web` and not
 deployed; Phase 2 planned only.**
 
+> **Amended 2026-09-22.** §3, §5 and §6 (and what §4 and §7 say about them) are replaced by
+> [the v0.1.5 explorer amendment](2026-09-22-website-explorer-design.md): single files only
+> (backgrounds, sounds, crosshairs), raw-file downloads, no ZIP manifest and no App Import entry.
+
 This document is the single design for the public website. It has two jobs:
 
 1. **Introduce the product and offer the download** — the four bilingual pages from the
