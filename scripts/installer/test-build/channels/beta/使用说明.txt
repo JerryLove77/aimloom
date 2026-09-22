@@ -1,0 +1,35 @@
+Aimloom · 测试版（Beta）{{VERSION}}
+
+KovaaK 配置管理的测试版：背景、音效、准星、敌人外观，以及训练 Profile。这是在「设置」里主动开启
+「参与 Beta 测试」后才会用到的测试版，可能不稳定，遇到问题请反馈。
+
+【运行前需要】
+· Windows 10 或 11（64 位）
+· PowerShell 7：没有的话，在「终端」中运行 winget install --id Microsoft.PowerShell，
+  或访问 https://aka.ms/powershell 下载安装，然后重新打开本程序
+· WebView2：Windows 11 已自带；Windows 10 如果窗口打不开，请安装 Microsoft Edge WebView2 运行时
+
+【怎么打开】
+1. 把整个文件夹放在任意位置，不要放进游戏目录。不要只拿出 Aimloom.exe，它需要旁边的 scripts 文件夹。
+2. 双击 Aimloom.exe。
+3. 如果出现蓝色的「Windows 已保护你的电脑」：点「更多信息」→「仍要运行」。
+   Aimloom 没有购买代码签名证书，所以 Windows 不认识它。
+
+【使用前请注意】
+· 写入游戏文件前建议先关闭 KovaaK。
+· 每次写入前都会先备份；在左下角「一键拖入」里可以撤销。
+· 备份和 Profile 保存在 %LOCALAPPDATA%\Aimloom，和正式版共用。
+· 正在使用哪个准星要在游戏里选。
+· 界面语言跟随 Windows；可在左下角「设置」里更改。
+
+【遇到问题请反馈】
+点左下角「设置」→「发送问题报告…」，并附上这三样：
+1. 截图
+2. 本文件夹里的 VERSION.txt
+3. 日志文件 worker.log：在资源管理器地址栏粘贴
+   %LOCALAPPDATA%\Aimloom\logs
+   然后回车即可打开所在文件夹
+
+【回到正式版】
+从 aimloom.dev 下载正式版 Setup 并安装，会覆盖当前的测试版；再在「设置」里关闭
+「参与 Beta 测试」，就不会再收到测试版更新提醒。
