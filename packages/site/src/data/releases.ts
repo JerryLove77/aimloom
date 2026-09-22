@@ -1,6 +1,7 @@
 import raw from './releases.json'
 
-export type ReleaseStatus = 'preparing' | 'beta' | 'stable'
+/** `withdrawn`: no longer offered for download; kept, with its facts, as a changelog record. */
+export type ReleaseStatus = 'preparing' | 'beta' | 'stable' | 'withdrawn'
 export interface Localized { zh: string; en: string }
 export interface LocalizedList { zh: string[]; en: string[] }
 export interface SetupFile { url: string; bytes: number; sha256: string }
@@ -21,7 +22,7 @@ export interface Release {
 }
 export interface ReleaseData { schemaVersion: 1; recommended: string | null; releases: Release[] }
 
-const STATUSES: readonly ReleaseStatus[] = ['preparing', 'beta', 'stable']
+const STATUSES: readonly ReleaseStatus[] = ['preparing', 'beta', 'stable', 'withdrawn']
 const RELEASE_KEYS = ['version', 'status', 'date', 'platform', 'requires', 'bytes', 'sha256', 'primaryUrl', 'mirrorUrl', 'contents', 'notes', 'knownIssues', 'setup'] as const
 const TOP_KEYS = ['schemaVersion', 'recommended', 'releases'] as const
 /** A release ZIP served by the site itself; scripts/stage-release.mjs copies it into dist/files/. */
@@ -104,6 +105,7 @@ export function parseReleases(input: unknown): ReleaseData {
   for (const r of list) { if (seen.has(r.version)) fail(`duplicate version ${r.version}`); seen.add(r.version) }
   const recommended = strOrNull(input.recommended, 'recommended')
   if (recommended !== null && !seen.has(recommended)) fail(`recommended ${recommended} names no release`)
+  if (recommended !== null && list.find(r => r.version === recommended)?.status === 'withdrawn') fail(`recommended ${recommended} is withdrawn`)
   return { schemaVersion: 1, recommended, releases: list }
 }
 

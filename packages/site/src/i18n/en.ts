@@ -51,6 +51,7 @@ export const en: Record<keyof typeof zh, string> = {
   'download.status.preparing': 'In preparation',
   'download.status.beta': 'Beta',
   'download.status.stable': 'Stable',
+  'download.status.withdrawn': 'Withdrawn',
   'download.preparing.title': 'No package has been released yet',
   'download.preparing.body': 'The current version is completing acceptance on real Windows machines. Once released, the download link, file size and SHA-256 appear here. Until then there is nothing to download.',
   'download.preparing.links': 'In the meantime, read the guide or the changelog.',

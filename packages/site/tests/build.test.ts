@@ -47,11 +47,11 @@ describe('build output', () => {
   it('home hides the showcase while showcase.json is empty', () => {
     expect(page('zh')).not.toContain('id="showcase"')
   })
-  it('home offers the 0.1.2 Setup from the site itself, in the hero and the closing block, and no ZIP', () => {
+  it('home offers the 0.1.3 Setup from the site itself, in the hero and the closing block, and no ZIP', () => {
     for (const r of ['zh', 'en']) {
       const html = page(r)
       expect(html.match(/data-download-state="beta"/g)?.length, r).toBe(2)
-      expect(html.match(/<a[^>]+href="\/files\/Aimloom-Setup-v0\.1\.2\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
+      expect(html.match(/<a[^>]+href="\/files\/Aimloom-Setup-v0\.1\.3\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
       expect(html, r).not.toMatch(/href="[^"]+\.zip"/)
     }
     expect(page('en')).toContain('One setup for each way you train.')
@@ -60,9 +60,9 @@ describe('build output', () => {
     for (const r of ['zh/download', 'en/download']) {
       const html = page(r)
       expect(html, r).toContain('data-download-state="beta"')
-      expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="/files/Aimloom-Setup-v0.1.2.exe"', 'href="/files/Aimloom-v0.1.2.zip"'])
-      expect(html, r).toContain('7eb0cddb76ff5957a940cf39eada79836d234096ba1950e95c5e5f4c9f9a0da9')
-      expect(html, r).toContain('c6d5b60aea25c5b0f8f91e401a4d31cb5711626a995d5fb8ace228f292e31371')
+      expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="/files/Aimloom-Setup-v0.1.3.exe"', 'href="/files/Aimloom-v0.1.3.zip"'])
+      expect(html, r).toContain('59b0290806f60aaf5123f3e5720bd8f391bcadbfa95a573bc87ad603b0b675f7')
+      expect(html, r).toContain('a2718b83bc4a70a22f6595e61fe9d2187d7c75eda2fa5ddc724bfb215f42d8c3')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')
       expect(html, r).not.toMatch(/github\.com/)
@@ -114,12 +114,14 @@ describe('build output', () => {
     expect(page('en')).toMatch(/Does Aimloom use the network\?/); expect(page('zh')).toContain('Aimloom 会联网吗？')
   })
 
-  it('changelog shows 0.1.2 above 0.1.1, each a dated beta that links to the download page, not to a file', () => {
+  it('changelog shows 0.1.3 above the withdrawn 0.1.2 and 0.1.1, each dated, linking to the download page, not to a file', () => {
     const html = page('en/changelog')
-    expect(html.indexOf('v0.1.2')).toBeGreaterThan(-1)
+    expect(html.indexOf('v0.1.3')).toBeGreaterThan(-1)
+    expect(html.indexOf('v0.1.3')).toBeLessThan(html.indexOf('v0.1.2'))
     expect(html.indexOf('v0.1.2')).toBeLessThan(html.indexOf('v0.1.1'))
-    expect(html).toContain('Beta · 2026-09-20')
-    expect(html).toContain('Beta · 2026-09-19')
+    expect(html).toContain('Beta · 2026-09-22')
+    expect(html).toContain('Withdrawn · 2026-09-20')
+    expect(html).toContain('Withdrawn · 2026-09-19')
     expect(html).toContain('href="/en/download/"')
     expect(html).not.toMatch(/href="[^"]+\.(zip|exe)"/)
   })

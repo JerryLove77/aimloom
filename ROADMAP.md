@@ -43,32 +43,26 @@ the five.
   [English App note](docs/superpowers/notes/2026-09-19-english-app-verification.md),
   [Setup note](docs/superpowers/notes/2026-09-20-setup-windows-verification.md).
 
-## v0.1.3 — built, unreleased (`feature/v013-app`, test build `0.1.3-test.8`)
+## Released: v0.1.3 — reports, a Steam account, Profile apply, enemy skins (2026-09-22)
 
-Spec: [reports, account, updates](docs/superpowers/specs/2026-09-20-aimloom-reports-account-updates-design.md);
-plans (a) [backend and site](docs/superpowers/plans/2026-09-20-v013-backend-and-site.md) — live
-since 2026-09-21 — and (b) [the App](docs/superpowers/plans/2026-09-21-v013-app.md); evidence in
-[the verification note](docs/superpowers/notes/2026-09-21-v013-app-verification.md).
+Spec: [reports, account, updates](docs/superpowers/specs/2026-09-20-aimloom-reports-account-updates-design.md).
+Built once from `ff2426f` with the path-remapping build and accepted on the tester's PC; served by
+aimloom.dev and attached to the GitHub release `v0.1.3`.
 
-What it ships:
-- in-App bug reports with a preview of exactly what is sent (REPORT, FEEDBACK-APP), an optional
-  Steam account (ACCOUNT), and a launch update check — the App's first network use, one origin;
+- in-App problem reports with a preview of exactly what is sent (REPORT, FEEDBACK-APP), an
+  optional Steam account (ACCOUNT), and a launch update check — the App's first network use, one
+  origin;
 - **applying a saved Profile** (PF3), and 「保持当前 · name」 showing what is kept;
 - **Enemy = the game's Skin Browser** (CUR-E2), and Profile no longer manages the enemy;
 - **the game-closed rule for settings writes**, and Apply about ten times faster;
 - the installer page renamed 一键拖入 / Quick import; Steam-aware game discovery; older themes
   apply (CUR-S1 closed).
 
-Remaining, each on the user's word, in this order:
-1. ~~`test.8` on the screen~~ — seen 2026-09-22: speed acceptable, Apply refuses with the game open.
-2. The site: ~~deploy the corrected Privacy page~~ — deployed 2026-09-22 (version
-   `77a42fd3`; only the two Privacy pages changed, downloads byte-identical). Still with the
-   release: 安装与恢复 → 一键拖入, `releases.json` and `latest.json` pointed at 0.1.3.
-3. Release: build the ZIP and the Setup **once** on the tester's PC (the Setup is not
-   reproducible), the user accepts them, GitHub release, docs, branch deleted.
+**v0.1.1 and v0.1.2 are withdrawn** from the site (kept in the changelog): their `Aimloom.exe`
+embedded the build machine's Windows user name in dependency source paths. Copies already
+downloaded cannot be recalled.
 
-LOG and UNK (below) were meant for 0.1.3 and are not fixed; they move to 0.1.4 unless the user
-wants them first.
+The update notice has not been seen end to end; the first chance is the next release.
 
 ## v0.1.4 — the App core (decided 2026-09-22)
 
@@ -80,7 +74,7 @@ wants them first.
 | PF-LAUNCH | **「用这个 Profile 启动游戏」 / "Start the game with this Profile".** Game closed → apply the Profile (the existing `planProfileApply`) → start KovaaK through Steam (`steam://rungameid/824270`). Game open → says to quit first. Steam not running → applies and tells the player to start the game | Chosen over RESTART on 2026-09-22. Needs a small spec: how Rust issues the launch, what "applied" waits for, wording |
 | CUR-C2 | **Crosshair tuner.** Paste a CS2 / VALORANT code → sliders for what that game exposes (length, thickness, gap, outline, colour, centre dot, alpha) → live preview on a dark and a light swatch → save as a new PNG through the existing add path. **No export back to a code, no drawing from a blank canvas** (user, 2026-09-22). See the notes after this table | Figma first. **Evidence first:** does the game list a PNG added while it runs? Never observed |
 | PF-CARDS | Profile cards in the Crosshair X layout ([HANDOFF](HANDOFF.md) Entry 2c): chip, preview filling the card, name at the bottom; two cards now (Theme, Sounds) | Figma first, in the same pass as CUR-C2 |
-| LOG | `worker.log` keeps the worker's stderr in the console code page (GBK on a Chinese Windows) | Observed 2026-09-19 |
+| LOG | (carried from 0.1.3) `worker.log` keeps the worker's stderr in the console code page (GBK on a Chinese Windows) | Observed 2026-09-19 |
 | UNK | Two plain `throw`s in `Invoke-KvkInstall` (a lock failure, an unfinished batch) happen before any write but surface as `unknown` | Code reading; not observed in use |
 | PF4 | A → B → A → undo acceptance pass across Theme, Sounds, Enemy and Profile on the real game | Possible now that settings writes require the game closed |
 

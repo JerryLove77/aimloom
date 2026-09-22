@@ -5,7 +5,7 @@ VALORANT crosshair code into the game, manage its themes, sounds, crosshairs and
 place, and save combinations you like as Profiles. Free, bilingual (中文 / English).
 
 **Download:** [aimloom.dev](https://aimloom.dev) — the Setup or the portable ZIP, with their
-SHA-256. The current release is **v0.1.2**.
+SHA-256. The current release is **v0.1.3**.
 
 > 给 KovaaK 玩家的 Windows 工具：把 CS2 / VALORANT 准星代码放进游戏，集中管理主题、音效、准星和
 > 敌人皮肤，把喜欢的组合存成 Profile。免费，中英双语。下载请到 [aimloom.dev](https://aimloom.dev)。
@@ -16,10 +16,9 @@ SHA-256. The current release is **v0.1.2**.
   folder, or add a PNG of your own. You pick it in the game's settings.
 - **Theme, Sounds** — see the themes and sounds installed in the game, preview them, and apply
   one. Add new ones from your computer by picking or dragging a file.
-- **Enemy** — choose the game's own enemy skins per shape, as its Skin Browser does
-  (from v0.1.3).
-- **Profile** — save a theme and a set of sounds as one named combination and apply it later
-  (applying from v0.1.3).
+- **Enemy** — choose the game's own enemy skins per shape, as its Skin Browser does.
+- **Profile** — save a theme and a set of sounds as one named combination, and apply it in one
+  step.
 - **Quick import** — bring a whole pack of files into the game at once.
 
 Every change is backed up before it is written and can be undone. Aimloom never touches your
@@ -37,9 +36,12 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 
 ## Status
 
-- **Released:** v0.1.1 (2026-09-19) and v0.1.2 (2026-09-20, English and the Setup).
-- **Next:** v0.1.3 is built and in testing — in-App bug reports, an optional Steam account, an
-  update notice, applying Profiles and enemy skins. What follows is in [ROADMAP.md](ROADMAP.md).
+- **Released:** v0.1.3 (2026-09-22) — in-App problem reports, an optional Steam account, a
+  launch update check, applying Profiles and enemy skins. What follows is in
+  [ROADMAP.md](ROADMAP.md).
+- v0.1.1 and v0.1.2 are withdrawn: their `Aimloom.exe` carried the build machine's Windows user
+  name in embedded source paths. From v0.1.3 the build remaps those paths and the packagers refuse
+  an EXE that still contains one.
 - What has and has not been observed on a real PC and in the real game is recorded, feature by
   feature, in verification notes the maintainer keeps privately. A test passing is not claimed
   as "works in the game".
