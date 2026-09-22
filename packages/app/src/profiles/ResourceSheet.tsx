@@ -10,6 +10,7 @@ import { Tiles, type TileChoice } from '../workspace/Tiles'
 import { resolveProfileAssetPath, type ProfileFileReference } from './model'
 import type { ProfileAssetBridge } from './assets'
 import { ImportSheet } from '../workspace/ImportSheet'
+import { SearchBox } from '../workspace/SearchBox'
 import { importFileName } from '../workspace/import-check'
 import type { FileAddOutcome, FileImportInput } from '../workspace/file-import'
 
@@ -144,7 +145,9 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const byPath = new Map([...files, ...(installed ?? []).map(item => ({ name: item.file, path: item.path }))].map(file => [file.path, file]))
   // The profile's own reference stays selectable even when its folder is not listed.
   if (value && !byPath.has(value.path)) byPath.set(value.path, value)
-  const listed = [...byPath.values()].filter(file => file.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
+  // The same rule as the Theme page: trimmed, case-insensitive, on the display name or the file.
+  const needle = search.trim().toLocaleLowerCase()
+  const listed = [...byPath.values()].filter(file => file.name.toLocaleLowerCase().includes(needle))
   const chosen = choice === KEEP ? null : byPath.get(choice) ?? null
   const unchanged = choice === (value?.path ?? KEEP)
   // Browsing a folder, the preview is the only evidence the file is usable, so confirming waits
@@ -154,7 +157,10 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const confirmable = !unchanged && (choice === KEEP || ready || fromGame)
   const noun = t(NOUN_KEY[kind])
   // The grid's own shape: the sheet only adds which tile is staged right now.
-  const tiles: TileChoice[] = (installed ?? []).map(item => ({ ...item, pending: choice === item.path }))
+  // Filtering narrows the grid only; the staged choice survives a search that hides its tile.
+  const tiles: TileChoice[] = (installed ?? [])
+    .filter(item => !needle || item.label.toLocaleLowerCase().includes(needle) || item.file.toLocaleLowerCase().includes(needle))
+    .map(item => ({ ...item, pending: choice === item.path }))
   return <Dialog variant="sheet" open={open} title={t('profile.sheet.title', { name: profileName, noun })} onClose={() => { if (!unresolved) onCancel() }}>
     <p className="ws-note">{t('profile.sheet.note', { name: profileName, noun })}</p>
     <div className="pr-sheet-preview">{chosen
@@ -168,8 +174,8 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
       onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
     {unresolved ? <Notice tone="warning"><p>{msg(error ?? { key: 'scheme.error.importUnknown' })}</p>
       <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void reconcileImport()}>{reconciling ? t('scheme.status.loading') : t('scheme.reconcile')}</Button></p></Notice> : <>
-    {installed ? null : <><label className="pr-sr-only" htmlFor={`sheet-search-${kind}`}>{t('profile.resource.searchLabel')}</label></>}
-    {installed ? null : <input id={`sheet-search-${kind}`} className="pr-sheet-search" type="search" placeholder={t('profile.resource.searchLabel')} value={search} onChange={event => setSearch(event.target.value)} />}
+    <SearchBox id={`sheet-search-${kind}`} label={t('scheme.search.label')} placeholder={t('scheme.search.placeholder')}
+      clearLabel={t('scheme.clearSearch')} value={search} onChange={next => { setSearch(next); setPage(0) }} />
     {loading ? <p role="status">{t('profile.resource.loading')}</p> : null}
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
@@ -184,6 +190,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
       thumb={item => <AssetPreview key={item.path} kind={kind} reference={{ name: item.label, path: item.path }} profilePath={profilePath} assets={assets} />}
       onPage={setPage}
       onChoose={item => { setReady(true); setChoice(choice === item.path ? KEEP : item.path) }} /> : null}
+    {installed?.length && needle && !tiles.length ? <p className="ws-note">{t('scheme.search.noMatch', { query: search.trim() })}</p> : null}
     </>}
     <div className="ki-dialog-actions"><span className="ws-note">{unchanged ? t('profile.sheet.unchanged') : chosen ? t('profile.resource.tempChosen', { name: chosen.name }) : t('profile.resource.tempKeep', { noun })}</span>
       <Button data-safe-focus disabled={unresolved} onClick={onCancel}>{t('import.cancel')}</Button>

@@ -573,7 +573,6 @@ export const en: Record<keyof typeof zh, string> = {
 
   'profile.resource.keepHint': "Doesn't change the {noun} when the combination is applied",
   'profile.resource.dirPlaceholder': 'Choose the folder with your files first',
-  'profile.resource.searchLabel': 'Search by file name',
   'profile.resource.loading': 'Loading files…',
   'profile.resource.fileErrorsSummary': "{count} files couldn't be used",
   'profile.resource.fileErrorsSummary.one': "{count} file couldn't be used",

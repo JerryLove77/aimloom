@@ -10,6 +10,7 @@ import { AUDIO_EVENTS, MAX_AUDIO_FILES, type AudioEvent } from './audio/model'
 import type { ProfileAudio, ProfileFileReference } from './model'
 import type { ProfileAssetBridge } from './assets'
 import { ImportSheet } from '../workspace/ImportSheet'
+import { SearchBox } from '../workspace/SearchBox'
 import { importFileName } from '../workspace/import-check'
 import type { FileAddOutcome, FileImportInput } from '../workspace/file-import'
 
@@ -65,6 +66,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   const [files, setFiles] = useState<ProfileFileReference[]>([])
   const [fileErrors, setFileErrors] = useState<{ fileName: string; message: Msg }[]>([])
   const [error, setError] = useState<Msg | null>(null)
+  const [search, setSearch] = useState('')
   const request = useRef(0)
   // The outside file being confirmed in the nested add sheet. Nothing is written until 添加到游戏.
   const [importPath, setImportPath] = useState<string | null>(null)
@@ -74,7 +76,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   // 核对结果 reconciles the very operation that came back unresolved.
   const [unresolved, setUnresolved] = useState(false)
   const [reconciling, setReconciling] = useState(false)
-  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setListen(null); setError(null); setFileErrors([]); setImportPath(null); setImportError(null); setUnresolved(false) } }, [open, value])
+  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setSearch(''); setListen(null); setError(null); setFileErrors([]); setImportPath(null); setImportError(null); setUnresolved(false) } }, [open, value])
   useEffect(() => { onUnresolvedChange?.(unresolved) }, [unresolved, onUnresolvedChange])
   const eventFiles = temp?.[event]
   const mode = modeOf(eventFiles)
@@ -109,6 +111,8 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     setImporting(false)
     if (outcome.kind === 'added') {
       setImportPath(null)
+      // A sound that was just added must not stay hidden behind an old search.
+      setSearch('')
       // The new sound must appear in this sheet's own list, so re-read the folder it landed in.
       if (directory) await load(directory)
       else if (defaultDirectory) await load(defaultDirectory)
@@ -139,6 +143,9 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     void load(defaultDirectory)
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once per opening
   }, [open])
+  // The same rule as the Sounds page: trimmed, case-insensitive, on the file's name.
+  const needle = search.trim().toLocaleLowerCase()
+  const shownFiles = needle ? files.filter(file => file.name.toLocaleLowerCase().includes(needle)) : files
   const changed = !same(temp, value)
   const move = (index: number, offset: number) => {
     if (!eventFiles) return
@@ -177,7 +184,10 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
       {onPickFile ? <Button variant="ghost" disabled={importing} onClick={() => void pickAndOpenImport()}>{t('audio.addSound')}</Button> : null}</div>
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
-    <div className="pr-sheet-list">{files.map(file => <div className="pr-sheet-row" key={file.path}><span><strong>{file.name}</strong><small>{file.path}</small></span>
+    {files.length ? <SearchBox id="sheet-search-audio" label={t('audio.search.label')} placeholder={t('audio.search.placeholder')}
+      clearLabel={t('audio.clearSearch')} value={search} onChange={setSearch} /> : null}
+    {needle && files.length && !shownFiles.length ? <p className="ws-note">{t('audio.sounds.noMatch', { query: search.trim() })}</p> : null}
+    <div className="pr-sheet-list">{shownFiles.map(file => <div className="pr-sheet-row" key={file.path}><span><strong>{file.name}</strong><small>{file.path}</small></span>
       {eventFiles?.some(item => item.path === file.path) ? <Tag kind="temporary">{t('audio.advanced.inList')}</Tag> : null}
       <Button aria-label={t('profile.audioSheet.addAria', { name: file.name })} disabled={(eventFiles?.length ?? 0) >= MAX_AUDIO_FILES} onClick={() => setEventFiles([...(eventFiles ?? []), file])}>{t('profile.audioSheet.add')}</Button></div>)}</div>
     </>}
