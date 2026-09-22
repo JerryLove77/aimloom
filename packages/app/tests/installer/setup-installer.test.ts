@@ -190,5 +190,5 @@ describe('the Setup bundle configuration', () => {
     expect(installer.bundle.resources).toBeUndefined()
   })
 
-  it('is version 0.1.3', () => expect(installer.version).toBe('0.1.3')) // already set by the English App work
+  it('is version 0.1.4', () => expect(installer.version).toBe('0.1.4'))
 })
