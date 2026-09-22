@@ -309,6 +309,108 @@ describe('Crosshair page', () => {
       await within(sheet).findByText(/已保存 PNG 到/)
       expect(f.bridge.exported).toEqual([{ directory: 'D:/Exports', fileName: 'from-code.png' }])
     })
+
+    it('the dark and light swatches carry different backgrounds (regression: the light swatch must not stay dark)', async () => {
+      render(tree(fixtures()))
+      const sheet = await openCodeSheet('from-code')
+      const dark = within(sheet).getByRole('img', { name: '准星代码预览' }) as HTMLImageElement
+      const light = within(sheet).getByRole('img', { name: /准星代码预览 · 浅色底/ }) as HTMLImageElement
+      expect(dark.style.background).not.toBe('')
+      expect(light.style.background).not.toBe('')
+      expect(dark.style.background).not.toBe(light.style.background)
+    })
+
+    it('draws CS2 colour presets as named swatch buttons, not a numeric slider', async () => {
+      render(tree(fixtures()))
+      const sheet = await openCodeSheet('from-code')
+      const group = within(sheet).getByRole('radiogroup', { name: '颜色' })
+      const red = within(group).getByRole('radio', { name: '红' })
+      expect(red).toBeVisible()
+      expect(within(group).getByRole('radio', { name: '自定义' })).toBeVisible()
+      // The old numeric palette slider is gone.
+      expect(within(sheet).queryByLabelText('颜色', { selector: 'input[type="range"]' })).toBeNull()
+    })
+
+    it('the fixture code already selects custom (color 5): its picker shows by default; a preset hides it, custom brings it back', async () => {
+      render(tree(fixtures()))
+      const sheet = await openCodeSheet('from-code')
+      const group = within(sheet).getByRole('radiogroup', { name: '颜色' })
+      expect(within(group).getByRole('radio', { name: '自定义' })).toHaveAttribute('aria-checked', 'true')
+      const picker = within(sheet).getByLabelText('自定义颜色') as HTMLInputElement
+      expect(picker.type).toBe('color')
+      fireEvent.change(picker, { target: { value: '#112233' } })
+      // Choosing a preset hides the picker again.
+      fireEvent.click(within(group).getByRole('radio', { name: '绿' }))
+      expect(within(sheet).queryByLabelText('自定义颜色')).toBeNull()
+      expect(within(group).getByRole('radio', { name: '绿' })).toHaveAttribute('aria-checked', 'true')
+      // Choosing custom brings it back.
+      fireEvent.click(within(group).getByRole('radio', { name: '自定义' }))
+      expect(within(sheet).getByLabelText('自定义颜色')).toBeVisible()
+    })
+
+    it('VALORANT custom colour reveals an RGB picker plus a 0–1 alpha slider, and no hand-typed hex box', async () => {
+      render(tree(fixtures()))
+      fireEvent.click(await screen.findByRole('button', { name: '粘贴准星代码' }))
+      const sheet = await screen.findByRole('dialog', { name: '粘贴准星代码' })
+      fireEvent.change(within(sheet).getByLabelText('准星代码'), { target: { value: '0;P;h;0;d;1;z;2;a;1;f;0;0b;0;1b;0' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: '预览' }))
+      await within(sheet).findByRole('img', { name: '准星代码预览' })
+      const group = within(sheet).getByRole('radiogroup', { name: '颜色' })
+      expect(within(group).getAllByRole('radio')).toHaveLength(9) // 8 presets + custom
+      fireEvent.click(within(group).getByRole('radio', { name: '自定义' }))
+      expect((within(sheet).getByLabelText('自定义颜色') as HTMLInputElement).type).toBe('color')
+      const alpha = within(sheet).getByLabelText('自定义颜色透明度') as HTMLInputElement
+      expect(alpha.type).toBe('range')
+      expect(alpha.min).toBe('0'); expect(alpha.max).toBe('1')
+      // No hand-typed hex box remains anywhere in the sheet.
+      expect(within(sheet).queryByPlaceholderText('FFFFFFFF')).toBeNull()
+    })
+
+    it('disables a CS2 dependent control while its parent toggle is off, without discarding its value', async () => {
+      render(tree(fixtures()))
+      const sheet = await openCodeSheet('from-code')
+      const outlineEnabled = within(sheet).getByLabelText('描边') as HTMLInputElement
+      const outlineWidth = within(sheet).getByLabelText('描边宽度') as HTMLInputElement
+      const alphaEnabled = within(sheet).getByLabelText('透明度') as HTMLInputElement
+      const alphaValue = within(sheet).getByLabelText('透明度数值') as HTMLInputElement
+      // The fixture code has both outline and alpha on.
+      expect(outlineEnabled.checked).toBe(true)
+      expect(alphaEnabled.checked).toBe(true)
+      expect(outlineWidth).toBeEnabled()
+      expect(alphaValue).toBeEnabled()
+      const widthBefore = outlineWidth.value
+      fireEvent.click(outlineEnabled)
+      fireEvent.click(alphaEnabled)
+      expect(outlineWidth).toBeDisabled()
+      expect(alphaValue).toBeDisabled()
+      // The value is kept, not reset, while disabled.
+      expect(outlineWidth.value).toBe(widthBefore)
+      // Turning it back on re-enables it with the same value.
+      fireEvent.click(outlineEnabled)
+      expect(outlineWidth).toBeEnabled()
+      expect(outlineWidth.value).toBe(widthBefore)
+    })
+
+    it('disables VALORANT inner/outer line controls while that line is off', async () => {
+      render(tree(fixtures()))
+      fireEvent.click(await screen.findByRole('button', { name: '粘贴准星代码' }))
+      const sheet = await screen.findByRole('dialog', { name: '粘贴准星代码' })
+      fireEvent.change(within(sheet).getByLabelText('准星代码'), { target: { value: '0;P;h;0;d;1;z;2;a;1;f;0;0b;0;1b;0' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: '预览' }))
+      await within(sheet).findByRole('img', { name: '准星代码预览' })
+      const outerEnabled = within(sheet).getByLabelText('外线') as HTMLInputElement
+      expect(outerEnabled.checked).toBe(false) // fixture code: 1b;0
+      expect(within(sheet).getByLabelText('外线长度')).toBeDisabled()
+      expect(within(sheet).getByLabelText('外线间隙')).toBeDisabled()
+      fireEvent.click(outerEnabled)
+      expect(within(sheet).getByLabelText('外线长度')).toBeEnabled()
+    })
+
+    it('says the running-game observation in the reworded terms', async () => {
+      render(tree(fixtures()))
+      const sheet = await openCodeSheet('from-code')
+      expect(within(sheet).getByText('游戏开着也能添加：测试中，新准星不用重启游戏就能在准星设置里选到。')).toBeVisible()
+    })
   })
 
   it('closing the code sheet leaves add mode, so nothing reopens', async () => {

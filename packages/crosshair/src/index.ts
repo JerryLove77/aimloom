@@ -19,6 +19,9 @@ export type { RgbaImage, CanonicalPngIssue } from './png';
 export { getTuningParams, readTuningValue, tune } from './tuning';
 export type { TuningParam, TuningParamKind, TuneChanges, TuneValue } from './tuning';
 
+export { CS2_PALETTE, VALORANT_PALETTE } from './palette';
+export type { PaletteColor } from './palette';
+
 export function parseCrosshair(input: string): ParsedCrosshair {
   if (typeof input !== 'string') throw new CrosshairError('INVALID_CODE', '请粘贴 CS2 或 VALORANT 准星代码', 'Paste a CS2 or VALORANT crosshair code.');
   if (input.length > 4096) throw new CrosshairError('INPUT_TOO_LONG', '准星代码不能超过 4096 个字符', 'The crosshair code cannot exceed 4096 characters.');

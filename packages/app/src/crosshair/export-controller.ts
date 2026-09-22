@@ -51,7 +51,13 @@ export function createCrosshairExportController(bridge: CrosshairExportBridge, g
     saving: false, message: null, error: null,
     game: null, params: [], values: {}, tuned: false,
   }
+  /** The pasted code's own parse, kept only for 恢复成粘贴的代码; never touched by setTune. */
   let parsed: ParsedCrosshair | null = null
+  /** The crosshair as currently tuned; starts equal to `parsed`. Each setTune re-tunes THIS
+   * (not `parsed` plus every stale control value), so a single change's side effects — e.g.
+   * VALORANT's `useCustomColor` flipping when a custom colour is picked — are never clobbered
+   * by re-applying every other control's unchanged, now-stale value on top of it. */
+  let tuned: ParsedCrosshair | null = null
   let baseValues: Record<string, TuneValue> = {}
   const listeners = new Set<() => void>()
   const publish = (patch: Partial<CrosshairExportState>) => {
@@ -82,6 +88,7 @@ export function createCrosshairExportController(bridge: CrosshairExportBridge, g
     setCode(value: string): void {
       // Any edit invalidates the previous render: what is added or saved must match the code shown.
       parsed = null
+      tuned = null
       baseValues = {}
       publish({ code: value, svg: null, pngBase64: null, width: 0, height: 0, warnings: [], ready: false, error: null, message: null,
         game: null, params: [], values: {}, tuned: false })
@@ -91,33 +98,38 @@ export function createCrosshairExportController(bridge: CrosshairExportBridge, g
         parsed = parseCrosshair(state.code)
       } catch (error) {
         parsed = null
+        tuned = null
         publish({ svg: null, pngBase64: null, ready: false, game: null, params: [], values: {}, tuned: false,
           error: errorMsg(error, { key: 'crosshair.error.parseCode' }) })
         return false
       }
+      tuned = parsed
       const params = getTuningParams(parsed.game)
       baseValues = readAllValues(parsed, params)
       publish({ game: parsed.game, params, values: { ...baseValues }, tuned: false })
       return renderFrom(parsed)
     },
-    /** Changes one control and re-renders from the pasted code plus every current value. */
+    /** Changes one control, tuning the CURRENT crosshair (not the pasted code plus every
+     * control's stale value), so one change's side effects on another value are kept. */
     setTune(id: string, value: TuneValue): void {
-      if (!parsed) return
-      const values = { ...state.values, [id]: value }
-      let source: ParsedCrosshair
+      if (!parsed || !tuned) return
+      let next: ParsedCrosshair
       try {
-        source = tune(parsed, values)
+        next = tune(tuned, { [id]: value })
       } catch (error) {
         publish({ error: errorMsg(error, { key: 'crosshair.error.parseCode' }) })
         return
       }
+      tuned = next
+      const values = readAllValues(tuned, state.params)
       const tunedFlag = Object.keys(baseValues).some(key => values[key] !== baseValues[key])
       publish({ values, tuned: tunedFlag })
-      renderFrom(source)
+      renderFrom(tuned)
     },
     /** Restores every control to what the pasted code decoded to (恢复成粘贴的代码). */
     resetTune(): void {
       if (!parsed) return
+      tuned = parsed
       publish({ values: { ...baseValues }, tuned: false })
       renderFrom(parsed)
     },

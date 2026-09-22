@@ -4,10 +4,32 @@ import { parseValorant } from '../src/valorant';
 import { renderCrosshair } from '../src/render';
 import { CrosshairError } from '../src/errors';
 import { getTuningParams, readTuningValue, tune } from '../src/tuning';
+import { CS2_PALETTE, VALORANT_PALETTE } from '../src/palette';
 
 const CJK = /[　-〿㐀-鿿＀-￯]/;
 const sampleCs2 = 'CSGO-Cn37R-YE7vo-pLCAL-aURmZ-z6zkG';
 const sampleValorant = '0;P;h;0;d;1;z;2;a;1;f;0;0b;0;1b;0';
+
+describe('palette tables', () => {
+  it('CS2 has 5 presets, matching the color param range (index 5 is custom)', () => {
+    expect(CS2_PALETTE).toHaveLength(5);
+    const color = getTuningParams('cs2').find((p) => p.id === 'color')!;
+    expect(color.max).toBe(CS2_PALETTE.length);
+  });
+  it('VALORANT has 8 presets, matching the color param range', () => {
+    expect(VALORANT_PALETTE).toHaveLength(8);
+    const color = getTuningParams('valorant').find((p) => p.id === 'color')!;
+    expect(color.max).toBe(VALORANT_PALETTE.length - 1);
+  });
+  it('every preset has a distinct English and Chinese name', () => {
+    for (const palette of [CS2_PALETTE, VALORANT_PALETTE]) {
+      for (const entry of palette) {
+        expect(entry.nameEn.length).toBeGreaterThan(0);
+        expect(entry.nameZh.length).toBeGreaterThan(0);
+      }
+    }
+  });
+});
 
 describe('getTuningParams', () => {
   it('lists every CS2 parameter named in the roadmap', () => {
