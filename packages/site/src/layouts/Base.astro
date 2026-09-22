@@ -3,7 +3,7 @@ import '../styles/tokens.css'
 import '../styles/global.css'
 import Nav from '../components/Nav.astro'
 import { HTML_LANG, LANGS, localizePath, t, type Lang } from '../i18n'
-interface Props { lang: Lang; title: string; description: string; path: '/' | '/download' | '/guide' | '/changelog' | '/privacy' }
+interface Props { lang: Lang; title: string; description: string; path: '/' | '/download' | '/guide' | '/changelog' | '/privacy' | '/crosshair' }
 const { lang, title, description, path } = Astro.props
 /** Where the name comes from. Shown untranslated on both languages' pages (user, 2026-09-19). */
 const NAME_ORIGIN = 'Aim + loom: weave your background, sounds, crosshair and enemy look into one setup.'
