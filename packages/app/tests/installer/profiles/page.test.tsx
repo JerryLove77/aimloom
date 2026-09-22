@@ -7,6 +7,7 @@ import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/pro
 import { createTrainingProfile } from '../../../src/profiles/model'
 import type { ProfileBridge } from '../../../src/profiles/bridge'
 import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import type { Job } from '../../../src/installer/contracts'
 
 beforeEach(() => {
   vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test-preview'), revokeObjectURL: vi.fn() }))
@@ -165,7 +166,7 @@ describe('a resource sheet shows what the game already has', () => {
     { name: 'Blue Room', file: 'Blue Room.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/Blue Room.json', readable: true, duplicateName: false },
     { name: 'Night', file: 'Night.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/Night.json', readable: true, duplicateName: false },
   ]
-  function gameBridge(options: { candidates?: string[]; fails?: boolean } = {}) {
+  function gameBridge(options: { candidates?: string[]; fails?: boolean; pickPath?: string | null; planFileAdd?: () => Promise<{ planId: string }>; execute?: () => Promise<Job>; job?: () => Promise<Job> } = {}) {
     const seen: string[] = []
     return {
       seen,
@@ -180,9 +181,11 @@ describe('a resource sheet shows what the game already has', () => {
       // These tests never open the apply dialog; stubs just satisfy ProfileGameBridge's shape.
       pickFolder: async () => null,
       planProfileApply: async () => { throw new Error('not used by these tests') },
-      execute: async () => { throw new Error('not used by these tests') },
-      job: async () => { throw new Error('not used by these tests') },
+      execute: options.execute ?? (async () => { throw new Error('not used by these tests') }),
+      job: options.job ?? (async () => { throw new Error('not used by these tests') }),
       reconcile: async () => { throw new Error('not used by these tests') },
+      planFileAdd: options.planFileAdd ?? (async () => { throw new Error('not used by these tests') }),
+      pickFile: async () => (options.pickPath !== undefined ? options.pickPath : null),
     }
   }
 
@@ -221,5 +224,94 @@ describe('a resource sheet shows what the game already has', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^Theme \u80cc\u666f/ }))
     const dialog = await screen.findByRole('dialog')
     await within(dialog).findByRole('searchbox')
+  })
+})
+
+// PF-ADD: the Profile sheet gets the same "add from my computer" chain the Theme and Sounds
+// pages already use -- pick, preview, \u6dfb\u52a0\u5230\u6e38\u620f through planFileAdd, and only then can the new
+// file be chosen for the draft. The sheet opens the add sheet as a second, nested Dialog rather
+// than swapping itself out, so the sheet's own in-progress choice is never touched.
+describe('adding a file to a Profile sheet from my computer', () => {
+  const initialThemes = [
+    { name: 'Blue Room', file: 'Blue Room.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/Blue Room.json', readable: true, duplicateName: false },
+  ]
+  const addedTheme = { name: 'Blue', file: 'New Theme.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/New Theme.json', readable: true, duplicateName: false }
+  function gameWithAdd(options: { pickPath?: string | null; planFileAdd?: () => Promise<{ planId: string }> } = {}) {
+    let added = false
+    const planCalls: unknown[] = []
+    const executeCalls: unknown[] = []
+    const game = {
+      discover: async () => ({ candidates: ['D:/Game'] }),
+      locate: async (gameRoot: string) => ({ gameRoot }),
+      schemeList: async (gameRoot: string) => ({ directory: `${gameRoot}/Themes`, current: 'Blue Room', themes: added ? [...initialThemes, addedTheme] : initialThemes }),
+      audioList: async () => ({ directory: '', sounds: [], bindings: { kill: [], spawn: [], mbsGood: [], mbsOkay: [], mbsBad: [], mbsChangeNow: [] } }),
+      pickFolder: async () => null,
+      planProfileApply: async () => { throw new Error('not used by these tests') },
+      execute: async (input: unknown): Promise<Job> => { executeCalls.push(input); return { operationId: 'op', planId: 'plan-add', state: 'finished', progress: null, result: { status: 'completed' as const, batchId: null, items: [], errors: [], errorsEn: [] }, error: null } },
+      job: async (): Promise<Job> => ({ operationId: 'op', planId: 'plan-add', state: 'finished', progress: null, result: { status: 'completed' as const, batchId: null, items: [], errors: [], errorsEn: [] }, error: null }),
+      reconcile: async () => ({}),
+      planFileAdd: options.planFileAdd ?? (async (input: unknown) => { planCalls.push(input); added = true; return { planId: 'plan-add' } }),
+      pickFile: async () => (options.pickPath !== undefined ? options.pickPath : 'C:/Users/Player1/Downloads/New Theme.json'),
+    }
+    return { game, planCalls, executeCalls }
+  }
+  async function openThemeSheet(f: ReturnType<typeof fixtures>, game: ReturnType<typeof gameWithAdd>['game']) {
+    render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={game} />)
+    fireEvent.click(await screen.findByRole('button', { name: '\u7f16\u8f91 \u6bcf\u65e5\u8bad\u7ec3' }))
+    fireEvent.click(await screen.findByRole('button', { name: /^Theme \u80cc\u666f/ }))
+    return screen.findByRole('dialog')
+  }
+
+  it('picks, previews and adds a file through planFileAdd; the new file can then be chosen', async () => {
+    const f = fixtures()
+    const { game, planCalls, executeCalls } = gameWithAdd()
+    const sheet = await openThemeSheet(f, game)
+    await within(sheet).findByRole('button', { name: /Blue Room/ })
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6dfb\u52a0\u4e3b\u9898\u2026' }))
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(2))
+    const dialogs = screen.getAllByRole('dialog') // the Profile sheet stays open behind the nested add sheet
+    const addSheet = dialogs[1]!
+    await waitFor(() => expect(within(addSheet).getByRole('button', { name: '\u6dfb\u52a0\u5230\u6e38\u620f' })).toBeEnabled())
+    fireEvent.click(within(addSheet).getByRole('button', { name: '\u6dfb\u52a0\u5230\u6e38\u620f' }))
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1))
+    expect(planCalls).toEqual([{ gameRoot: 'D:/Game', kind: 'theme', sourcePath: 'C:/Users/Player1/Downloads/New Theme.json', sourceSha256: expect.any(String), file: 'New Theme.json', revision: 1 }])
+    expect(executeCalls).toHaveLength(1)
+    // The refreshed installed list now shows the added file, selectable for the draft.
+    const added = await within(sheet).findByRole('button', { name: 'Blue 预览' })
+    fireEvent.click(added)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u7528\u4e8e\u6b64\u7ec4\u5408' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(f.save).not.toHaveBeenCalled()
+  })
+
+  it('shows the same refusal message the page shows, and writes nothing', async () => {
+    const f = fixtures()
+    const refuse = async (): Promise<never> => { throw new Error('\u6587\u4ef6\u540d\u5df2\u88ab\u5360\u7528') }
+    const { game, executeCalls } = gameWithAdd({ planFileAdd: refuse })
+    const sheet = await openThemeSheet(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6dfb\u52a0\u4e3b\u9898\u2026' }))
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(2))
+    const addSheet = screen.getAllByRole('dialog')[1]!
+    await waitFor(() => expect(within(addSheet).getByRole('button', { name: '\u6dfb\u52a0\u5230\u6e38\u620f' })).toBeEnabled())
+    fireEvent.click(within(addSheet).getByRole('button', { name: '\u6dfb\u52a0\u5230\u6e38\u620f' }))
+    // The sheet reuses the same refusal-message code path the pages do (addFileToGame), so the
+    // engine's own message surfaces unchanged.
+    expect(await within(addSheet).findByText('文件名已被占用')).toBeVisible()
+    expect(executeCalls).toEqual([])
+    expect(screen.getAllByRole('dialog')).toHaveLength(2)
+  })
+
+  it('cancelling the add sheet writes nothing and returns to the Profile sheet unchanged', async () => {
+    const f = fixtures()
+    const { game, planCalls } = gameWithAdd()
+    const sheet = await openThemeSheet(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '\u6dfb\u52a0\u4e3b\u9898\u2026' }))
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(2))
+    const addSheet = screen.getAllByRole('dialog')[1]!
+    fireEvent.click(within(addSheet).getByRole('button', { name: '\u53d6\u6d88' }))
+    await waitFor(() => expect(screen.getAllByRole('dialog')).toHaveLength(1))
+    expect(planCalls).toEqual([])
+    // The Profile sheet itself is untouched: still on the same list, nothing chosen.
+    await within(sheet).findByRole('button', { name: /Blue Room/ })
   })
 })

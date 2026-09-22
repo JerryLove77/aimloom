@@ -171,6 +171,10 @@ export const zh = {
   'scheme.note.takesEffect': '先退出 KovaaK 再应用 · 下次启动生效',
   'scheme.addTheme': '添加主题…',
   'scheme.refresh': '刷新',
+  'scheme.search.label': '搜索主题',
+  'scheme.search.placeholder': '搜索主题…',
+  'scheme.clearSearch': '清空搜索',
+  'scheme.search.noMatch': '没有匹配「{query}」的主题。',
   'scheme.tile.previewLabel': '{label} 预览',
   'scheme.tile.unreadable': '这个主题文件无法读取',
   'scheme.tile.duplicateTitle': '多个主题文件使用同一名称，无法确定要应用哪一个',
@@ -516,6 +520,7 @@ export const zh = {
   'profile.sheet.confirm': '用于此组合',
   'profile.sheet.browseDemo': '浏览演示素材',
   'profile.sheet.error.generic': '操作失败，请重试。',
+  'profile.sheet.importUnknown': '添加结果未知：无法确认文件是否已经写入。稍后重新打开这个组合项查看文件是否已添加。',
 
   'profile.audioSheet.event.kill': '击杀',
   'profile.audioSheet.event.spawn': '生成',

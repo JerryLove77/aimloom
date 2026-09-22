@@ -167,6 +167,10 @@ export const en: Record<keyof typeof zh, string> = {
   'scheme.note.takesEffect': 'Quit KovaaK before applying · Takes effect the next time it starts',
   'scheme.addTheme': 'Add theme…',
   'scheme.refresh': 'Refresh',
+  'scheme.search.label': 'Search themes',
+  'scheme.search.placeholder': 'Search themes…',
+  'scheme.clearSearch': 'Clear search',
+  'scheme.search.noMatch': 'No theme matches "{query}".',
   'scheme.tile.previewLabel': '{label} preview',
   'scheme.tile.unreadable': "This theme file can't be read",
   'scheme.tile.duplicateTitle': "Several theme files share this name, so it isn't clear which to apply",
@@ -507,6 +511,7 @@ export const en: Record<keyof typeof zh, string> = {
   'profile.sheet.confirm': 'Use for this combination',
   'profile.sheet.browseDemo': 'Browse demo assets',
   'profile.sheet.error.generic': 'The action failed. Try again.',
+  'profile.sheet.importUnknown': 'The add result is unknown: it\'s not clear whether the file was written. Reopen this item later to see whether it was added.',
 
   'profile.audioSheet.event.kill': 'Kill',
   'profile.audioSheet.event.spawn': 'Spawn',

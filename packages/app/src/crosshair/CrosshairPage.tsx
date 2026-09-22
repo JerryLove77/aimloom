@@ -8,6 +8,7 @@ import { useLang, useMsg, useT } from '../i18n'
 import { errorMsg } from '../workspace/issue-text'
 import { importFileName, stemOf } from '../workspace/import-check'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
+import { SearchBox } from '../workspace/SearchBox'
 import { createCrosshairController, type CrosshairBridge } from './controller'
 import { CodeExportDialog } from './CodeExportDialog'
 import type { CrosshairExportBridge } from './export-controller'
@@ -165,11 +166,8 @@ export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true,
         <section className="cx-installed" aria-labelledby="crosshair-installed">
           <div className="cx-installed-head">
             <h2 id="crosshair-installed">{t('crosshair.installed.heading', { count: state.slots.length })}</h2>
-            <div className="pr-search">
-              <label className="pr-sr-only" htmlFor="crosshair-search">{t('crosshair.search.label')}</label>
-              <input id="crosshair-search" type="search" placeholder={t('crosshair.search.placeholder')} value={query} onChange={change => setQuery(change.target.value)} />
-              {query ? <Button variant="ghost" aria-label={t('crosshair.clearSearch')} onClick={() => setQuery('')}>×</Button> : null}
-            </div>
+            <SearchBox id="crosshair-search" label={t('crosshair.search.label')} placeholder={t('crosshair.search.placeholder')}
+              clearLabel={t('crosshair.clearSearch')} value={query} onChange={setQuery} />
             <Button variant="ghost" onClick={() => void controller.load()} disabled={locked}>{t('crosshair.refresh')}</Button>
           </div>
           <p className="ws-note">{t('crosshair.installed.hint')}</p>

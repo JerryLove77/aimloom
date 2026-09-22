@@ -18,16 +18,21 @@ import { gameAssetFolder, resolveGameRoot, type GameRootStorage } from '../works
 import type { TileChoice } from '../workspace/Tiles'
 import type { AudioList, SchemeList } from '../installer/contracts'
 import { browserStorage } from '../i18n'
-import { plural, useLang, useMsg, useT, type MessageKey } from '../i18n'
+import { plural, useLang, useMsg, useT, type Lang, type MessageKey } from '../i18n'
 import { resolveProfileAssetPath, type ProfileFileReference, type TrainingProfile } from './model'
 import { readCurrentGame, type CurrentGame } from './current-game'
 import { describeAudio, describeFile } from './describe'
+import { addFileToGame, type FileAddOutcome, type FileImportInput } from '../workspace/file-import'
+import type { FileAddKind, PlanFileAddRequest } from '../installer/contracts'
 import './profiles.css'
 
 /** Just enough of the installer bridge for Profile to show what the game already has, plus what applying a saved combination needs. */
 export interface ProfileGameBridge extends ApplyBridge {
   schemeList(gameRoot: string): Promise<SchemeList>
   audioList(gameRoot: string): Promise<AudioList>
+  /** The same byte-exact add-a-file plan the Theme and Sounds pages use, reused unchanged from inside a Profile sheet. */
+  planFileAdd(input: PlanFileAddRequest): Promise<{ planId: string }>
+  pickFile(kind: FileAddKind, lang: Lang): Promise<string | null>
 }
 /** A tile before the sheet marks which one is staged. */
 export type InstalledChoice = Omit<TileChoice, 'pending'>
@@ -147,6 +152,19 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
     return () => { live = false }
   }, [sheet, gameRoot, locate, installed, t])
 
+  // Adding a file from a Profile sheet reuses the section pages' own byte-exact plan path
+  // (`planFileAdd`), never a separate write. Each add gets a fresh operationId and a rising
+  // revision, exactly like the Scheme and Audio controllers.
+  const fileImportRevision = useRef(0)
+  async function addFile(kind: FileAddKind, input: FileImportInput): Promise<FileAddOutcome> {
+    if (!locate || !gameRoot) return { kind: 'refused', message: { key: 'profile.sheet.error.generic' } }
+    const operationId = crypto.randomUUID()
+    const outcome = await addFileToGame(locate, operationId, { gameRoot, kind, ...input, revision: ++fileImportRevision.current })
+    // The game's own installed list (`installed`) is fetched once per sheet opening and cached;
+    // forcing it back to null makes the existing effect re-read it, same as a fresh open would.
+    if (kind === 'theme' && (outcome.kind === 'added' || outcome.kind === 'unknown')) setInstalled(null)
+    return outcome
+  }
   const { toast, tone, hide, show } = useToast(null)
   const dropHint = useFileDrop(fileDrops, { section: 'profile', active: isActive && sheet === null && deleting === null, busy: false, onFile: () => {}, onRefused: show })
   // Decision D: quitting with a draft exits with no save and no prompt, so there is no
@@ -176,10 +194,15 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
     <Dialog open={deleting !== null} title={t('profile.delete.title')} onClose={() => { if (!state.busyId) setDeleting(null) }}><p>{t('profile.delete.confirm', { name: deleting?.name ?? '' })}</p>{state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}<div className="ki-dialog-actions"><Button data-safe-focus disabled={!!state.busyId} onClick={() => setDeleting(null)}>{t('import.cancel')}</Button><Button variant="danger" disabled={!!state.busyId} onClick={() => { if (deleting) void editor.deleteProfile(deleting.id).then(ok => { if (ok) { setDeleting(null); setNotice(t('profile.delete.done')) } }) }}>{state.busyId ? t('profile.delete.working') : t('profile.delete.button')}</Button></div></Dialog>
     {state.draft && sheet === 'audio' ? <AudioSheet open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
       value={state.draft.audio} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('audio', gameRoot) : null}
+      onAddFile={locate && gameRoot ? input => addFile('sound', input) : undefined}
+      onPickFile={locate ? lang => locate.pickFile('sound', lang) : undefined}
       onConfirm={value => { if (editor.setComponent('audio', value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
     {state.draft && sheet && sheet !== 'audio' ? <ResourceSheet kind={sheet} open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
       value={state.draft[sheet]} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder(sheet, gameRoot) : null}
       installed={!installedError && installed?.kind === sheet ? installed.choices : null}
+      onAddFile={locate && gameRoot ? input => addFile('theme', input) : undefined}
+      onPickFile={locate ? lang => locate.pickFile('theme', lang) : undefined}
+      onAdded={() => setInstalled(null)}
       onConfirm={value => { if (editor.setComponent(sheet, value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
     <ApplyDialog state={applyState} current={currentGame}
       onChooseGameRoot={root => void applyController.chooseGameRoot(root)}

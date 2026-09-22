@@ -5,6 +5,7 @@ import { WorkspaceShell, type WorkspaceSection } from '../workspace/WorkspaceShe
 import { StatusStrip, Tag, Toast, useToast } from '../workspace/ui'
 import { ImportSheet } from '../workspace/ImportSheet'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
+import { SearchBox } from '../workspace/SearchBox'
 import { createAudioController, AUDIO_EVENTS, AUDIO_TAB_KEYS, type AudioBridge } from './controller'
 import { createAudioPreview } from '../profiles/audio/preview'
 import { assetMime, type ProfileAssetBridge } from '../profiles/assets'
@@ -147,11 +148,8 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
             <div className="ws-panel-head"><h2>{eventLabel}</h2><span className="ws-note">{isList ? t('audio.editor.list') : t('audio.editor.single')} · {audition.status !== 'idle' ? t('audio.editor.auditionPlaying') : t('audio.editor.auditionHint')}</span></div>
             <p className="ws-note">{advanced ? t('audio.editor.hintAdvanced') : t('audio.editor.hintSimple')}</p>
             <div className="au-toolbar">
-              <div className="pr-search">
-                <label className="pr-sr-only" htmlFor="audio-search">{t('audio.search.label')}</label>
-                <input id="audio-search" type="search" placeholder={t('audio.search.placeholder')} value={query} onChange={change => setQuery(change.target.value)} />
-                {query ? <Button variant="ghost" aria-label={t('audio.clearSearch')} onClick={() => setQuery('')}>×</Button> : null}
-              </div>
+              <SearchBox id="audio-search" label={t('audio.search.label')} placeholder={t('audio.search.placeholder')}
+                clearLabel={t('audio.clearSearch')} value={query} onChange={setQuery} />
               <Button onClick={() => void pickImport()} disabled={locked}>{t('audio.addSound')}</Button>
             </div>
             {isList ? <button type="button" className="au-advanced" aria-expanded={advanced} disabled={locked || state.draft.length > 1}

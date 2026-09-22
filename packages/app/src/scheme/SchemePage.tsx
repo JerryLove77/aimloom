@@ -6,6 +6,7 @@ import { StatusStrip, Tag, Toast, useToast } from '../workspace/ui'
 import { ImportSheet } from '../workspace/ImportSheet'
 import { importFileName } from '../workspace/import-check'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
+import { SearchBox } from '../workspace/SearchBox'
 import { createSchemeController, type SchemeBridge } from './controller'
 import { SchemePreview } from './SchemePreview'
 import { Tiles, type TileChoice } from '../workspace/Tiles'
@@ -32,11 +33,12 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
   const controller = useMemo(() => createSchemeController(bridge), [bridge])
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)
   const [page, setPage] = useState(0)
+  const [query, setQuery] = useState('')
   const { toast, tone, hide, show } = useToast(state.message ? msg(state.message) : null)
   /** The outside file being confirmed in the add sheet. Nothing is written until Add to game. */
   const [importPath, setImportPath] = useState<string | null>(null)
   useEffect(() => { if (isActive && state.phase === 'idle') void controller.load() }, [isActive, controller, state.phase])
-  useEffect(() => { setPage(0) }, [state.themes])
+  useEffect(() => { setPage(0) }, [state.themes, query])
   // A theme that was just added is selected; turn to the page it landed on.
   useEffect(() => {
     const index = state.selected ? state.themes.findIndex(theme => theme.file === state.selected?.file) : -1
@@ -54,9 +56,15 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
   const activePage = Math.min(page, lastPage)
   /** Selecting the theme already in effect is not a change, so it never enables Apply. */
   const pending = state.selected && state.selected.name !== state.current ? state.selected : null
+  // Filtering is presentation only: it narrows the grid, never the pending selection or the
+  // current mark, which the controller still owns.
+  const needle = query.trim().toLocaleLowerCase()
+  const filteredThemes = needle
+    ? state.themes.filter(theme => (theme.name ?? '').toLocaleLowerCase().includes(needle) || theme.file.toLocaleLowerCase().includes(needle))
+    : state.themes
   // One shape for the grid, shared with the same grid inside Profile. An unreadable theme stays
   // visible and unselectable -- hiding it would leave the player wondering where their file went.
-  const choices: TileChoice[] = state.themes.map(theme => ({
+  const choices: TileChoice[] = filteredThemes.map(theme => ({
     file: theme.file,
     label: theme.name ?? theme.file,
     detail: theme.readable ? theme.file : t('scheme.tile.fileUnreadable'),
@@ -115,6 +123,8 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
           aside={<><span>{t('scheme.note.takesEffect')}</span><Button onClick={() => void pickImport()} disabled={locked}>{t('scheme.addTheme')}</Button><Button variant="ghost" onClick={() => void controller.load()} disabled={locked}>{t('scheme.refresh')}</Button></>} />
         <div className="ws-columns">
           <div>
+            <SearchBox id="scheme-search" label={t('scheme.search.label')} placeholder={t('scheme.search.placeholder')}
+              clearLabel={t('scheme.clearSearch')} value={query} onChange={setQuery} />
             <Tiles choices={choices} page={activePage} pageSize={PER_PAGE} disabled={locked} countKey="scheme.pagination.count"
               ariaLabel={choice => t('scheme.tile.previewLabel', { label: choice.label })}
               thumb={choice => choice.selectable || choice.duplicate
@@ -126,7 +136,8 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
                 if (!theme) return
                 theme.readable && theme.name === state.current ? controller.close() : controller.open(theme)
               }}
-              empty={<div className="pr-empty"><span aria-hidden="true">▱</span><h2>{t('scheme.empty.title')}</h2><p>{t('scheme.empty.body')}</p></div>} />
+              empty={query ? undefined : <div className="pr-empty"><span aria-hidden="true">▱</span><h2>{t('scheme.empty.title')}</h2><p>{t('scheme.empty.body')}</p></div>} />
+            {query && !choices.length ? <p className="ws-note">{t('scheme.search.noMatch', { query })}</p> : null}
           </div>
           <section className="ws-panel" aria-label={t('scheme.panel.ariaLabel')}>
             <div className="ws-panel-head"><h2>{t('scheme.panel.heading')}</h2>{shown ? <Tag kind={pending ? (state.applying ? 'working' : 'pending') : 'current'} /> : null}</div>
