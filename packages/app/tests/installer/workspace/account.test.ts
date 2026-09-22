@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { ACCOUNT_STORAGE_KEY, looksLikeSteamUrl, readAccount, writeAccount } from '../../../src/workspace/account'
 import { UPDATES_STORAGE_KEY, readUpdatesEnabled, writeUpdatesEnabled } from '../../../src/workspace/updates'
+import { BETA_STORAGE_KEY, readBetaEnabled, writeBetaEnabled } from '../../../src/workspace/beta'
 
 function store(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial))
@@ -113,5 +114,38 @@ describe('the update check switch', () => {
     expect(readUpdatesEnabled(null)).toBe(true)
     expect(() => writeUpdatesEnabled(throwing, false)).not.toThrow()
     expect(() => writeUpdatesEnabled(null, false)).not.toThrow()
+  })
+})
+
+describe('the beta switch', () => {
+  it('follows the build default when nothing is stored', () => {
+    const s = store()
+    expect(readBetaEnabled(s, true)).toBe(true)
+    expect(readBetaEnabled(s, false)).toBe(false)
+  })
+
+  it('an explicit choice wins over the build default, in both directions', () => {
+    const s = store()
+    writeBetaEnabled(s, true)
+    expect(s.map.get(BETA_STORAGE_KEY)).toBe('on')
+    expect(readBetaEnabled(s, false)).toBe(true)
+    writeBetaEnabled(s, false)
+    expect(readBetaEnabled(s, true)).toBe(false)
+  })
+
+  it('reads anything it does not recognise as the build default', () => {
+    for (const raw of ['', 'nonsense', 'ON', 'true', '1']) {
+      expect(readBetaEnabled(store({ [BETA_STORAGE_KEY]: raw }), true), raw).toBe(true)
+      expect(readBetaEnabled(store({ [BETA_STORAGE_KEY]: raw }), false), raw).toBe(false)
+    }
+  })
+
+  it('treats storage that throws, and no storage at all, as the build default', () => {
+    expect(readBetaEnabled(throwing, true)).toBe(true)
+    expect(readBetaEnabled(throwing, false)).toBe(false)
+    expect(readBetaEnabled(null, true)).toBe(true)
+    expect(readBetaEnabled(null, false)).toBe(false)
+    expect(() => writeBetaEnabled(throwing, true)).not.toThrow()
+    expect(() => writeBetaEnabled(null, true)).not.toThrow()
   })
 })

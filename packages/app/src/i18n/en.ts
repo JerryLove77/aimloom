@@ -21,10 +21,14 @@ export const en: Record<keyof typeof zh, string> = {
   'settings.feedback.openLogsFailed': 'Could not open the log folder.',
   'settings.updates': 'Updates',
   'settings.updates.check': 'Check for a new version at launch',
+  'settings.updates.beta': 'Join the beta',
+  'settings.updates.beta.hint': 'When on, you are offered beta versions too. A beta can be rough; turn this off at any time to go back to stable releases.',
   'settings.updates.current': 'You are on the newest version.',
   'settings.updates.available': 'Version {version} is available.',
+  'settings.updates.available.beta': 'Beta {version} is available.',
   'settings.updates.download': 'Download',
   'settings.version': 'Aimloom v{version}',
+  'settings.version.beta': 'Beta',
 
   // report.* — ReportSheet.tsx: the "send a bug report" sheet, opened from Settings.
   'report.title': 'Send a report',

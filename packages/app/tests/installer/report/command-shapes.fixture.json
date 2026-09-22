@@ -2,5 +2,6 @@
   "installer_report_preview": { "text": "Aimloom 0.1.3\n", "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "bytes": 14 },
   "installer_report_send": { "number": "AL-260921-TST1" },
   "installer_account_resolve": { "steamId": "76561198000000000", "name": "Player" },
-  "installer_update_check": { "latest": "0.1.2", "newer": false }
+  "installer_update_check": { "latest": "0.1.2", "newer": false, "channel": "stable" },
+  "installer_app_info": { "label": "0.1.3", "channel": "stable" }
 }

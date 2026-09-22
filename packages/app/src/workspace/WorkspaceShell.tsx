@@ -3,9 +3,10 @@ import { Button } from '../installer/components/Button'
 import { TargetMark } from '../installer/components/Icon'
 import { useAnyDialogOpen } from '../installer/components/Dialog'
 import { SettingsPopover } from './SettingsPopover'
+import { updateAvailableKey } from './update-text'
 import { useT, type Lang, type MessageKey } from '../i18n'
 import type { FileDropHint } from './file-drop'
-import type { SteamAccount, UpdateCheck } from '../installer/contracts'
+import type { AppInfo, SteamAccount, UpdateCheck } from '../installer/contracts'
 import './workspace.css'
 
 export type WorkspaceSection = 'profile' | 'scheme' | 'audio' | 'crosshair' | 'enemy'
@@ -35,10 +36,15 @@ export const SettingsState = createContext<{
   storage: SettingsStorage
   accountResolve(url: string): Promise<SteamAccount>
   openLogs(): Promise<void>
-  openDownload(lang: Lang): Promise<void>
+  openDownload(lang: Lang, channel: 'stable' | 'beta'): Promise<void>
   update: UpdateCheck | null
   /** Whether the sidebar button should show its small dot: `update.newer` and the popover has not yet opened this session. */
   updateDot: boolean
+  /** The App's own label and channel, from `installer_app_info`. Null only until the first answer lands. */
+  appInfo: AppInfo | null
+  /** The Join-the-beta switch's current value; changing it (via `setBetaOn`) re-runs the update check. */
+  betaOn: boolean
+  setBetaOn(on: boolean): void
   openReport(): void
   /**
    * The report sheet, built and owned by `Workspace`. Every page mounts its own `WorkspaceShell`
@@ -55,6 +61,9 @@ export const SettingsState = createContext<{
   openDownload: () => Promise.resolve(),
   update: null,
   updateDot: false,
+  appInfo: null,
+  betaOn: false,
+  setBetaOn: () => {},
   openReport: () => {},
   rootOverlay: null,
 })
@@ -110,7 +119,7 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, locked = fa
           {onOpenInstaller ? <Button variant="ghost" onClick={onOpenInstaller} disabled={locked}>{t('shell.installRestore')}</Button> : null}
           <Button variant="ghost" ref={settingsRef} disabled={dialogOpen} aria-haspopup="dialog" aria-expanded={settings.anchor === settingsRef.current && settings.anchor !== null}
             aria-label={settings.updateDot && settings.update?.latest != null
-              ? `${t('settings.open')} — ${t('settings.updates.available', { version: settings.update.latest })}`
+              ? `${t('settings.open')} — ${t(updateAvailableKey(settings.update), { version: settings.update.latest })}`
               : undefined}
             onClick={() => settingsRef.current && (settings.anchor === settingsRef.current ? settings.close() : settings.open(settingsRef.current))}>
             {t('settings.open')}

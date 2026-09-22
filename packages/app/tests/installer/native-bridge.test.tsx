@@ -70,7 +70,7 @@ describe('native bridge file import', () => {
 })
 
 
-// v0.1.3's six commands. What matters here is the command NAME and the exact argument object:
+// The seven commands that never touch the engine. What matters here is the command NAME and the exact argument object:
 // Rust validates both, and a silent mismatch would only surface on Windows.
 describe('the reporting, account and update commands', () => {
   beforeEach(() => { invoke.mockReset().mockResolvedValue(undefined) })
@@ -85,15 +85,16 @@ describe('the reporting, account and update commands', () => {
     ['reportPreview', (b: ReturnType<typeof createNativeBridge>) => b.reportPreview(input), 'installer_report_preview', { input }],
     ['reportSend', (b: ReturnType<typeof createNativeBridge>) => b.reportSend('a'.repeat(64)), 'installer_report_send', { sha256: 'a'.repeat(64) }],
     ['accountResolve', (b: ReturnType<typeof createNativeBridge>) => b.accountResolve('https://steamcommunity.com/id/x'), 'installer_account_resolve', { url: 'https://steamcommunity.com/id/x' }],
-    ['openDownload', (b: ReturnType<typeof createNativeBridge>) => b.openDownload('zh'), 'installer_open_download', { lang: 'zh' }],
+    ['openDownload', (b: ReturnType<typeof createNativeBridge>) => b.openDownload('zh', 'stable'), 'installer_open_download', { lang: 'zh', channel: 'stable' }],
+    ['updateCheck', (b: ReturnType<typeof createNativeBridge>) => b.updateCheck(true), 'installer_update_check', { beta: true }],
   ])('%s invokes its command with exactly its arguments', async (_name, call, command, args) => {
     await call(createNativeBridge())
     expect(invoke).toHaveBeenCalledWith(command, args)
   })
 
   it.each([
-    ['updateCheck', (b: ReturnType<typeof createNativeBridge>) => b.updateCheck(), 'installer_update_check'],
     ['openLogs', (b: ReturnType<typeof createNativeBridge>) => b.openLogs(), 'installer_open_logs'],
+    ['appInfo', (b: ReturnType<typeof createNativeBridge>) => b.appInfo(), 'installer_app_info'],
   ])('%s invokes its command with no arguments at all', async (_name, call, command) => {
     await call(createNativeBridge())
     // The shared `call` helper always passes a second argument; for these two it is undefined.

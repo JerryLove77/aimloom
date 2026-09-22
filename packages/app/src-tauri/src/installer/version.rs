@@ -1,7 +1,10 @@
 //! What the App knows about itself: version label, build metadata, and semantic version comparison.
 
+use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
+
+use serde::Serialize;
 
 /// App version metadata from the built package.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -161,12 +164,56 @@ fn format_user_agent(label: &str) -> String {
     format!("Aimloom/{}", cleaned)
 }
 
-/// Compare two semantic versions. Returns `true` if `latest` is strictly newer than `current`.
+/// The channel a build's label belongs to, per the design's table:
+/// `0.1.4` -> `stable`, `0.1.4-beta.3` -> `beta`, `0.1.4-test.2` -> `test`. A prerelease label
+/// that is neither `beta.N` nor `test.N` (or bare `beta`/`test`) is treated as `stable` -- the
+/// three-row table is exhaustive by design, so anything else falls back rather than guessing.
+pub fn channel(label: &str) -> &'static str {
+    if let Some(prerelease) = label.split_once('-').map(|(_, rest)| rest) {
+        if prerelease == "beta" || prerelease.starts_with("beta.") {
+            return "beta";
+        }
+        if prerelease == "test" || prerelease.starts_with("test.") {
+            return "test";
+        }
+    }
+    "stable"
+}
+
+/// The window title for a channel: `Aimloom Beta` / `Aimloom Test` / `Aimloom`.
+pub fn window_title(channel: &str) -> &'static str {
+    match channel {
+        "beta" => "Aimloom Beta",
+        "test" => "Aimloom Test",
+        _ => "Aimloom",
+    }
+}
+
+/// What `installer_app_info` answers -- always, never a failure (see `app_info`).
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+pub struct AppInfo {
+    pub label: String,
+    pub channel: String,
+}
+
+/// The App's own label and channel, resolved from `VERSION.txt` next to the running exe. Never
+/// fails: on any doubt `resolved_version()` already fell back to the compiled version and
+/// `stable`, so this has nothing left to fail on.
+pub fn app_info() -> AppInfo {
+    let version = resolved_version();
+    AppInfo { label: version.label.clone(), channel: channel(&version.label).to_string() }
+}
+
+/// Compare two semantic versions. Returns `true` if `latest` is strictly newer than `current`,
+/// following full semver precedence (semver.org §11):
+/// - the numeric parts first (major, then minor, then patch);
+/// - when those are equal, a release outranks any prerelease of the same numbers;
+/// - when both are prereleases, their dot-separated identifiers compare left to right -- a
+///   numeric identifier compares numerically, an alphanumeric one compares as ASCII text, a
+///   numeric identifier always ranks below an alphanumeric one, and if every shared identifier is
+///   equal the prerelease with more identifiers wins.
 ///
-/// Semantic version comparison rules:
-/// - Versions are compared by numeric parts (0.1.3 > 0.1.2)
-/// - Pre-release versions never count as newer than their release version (0.1.3-rc.1 is not newer than 0.1.3)
-/// - Unparsable versions (empty, leading 'v', wrong number of parts, huge numbers) return `false`
+/// Unparsable versions (empty, leading 'v', wrong number of parts, huge numbers) return `false`.
 pub fn is_newer(latest: &str, current: &str) -> bool {
     let latest_parts = match parse_semver(latest) {
         Some(p) => p,
@@ -176,24 +223,54 @@ pub fn is_newer(latest: &str, current: &str) -> bool {
         Some(p) => p,
         None => return false,
     };
+    compare_semver(&latest_parts, &current_parts) == Ordering::Greater
+}
 
-    // If latest has a prerelease, it's never newer
-    if latest_parts.has_prerelease {
-        return false;
-    }
+fn compare_semver(a: &SemverParts, b: &SemverParts) -> Ordering {
+    a.major.cmp(&b.major)
+        .then(a.minor.cmp(&b.minor))
+        .then(a.patch.cmp(&b.patch))
+        .then_with(|| match (&a.prerelease, &b.prerelease) {
+            (None, None) => Ordering::Equal,
+            // A release outranks any prerelease of the same numbers.
+            (None, Some(_)) => Ordering::Greater,
+            (Some(_), None) => Ordering::Less,
+            (Some(pa), Some(pb)) => compare_prerelease(pa, pb),
+        })
+}
 
-    // Compare numeric parts: major, minor, patch
-    if latest_parts.major != current_parts.major {
-        return latest_parts.major > current_parts.major;
+/// Dot-separated identifiers, compared left to right; a missing identifier loses to a present
+/// one, so `0.1.3-beta.1.1` outranks `0.1.3-beta.1` once every shared identifier ties.
+fn compare_prerelease(a: &[String], b: &[String]) -> Ordering {
+    for i in 0..a.len().max(b.len()) {
+        let ord = match (a.get(i), b.get(i)) {
+            (None, None) => Ordering::Equal,
+            (Some(_), None) => Ordering::Greater,
+            (None, Some(_)) => Ordering::Less,
+            (Some(x), Some(y)) => compare_identifier(x, y),
+        };
+        if ord != Ordering::Equal {
+            return ord;
+        }
     }
-    if latest_parts.minor != current_parts.minor {
-        return latest_parts.minor > current_parts.minor;
-    }
-    if latest_parts.patch != current_parts.patch {
-        return latest_parts.patch > current_parts.patch;
-    }
+    Ordering::Equal
+}
 
-    false
+fn compare_identifier(x: &str, y: &str) -> Ordering {
+    let x_numeric = !x.is_empty() && x.chars().all(|c| c.is_ascii_digit());
+    let y_numeric = !y.is_empty() && y.chars().all(|c| c.is_ascii_digit());
+    match (x_numeric, y_numeric) {
+        // A numeric identifier always ranks below an alphanumeric one (semver.org §11.4.3).
+        (true, false) => Ordering::Less,
+        (false, true) => Ordering::Greater,
+        (false, false) => x.cmp(y),
+        (true, true) => match (x.parse::<u128>(), y.parse::<u128>()) {
+            (Ok(xi), Ok(yi)) => xi.cmp(&yi),
+            // Numbers too large to fit even u128: compare by digit count, then lexically --
+            // both are still all-digits of the same otherwise-unparsable magnitude.
+            _ => x.len().cmp(&y.len()).then_with(|| x.cmp(y)),
+        },
+    }
 }
 
 #[derive(Debug)]
@@ -201,7 +278,8 @@ struct SemverParts {
     major: u64,
     minor: u64,
     patch: u64,
-    has_prerelease: bool,
+    /// `None` for a release; `Some(identifiers)` for a prerelease, split on `.`.
+    prerelease: Option<Vec<String>>,
 }
 
 fn parse_semver(version: &str) -> Option<SemverParts> {
@@ -216,10 +294,14 @@ fn parse_semver(version: &str) -> Option<SemverParts> {
     }
 
     // Check if there's a prerelease part
-    let (base_version, has_prerelease) = if let Some(dash_pos) = version.find('-') {
-        (version[..dash_pos].to_string(), true)
+    let (base_version, prerelease) = if let Some(dash_pos) = version.find('-') {
+        let tail = &version[dash_pos + 1..];
+        if tail.is_empty() {
+            return None;
+        }
+        (version[..dash_pos].to_string(), Some(tail.split('.').map(str::to_string).collect::<Vec<_>>()))
     } else {
-        (version.to_string(), false)
+        (version.to_string(), None)
     };
 
     let parts: Vec<&str> = base_version.split('.').collect();
@@ -232,7 +314,7 @@ fn parse_semver(version: &str) -> Option<SemverParts> {
     let minor = parts[1].parse::<u64>().ok()?;
     let patch = parts[2].parse::<u64>().ok()?;
 
-    Some(SemverParts { major, minor, patch, has_prerelease })
+    Some(SemverParts { major, minor, patch, prerelease })
 }
 
 #[cfg(test)]
@@ -438,8 +520,10 @@ mod tests {
     }
 
     #[test]
-    fn is_newer_prerelease_not_newer() {
-        assert!(!is_newer("0.1.3-rc.1", "0.1.2"));
+    fn is_newer_prerelease_outranks_a_lower_release_on_numbers_alone() {
+        // Full semver precedence: the numeric parts are compared first, regardless of
+        // prerelease status. 0.1.3-rc.1 is numerically newer than 0.1.2.
+        assert!(is_newer("0.1.3-rc.1", "0.1.2"));
     }
 
     #[test]
@@ -478,12 +562,47 @@ mod tests {
     }
 
     #[test]
-    fn is_newer_prerelease_never_counts_as_newer() {
-        // Prerelease versions never count as newer, regardless of numeric relationship
-        assert!(!is_newer("0.1.3-rc.1", "0.1.3"));       // same base version: prerelease < release
-        assert!(!is_newer("0.1.3-rc.1", "0.1.2"));       // lower numeric version still not newer
-        assert!(!is_newer("0.1.4-rc.1", "0.1.3"));       // even higher base still not newer
-        assert!(!is_newer("0.1.3-rc.2", "0.1.3-rc.1")); // both prerelease: not newer
+    fn is_newer_release_outranks_a_prerelease_of_the_same_numbers() {
+        // A release always outranks a prerelease with the same major.minor.patch, whatever the
+        // prerelease identifiers say.
+        assert!(!is_newer("0.1.3-rc.1", "0.1.3"));
+        // But numbers still come first: a higher-numbered prerelease beats a lower release.
+        assert!(is_newer("0.1.3-rc.1", "0.1.2"));
+        assert!(is_newer("0.1.4-rc.1", "0.1.3"));
+    }
+
+    #[test]
+    fn is_newer_compares_prerelease_identifiers_numerically() {
+        assert!(is_newer("0.1.3-rc.2", "0.1.3-rc.1"));
+        assert!(!is_newer("0.1.3-rc.1", "0.1.3-rc.1"));
+        assert!(!is_newer("0.1.3-rc.1", "0.1.3-rc.2"));
+        // "10" outranks "9" numerically, not lexically.
+        assert!(is_newer("0.1.3-rc.10", "0.1.3-rc.9"));
+    }
+
+    #[test]
+    fn is_newer_orders_the_beta_chain_from_the_design_doc() {
+        // 0.1.3 < 0.1.4-beta.1 < 0.1.4-beta.2 < 0.1.4
+        assert!(is_newer("0.1.4-beta.1", "0.1.3"));
+        assert!(is_newer("0.1.4-beta.2", "0.1.4-beta.1"));
+        assert!(is_newer("0.1.4", "0.1.4-beta.2"));
+        // And the reverse never holds.
+        assert!(!is_newer("0.1.3", "0.1.4-beta.1"));
+        assert!(!is_newer("0.1.4-beta.1", "0.1.4-beta.2"));
+        assert!(!is_newer("0.1.4-beta.2", "0.1.4"));
+    }
+
+    #[test]
+    fn is_newer_a_test_build_is_older_than_the_release_it_precedes() {
+        assert!(is_newer("0.1.4", "0.1.4-test.2"));
+        assert!(!is_newer("0.1.4-test.2", "0.1.4"));
+    }
+
+    #[test]
+    fn is_newer_numeric_identifiers_rank_below_alphanumeric_ones() {
+        // semver.org 11.4.3: "1.0.0-alpha" < "1.0.0-alpha.1" < "1.0.0-alpha.beta"
+        assert!(is_newer("0.1.3-alpha.1", "0.1.3-alpha"));
+        assert!(is_newer("0.1.3-alpha.beta", "0.1.3-alpha.1"));
     }
 
     #[test]
@@ -583,5 +702,56 @@ mod tests {
     #[test]
     fn is_valid_commit_invalid_non_hex() {
         assert!(!is_valid_commit("abcg1234567"));
+    }
+
+    // ============================================================================
+    // channel / window_title / app_info tests
+    // ============================================================================
+
+    #[test]
+    fn channel_reads_the_three_rows_of_the_design_table() {
+        assert_eq!(channel("0.1.4"), "stable");
+        assert_eq!(channel("0.1.4-beta.3"), "beta");
+        assert_eq!(channel("0.1.4-test.2"), "test");
+    }
+
+    #[test]
+    fn channel_falls_back_to_stable_for_an_unrecognised_prerelease() {
+        assert_eq!(channel("0.1.4-rc.1"), "stable");
+        assert_eq!(channel(""), "stable");
+    }
+
+    #[test]
+    fn channel_accepts_a_bare_beta_or_test_with_no_number() {
+        assert_eq!(channel("0.1.4-beta"), "beta");
+        assert_eq!(channel("0.1.4-test"), "test");
+    }
+
+    #[test]
+    fn window_title_follows_the_channel() {
+        assert_eq!(window_title("beta"), "Aimloom Beta");
+        assert_eq!(window_title("test"), "Aimloom Test");
+        assert_eq!(window_title("stable"), "Aimloom");
+        assert_eq!(window_title("anything-else"), "Aimloom");
+    }
+
+    #[test]
+    fn app_info_reads_the_resolved_labels_channel() {
+        let dir = test_dir("app-info-beta");
+        fs::write(dir.join("VERSION.txt"), "Aimloom 0.1.4-beta.1\ncommit abc1234\nbuilt 2026-09-20 12:00:00 UTC").unwrap();
+        let version = read_version_file(&dir);
+        assert_eq!(version.label, "0.1.4-beta.1");
+        assert_eq!(channel(&version.label), "beta");
+    }
+
+    #[test]
+    fn app_info_never_fails_an_unreadable_version_file_answers_the_compiled_version_and_stable() {
+        // read_version_file already falls back to the compiled CARGO_PKG_VERSION on a missing
+        // or unparsable VERSION.txt, and that compiled version carries no prerelease, so its
+        // channel is always "stable" -- app_info() has nothing left to fail on.
+        let dir = test_dir("app-info-missing");
+        let version = read_version_file(&dir);
+        assert_eq!(version.label, env!("CARGO_PKG_VERSION"));
+        assert_eq!(channel(&version.label), "stable");
     }
 }

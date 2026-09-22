@@ -504,33 +504,53 @@ pub async fn installer_account_resolve(url: String) -> Result<AccountResolveOut,
 
 /// What `installer_update_check` answers — always, never an `Issue`: a network failure, a
 /// non-200 or an unparsable body all collapse to "no update known", exactly like a check that
-/// simply hasn't happened. The player is never shown a dismissable error for this.
+/// simply hasn't happened. The player is never shown a dismissable error for this. `channel`
+/// names which line `latest` belongs to (`stable` when nothing newer was offered either).
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct UpdateCheckOut {
     pub latest: Option<String>,
     pub newer: bool,
+    pub channel: String,
 }
 
-/// `https://aimloom.dev/latest.json` today answers exactly `{"version":"0.1.2"}`. Takes `Http`
-/// and the current label so a test can drive both without touching the real site or the exe's
-/// own `VERSION.txt`.
-fn update_check_with(http: &Http, current: &str) -> UpdateCheckOut {
+/// `https://aimloom.dev/latest.json` answers `{"version":"0.1.4","beta":"0.1.5-beta.1"}`, where
+/// `beta` may be absent (an older site, or today's `0.1.3`) or `null` (no beta is currently newer
+/// than `version`). Takes `Http`, the current label and the player's beta switch so a test can
+/// drive all three without touching the real site or the exe's own `VERSION.txt`.
+///
+/// Considers `version` always, and `beta` only when `beta` (the switch) is true; offers whichever
+/// considered candidate is newer than `current` and, if both are, whichever of the two is itself
+/// the newer semver. When nothing considered is newer, still answers the stable `version` as
+/// `latest` with `newer: false` — the "you are on the newest version" line reads this.
+fn update_check_with(http: &Http, current: &str, beta: bool) -> UpdateCheckOut {
+    let none = UpdateCheckOut { latest: None, newer: false, channel: "stable".to_string() };
     let (status, body) = match http.get(super::net::LATEST_PATH) {
         Ok(pair) => pair,
-        Err(_) => return UpdateCheckOut { latest: None, newer: false },
+        Err(_) => return none,
     };
     if status != 200 {
-        return UpdateCheckOut { latest: None, newer: false };
+        return none;
     }
-    let latest = serde_json::from_str::<Value>(&body)
-        .ok()
-        .and_then(|v| v.get("version").and_then(|s| s.as_str()).map(str::to_string));
-    match latest {
-        Some(latest) => {
-            let newer = super::version::is_newer(&latest, current);
-            UpdateCheckOut { latest: Some(latest), newer }
+    let Ok(parsed) = serde_json::from_str::<Value>(&body) else { return none };
+    let Some(stable) = parsed.get("version").and_then(Value::as_str).map(str::to_string) else { return none };
+
+    let stable_newer = super::version::is_newer(&stable, current);
+    let mut chosen = (stable.clone(), "stable".to_string(), stable_newer);
+
+    if beta {
+        let beta_label = parsed.get("beta").and_then(|v| if v.is_null() { None } else { v.as_str() }).map(str::to_string);
+        if let Some(beta_label) = beta_label {
+            let beta_newer = super::version::is_newer(&beta_label, current);
+            if beta_newer && (!stable_newer || super::version::is_newer(&beta_label, &stable)) {
+                chosen = (beta_label, "beta".to_string(), true);
+            }
         }
-        None => UpdateCheckOut { latest: None, newer: false },
+    }
+
+    if chosen.2 {
+        UpdateCheckOut { latest: Some(chosen.0), newer: true, channel: chosen.1 }
+    } else {
+        UpdateCheckOut { latest: Some(stable), newer: false, channel: "stable".to_string() }
     }
 }
 
@@ -539,13 +559,18 @@ fn current_version_label() -> String {
 }
 
 #[tauri::command]
-pub async fn installer_update_check() -> Result<UpdateCheckOut, Issue> {
-    tauri::async_runtime::spawn_blocking(|| {
+pub async fn installer_update_check(beta: bool) -> Result<UpdateCheckOut, Issue> {
+    tauri::async_runtime::spawn_blocking(move || {
         let current = current_version_label();
-        update_check_with(&Http::new(), &current)
+        update_check_with(&Http::new(), &current, beta)
     })
     .await
     .map_err(|e| Issue::worker(format!("native update-check task failed: {e}")))
+}
+
+#[tauri::command]
+pub fn installer_app_info() -> super::version::AppInfo {
+    super::version::app_info()
 }
 
 /// The one folder `installer_open_logs` opens: the *parent* of `worker_log_path`. Resolving it
@@ -597,16 +622,22 @@ pub async fn installer_open_logs() -> Result<(), Issue> {
         .map_err(|e| Issue::worker(format!("native folder task failed: {e}")))?
 }
 
-/// Validates the language and builds the exact download-page URL; never takes a URL from the UI.
-fn download_url(lang: &str) -> Result<String, Issue> {
-    match lang {
-        "zh" | "en" => Ok(format!("https://aimloom.dev/{lang}/download/")),
-        _ => Err(Issue::new(ErrorCode::InvalidPath, "lang 必须是 \"zh\" 或 \"en\"。", "lang must be \"zh\" or \"en\".")),
+/// Validates the language and channel and builds the exact download-page URL; never takes a URL
+/// from the UI. A beta channel opens the page's `#beta` section; a channel outside `stable`/`beta`
+/// is refused exactly like a bad `lang`.
+fn download_url(lang: &str, channel: &str) -> Result<String, Issue> {
+    if !matches!(lang, "zh" | "en") {
+        return Err(Issue::new(ErrorCode::InvalidPath, "lang 必须是 \"zh\" 或 \"en\"。", "lang must be \"zh\" or \"en\"."));
+    }
+    match channel {
+        "stable" => Ok(format!("https://aimloom.dev/{lang}/download/")),
+        "beta" => Ok(format!("https://aimloom.dev/{lang}/download/#beta")),
+        _ => Err(Issue::new(ErrorCode::InvalidPath, "channel 必须是 \"stable\" 或 \"beta\"。", "channel must be \"stable\" or \"beta\".")),
     }
 }
 
-fn installer_open_download_blocking(lang: String) -> Result<(), Issue> {
-    let url = download_url(&lang)?;
+fn installer_open_download_blocking(lang: String, channel: String) -> Result<(), Issue> {
+    let url = download_url(&lang, &channel)?;
     #[cfg(not(target_os = "windows"))]
     {
         let _ = url;
@@ -621,8 +652,8 @@ fn installer_open_download_blocking(lang: String) -> Result<(), Issue> {
 }
 
 #[tauri::command]
-pub async fn installer_open_download(lang: String) -> Result<(), Issue> {
-    tauri::async_runtime::spawn_blocking(move || installer_open_download_blocking(lang))
+pub async fn installer_open_download(lang: String, channel: String) -> Result<(), Issue> {
+    tauri::async_runtime::spawn_blocking(move || installer_open_download_blocking(lang, channel))
         .await
         .map_err(|e| Issue::worker(format!("native folder task failed: {e}")))?
 }
@@ -728,9 +759,19 @@ pub fn run() {
             installer_report_send,
             installer_account_resolve,
             installer_update_check,
+            installer_app_info,
             installer_open_logs,
             installer_open_download,
         ])
+        .setup(|app| {
+            // The window is declared in tauri.installer.conf.json with the plain "Aimloom"
+            // title; a beta or test build relabels it here, once, before the player sees it.
+            if let Some(window) = app.get_webview_window("installer") {
+                let info = super::version::app_info();
+                let _ = window.set_title(super::version::window_title(&info.channel));
+            }
+            Ok(())
+        })
         .build(tauri::generate_context!())
         .expect("failed to build the isolated installer application");
 
@@ -1034,15 +1075,25 @@ mod tests {
     #[test]
     fn update_check_reports_a_newer_release() {
         let http = serve_json(200, r#"{"version":"0.1.3"}"#);
-        let out = update_check_with(&http, "0.1.2");
+        let out = update_check_with(&http, "0.1.2", false);
         assert_eq!(out.latest.as_deref(), Some("0.1.3"));
         assert!(out.newer);
+        assert_eq!(out.channel, "stable");
+    }
+
+    #[test]
+    fn update_check_reports_up_to_date_with_the_stable_channel() {
+        let http = serve_json(200, r#"{"version":"0.1.3"}"#);
+        let out = update_check_with(&http, "0.1.3", false);
+        assert_eq!(out.latest.as_deref(), Some("0.1.3"));
+        assert!(!out.newer);
+        assert_eq!(out.channel, "stable");
     }
 
     #[test]
     fn update_check_never_fails_on_a_non_200() {
         let http = serve_json(500, "oops");
-        let out = update_check_with(&http, "0.1.2");
+        let out = update_check_with(&http, "0.1.2", false);
         assert_eq!(out.latest, None);
         assert!(!out.newer);
     }
@@ -1050,7 +1101,7 @@ mod tests {
     #[test]
     fn update_check_never_fails_on_an_unparsable_body() {
         let http = serve_json(200, "not json");
-        let out = update_check_with(&http, "0.1.2");
+        let out = update_check_with(&http, "0.1.2", false);
         assert_eq!(out.latest, None);
         assert!(!out.newer);
     }
@@ -1059,25 +1110,98 @@ mod tests {
     fn update_check_never_fails_on_an_unreachable_host() {
         // Nothing is listening on this port.
         let http = super::super::net::Http::with_base("http://127.0.0.1:1");
-        let out = update_check_with(&http, "0.1.2");
+        let out = update_check_with(&http, "0.1.2", false);
         assert_eq!(out.latest, None);
         assert!(!out.newer);
+    }
+
+    #[test]
+    fn update_check_ignores_the_beta_field_when_the_switch_is_off() {
+        let http = serve_json(200, r#"{"version":"0.1.3","beta":"0.1.4-beta.1"}"#);
+        let out = update_check_with(&http, "0.1.3", false);
+        // The stable field itself is not newer than the running 0.1.3, so with the switch off
+        // nothing is offered even though a newer beta exists in the body.
+        assert!(!out.newer);
+        assert_eq!(out.latest.as_deref(), Some("0.1.3"));
+        assert_eq!(out.channel, "stable");
+    }
+
+    #[test]
+    fn update_check_offers_the_beta_when_the_switch_is_on() {
+        let http = serve_json(200, r#"{"version":"0.1.3","beta":"0.1.4-beta.1"}"#);
+        let out = update_check_with(&http, "0.1.3", true);
+        assert_eq!(out.latest.as_deref(), Some("0.1.4-beta.1"));
+        assert!(out.newer);
+        assert_eq!(out.channel, "beta");
+    }
+
+    #[test]
+    fn update_check_treats_a_missing_beta_field_as_no_beta() {
+        // Today's site (0.1.3) answers only {"version": ...}.
+        let http = serve_json(200, r#"{"version":"0.1.3"}"#);
+        let out = update_check_with(&http, "0.1.2", true);
+        assert_eq!(out.latest.as_deref(), Some("0.1.3"));
+        assert_eq!(out.channel, "stable");
+    }
+
+    #[test]
+    fn update_check_treats_a_null_beta_field_as_no_beta() {
+        let http = serve_json(200, r#"{"version":"0.1.3","beta":null}"#);
+        let out = update_check_with(&http, "0.1.2", true);
+        assert_eq!(out.latest.as_deref(), Some("0.1.3"));
+        assert_eq!(out.channel, "stable");
+    }
+
+    #[test]
+    fn update_check_offers_a_stable_release_that_outranks_a_running_beta() {
+        // A beta player who turns the switch off: their running 0.1.4-beta.1 keeps being offered
+        // nothing until a stable 0.1.4 exists, at which point it is offered as the way back.
+        let http = serve_json(200, r#"{"version":"0.1.4"}"#);
+        let out = update_check_with(&http, "0.1.4-beta.1", false);
+        assert_eq!(out.latest.as_deref(), Some("0.1.4"));
+        assert!(out.newer);
+        assert_eq!(out.channel, "stable");
+    }
+
+    #[test]
+    fn update_check_prefers_whichever_candidate_is_genuinely_newer() {
+        // The site is expected to null the beta field once it is not newer than the stable
+        // release, but the parser stays correct even if it is not: the newer of the two wins.
+        let http = serve_json(200, r#"{"version":"0.1.5","beta":"0.1.4-beta.9"}"#);
+        let out = update_check_with(&http, "0.1.3", true);
+        assert_eq!(out.latest.as_deref(), Some("0.1.5"));
+        assert_eq!(out.channel, "stable");
     }
 
     // ---- installer_open_download -----------------------------------------------------------
 
     #[test]
-    fn download_url_accepts_only_zh_or_en() {
-        assert_eq!(download_url("zh").unwrap(), "https://aimloom.dev/zh/download/");
-        assert_eq!(download_url("en").unwrap(), "https://aimloom.dev/en/download/");
-        let issue = download_url("fr").unwrap_err();
+    fn download_url_accepts_only_zh_or_en_and_stable_or_beta() {
+        assert_eq!(download_url("zh", "stable").unwrap(), "https://aimloom.dev/zh/download/");
+        assert_eq!(download_url("en", "stable").unwrap(), "https://aimloom.dev/en/download/");
+        assert_eq!(download_url("zh", "beta").unwrap(), "https://aimloom.dev/zh/download/#beta");
+        assert_eq!(download_url("en", "beta").unwrap(), "https://aimloom.dev/en/download/#beta");
+        let issue = download_url("fr", "stable").unwrap_err();
+        assert_eq!(issue.code, ErrorCode::InvalidPath);
+        assert!(!has_cjk(&issue.message_en));
+    }
+
+    #[test]
+    fn download_url_refuses_a_channel_outside_stable_or_beta() {
+        let issue = download_url("en", "test").unwrap_err();
         assert_eq!(issue.code, ErrorCode::InvalidPath);
         assert!(!has_cjk(&issue.message_en));
     }
 
     #[test]
     fn open_download_refuses_an_invalid_language_before_touching_the_platform_arm() {
-        let issue = installer_open_download_blocking("fr".into()).unwrap_err();
+        let issue = installer_open_download_blocking("fr".into(), "stable".into()).unwrap_err();
+        assert_eq!(issue.code, ErrorCode::InvalidPath);
+    }
+
+    #[test]
+    fn open_download_refuses_an_invalid_channel_before_touching_the_platform_arm() {
+        let issue = installer_open_download_blocking("en".into(), "nightly".into()).unwrap_err();
         assert_eq!(issue.code, ErrorCode::InvalidPath);
     }
 
@@ -1120,8 +1244,11 @@ mod tests {
         let account = AccountResolveOut { steam_id: "76561198000000000".into(), name: "Player".into() };
         assert_eq!(keys(&serde_json::to_value(&account).unwrap()), shape("installer_account_resolve"));
 
-        let update = UpdateCheckOut { latest: Some("0.1.2".into()), newer: false };
+        let update = UpdateCheckOut { latest: Some("0.1.2".into()), newer: false, channel: "stable".into() };
         assert_eq!(keys(&serde_json::to_value(&update).unwrap()), shape("installer_update_check"));
+
+        let info = super::super::version::AppInfo { label: "0.1.3".into(), channel: "stable".into() };
+        assert_eq!(keys(&serde_json::to_value(&info).unwrap()), shape("installer_app_info"));
     }
 
 }
