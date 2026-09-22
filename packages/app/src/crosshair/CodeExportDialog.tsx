@@ -1,10 +1,69 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useMemo, useSyncExternalStore } from 'react'
+import type { TuneValue, TuningParam } from '../../../crosshair/src/tuning'
 import { Button } from '../installer/components/Button'
 import { Dialog } from '../installer/components/Dialog'
 import { Notice } from '../installer/components/Notice'
-import { useLang, useMsg, useT } from '../i18n'
+import { useLang, useMsg, useT, type MessageKey } from '../i18n'
 import { crosshairFileName, crosshairNameIssue, type CrosshairController } from './controller'
 import { createCrosshairExportController, type CrosshairExportBridge } from './export-controller'
+
+/** One control for one tunable parameter; the section is presentation only, the render lives
+ * in the export controller. */
+function TuneControl({ param, game, value, disabled, onChange }: {
+  param: TuningParam
+  game: 'cs2' | 'valorant'
+  value: TuneValue
+  disabled: boolean
+  onChange: (id: string, value: TuneValue) => void
+}) {
+  const t = useT()
+  const label = t(`crosshair.tune.${game}.${param.id}` as MessageKey)
+  // aria-label (not a wrapping <label>) keeps each control's accessible name exactly the
+  // parameter's name, not the name plus the numeric value shown beside a slider.
+  if (param.kind === 'boolean') {
+    return <div className="cx-tune-row cx-tune-switch">
+      <span>{label}</span>
+      <input type="checkbox" aria-label={label} checked={value === true} disabled={disabled}
+        onChange={event => onChange(param.id, event.target.checked)} />
+    </div>
+  }
+  if (param.kind === 'color') {
+    const text = typeof value === 'string' ? value : ''
+    return <div className="cx-tune-row cx-tune-color">
+      <span>{label}</span>
+      <input type="text" aria-label={label} value={text} disabled={disabled} maxLength={8}
+        pattern="[0-9A-Fa-f]{8}" placeholder="FFFFFFFF" spellCheck={false}
+        onChange={event => onChange(param.id, event.target.value)} />
+    </div>
+  }
+  // number and palette: a range slider with the numeric value shown beside it.
+  const numeric = typeof value === 'number' ? value : 0
+  const min = param.min ?? 0
+  const max = param.max ?? 1
+  const step = param.step ?? 1
+  return <div className="cx-tune-row cx-tune-slider">
+    <span>{label}</span>
+    <span className="cx-tune-controls">
+      <input type="range" aria-label={label} min={min} max={max} step={step} value={numeric} disabled={disabled}
+        onChange={event => onChange(param.id, Number(event.target.value))} />
+      <span className="cx-tune-value">{numeric}</span>
+    </span>
+  </div>
+}
+
+/**
+ * Two backdrops so a mostly-white and a mostly-dark crosshair are both checked before adding.
+ * The dark swatch keeps the page's original preview accessible name so it stays findable as
+ * "the" preview; the light swatch's name says which one it is.
+ */
+function TuneSwatches({ svg, previewAlt, dark, light }: { svg: string | null; previewAlt: string; dark: string; light: string }) {
+  if (!svg) return null
+  const url = `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+  return <div className="cx-tune-swatches">
+    <figure className="cx-tune-swatch cx-tune-swatch-dark"><img src={url} alt={previewAlt} /><figcaption>{dark}</figcaption></figure>
+    <figure className="cx-tune-swatch cx-tune-swatch-light"><img src={url} alt={`${previewAlt} · ${light}`} /><figcaption>{light}</figcaption></figure>
+  </div>
+}
 
 /**
  * Paste a CS2/VALORANT code, preview it, and add it to the game's crosshairs folder.
@@ -25,13 +84,6 @@ export function CodeExportDialog({ bridge, controller, onClose }: {
   const gameRoot = page.gameRoot ?? ''
   const renderer = useMemo(() => createCrosshairExportController(bridge, gameRoot), [bridge, gameRoot])
   const state = useSyncExternalStore(renderer.subscribe, renderer.getState, renderer.getState)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  useEffect(() => {
-    if (!state.svg) { setPreviewUrl(null); return }
-    const url = URL.createObjectURL(new Blob([state.svg], { type: 'image/svg+xml' }))
-    setPreviewUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [state.svg])
   const busy = state.saving || page.applying
   // A name taken in the game blocks adding, but a copy saved elsewhere only needs a valid name.
   const validName = crosshairNameIssue(page.newName) === null
@@ -50,11 +102,21 @@ export function CodeExportDialog({ bridge, controller, onClose }: {
     </div>
     <Button disabled={busy || !state.code.trim()} onClick={() => void renderer.preview()}>{t('crosshair.preview')}</Button>
 
-    {previewUrl ? <div className="cx-code-preview">
-      <img src={previewUrl} alt={t('crosshair.code.previewAlt')} />
+    {state.svg ? <div className="cx-code-preview">
+      <TuneSwatches svg={state.svg} previewAlt={t('crosshair.code.previewAlt')} dark={t('crosshair.tune.dark')} light={t('crosshair.tune.light')} />
       <span className="cx-note">{t('crosshair.code.previewSize', { width: state.width, height: state.height })}</span>
     </div> : null}
     {state.warnings.length ? <Notice tone="warning">{state.warnings.map((warning, index) => <p key={index}>{warning}</p>)}</Notice> : null}
+
+    {state.game && state.params.length ? <div className="cx-tune">
+      <div className="cx-tune-head">
+        <h3>{t('crosshair.tune.heading')}</h3>
+        <Button variant="ghost" disabled={busy || !state.tuned} onClick={() => renderer.resetTune()}>{t('crosshair.tune.reset')}</Button>
+      </div>
+      {state.params.map(param => <TuneControl key={param.id} param={param} game={state.game as 'cs2' | 'valorant'}
+        value={state.values[param.id] ?? (param.kind === 'boolean' ? false : param.kind === 'color' ? '' : 0)}
+        disabled={busy} onChange={(id, value) => renderer.setTune(id, value)} />)}
+    </div> : null}
 
     <div className="cx-name-field">
       <label htmlFor="crosshair-code-name">{t('crosshair.fileName')}</label>
@@ -62,8 +124,9 @@ export function CodeExportDialog({ bridge, controller, onClose }: {
       {page.nameError ? <p id="crosshair-code-name-error" className="pr-error">{msg(page.nameError)}</p> : null}
     </div>
     <div className="cx-picker-source"><span className="ws-muted">{t('crosshair.destination')}</span><span className="ws-path">{page.directory}</span></div>
+    <p className="cx-note">{t('crosshair.tune.runningGameNote')}</p>
 
-    {page.error ? <Notice tone="error"><p>{msg(page.error)}</p></Notice> : null}
+    {page.error ?<Notice tone="error"><p>{msg(page.error)}</p></Notice> : null}
     {state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}
     {state.message ? <p role="status" className="pr-status">{msg(state.message)}</p> : null}
     <div className="ki-dialog-actions">

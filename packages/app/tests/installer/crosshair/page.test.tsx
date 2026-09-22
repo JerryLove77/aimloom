@@ -253,6 +253,64 @@ describe('Crosshair page', () => {
     expect(within(sheet).getByRole('button', { name: '另存到其他文件夹…' })).toBeDisabled()
   })
 
+  describe('fine-tune (CUR-C2)', () => {
+    it('shows CS2 controls and both a dark and a light swatch, and adding uses the tuned PNG', async () => {
+      const f = fixtures()
+      render(tree(f))
+      const sheet = await openCodeSheet('from-code')
+      expect(within(sheet).getByRole('heading', { name: '微调' })).toBeVisible()
+      expect(within(sheet).getByText('长度')).toBeVisible()
+      expect(within(sheet).getByText('颜色')).toBeVisible()
+      // Both swatches are present: the dark one keeps the page's usual preview name.
+      expect(within(sheet).getByRole('img', { name: '准星代码预览' })).toBeVisible()
+      expect(within(sheet).getByRole('img', { name: /准星代码预览 · 浅色底/ })).toBeVisible()
+
+      const slider = within(sheet).getByLabelText('长度') as HTMLInputElement
+      fireEvent.change(slider, { target: { value: '9' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: '添加到游戏' }))
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+      expect(f.plans).toEqual([{ file: 'from-code.png' }])
+      expect(canonicalPngIssue(Uint8Array.from(Buffer.from(f.pngs[0]!, 'base64')))).toBeNull()
+    })
+
+    it('shows VALORANT controls for a VALORANT code', async () => {
+      render(tree(fixtures()))
+      fireEvent.click(await screen.findByRole('button', { name: '粘贴准星代码' }))
+      const sheet = await screen.findByRole('dialog', { name: '粘贴准星代码' })
+      fireEvent.change(within(sheet).getByLabelText('准星代码'), { target: { value: '0;P;h;0;d;1;z;2;a;1;f;0;0b;0;1b;0' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: '预览' }))
+      await within(sheet).findByRole('img', { name: '准星代码预览' })
+      expect(within(sheet).getByText('内线长度')).toBeVisible()
+      expect(within(sheet).getByText('外线间隙')).toBeVisible()
+      expect(within(sheet).queryByText('长度')).toBeNull()
+    })
+
+    it('reset restores the pasted code, and the code textarea itself never changes', async () => {
+      const f = fixtures()
+      render(tree(f))
+      const sheet = await openCodeSheet('from-code')
+      const before = (within(sheet).getByRole('img', { name: '准星代码预览' }) as HTMLImageElement).src
+      const codeBefore = (within(sheet).getByLabelText('准星代码') as HTMLTextAreaElement).value
+      fireEvent.change(within(sheet).getByLabelText('长度'), { target: { value: '9' } })
+      expect((within(sheet).getByRole('img', { name: '准星代码预览' }) as HTMLImageElement).src).not.toBe(before)
+      expect(within(sheet).getByRole('button', { name: '恢复成粘贴的代码' })).toBeEnabled()
+      fireEvent.click(within(sheet).getByRole('button', { name: '恢复成粘贴的代码' }))
+      expect((within(sheet).getByRole('img', { name: '准星代码预览' }) as HTMLImageElement).src).toBe(before)
+      expect((within(sheet).getByLabelText('准星代码') as HTMLTextAreaElement).value).toBe(codeBefore)
+      expect(within(sheet).getByRole('button', { name: '恢复成粘贴的代码' })).toBeDisabled()
+    })
+
+    it('a tuned save-elsewhere copy carries the tuned bytes too', async () => {
+      const f = fixtures()
+      render(tree(f))
+      const sheet = await openCodeSheet('from-code')
+      fireEvent.change(within(sheet).getByLabelText('粗细'), { target: { value: '5' } })
+      fireEvent.click(within(sheet).getByRole('button', { name: '另存到其他文件夹…' }))
+      await within(sheet).findByText(/已保存 PNG 到/)
+      expect(f.bridge.exported).toEqual([{ directory: 'D:/Exports', fileName: 'from-code.png' }])
+    })
+  })
+
   it('closing the code sheet leaves add mode, so nothing reopens', async () => {
     render(tree(fixtures()))
     const sheet = await openCodeSheet('from-code')
