@@ -1,4 +1,4 @@
-import { formatBytes, type Release, type ReleaseStatus } from '../data/releases'
+import { betaRelease, formatBytes, type Release, type ReleaseData, type ReleaseStatus } from '../data/releases'
 import { t, type Lang } from '../i18n'
 
 export type DownloadView =
@@ -29,4 +29,10 @@ export function downloadView(release: Release | null, lang: Lang): DownloadView 
 
 export function statusLabel(kind: ReleaseStatus, lang: Lang): string {
   return t(lang, `download.status.${kind}`)
+}
+
+/** The Download page's secondary "Beta" section, or null when `releases.json`'s `beta` names none. */
+export function betaDownloadView(data: ReleaseData, lang: Lang): DownloadView | null {
+  const entry = betaRelease(data)
+  return entry === null ? null : downloadView(entry, lang)
 }

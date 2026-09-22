@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { downloadView, statusLabel } from '../src/lib/download-view'
-import type { Release } from '../src/data/releases'
+import { betaDownloadView, downloadView, statusLabel } from '../src/lib/download-view'
+import type { Release, ReleaseData } from '../src/data/releases'
 
 const base: Release = {
   version: '0.1.0', status: 'preparing', date: null, platform: 'Windows 10/11 x64', requires: ['PowerShell 7.0+'],
@@ -58,5 +58,21 @@ describe('statusLabel', () => {
   it('localizes', () => {
     expect(statusLabel('preparing', 'zh')).toBe('准备中')
     expect(statusLabel('stable', 'en')).toBe('Stable')
+  })
+})
+
+describe('betaDownloadView', () => {
+  const betaRelease: Release = { ...stable, version: '0.1.1-beta.1', status: 'beta' }
+  it('is null when releases.json names no beta', () => {
+    const data: ReleaseData = { schemaVersion: 1, recommended: '0.1.0', beta: null, releases: [stable] }
+    expect(betaDownloadView(data, 'zh')).toBeNull()
+  })
+  it('builds a beta view from the release the beta field names', () => {
+    const data: ReleaseData = { schemaVersion: 1, recommended: '0.1.0', beta: '0.1.1-beta.1', releases: [stable, betaRelease] }
+    expect(betaDownloadView(data, 'en')).toMatchObject({ kind: 'beta', version: '0.1.1-beta.1' })
+  })
+  it('localizes the beta view independently of the main view', () => {
+    const data: ReleaseData = { schemaVersion: 1, recommended: '0.1.0', beta: '0.1.1-beta.1', releases: [stable, betaRelease] }
+    expect(betaDownloadView(data, 'zh')).toMatchObject({ notes: '说明', knownIssues: ['问题一'] })
   })
 })

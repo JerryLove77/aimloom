@@ -14,10 +14,20 @@ workspace yet.
 Version facts live only in `src/data/releases.json`. A release whose status is
 `preparing` renders no download link anywhere.
 
-`/latest.json` (`src/pages/latest.json.ts`), read by the App's v0.1.3 launch check, answers
-`{ "version": "<recommended>" }` — or **`{ "version": null }`** when `recommended` is `null` or
-names a release whose status is `preparing` (nothing to download yet). The App must treat `null`
-the same as "no newer version" and not attempt a fetch.
+`releases.json` also carries a top-level `beta`: `"<version>" | null`, naming the current beta
+release. When set, it must name an entry whose status is `beta` and whose version is newer than
+`recommended` by semver precedence (prereleases included, so `0.1.4-beta.1` outranks `0.1.3` but
+not `0.1.4`); `recommended`, when set, must itself name a `stable` entry — the site never
+recommends a beta. The Download page shows the beta as a secondary `#beta` section below the
+stable release, with its own Setup, ZIP, hashes and known issues.
+
+`/latest.json` (`src/pages/latest.json.ts`), read by the App's launch check, answers
+`{ "version": "<recommended>", "beta": "<beta>" | null }`. `version` is **`null`** when
+`recommended` is `null` or names a release whose status is `preparing` (nothing to download yet);
+the App must treat that the same as "no newer version" and not attempt a fetch. `beta` is `null`
+whenever the `beta` field is unset or no longer newer than `version` — a beta that a stable release
+has caught up with or passed disappears from the endpoint on its own, without editing
+`releases.json` by hand.
 
 A release's files can be served by the site itself: the ZIP's `primaryUrl` is then
 `/files/<name>.zip`, and since v0.1.2 a release may also carry `setup: {url, bytes, sha256}` with

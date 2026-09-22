@@ -44,6 +44,13 @@ describe('stageRelease', () => {
       expect(run(setup(release))).toEqual([])
     }
   })
+  it('stages a beta release exactly like a stable one: the beta channel is served, not a separate case', () => {
+    for (const status of ['beta', 'stable']) {
+      const s = setup({ status })
+      writeFileSync(join(s.source, 'Aimloom-v0.1.1.zip'), zip)
+      expect(run(s), status).toEqual([{ file: 'Aimloom-v0.1.1.zip', bytes: zip.length }])
+    }
+  })
   it('does not stage a withdrawn release: its files are no longer served', () => {
     const s = setup({ status: 'withdrawn' })
     writeFileSync(join(s.source, 'Aimloom-v0.1.1.zip'), zip)

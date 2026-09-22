@@ -20,17 +20,45 @@ export interface Release {
   knownIssues: LocalizedList
   setup: SetupFile | null
 }
-export interface ReleaseData { schemaVersion: 1; recommended: string | null; releases: Release[] }
+export interface ReleaseData { schemaVersion: 1; recommended: string | null; beta: string | null; releases: Release[] }
 
 const STATUSES: readonly ReleaseStatus[] = ['preparing', 'beta', 'stable', 'withdrawn']
 const RELEASE_KEYS = ['version', 'status', 'date', 'platform', 'requires', 'bytes', 'sha256', 'primaryUrl', 'mirrorUrl', 'contents', 'notes', 'knownIssues', 'setup'] as const
-const TOP_KEYS = ['schemaVersion', 'recommended', 'releases'] as const
+const TOP_KEYS = ['schemaVersion', 'recommended', 'beta', 'releases'] as const
 /** A release ZIP served by the site itself; scripts/stage-release.mjs copies it into dist/files/. */
 export const SITE_FILE = /^\/files\/[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/
 /** A Windows Setup served by the site itself, beside the ZIP; staged and checked the same way. */
 export const SITE_SETUP = /^\/files\/[A-Za-z0-9][A-Za-z0-9._-]*\.exe$/
 
 function fail(message: string): never { throw new Error(`releases.json: ${message}`) }
+
+/** Semver precedence, including prereleases: `0.1.3 < 0.1.4-beta.1 < 0.1.4-beta.2 < 0.1.4`. */
+function parseSemver(v: string, name: string): { core: [number, number, number]; prerelease: (string | number)[] | null } {
+  const m = /^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$/.exec(v)
+  if (m === null) fail(`${name} "${v}" is not a valid version`)
+  const core: [number, number, number] = [Number(m[1]), Number(m[2]), Number(m[3])]
+  const prerelease = m[4] !== undefined ? m[4].split('.').map(id => (/^\d+$/.test(id) ? Number(id) : id)) : null
+  return { core, prerelease }
+}
+/** True when `candidate` outranks `base` by semver precedence. */
+export function isNewer(candidate: string, base: string): boolean {
+  const a = parseSemver(candidate, 'version'), b = parseSemver(base, 'version')
+  for (let i = 0; i < 3; i++) { if (a.core[i] !== b.core[i]) return a.core[i]! > b.core[i]! }
+  if (a.prerelease === null && b.prerelease === null) return false
+  if (a.prerelease === null) return true // a release outranks any prerelease of the same numbers
+  if (b.prerelease === null) return false
+  const len = Math.max(a.prerelease.length, b.prerelease.length)
+  for (let i = 0; i < len; i++) {
+    const x = a.prerelease[i], y = b.prerelease[i]
+    if (x === undefined) return false // fewer fields sorts lower
+    if (y === undefined) return true
+    if (typeof x === 'number' && typeof y === 'number') { if (x !== y) return x > y; continue }
+    if (typeof x === 'number') return false // a numeric identifier sorts lower than an alphanumeric one
+    if (typeof y === 'number') return true
+    if (x !== y) return x > y
+  }
+  return false
+}
 function isRecord(v: unknown): v is Record<string, unknown> { return typeof v === 'object' && v !== null && !Array.isArray(v) }
 function onlyKeys(obj: Record<string, unknown>, allowed: readonly string[], where: string): void {
   for (const k of Object.keys(obj)) if (!allowed.includes(k)) fail(`unknown key "${k}" in ${where}`)
@@ -105,13 +133,26 @@ export function parseReleases(input: unknown): ReleaseData {
   for (const r of list) { if (seen.has(r.version)) fail(`duplicate version ${r.version}`); seen.add(r.version) }
   const recommended = strOrNull(input.recommended, 'recommended')
   if (recommended !== null && !seen.has(recommended)) fail(`recommended ${recommended} names no release`)
-  if (recommended !== null && list.find(r => r.version === recommended)?.status === 'withdrawn') fail(`recommended ${recommended} is withdrawn`)
-  return { schemaVersion: 1, recommended, releases: list }
+  const recommendedEntry = recommended !== null ? list.find(r => r.version === recommended) : undefined
+  if (recommended !== null && recommendedEntry?.status === 'withdrawn') fail(`recommended ${recommended} is withdrawn`)
+  if (recommended !== null && recommendedEntry?.status !== 'stable') fail(`recommended ${recommended} must be stable`)
+  // Absent is treated as null: existing fixtures and callers that predate the beta channel need not carry the key.
+  const beta = input.beta === undefined ? null : strOrNull(input.beta, 'beta')
+  if (beta !== null && !seen.has(beta)) fail(`beta ${beta} names no release`)
+  const betaEntry = beta !== null ? list.find(r => r.version === beta) : undefined
+  if (beta !== null && betaEntry?.status !== 'beta') fail(`beta ${beta} must name a beta release`)
+  if (beta !== null && recommended !== null && !isNewer(beta, recommended)) fail(`beta ${beta} must be newer than recommended ${recommended}`)
+  return { schemaVersion: 1, recommended, beta, releases: list }
 }
 
 export function recommendedRelease(data: ReleaseData): Release | null {
   if (data.recommended === null) return null
   return data.releases.find(r => r.version === data.recommended) ?? null
+}
+
+export function betaRelease(data: ReleaseData): Release | null {
+  if (data.beta === null) return null
+  return data.releases.find(r => r.version === data.beta) ?? null
 }
 
 export function formatBytes(bytes: number): string {
