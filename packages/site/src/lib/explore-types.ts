@@ -1,6 +1,6 @@
 /** The explorer's catalogue shapes, shared by the Worker and the page renderer (no runtime bindings here). */
 /** The explorer's own sub-paths under /explore/, so never an item's slug. */
-export const RESERVED_SLUGS = ['item-shell', 'upload', 'mine', 'review'] as const
+export const RESERVED_SLUGS = ['item-shell', 'upload', 'mine', 'review', 'welcome'] as const
 export const RESERVED_SLUG = RESERVED_SLUGS[0]
 export const KINDS = ['theme', 'sound', 'crosshair'] as const
 export type Kind = typeof KINDS[number]

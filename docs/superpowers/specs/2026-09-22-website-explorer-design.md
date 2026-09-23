@@ -249,11 +249,15 @@ stays, for the maintainer's own items).
 
 ### 11.3 Upload
 
-`/<lang>/explore/upload/` (signed in): kind, the file, title and summary (zh and/or en; one language
-fills both when only one is given), display name, optional link, licence (CC0-1.0, CC-BY-4.0,
-CC-BY-SA-4.0, or "permission": free to download through Aimloom, other use needs the author's
-consent), a crosshair's optional code, and a required confirmation: *I made this or have the right to
-share it, and I agree to it being offered on aimloom.dev under the licence above.* The same checks as
+`/<lang>/explore/upload/` (signed in) asks for **the file, a name and the agreement**
+(*I made this or have the right to share it, and I agree to it being offered on aimloom.dev under
+CC BY 4.0*). The kind follows the file's extension and the name defaults to the file's stem. The display
+name (and optional link) belongs to the account: the first sign-in goes through a "pick a name" page
+(`/<lang>/explore/welcome/`, also where it is changed), so the upload form never asks for it (user,
+2026-09-23: 「署名做进一开始登录里」). Under "More options": the other language's name, a summary (zh and/or
+en, optional), a link, the licence (CC0-1.0, CC-BY-4.0, CC-BY-SA-4.0, or "permission": free to
+download through Aimloom, other use needs the author's consent) and a crosshair's code. Simplified
+on 2026-09-23 after the user's first real upload (「上传页面太复杂了」). The same checks as
 the publish command run in the Worker (§6), plus a per-account limit (10 uploads a day).
 
 - **Trusted creator:** the file goes to the public bucket and the item is `published`.

@@ -1,0 +1,12 @@
+---
+// A shell the Worker fills for /<lang>/explore/welcome/ (the display name after the first sign-in). Reserved slug.
+import Base from '../../../layouts/Base.astro'
+import '../../../styles/explore.css'
+import { LANGS, t, type Lang } from '../../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+---
+<Base lang={lang} path="/explore" title={t(lang, 'explore.welcome.title')} description={t(lang, 'explore.description')}>
+  <div class="section stack ex ex--welcome" id="explore-root"></div>
+</Base>
+<script>import '../../../scripts/explore.client'</script>

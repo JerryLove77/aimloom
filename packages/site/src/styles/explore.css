@@ -112,3 +112,5 @@
 .ex-review__actions { display: flex; flex-direction: column; gap: var(--al-space-3); }
 .ex-review__preview audio { width: 100%; }
 @media (max-width: 720px) { .ex-row, .ex-review { grid-template-columns: 1fr; } }
+.ex-more summary { cursor: pointer; font-size: 14px; font-weight: 500; }
+.ex-more__body { display: flex; flex-direction: column; gap: var(--al-space-4); padding-top: var(--al-space-4); }

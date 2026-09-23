@@ -116,7 +116,7 @@ export async function freeSlug(db: D1Database, fileName: string): Promise<string
   }
   throw new Error('no free slug')
 }
-const RESERVED = ['item-shell', 'upload', 'mine', 'review'] as const
+const RESERVED = ['item-shell', 'upload', 'mine', 'review', 'welcome'] as const
 
 export async function insertItem(db: D1Database, row: Omit<Item, 'featured'>): Promise<void> {
   await db.prepare(`INSERT INTO item (slug, kind, status, title_zh, title_en, summary_zh, summary_en, author, author_url, licence, file_name, file_key, bytes, sha256, code, featured, published_at, source, uploader, uploaded_at, reject_reason)

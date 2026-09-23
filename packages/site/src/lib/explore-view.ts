@@ -118,7 +118,7 @@ export function detailHtml(item: Item, lang: Lang, origin: string, downloads: nu
   const info = `<div class="ex-info"><h1>${esc(title(item, lang))}</h1>`
     + `<p class="ex-by">${tt(lang, 'explore.by')} ${author}</p>`
     + `<p class="ex-tags"><span class="ex-badge">${licenceText(item, lang)}</span><span class="muted small">${tt(lang, 'explore.published', { date: item.published_at.slice(0, 10) })}</span></p>`
-    + `<p>${esc(summary(item, lang))}</p>${code}`
+    + (summary(item, lang) ? `<p>${esc(summary(item, lang))}</p>` : '') + code
     + `<div class="ex-box ex-file" role="group" aria-label="${tt(lang, 'explore.file.aria')}"><p class="ex-file__row"><span class="mono">${esc(item.file_name)}</span><span class="mono muted">${formatBytes(item.bytes)}</span></p>`
     + `<p class="mono small muted ex-hash">SHA-256 ${esc(item.sha256)}</p></div>`
     + `<a class="button button--primary ex-download" href="/d/${esc(encodeURIComponent(item.slug))}" download>${tt(lang, 'explore.download', { file: item.file_name })}</a>`

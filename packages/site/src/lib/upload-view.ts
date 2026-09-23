@@ -13,7 +13,7 @@ const tt = (lang: Lang, key: MessageKey, vars: Record<string, string | number> =
 export const UPLOADS_PER_DAY = 10
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 
-export interface Viewer { steamId: string; admin: boolean }
+export interface Viewer { steamId: string; admin: boolean; name: string | null; url: string | null }
 export interface FormValues { kind: Kind; title_zh: string; title_en: string; summary_zh: string; summary_en: string; author: string; author_url: string; licence: string; code: string; confirm: boolean }
 export const emptyForm = (kind: Kind = 'theme'): FormValues => ({ kind, title_zh: '', title_en: '', summary_zh: '', summary_en: '', author: '', author_url: '', licence: 'CC-BY-4.0', code: '', confirm: false })
 
@@ -29,7 +29,8 @@ export function accountBar(lang: Lang, viewer: Viewer | null, next: string, sign
   }
   const links = [`<a href="${esc(localizePath(lang, '/explore/upload'))}">${tt(lang, 'explore.account.upload')}</a>`, `<a href="${esc(localizePath(lang, '/explore/mine'))}">${tt(lang, 'explore.account.mine')}</a>`]
   if (viewer.admin) links.push(`<a href="${esc(localizePath(lang, '/explore/review'))}">${tt(lang, 'explore.account.review')}</a>`)
-  return `<div class="ex-account"><span class="muted small">${tt(lang, 'explore.account.signedIn')} <span class="ex-badge ex-badge--ok">${tt(lang, 'explore.account.verified')}</span></span>`
+  const as = viewer.name ? ` · ${tt(lang, 'explore.account.as', { name: viewer.name })} <a href="${esc(localizePath(lang, '/explore/welcome'))}">${tt(lang, 'explore.account.rename')}</a>` : ''
+  return `<div class="ex-account"><span class="muted small">${tt(lang, 'explore.account.signedIn')} <span class="ex-badge ex-badge--ok">${tt(lang, 'explore.account.verified')}</span>${as}</span>`
     + `<nav class="ex-account__links">${links.join('')}${signOutForm(lang, next)}</nav></div>`
 }
 
@@ -42,18 +43,25 @@ export function uploadFormHtml(lang: Lang, v: FormValues, errors: string[], view
   const head = crumbs(lang, tt(lang, 'explore.account.upload')) + `<h1>${tt(lang, 'explore.upload.title')}</h1>` + accountBar(lang, viewer, here)
   if (!viewer) return head + `<p class="panel">${tt(lang, 'explore.upload.needSignIn')}</p>`
   const errorBox = errors.length ? `<div class="notice ex-notice-error" role="alert"><p><strong>${tt(lang, 'explore.upload.error.heading')}</strong></p><ul>${errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''
-  const kinds = (['theme', 'sound', 'crosshair'] as const).map(k => `<label class="ex-kind${v.kind === k ? ' is-on' : ''}"><input type="radio" name="kind" value="${k}"${v.kind === k ? ' checked' : ''} />${tt(lang, `explore.upload.kind.${k}`)}</label>`).join('')
   const licences = UPLOAD_LICENCES.map(l => `<option value="${l}"${v.licence === l ? ' selected' : ''}>${tt(lang, `explore.upload.licence.${l}`)}</option>`).join('')
-  return head + errorBox
-    + `<form class="panel ex-form" method="post" action="${esc(here)}" enctype="multipart/form-data">`
-    + `<fieldset class="ex-kinds"><legend>${tt(lang, 'explore.upload.kind')}</legend>${kinds}</fieldset>`
-    + field('up-file', tt(lang, 'explore.upload.file'), `<input id="up-file" name="file" type="file" required accept=".json,.wav,.ogg,.png" />`, tt(lang, 'explore.upload.file.hint'))
-    + `<div class="ex-row">${field('up-title-zh', tt(lang, 'explore.upload.title.zh'), input('up-title-zh', 'title_zh', v.title_zh, 'maxlength="80"'))}${field('up-title-en', tt(lang, 'explore.upload.title.en'), input('up-title-en', 'title_en', v.title_en, 'maxlength="80"'), tt(lang, 'explore.upload.title.hint'))}</div>`
-    + `<div class="ex-row">${field('up-summary-zh', tt(lang, 'explore.upload.summary.zh'), `<textarea id="up-summary-zh" name="summary_zh" rows="3" maxlength="400">${esc(v.summary_zh)}</textarea>`)}${field('up-summary-en', tt(lang, 'explore.upload.summary.en'), `<textarea id="up-summary-en" name="summary_en" rows="3" maxlength="400">${esc(v.summary_en)}</textarea>`, tt(lang, 'explore.upload.summary.hint'))}</div>`
-    + `<div class="ex-row">${field('up-author', tt(lang, 'explore.upload.author'), input('up-author', 'author', v.author, 'maxlength="80" required'), tt(lang, 'explore.upload.author.hint'))}${field('up-url', tt(lang, 'explore.upload.authorUrl'), input('up-url', 'author_url', v.author_url, 'maxlength="300" placeholder="https://…"'), tt(lang, 'explore.upload.authorUrl.hint'))}</div>`
+  // The kind comes from the file's extension; the name from its stem unless typed. One title field
+  // fills both languages; everything else is under "More options" (user, 2026-09-23: too complex).
+  const nameField = lang === 'zh' ? 'title_zh' : 'title_en'
+  const nameValue = lang === 'zh' ? v.title_zh : v.title_en
+  const otherName = lang === 'zh' ? 'title_en' : 'title_zh'
+  const otherValue = lang === 'zh' ? v.title_en : v.title_zh
+  const more = `<details class="ex-more"${v.summary_zh || v.summary_en || v.code || otherValue || v.licence !== 'CC-BY-4.0' ? ' open' : ''}><summary>${tt(lang, 'explore.upload.more')}</summary><div class="ex-more__body">`
+    + field('up-other', tt(lang, lang === 'zh' ? 'explore.upload.title.en.short' : 'explore.upload.title.zh'), input('up-other', otherName, otherValue, 'maxlength="80"'))
+    + `<div class="ex-row">${field('up-summary-zh', tt(lang, 'explore.upload.summary.zh'), `<textarea id="up-summary-zh" name="summary_zh" rows="2" maxlength="400">${esc(v.summary_zh)}</textarea>`)}${field('up-summary-en', tt(lang, 'explore.upload.summary.en'), `<textarea id="up-summary-en" name="summary_en" rows="2" maxlength="400">${esc(v.summary_en)}</textarea>`, tt(lang, 'explore.upload.summary.hint'))}</div>`
     + field('up-licence', tt(lang, 'explore.upload.licence'), `<select id="up-licence" name="licence">${licences}</select>`)
     + field('up-code', tt(lang, 'explore.upload.code'), input('up-code', 'code', v.code, 'maxlength="512" placeholder="CSGO-…"'))
-    + `<label class="ex-confirm"><input type="checkbox" name="confirm" value="yes"${v.confirm ? ' checked' : ''} /> <span>${tt(lang, 'explore.upload.confirm')}</span></label>`
+    + `</div></details>`
+  return head + errorBox
+    + `<form class="panel ex-form" method="post" action="${esc(here)}" enctype="multipart/form-data">`
+    + field('up-file', tt(lang, 'explore.upload.file'), `<input id="up-file" name="file" type="file" required accept=".json,.wav,.ogg,.png" />`, tt(lang, 'explore.upload.file.hint'))
+    + field('up-name', tt(lang, 'explore.upload.name'), input('up-name', nameField, nameValue, 'maxlength="80"'), tt(lang, 'explore.upload.name.hint'))
+    + `<label class="ex-confirm"><input type="checkbox" name="confirm" value="yes"${v.confirm ? ' checked' : ''} /> <span>${tt(lang, 'explore.upload.agree')}</span></label>`
+    + more
     + `<div class="ex-rules small muted"><p>${tt(lang, 'explore.upload.note.review', { n: UPLOADS_PER_DAY })}</p><p>${tt(lang, 'explore.upload.note.rules')}</p></div>`
     + `<div class="ex-actions"><a class="button button--secondary" href="${esc(localizePath(lang, '/explore'))}">${tt(lang, 'explore.upload.cancel')}</a><button type="submit" class="button button--primary">${tt(lang, 'explore.upload.submit')}</button></div></form>`
 }
@@ -115,4 +123,16 @@ export function reviewHtml(lang: Lang, pending: PendingRow[], live: Item[], trus
     + (pending.length ? `<ul class="ex-list">${queue}</ul>` : `<p class="panel">${tt(lang, 'explore.review.empty')}</p>`)
     + `<section class="ex-section"><h2>${tt(lang, 'explore.review.trusted')}</h2>${trustedRows ? `<ul class="ex-list">${trustedRows}</ul>` : '<p class="muted">—</p>'}</section>`
     + `<section class="ex-section"><h2>${tt(lang, 'explore.review.live')}</h2>${liveRows ? `<ul class="ex-list">${liveRows}</ul>` : '<p class="muted">—</p>'}</section>`
+}
+
+/** After the first sign-in (or from "Change name"): the public display name and an optional link. */
+export function welcomeHtml(lang: Lang, viewer: Viewer, values: { author: string; author_url: string }, errors: string[], next: string): string {
+  const here = localizePath(lang, '/explore/welcome')
+  const errorBox = errors.length ? `<div class="notice ex-notice-error" role="alert"><ul>${errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''
+  return crumbs(lang, tt(lang, 'explore.welcome.title')) + `<h1>${tt(lang, 'explore.welcome.title')}</h1><p class="muted">${tt(lang, 'explore.welcome.intro')}</p>` + errorBox
+    + `<form class="panel ex-form" method="post" action="${esc(here)}"><input type="hidden" name="next" value="${esc(next)}" />`
+    + field('wc-author', tt(lang, 'explore.upload.author'), input('wc-author', 'author', values.author, 'maxlength="80" required autofocus'), tt(lang, 'explore.upload.author.hint'))
+    + field('wc-url', tt(lang, 'explore.upload.authorUrl'), input('wc-url', 'author_url', values.author_url, 'maxlength="300" placeholder="https://…"'), tt(lang, 'explore.upload.authorUrl.hint'))
+    + `<div class="ex-actions"><button type="submit" class="button button--primary">${tt(lang, 'explore.welcome.save')}</button></div></form>`
+    + `<p class="small muted">${accountBar(lang, viewer, here)}</p>`
 }

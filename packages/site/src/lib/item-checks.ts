@@ -54,12 +54,13 @@ const text = (v: unknown, field: string, max: number): string => {
   if (typeof v !== 'string' || v.trim() === '' || v !== v.trim() || v.length > max || /[\x00-\x1f]/.test(v)) fail(`${field}: a non-empty single line without surrounding spaces, at most ${max} characters`)
   return v as string
 }
-const pair = (v: unknown, field: string, max: number): { zh: string; en: string } => {
+const pair = (v: unknown, field: string, max: number, optional = false): { zh: string; en: string } => {
   if (typeof v !== 'object' || v === null || Array.isArray(v)) return fail(`${field}: an object with "zh" and "en"`)
   const o = v as Record<string, unknown>
   const extra = Object.keys(o).filter(k => k !== 'zh' && k !== 'en')
   if (extra.length) fail(`${field}: unknown field ${extra.join(', ')}`)
-  return { zh: text(o.zh, `${field}.zh`, max), en: text(o.en, `${field}.en`, max) }
+  const one = (k: 'zh' | 'en') => (optional && (o[k] === undefined || o[k] === '') ? '' : text(o[k], `${field}.${k}`, max))
+  return { zh: one('zh'), en: one('en') }
 }
 
 const FIELDS = ['slug', 'kind', 'title', 'summary', 'author', 'authorUrl', 'licence', 'code', 'featured'] as const
@@ -91,7 +92,7 @@ export function parseManifest(bytes: Uint8Array): Manifest {
   const featured = o.featured ?? null
   if (featured !== null && !(Number.isInteger(featured) && (featured as number) >= 1 && (featured as number) <= 99)) fail('featured: a position from 1 to 99, or leave it out')
   return {
-    slug: checkSlug(o.slug), kind, title: pair(o.title, 'title', 80), summary: pair(o.summary, 'summary', 400),
+    slug: checkSlug(o.slug), kind, title: pair(o.title, 'title', 80), summary: o.summary === undefined ? { zh: '', en: '' } : pair(o.summary, 'summary', 400, true),
     author: text(o.author, 'author', 80), authorUrl: authorUrl as string | null, licence: licence as string,
     code: code as string | null, featured: featured as number | null,
   }

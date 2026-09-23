@@ -101,7 +101,11 @@ export async function handleAuth(request: Request, env: AppEnv, now: Date, fetch
     const next = safeNext(url.searchParams.get('next'))
     if (!steamId) return Response.redirect(new URL(next + (next.includes('?') ? '&' : '?') + 'signin=failed', url.origin).toString(), 302)
     const token = await createSession(env, steamId, now)
-    return new Response(null, { status: 302, headers: { location: new URL(next, url.origin).toString(), 'set-cookie': setCookie(token), 'cache-control': 'no-store' } })
+    // A first sign-in goes through "pick a name" (the display name belongs to the account), then on to `next`.
+    const named = await env.DB.prepare('SELECT display_name FROM creator WHERE steam_id = ?').bind(steamId).first<string | null>('display_name')
+    const lang = next.startsWith('/en/') ? 'en' : 'zh'
+    const to = named ? next : `/${lang}/explore/welcome/?next=${encodeURIComponent(next)}`
+    return new Response(null, { status: 302, headers: { location: new URL(to, url.origin).toString(), 'set-cookie': setCookie(token), 'cache-control': 'no-store' } })
   }
   if (url.pathname === '/auth/signout') {
     if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
