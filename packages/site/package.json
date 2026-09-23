@@ -19,7 +19,8 @@
     "wrangler-config": "node scripts/wrangler-config.mjs",
     "report": "node scripts/wrangler-config.mjs && node scripts/report.mjs",
     "reports": "node scripts/wrangler-config.mjs && node scripts/report.mjs --list",
-    "site:publish": "tsx scripts/publish.ts"
+    "site:publish": "tsx scripts/publish.ts",
+    "site:backup": "tsx scripts/backup.ts"
   },
   "dependencies": {
     "astro": "7.3.3"

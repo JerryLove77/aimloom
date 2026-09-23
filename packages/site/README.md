@@ -120,6 +120,13 @@ That page opens only for the SteamIDs in the secret `ADMIN_STEAM_IDS` (`npx wran
 ADMIN_STEAM_IDS --config .wrangler.generated.jsonc --env=""`, and again `--env preview`; a
 comma-separated list, never in git). Apply `0003_uploads.sql` like 0002, before the deploy.
 
+**Backups.** D1's Time Travel restores any minute of the last 7 days (free plan). About once a week,
+with the weekly look at the database, run `npm run site:backup -w @kvk/site`: it writes the
+production database as SQL and every uploaded file it points at to `private/backups/<date>/`
+(gitignored in the private records; files already in an earlier backup are copied, not downloaded).
+Set the Turnstile keys on **production only**: preview shares the buckets, so its uploads must stay
+closed (`tests/deploy-config.test.ts`).
+
 **Publishing an item by hand** — only content whose author has given permission; keep the evidence in the
 private records, never here. A folder holds `item.json` and exactly one file:
 
