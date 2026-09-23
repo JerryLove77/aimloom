@@ -66,7 +66,7 @@ describe('Settings', () => {
     })
   })
 
-  it('pasting a Steam link calls accountResolve and shows the name as connected, with no word about verification', async () => {
+  it('pasting a Steam link calls accountResolve, lets the player name the account, and shows it as connected, with no word about verification', async () => {
     const accountResolve = vi.fn().mockResolvedValue({ steamId: '76561190000000000', name: 'Demo Player' })
     const { settingsStorage } = app({ bridge: { ...createDemoBridge(), accountResolve } })
     fireEvent.click(settingsButton())
@@ -74,12 +74,21 @@ describe('Settings', () => {
     fireEvent.change(within(dialog).getByPlaceholderText('https://steamcommunity.com/id/…'), { target: { value: 'https://steamcommunity.com/id/demoplayer' } })
     fireEvent.click(within(dialog).getByRole('button', { name: '连接' }))
     expect(accountResolve).toHaveBeenCalledWith('https://steamcommunity.com/id/demoplayer')
-    await waitFor(() => expect(within(dialog).getByText('Demo Player')).toBeInTheDocument())
+    // The name starts as the Steam name and is the player's to change (user, 2026-09-23).
+    const name = await within(dialog).findByDisplayValue('Demo Player')
+    expect(settingsStorage.m.get('aimloom.account')).toBeUndefined()
+    fireEvent.change(name, { target: { value: '  My Own Name ' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
+    expect(within(dialog).getByText('My Own Name')).toBeInTheDocument()
     // The user's call, 2026-09-21: a tag reading 未验证 beside a name that just connected looks
     // like a failure. Verification belongs to the upload page, which is the only place that needs it.
     expect(within(dialog).getByText('已连接')).toBeInTheDocument()
     expect(dialog.textContent).not.toMatch(/验证/)
-    expect(settingsStorage.m.get('aimloom.account')).toContain('Demo Player')
+    expect(JSON.parse(settingsStorage.m.get('aimloom.account')!)).toEqual({ steamId: '76561190000000000', name: 'My Own Name' })
+    fireEvent.click(within(dialog).getByRole('button', { name: '改名' }))
+    fireEvent.change(within(dialog).getByDisplayValue('My Own Name'), { target: { value: 'Renamed' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
+    expect(JSON.parse(settingsStorage.m.get('aimloom.account')!).name).toBe('Renamed')
   })
 
   it('a link that fails looksLikeSteamUrl never calls accountResolve, and shows the bad-link error', () => {
@@ -111,6 +120,8 @@ describe('Settings', () => {
     const dialog = screen.getByRole('dialog')
     fireEvent.change(within(dialog).getByPlaceholderText('https://steamcommunity.com/id/…'), { target: { value: 'https://steamcommunity.com/id/demoplayer' } })
     fireEvent.click(within(dialog).getByRole('button', { name: '连接' }))
+    await within(dialog).findByDisplayValue('Demo Player')
+    fireEvent.click(within(dialog).getByRole('button', { name: '保存' }))
     await waitFor(() => expect(within(dialog).getByText('Demo Player')).toBeInTheDocument())
     fireEvent.click(within(dialog).getByRole('button', { name: '移除' }))
     expect(screen.queryByText('Demo Player')).toBeNull()

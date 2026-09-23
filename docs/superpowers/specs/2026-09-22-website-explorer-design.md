@@ -246,6 +246,13 @@ stays, for the maintainer's own items).
   keeps only its SHA-256, the SteamID and an expiry (30 days). Sign-out deletes the row.
 - Every state-changing request is a `POST` whose `Origin` must be the site's own.
 - Nothing else on the site or in the App needs or offers sign-in.
+- **One account, simply (user, 2026-09-23).** An Aimloom account *is* a Steam account: the SteamID is its
+  only ID, no Aimloom ID is added. In the App it is a pasted profile link plus a name the player picks
+  (unverified, for reports). On the site it exists only for uploading, so it starts with Steam's own
+  sign-in (already the verification) and a name picked once; the hint says to use the App's name.
+- **A human check on every upload:** Cloudflare Turnstile. The Worker sends Cloudflare only the widget's
+  token and the secret (no IP). Without the keys (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET`, both
+  secrets) the upload page says uploads are not open and refuses posts.
 
 ### 11.3 Upload
 

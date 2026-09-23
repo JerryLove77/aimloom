@@ -106,7 +106,7 @@ async function apiList(env: AppEnv, url: URL, now: Date): Promise<Response> {
 }
 
 /** `null` when the path is not the explorer's. */
-export async function handleExplore(request: Request, env: AppEnv, ctx: ExecutionContext, now = new Date()): Promise<Response | null> {
+export async function handleExplore(request: Request, env: AppEnv, ctx: ExecutionContext, now = new Date(), fetcher: typeof fetch = fetch): Promise<Response | null> {
   const url = new URL(request.url)
   const path = url.pathname
   const isApi = path === '/api/explore/items'
@@ -119,7 +119,7 @@ export async function handleExplore(request: Request, env: AppEnv, ctx: Executio
       fill: async (page, html, pageTitle) => { const res = await shell(env, url, localizePath(lang, `/explore/${page}`)); if (!res.ok) return res; const out = fillShell(res, { html, lang, ...(pageTitle ? { title: pageTitle } : {}) }); out.headers.set('cache-control', 'private, no-store'); return out },
       notFound: () => notFound(env, url),
     }
-    return handleUploads(request, env, lang, sub[2]! + (sub[3] ? `/${sub[3]}` : ''), viewer, shellFor, now)
+    return handleUploads(request, env, lang, sub[2]! + (sub[3] ? `/${sub[3]}` : ''), viewer, shellFor, now, fetcher)
   }
   if (request.method !== 'GET' && request.method !== 'HEAD') return fail('METHOD_NOT_ALLOWED', 405)
   if (isApi) return apiList(env, url, now)
