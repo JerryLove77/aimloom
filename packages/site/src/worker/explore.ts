@@ -5,7 +5,7 @@
  */
 import { detailHtml, fileUrl, itemPath, listHtml, title } from '../lib/explore-view'
 import { localizePath, t, type Lang } from '../i18n'
-import { countDownload, downloadsLast30, featuredItems, getItem, listItems, parseListQuery, type Item } from './catalogue'
+import { countDownload, creatorOf, downloadsLast30, featuredItems, getItem, listItems, parseListQuery, type Item } from './catalogue'
 import { RESERVED_SLUG, RESERVED_SLUGS } from '../lib/explore-types'
 import { accountBar, type Viewer } from '../lib/upload-view'
 import { isAdmin, readSession } from './auth'
@@ -16,7 +16,7 @@ import { fail, json } from './http'
 const SLUG = '[a-z0-9][a-z0-9_-]{0,63}'
 const LIST = /^\/(zh|en)\/explore\/?$/
 const DETAIL = new RegExp(`^/(zh|en)/explore/(${SLUG})/?$`)
-const SUB = /^\/(zh|en)\/explore\/(upload|mine|review)(?:\/([a-z0-9_./-]*))?\/?$/
+const SUB = /^\/(zh|en)\/explore\/(upload|mine|review|welcome)(?:\/([a-z0-9_./-]*))?\/?$/
 const DOWNLOAD = new RegExp(`^/d/(${SLUG})$`)
 const PAGE_CACHE = 'public, max-age=300'
 
@@ -67,7 +67,9 @@ async function listPage(env: AppEnv, url: URL, lang: Lang, viewer: Viewer | null
 
 async function viewerOf(request: Request, env: AppEnv, now: Date): Promise<Viewer | null> {
   const session = await readSession(request, env, now)
-  return session ? { steamId: session.steamId, admin: isAdmin(env, session.steamId) } : null
+  if (!session) return null
+  const creator = await creatorOf(env.DB, session.steamId)
+  return { steamId: session.steamId, admin: isAdmin(env, session.steamId), name: creator?.display_name ?? null, url: creator?.author_url ?? null }
 }
 
 async function detailPage(env: AppEnv, url: URL, lang: Lang, slug: string, now: Date): Promise<Response> {

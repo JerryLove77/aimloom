@@ -8,7 +8,7 @@ import { renderSchemePreview } from '../../../core/src/scheme/preview'
 import { parseScheme } from '../../../core/src/scheme/document'
 import { checkFile, CONTENT_TYPE, extensionOf, parseManifest, PublishError, sha256Hex, UPLOAD_LICENCES, type Kind } from '../lib/item-checks'
 import type { Item } from '../lib/explore-types'
-import { accountBar, emptyForm, MAX_UPLOAD_BYTES, mineHtml, reviewHtml, uploadDoneHtml, uploadFormHtml, UPLOADS_PER_DAY, type FormValues, type Viewer } from '../lib/upload-view'
+import { accountBar, emptyForm, MAX_UPLOAD_BYTES, mineHtml, reviewHtml, uploadDoneHtml, uploadFormHtml, UPLOADS_PER_DAY, welcomeHtml, type FormValues, type Viewer } from '../lib/upload-view'
 import { creatorOf, fileNameTaken, freeSlug, insertItem, itemAnyStatus, liveItems, mine, pendingItems, rememberCreator, setStatus, setTrusted, trustedCreators, uploadsToday } from './catalogue'
 import { requireSameOrigin } from './auth'
 import type { AppEnv } from './env'
@@ -28,11 +28,9 @@ async function publishToFiles(env: AppEnv, key: string, name: string, bytes: Uin
 }
 
 async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, now: Date): Promise<Response> {
-  if (request.method === 'GET') {
-    const remembered = viewer ? await creatorOf(env.DB, viewer.steamId) : null
-    const values = emptyForm(); if (remembered) { values.author = remembered.display_name ?? ''; values.author_url = remembered.author_url ?? '' }
-    return shell.fill('upload', uploadFormHtml(lang, values, [], viewer), t(lang, 'explore.upload.title'))
-  }
+  // The display name belongs to the account (set at the first sign-in), never to the form.
+  if (viewer && !viewer.name) return welcomeFirst(request, lang, 'upload')
+  if (request.method === 'GET') return shell.fill('upload', uploadFormHtml(lang, emptyForm(), [], viewer), t(lang, 'explore.upload.title'))
   if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
   if (!viewer) return fail('UNAUTHORIZED', 401)
   const refused = requireSameOrigin(request); if (refused) return refused
@@ -42,18 +40,21 @@ async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
   const kindRaw = fd.get('kind')
   const v: FormValues = {
     kind: isKind(kindRaw) ? kindRaw : 'theme', title_zh: str(fd, 'title_zh', 80), title_en: str(fd, 'title_en', 80), summary_zh: str(fd, 'summary_zh', 400), summary_en: str(fd, 'summary_en', 400),
-    author: str(fd, 'author', 80), author_url: str(fd, 'author_url', 300), licence: str(fd, 'licence', 40), code: str(fd, 'code', 512), confirm: fd.get('confirm') === 'yes',
+    author: viewer.name ?? '', author_url: viewer.url ?? '', licence: str(fd, 'licence', 40), code: str(fd, 'code', 512), confirm: fd.get('confirm') === 'yes',
   }
   const errors: string[] = []
   const file = fd.get('file')
   const hasFile = file instanceof File && file.size > 0
   if (!hasFile) errors.push(t(lang, 'explore.upload.error.file'))
   else if (file.size > MAX_UPLOAD_BYTES) errors.push(t(lang, 'explore.upload.error.tooLarge'))
+  // The kind follows the extension; the name defaults to the stem (the form asks for neither).
+  if (hasFile) {
+    const ext = extensionOf(file.name)
+    if (!isKind(kindRaw)) v.kind = ext === '.png' ? 'crosshair' : ext === '.wav' || ext === '.ogg' ? 'sound' : 'theme'
+    if (!v.title_zh && !v.title_en) { const stem = file.name.slice(0, file.name.length - ext.length).trim().slice(0, 80); v.title_zh = stem; v.title_en = stem }
+  }
   if (!v.confirm) errors.push(t(lang, 'explore.upload.error.confirm'))
   if (!v.title_zh && !v.title_en) errors.push(t(lang, 'explore.upload.error.title'))
-  if (!v.summary_zh && !v.summary_en) errors.push(t(lang, 'explore.upload.error.summary'))
-  if (!v.author) errors.push(t(lang, 'explore.upload.error.author'))
-  if (v.author_url && !/^https:\/\/[^\s"'<>]+$/.test(v.author_url)) errors.push(t(lang, 'explore.upload.error.authorUrl'))
   if (!(UPLOAD_LICENCES as readonly string[]).includes(v.licence)) errors.push(t(lang, 'explore.upload.error.licence'))
   const form = (errs: string[]) => shell.fill('upload', uploadFormHtml(lang, v, errs, viewer), t(lang, 'explore.upload.title'))
   if (errors.length) return form(errors)
@@ -80,12 +81,31 @@ async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     code: v.kind === 'crosshair' && v.code ? v.code : null, published_at: now.toISOString(), source: 'upload', uploader: viewer.steamId, uploaded_at: now.toISOString(), reject_reason: null,
   }
   await insertItem(env.DB, row)
-  await rememberCreator(env.DB, viewer.steamId, v.author, v.author_url || null, now)
   return shell.fill('upload', uploadDoneHtml(lang, { ...row, featured: null }, viewer), t(lang, 'explore.upload.title'))
+}
+
+const welcomeFirst = (request: Request, lang: Lang, page: string): Response => Response.redirect(new URL(`${localizePath(lang, '/explore/welcome')}?next=${encodeURIComponent(localizePath(lang, `/explore/${page}`))}`, request.url).toString(), 302)
+
+async function welcome(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, now: Date): Promise<Response> {
+  if (!viewer) return request.method === 'GET' ? loginFor(request, lang, 'welcome') : fail('UNAUTHORIZED', 401)
+  const url = new URL(request.url)
+  const next = (v: string | null) => (v && /^\/(zh|en)\/explore\/[a-z/]*$/.test(v) ? v : localizePath(lang, '/explore'))
+  if (request.method === 'GET') return shell.fill('welcome', welcomeHtml(lang, viewer, { author: viewer.name ?? '', author_url: viewer.url ?? '' }, [], next(url.searchParams.get('next'))), t(lang, 'explore.welcome.title'))
+  if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
+  const refused = requireSameOrigin(request); if (refused) return refused
+  const fd = await request.formData()
+  const author = str(fd, 'author', 80); const author_url = str(fd, 'author_url', 300); const to = next(str(fd, 'next', 200))
+  const errors: string[] = []
+  if (!author) errors.push(t(lang, 'explore.upload.error.author'))
+  if (author_url && !/^https:\/\/[^\s"'<>]+$/.test(author_url)) errors.push(t(lang, 'explore.upload.error.authorUrl'))
+  if (errors.length) return shell.fill('welcome', welcomeHtml(lang, viewer, { author, author_url }, errors, to), t(lang, 'explore.welcome.title'))
+  await rememberCreator(env.DB, viewer.steamId, author, author_url || null, now)
+  return Response.redirect(new URL(to, request.url).toString(), 303)
 }
 
 async function minePage(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, sub: string): Promise<Response> {
   if (!viewer) return request.method === 'GET' ? loginFor(request, lang, 'mine') : fail('UNAUTHORIZED', 401)
+  if (!viewer.name) return welcomeFirst(request, lang, 'mine')
   if (sub === 'mine/withdraw') {
     if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
     const refused = requireSameOrigin(request); if (refused) return refused
@@ -157,6 +177,7 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
 
 /** `sub` is the path under /<lang>/explore/ without its trailing slash: `upload`, `mine`, `review/action`, … */
 export async function handleUploads(request: Request, env: AppEnv, lang: Lang, sub: string, viewer: Viewer | null, shell: Shell, now: Date): Promise<Response> {
+  if (sub === 'welcome') return welcome(request, env, lang, viewer, shell, now)
   if (sub === 'upload') return upload(request, env, lang, viewer, shell, now)
   if (sub === 'mine' || sub === 'mine/withdraw') return minePage(request, env, lang, viewer, shell, sub)
   if (sub === 'review' || sub.startsWith('review/')) return review(request, env, lang, viewer, shell, sub, now)

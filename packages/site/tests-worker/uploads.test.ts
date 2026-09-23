@@ -10,13 +10,17 @@ const ADMIN = '76561198000000042', CREATOR = '76561198000000043', TRUSTED = '765
 const base = testEnv as unknown as Pick<AppEnv, 'DB' | 'FILES' | 'UPLOADS'>
 const NOW = new Date('2026-10-20T12:00:00Z')
 const shellHtml = `<!doctype html><html><head><title>Explore · Aimloom</title><meta name="description" content="shell" /></head><body><div id="explore-root"></div></body></html>`
-const assets = { fetch: async (req: Request) => (/^\/(zh|en)\/explore\/(item-shell|upload|mine|review)?\/?$/.test(new URL(req.url).pathname) ? new Response(shellHtml, { headers: { 'content-type': 'text/html' } }) : new Response('the 404 page', { status: 404 })) }
+const assets = { fetch: async (req: Request) => (/^\/(zh|en)\/explore\/(item-shell|upload|mine|review|welcome)?\/?$/.test(new URL(req.url).pathname) ? new Response(shellHtml, { headers: { 'content-type': 'text/html' } }) : new Response('the 404 page', { status: 404 })) }
 const env = { ...base, ASSETS: assets, FILES_ORIGIN: 'https://dl.test.invalid', ADMIN_STEAM_IDS: ` ${ADMIN} ` } as unknown as AppEnv
 const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext
 const ORIGIN = 'https://aimloom.dev'
 const png = () => { const d = new Uint8Array(16 * 16 * 4); for (let i = 0; i < 16; i++) d.set([0, 255, 102, 255], (i * 16 + 8) * 4); return encodePng({ width: 16, height: 16, data: d, warnings: [] }) }
 
-async function cookieFor(steamId: string): Promise<string> { return `aimloom_session=${await createSession(env, steamId, NOW)}` }
+/** A signed-in creator who has already picked a display name (the first sign-in's step), unless `named` is false. */
+async function cookieFor(steamId: string, named = true): Promise<string> {
+  if (named) await base.DB.prepare("INSERT OR IGNORE INTO creator (steam_id, trusted, display_name, author_url, first_seen) VALUES (?, 0, 'Sample author', 'https://example.com/a', '2026-10-01T00:00:00Z')").bind(steamId).run()
+  return `aimloom_session=${await createSession(env, steamId, NOW)}`
+}
 const send = (path: string, init: RequestInit & { cookie?: string } = {}) => {
   const headers = new Headers(init.headers); if (init.cookie) headers.set('cookie', init.cookie)
   return handleExplore(new Request(ORIGIN + path, { ...init, headers, redirect: 'manual' }), env, ctx, NOW)
@@ -27,7 +31,7 @@ function form(fields: Record<string, string>, file: { name: string; bytes: Uint8
   if (file) fd.set('file', new File([file.bytes as BlobPart], file.name, { type: file.type }))
   return fd
 }
-const VALID = { kind: 'crosshair', title_zh: '小点', title_en: 'Small dot', summary_zh: '绿色小点', summary_en: 'A green dot', author: 'Sample author', author_url: 'https://example.com/a', licence: 'CC-BY-4.0', code: '', confirm: 'yes' }
+const VALID = { kind: 'crosshair', title_zh: '小点', title_en: 'Small dot', summary_zh: '绿色小点', summary_en: 'A green dot', licence: 'CC-BY-4.0', code: '', confirm: 'yes' }
 const post = (path: string, fd: FormData, cookie: string, origin: string | null = ORIGIN) => send(path, { method: 'POST', body: fd, cookie, headers: origin ? { origin } : {} })
 const item = (slug: string) => base.DB.prepare('SELECT * FROM item WHERE slug = ?').bind(slug).first<Record<string, unknown>>()
 
@@ -50,7 +54,11 @@ describe('sign in through Steam', () => {
     const bad = (await handleAuth(new Request(cb(CREATOR)), env, NOW, said('ns:http://specs.openid.net/auth/2.0\nis_valid:false\n')))!
     expect(bad.status).toBe(302); expect(bad.headers.get('location')).toBe(`${ORIGIN}/en/explore/?signin=failed`); expect(bad.headers.get('set-cookie')).toBeNull()
     const ok = (await handleAuth(new Request(cb(CREATOR)), env, NOW, said('ns:http://specs.openid.net/auth/2.0\nis_valid:true\n')))!
-    expect(ok.status).toBe(302); expect(ok.headers.get('location')).toBe(`${ORIGIN}/en/explore/`)
+    // A first sign-in picks a display name before going on; a known creator goes straight on.
+    expect(ok.status).toBe(302); expect(ok.headers.get('location')).toBe(`${ORIGIN}/en/explore/welcome/?next=%2Fen%2Fexplore%2F`)
+    await base.DB.prepare("INSERT INTO creator (steam_id, trusted, display_name, first_seen) VALUES (?, 0, 'Sample author', '2026-10-01T00:00:00Z')").bind(CREATOR).run()
+    const again = (await handleAuth(new Request(cb(CREATOR)), env, NOW, said('is_valid:true\n')))!
+    expect(again.headers.get('location')).toBe(`${ORIGIN}/en/explore/`)
     const cookie = ok.headers.get('set-cookie')!
     expect(cookie).toMatch(/^aimloom_session=[0-9a-f]{64}; Path=\/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax$/)
     const token = cookie.slice('aimloom_session='.length, 'aimloom_session='.length + 64)
@@ -83,17 +91,35 @@ describe('the upload page', () => {
     const html = await r.text()
     expect(r.headers.get('cache-control')).toBe('private, no-store')
     expect(html).toContain('已通过 Steam 登录'); expect(html).toContain('href="/zh/explore/mine/"'); expect(html).not.toContain('href="/zh/explore/review/"')
-    expect(html).toContain('enctype="multipart/form-data"'); expect(html).toContain('name="confirm"')
+    expect(html).toContain('enctype="multipart/form-data"'); expect(html).toContain('name="confirm"'); expect(html).not.toContain('name="author"')
+  })
+  it('sends a creator without a display name to pick one first, and remembers it for their uploads', async () => {
+    const cookie = await cookieFor(CREATOR, false)
+    const r = (await send('/en/explore/upload/', { cookie }))!
+    expect(r.status).toBe(302); expect(r.headers.get('location')).toBe(`${ORIGIN}/en/explore/welcome/?next=%2Fen%2Fexplore%2Fupload%2F`)
+    expect(await (await send('/en/explore/welcome/', { cookie }))!.text()).toContain('name="author"')
+    const bad = await (await post('/en/explore/welcome/', form({ author: '', author_url: 'http://x' }, null), cookie))!.text()
+    expect(bad).toContain('Give a display name'); expect(bad).toContain('must start with https://')
+    const ok = (await post('/en/explore/welcome/', form({ author: 'Chosen name', author_url: 'https://example.com/me', next: '/en/explore/upload/' }, null), cookie))!
+    expect(ok.status).toBe(303); expect(ok.headers.get('location')).toBe(`${ORIGIN}/en/explore/upload/`)
+    await post('/en/explore/upload/', form(VALID), cookie)
+    expect(await item('small-dot')).toMatchObject({ author: 'Chosen name', author_url: 'https://example.com/me' })
+    expect(await (await send('/en/explore/mine/', { cookie }))!.text()).toContain('Name: Chosen name')
   })
   it('names what is missing instead of uploading', async () => {
     const cookie = await cookieFor(CREATOR)
-    const html = await (await post('/en/explore/upload/', form({ ...VALID, confirm: '', author: '', author_url: 'http://x' }), cookie))!.text()
-    for (const e of ['Confirm that you have the right', 'Give a display name', 'The link must start with https://']) expect(html).toContain(e)
+    const html = await (await post('/en/explore/upload/', form({ ...VALID, confirm: '' }), cookie))!.text()
+    expect(html).toContain('Confirm that you have the right')
     expect(await base.DB.prepare('SELECT COUNT(*) AS c FROM item').first<number>('c')).toBe(0)
     const noFile = await (await post('/en/explore/upload/', form(VALID, null), cookie))!.text()
     expect(noFile).toContain('Choose a file.')
     const notPng = await (await post('/en/explore/upload/', form(VALID, { name: 'x.png', bytes: new Uint8Array(100), type: 'image/png' }), cookie))!.text()
     expect(notPng).toContain('The upload did not go through')
+  })
+  it('needs only the file and the agreement: kind and name come from the file, the credit from the account', async () => {
+    const html = await (await post('/zh/explore/upload/', form({ confirm: 'yes', licence: 'CC-BY-4.0' }, { name: 'small dot.png', bytes: png(), type: 'image/png' }), await cookieFor(CREATOR)))!.text()
+    expect(html).toContain('收到了')
+    expect(await item('small-dot')).toMatchObject({ kind: 'crosshair', title_zh: 'small dot', title_en: 'small dot', summary_zh: '', summary_en: '', author: 'Sample author' })
   })
   it('puts a new creator\'s file in the private bucket as pending, invisible to the public', async () => {
     const r = (await post('/en/explore/upload/', form(VALID), await cookieFor(CREATOR)))!
@@ -106,10 +132,9 @@ describe('the upload page', () => {
     expect(await (await send('/en/explore/?kind=crosshair'))!.text()).not.toContain('Small dot')
     expect((await send('/en/explore/small-dot/'))!.status).toBe(404)
     expect((await send('/d/small-dot'))!.status).toBe(404)
-    expect(await base.DB.prepare('SELECT display_name, author_url, trusted FROM creator WHERE steam_id = ?').bind(CREATOR).first()).toEqual({ display_name: 'Sample author', author_url: 'https://example.com/a', trusted: 0 })
   })
   it('publishes a trusted creator\'s file at once, to the public bucket', async () => {
-    await base.DB.prepare("INSERT INTO creator (steam_id, trusted, first_seen) VALUES (?, 1, '2026-10-01T00:00:00Z')").bind(TRUSTED).run()
+    await base.DB.prepare("INSERT INTO creator (steam_id, trusted, display_name, first_seen) VALUES (?, 1, 'Trusted one', '2026-10-01T00:00:00Z')").bind(TRUSTED).run()
     const html = await (await post('/zh/explore/upload/', form({ ...VALID, title_en: '' }), await cookieFor(TRUSTED)))!.text()
     expect(html).toContain('已上线：'); expect(html).toContain('href="/zh/explore/small-dot/"')
     const row = (await item('small-dot'))!
