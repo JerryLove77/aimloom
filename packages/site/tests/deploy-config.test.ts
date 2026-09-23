@@ -35,6 +35,11 @@ describe('Worker deployment config', () => {
     expect(config.assets.binding).toBe('ASSETS')
     expect(config.assets.run_worker_first).toEqual(['/api/*', '/zh/explore*', '/en/explore*', '/d/*', '/auth/*'])
   })
+  it('keeps uploads closed on preview: the Turnstile keys are production secrets, never vars', () => {
+    // Preview shares production's buckets, so a preview upload must never be possible. Uploads stay
+    // closed without both Turnstile keys, and neither is a var anywhere (secrets are set per env).
+    for (const vars of [config.vars, config.env.preview.vars]) { expect(vars).not.toHaveProperty('TURNSTILE_SITE_KEY'); expect(vars).not.toHaveProperty('TURNSTILE_SECRET') }
+  })
   it('points both environments at the explorer\'s file origin; vars are not inherited, so preview repeats it', () => {
     expect(config.vars).toEqual({ FILES_ORIGIN: 'https://dl.aimloom.dev' })
     expect(config.env.preview.vars).toEqual({ FILES_ORIGIN: 'https://dl.aimloom.dev' })
