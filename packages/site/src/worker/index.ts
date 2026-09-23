@@ -4,6 +4,8 @@ import { handleReport, deleteExpired } from './reports'
 import { handleSteamResolve } from './steam'
 import { notify } from './notify'
 import { handleExplore } from './explore'
+import { handleAuth } from './auth'
+import { deleteExpiredSessions } from './catalogue'
 
 /** `null` lets the request through. The address is the key and is written nowhere (spec §5.4). */
 export async function limited(limit: RateLimit, request: Request, failOpen: boolean): Promise<Response | null> {
@@ -21,6 +23,8 @@ export default {
     const { pathname } = new URL(request.url)
     // Only /api/*, the explorer's pages and /d/* run this script first (wrangler.jsonc). Anything
     // else that reaches it matched no static asset, so the asset handler answers with the 404 page.
+    const auth = await handleAuth(request, env, new Date())
+    if (auth) return auth
     const explore = await handleExplore(request, env, ctx)
     if (explore) return explore
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
@@ -33,5 +37,6 @@ export default {
   // the request-path DELETE in reports.ts only prunes when something new arrives.
   async scheduled(_controller: ScheduledController, env: AppEnv, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(deleteExpired(env, new Date()))
+    ctx.waitUntil(deleteExpiredSessions(env.DB, new Date()))
   },
 } satisfies ExportedHandler<AppEnv>

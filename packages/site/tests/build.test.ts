@@ -114,7 +114,7 @@ describe('build output', () => {
       const html = page(r)
       const toc = html.match(/<nav class="toc"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? ''
       const ids = [...toc.matchAll(/href="#([a-z-]+)"/g)].map(m => m[1])
-      expect(ids, r).toEqual(['versions', 'when', 'sent', 'never', 'kept', 'explore', 'contact'])
+      expect(ids, r).toEqual(['versions', 'when', 'sent', 'never', 'kept', 'explore', 'signin', 'contact'])
       for (const id of ids) expect(html, `${r}#${id}`).toContain(`id="${id}"`)
       expect(toc, r).toContain(r.startsWith('zh') ? '本页内容' : 'On this page')
     }

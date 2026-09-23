@@ -2,6 +2,7 @@ export type ErrorCode =
   | 'NOT_FOUND' | 'METHOD_NOT_ALLOWED' | 'UNSUPPORTED_MEDIA_TYPE' | 'TOO_LARGE' | 'INVALID_JSON' | 'INVALID_REPORT'
   | 'UNKNOWN_CLIENT' | 'RATE_LIMITED' | 'DAILY_LIMIT' | 'STORAGE_FULL' | 'STORAGE_FAILED'
   | 'INVALID_STEAM_URL' | 'STEAM_NOT_FOUND' | 'STEAM_UNREACHABLE'
+  | 'FORBIDDEN' | 'UNAUTHORIZED'
 
 const HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }
 export const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), { status, headers: HEADERS })

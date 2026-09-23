@@ -6,13 +6,17 @@
 import { detailHtml, fileUrl, itemPath, listHtml, title } from '../lib/explore-view'
 import { localizePath, t, type Lang } from '../i18n'
 import { countDownload, downloadsLast30, featuredItems, getItem, listItems, parseListQuery, type Item } from './catalogue'
-import { RESERVED_SLUG } from '../lib/explore-types'
+import { RESERVED_SLUG, RESERVED_SLUGS } from '../lib/explore-types'
+import { accountBar, type Viewer } from '../lib/upload-view'
+import { isAdmin, readSession } from './auth'
+import { handleUploads, type Shell } from './uploads'
 import type { AppEnv } from './env'
 import { fail, json } from './http'
 
 const SLUG = '[a-z0-9][a-z0-9_-]{0,63}'
 const LIST = /^\/(zh|en)\/explore\/?$/
 const DETAIL = new RegExp(`^/(zh|en)/explore/(${SLUG})/?$`)
+const SUB = /^\/(zh|en)\/explore\/(upload|mine|review)(?:\/([a-z0-9_./-]*))?\/?$/
 const DOWNLOAD = new RegExp(`^/d/(${SLUG})$`)
 const PAGE_CACHE = 'public, max-age=300'
 
@@ -49,16 +53,25 @@ function fillShell(res: Response, opts: { html: string; title?: string; descript
   return new Response(out.body, { status: 200, headers })
 }
 
-async function listPage(env: AppEnv, url: URL, lang: Lang, now: Date): Promise<Response> {
+async function listPage(env: AppEnv, url: URL, lang: Lang, viewer: Viewer | null, now: Date): Promise<Response> {
   const query = parseListQuery(url.searchParams)
   const [result, featured] = await Promise.all([listItems(env.DB, query, now), featuredItems(env.DB, query.kind)])
   const res = await shell(env, url, localizePath(lang, '/explore'))
   if (!res.ok) return res
-  return fillShell(res, { html: listHtml(lang, query, result, featured, env.FILES_ORIGIN), lang })
+  const bar = accountBar(lang, viewer, url.pathname + url.search, url.searchParams.get('signin') === 'failed')
+  const out = fillShell(res, { html: bar + listHtml(lang, query, result, featured, env.FILES_ORIGIN), lang })
+  // A signed-in view is personal; the shared cache keeps only the anonymous one.
+  if (viewer) out.headers.set('cache-control', 'private, no-store')
+  return out
+}
+
+async function viewerOf(request: Request, env: AppEnv, now: Date): Promise<Viewer | null> {
+  const session = await readSession(request, env, now)
+  return session ? { steamId: session.steamId, admin: isAdmin(env, session.steamId) } : null
 }
 
 async function detailPage(env: AppEnv, url: URL, lang: Lang, slug: string, now: Date): Promise<Response> {
-  const item = slug === RESERVED_SLUG ? null : await getItem(env.DB, slug)
+  const item = (RESERVED_SLUGS as readonly string[]).includes(slug) ? null : await getItem(env.DB, slug)
   if (!item) return notFound(env, url)
   const res = await shell(env, url, localizePath(lang, `/explore/${RESERVED_SLUG}`))
   if (!res.ok) return res
@@ -95,12 +108,21 @@ export async function handleExplore(request: Request, env: AppEnv, ctx: Executio
   const url = new URL(request.url)
   const path = url.pathname
   const isApi = path === '/api/explore/items'
-  const list = LIST.exec(path); const detail = DETAIL.exec(path); const dl = DOWNLOAD.exec(path)
-  if (!isApi && !list && !detail && !dl) return null
+  const list = LIST.exec(path); const sub = SUB.exec(path); const detail = DETAIL.exec(path); const dl = DOWNLOAD.exec(path)
+  if (!isApi && !list && !sub && !detail && !dl) return null
+  if (sub) {
+    const lang = sub[1] as Lang
+    const viewer = await viewerOf(request, env, now)
+    const shellFor: Shell = {
+      fill: async (page, html, pageTitle) => { const res = await shell(env, url, localizePath(lang, `/explore/${page}`)); if (!res.ok) return res; const out = fillShell(res, { html, lang, ...(pageTitle ? { title: pageTitle } : {}) }); out.headers.set('cache-control', 'private, no-store'); return out },
+      notFound: () => notFound(env, url),
+    }
+    return handleUploads(request, env, lang, sub[2]! + (sub[3] ? `/${sub[3]}` : ''), viewer, shellFor, now)
+  }
   if (request.method !== 'GET' && request.method !== 'HEAD') return fail('METHOD_NOT_ALLOWED', 405)
   if (isApi) return apiList(env, url, now)
   if (dl) return download(env, ctx, url, request.method, dl[1]!, now)
   if ((list || detail) && !path.endsWith('/')) return Response.redirect(new URL(path + '/' + url.search, url).toString(), 301)
-  if (list) return listPage(env, url, list[1] as Lang, now)
+  if (list) return listPage(env, url, list[1] as Lang, await viewerOf(request, env, now), now)
   return detailPage(env, url, detail![1] as Lang, detail![2]!, now)
 }

@@ -1,4 +1,5 @@
 {
   "name": "aimloom-site-test", "compatibility_date": "2026-09-01",
-  "d1_databases": [{ "binding": "DB", "database_name": "aimloom-test", "database_id": "00000000-0000-0000-0000-000000000001" }]
+  "d1_databases": [{ "binding": "DB", "database_name": "aimloom-test", "database_id": "00000000-0000-0000-0000-000000000001" }],
+  "r2_buckets": [{ "binding": "FILES", "bucket_name": "aimloom-files-test" }, { "binding": "UPLOADS", "bucket_name": "aimloom-uploads-test" }]
 }
