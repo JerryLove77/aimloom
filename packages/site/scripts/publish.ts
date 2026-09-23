@@ -40,7 +40,7 @@ function wrangler(argv: string[], env: 'production' | 'preview', dryRun: boolean
   if (r.status !== 0) throw new PublishError(`wrangler exited with ${r.status}; nothing after this step ran`)
 }
 
-function main(): void {
+async function main(): Promise<void> {
   const { folder, env, dryRun } = args(process.argv.slice(2))
   const names = readdirSync(folder).filter(n => !n.startsWith('.'))
   if (!names.includes('item.json')) throw new PublishError('the folder has no item.json')
@@ -52,10 +52,10 @@ function main(): void {
 
   // 1–3. Every check, before anything leaves this machine.
   const manifest = parseManifest(readFileSync(join(folder, 'item.json')))
-  const bytes = new Uint8Array(readFileSync(filePath))
-  const { previews } = checkFile(manifest.kind, fileName, bytes)
+  // Strict: every byte accounted for; a crosshair is published re-encoded (only its pixels survive).
+  const { bytes, previews } = await checkFile(manifest.kind, fileName, new Uint8Array(readFileSync(filePath)))
   const row = buildRow(manifest, fileName, bytes, new Date().toISOString())
-  const uploads: Upload[] = uploadsFor(row, filePath, previews)
+  const uploads: Upload[] = uploadsFor(row, null, previews, bytes)
   console.log(`checked: ${row.kind} "${row.title_en}" → ${row.file_key} (${row.bytes} bytes, sha256 ${row.sha256}); target ${env}`)
 
   execute(env, dryRun, row.slug, uploads, upsertSql(row))
@@ -86,8 +86,8 @@ function execute(env: 'production' | 'preview', dryRun: boolean, slug: string, u
   } finally { rmSync(work, { recursive: true, force: true }) }
 }
 
-try { main() } catch (e) {
+main().catch((e: unknown) => {
   // 5. A refusal names its reason and changes nothing.
   console.error(e instanceof PublishError ? `refused: ${e.message}` : e)
   process.exit(1)
-}
+})

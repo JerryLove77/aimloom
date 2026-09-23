@@ -250,6 +250,13 @@ stays, for the maintainer's own items).
   only ID, no Aimloom ID is added. In the App it is a pasted profile link plus a name the player picks
   (unverified, for reports). On the site it exists only for uploading, so it starts with Steam's own
   sign-in (already the verification) and a name picked once; the hint says to use the App's name.
+- **Strict files (user, 2026-09-23: 「这肯定得加，到时候被黑了我都不会修」).** Cloudflare does not scan R2
+  uploads, so every file must be exactly a medium of its kind (`item-checks.ts`, shared by uploads,
+  approval and the publish command): a PNG is walked chunk by chunk (CRCs, only IHDR/IDAT/IEND and
+  ≤ 64 KiB of ancillary chunks, nothing after IEND), fully decoded, and **stored re-encoded** so only
+  its pixels survive; a WAV must be RIFF/WAVE with only fmt/data/fact/LIST chunks, a sane format and
+  sizes that add up to the file exactly; an Ogg file must be one CRC-checked Vorbis or Opus stream
+  with begin and end pages and nothing between or after. A theme is already fully parsed.
 - **A human check on every upload:** Cloudflare Turnstile. The Worker sends Cloudflare only the widget's
   token and the secret (no IP). Without the keys (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET`, both
   secrets) the upload page says uploads are not open and refuses posts.

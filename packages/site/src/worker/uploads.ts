@@ -71,13 +71,14 @@ async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
   if (errors.length) return form(errors)
   if (!(await humanCheck(env, str(fd, 'cf-turnstile-response', 4096), fetcher))) return form([t(lang, 'explore.upload.error.human')])
   const fileName = (file as File).name
-  const bytes = new Uint8Array(await (file as File).arrayBuffer())
+  let bytes: Uint8Array = new Uint8Array(await (file as File).arrayBuffer())
   let slug: string; let previews: { zh: string; en: string } | null
   try {
     slug = await freeSlug(env.DB, fileName)
     // The same rules the publish command applies, through the same parser.
     parseManifest(new TextEncoder().encode(JSON.stringify({ slug, kind: v.kind, title: { zh: v.title_zh || v.title_en, en: v.title_en || v.title_zh }, summary: { zh: v.summary_zh || v.summary_en, en: v.summary_en || v.summary_zh }, author: v.author, authorUrl: v.author_url || undefined, licence: v.licence, code: v.kind === 'crosshair' && v.code ? v.code : undefined })))
-    previews = checkFile(v.kind, fileName, bytes).previews
+    // Strict: every byte accounted for; a crosshair is stored re-encoded (only its pixels survive).
+    ;({ bytes, previews } = await checkFile(v.kind, fileName, bytes))
   } catch (e) { return form([e instanceof PublishError ? e.message : String(e)]) }
   if (await fileNameTaken(env.DB, v.kind, fileName)) return form([t(lang, 'explore.upload.error.duplicate')])
   const today = await uploadsToday(env.DB, viewer.steamId, now)
@@ -163,8 +164,8 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     if (action === 'approve' && item?.status === 'pending') {
       const obj = await env.UPLOADS.get(item.file_key)
       if (obj) {
-        const bytes = new Uint8Array(await obj.arrayBuffer())
-        const { previews } = checkFile(item.kind, item.file_name, bytes)
+        // Checked again on the way to the public bucket: what goes live is always what the rules accept.
+        const { bytes, previews } = await checkFile(item.kind, item.file_name, new Uint8Array(await obj.arrayBuffer()))
         const hash = await sha256Hex(bytes)
         const key = `files/${hash}/${item.file_name}`
         await publishToFiles(env, key, item.file_name, bytes, hash, previews)
