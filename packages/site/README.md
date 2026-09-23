@@ -88,8 +88,9 @@ pins both, and pins that no environment can claim the domain: wrangler **inherit
 `aimloom.dev` to the preview Worker; `npx wrangler triggers deploy --env=""` moved it back without
 uploading anything. Read a deploy's whole output and check https://aimloom.dev after any deploy.
 
-The D1 databases `aimloom` and `aimloom-preview` exist (the report backend, below). No R2 bucket
-exists yet; the explorer creates one (next section). Deploy production only when a real release is
+The D1 databases `aimloom` and `aimloom-preview` exist (the report backend, below). Since
+2026-09-22 the R2 bucket `aimloom-files` exists with its custom domain `dl.aimloom.dev` (r2.dev off),
+and `0002_catalogue.sql` is applied to both databases (next section). Deploy production only when a real release is
 in `releases.json`, with its ZIP in `release-files/`.
 
 ## The explorer (v0.1.5)
