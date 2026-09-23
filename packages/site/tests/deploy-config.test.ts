@@ -25,7 +25,7 @@ describe('Worker deployment config', () => {
       expect(env.routes, `env.${name}.routes`).toEqual([])
       const d1 = (env.d1_databases as { database_name: string }[])[0]
       expect(d1?.database_name, name).toBe(`aimloom-${name}`)
-      expect(env.r2_buckets, name).toBeUndefined() // R2 is not enabled on the account: bodies live in D1
+      expect(env.r2_buckets, name).toEqual([{ binding: 'FILES', bucket_name: 'aimloom-files' }, { binding: 'UPLOADS', bucket_name: 'aimloom-uploads' }]) // the explorer's buckets; report bodies still live in D1
       expect(env.send_email, name).toEqual([{ name: 'MAIL' }])
       expect((env.ratelimits as { name: string }[]).map(r => r.name).sort(), name).toEqual(['REPORT_LIMIT', 'STEAM_LIMIT'])
     }
@@ -33,15 +33,16 @@ describe('Worker deployment config', () => {
   it('runs the script first for /api/*, the explorer and /d/* only: every other page and release file stays a static asset', () => {
     expect(config.main).toBe('src/worker/index.ts')
     expect(config.assets.binding).toBe('ASSETS')
-    expect(config.assets.run_worker_first).toEqual(['/api/*', '/zh/explore*', '/en/explore*', '/d/*'])
+    expect(config.assets.run_worker_first).toEqual(['/api/*', '/zh/explore*', '/en/explore*', '/d/*', '/auth/*'])
   })
   it('points both environments at the explorer\'s file origin; vars are not inherited, so preview repeats it', () => {
     expect(config.vars).toEqual({ FILES_ORIGIN: 'https://dl.aimloom.dev' })
     expect(config.env.preview.vars).toEqual({ FILES_ORIGIN: 'https://dl.aimloom.dev' })
   })
-  it('binds production to its own database, to no bucket, and limits as the spec says', () => {
+  it('binds production to its own database, the two buckets, and limits as the spec says', () => {
     expect(config.d1_databases[0]).toMatchObject({ binding: 'DB', database_name: 'aimloom', migrations_dir: 'migrations' })
-    expect(config.r2_buckets).toBeUndefined()
+    expect(config.r2_buckets).toEqual([{ binding: 'FILES', bucket_name: 'aimloom-files' }, { binding: 'UPLOADS', bucket_name: 'aimloom-uploads' }])
+    expect(config.env.preview.r2_buckets).toEqual(config.r2_buckets)
     expect(config.ratelimits).toEqual([
       { name: 'REPORT_LIMIT', namespace_id: '2001', simple: { limit: 3, period: 60 } },
       { name: 'STEAM_LIMIT', namespace_id: '2002', simple: { limit: 10, period: 60 } },

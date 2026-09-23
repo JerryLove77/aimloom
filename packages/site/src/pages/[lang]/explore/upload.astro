@@ -1,0 +1,12 @@
+---
+// A shell the Worker fills for /<lang>/explore/upload/ (spec 2026-09-22 §11). Reserved slug.
+import Base from '../../../layouts/Base.astro'
+import '../../../styles/explore.css'
+import { LANGS, t, type Lang } from '../../../i18n'
+export function getStaticPaths() { return LANGS.map(lang => ({ params: { lang } })) }
+const lang = Astro.params.lang as Lang
+---
+<Base lang={lang} path="/explore" title={t(lang, 'explore.upload.title')} description={t(lang, 'explore.description')}>
+  <div class="section stack ex ex--upload" id="explore-root"></div>
+</Base>
+<script>import '../../../scripts/explore.client'</script>

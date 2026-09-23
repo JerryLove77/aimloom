@@ -112,7 +112,15 @@ no R2 binding: a download is a counted `302`.
 
 Apply the migration **before** deploying the Worker that reads it.
 
-**Publishing an item** — only content whose author has given permission; keep the evidence in the
+**Sign-in and uploads** (spec §11). Sign-in is Steam OpenID (`/auth/steam/*`); the session cookie is
+`aimloom_session`. Uploads by a trusted creator go to `aimloom-files` and are live at once; everyone
+else's wait in the **private** bucket `aimloom-uploads` (create it once: `npx wrangler r2 bucket
+create aimloom-uploads`, no custom domain, r2.dev off) until `/<lang>/explore/review/` approves them.
+That page opens only for the SteamIDs in the secret `ADMIN_STEAM_IDS` (`npx wrangler secret put
+ADMIN_STEAM_IDS --config .wrangler.generated.jsonc --env=""`, and again `--env preview`; a
+comma-separated list, never in git). Apply `0003_uploads.sql` like 0002, before the deploy.
+
+**Publishing an item by hand** — only content whose author has given permission; keep the evidence in the
 private records, never here. A folder holds `item.json` and exactly one file:
 
     {
