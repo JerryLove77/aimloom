@@ -27,15 +27,26 @@ async function publishToFiles(env: AppEnv, key: string, name: string, bytes: Uin
   if (previews) for (const lang of ['zh', 'en'] as const) await env.FILES.put(`previews/${hash}/${lang}.svg`, previews[lang], { httpMetadata: { contentType: 'image/svg+xml', cacheControl: 'public, max-age=31536000, immutable' } })
 }
 
-async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, now: Date): Promise<Response> {
+/** Cloudflare Turnstile's server-side check. No IP is sent: only the widget's token. */
+async function humanCheck(env: AppEnv, token: string, fetcher: typeof fetch): Promise<boolean> {
+  if (!token || !env.TURNSTILE_SECRET) return false
+  try {
+    const r = await fetcher('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token }) })
+    return r.ok && (await r.json() as { success?: unknown }).success === true
+  } catch { return false }
+}
+
+async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, now: Date, fetcher: typeof fetch): Promise<Response> {
   // The display name belongs to the account (set at the first sign-in), never to the form.
   if (viewer && !viewer.name) return welcomeFirst(request, lang, 'upload')
-  if (request.method === 'GET') return shell.fill('upload', uploadFormHtml(lang, emptyForm(), [], viewer), t(lang, 'explore.upload.title'))
+  const siteKey = env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET ? env.TURNSTILE_SITE_KEY : null
+  if (request.method === 'GET') return shell.fill('upload', uploadFormHtml(lang, emptyForm(), [], viewer, siteKey), t(lang, 'explore.upload.title'))
   if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
   if (!viewer) return fail('UNAUTHORIZED', 401)
   const refused = requireSameOrigin(request); if (refused) return refused
+  if (!siteKey) return fail('FORBIDDEN', 403)
   const declared = Number(request.headers.get('content-length') ?? '0')
-  if (declared > MAX_UPLOAD_BYTES + 64 * 1024) return shell.fill('upload', uploadFormHtml(lang, emptyForm(), [t(lang, 'explore.upload.error.tooLarge')], viewer), t(lang, 'explore.upload.title'))
+  if (declared > MAX_UPLOAD_BYTES + 64 * 1024) return shell.fill('upload', uploadFormHtml(lang, emptyForm(), [t(lang, 'explore.upload.error.tooLarge')], viewer, siteKey), t(lang, 'explore.upload.title'))
   const fd = await request.formData()
   const kindRaw = fd.get('kind')
   const v: FormValues = {
@@ -56,8 +67,9 @@ async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
   if (!v.confirm) errors.push(t(lang, 'explore.upload.error.confirm'))
   if (!v.title_zh && !v.title_en) errors.push(t(lang, 'explore.upload.error.title'))
   if (!(UPLOAD_LICENCES as readonly string[]).includes(v.licence)) errors.push(t(lang, 'explore.upload.error.licence'))
-  const form = (errs: string[]) => shell.fill('upload', uploadFormHtml(lang, v, errs, viewer), t(lang, 'explore.upload.title'))
+  const form = (errs: string[]) => shell.fill('upload', uploadFormHtml(lang, v, errs, viewer, siteKey), t(lang, 'explore.upload.title'))
   if (errors.length) return form(errors)
+  if (!(await humanCheck(env, str(fd, 'cf-turnstile-response', 4096), fetcher))) return form([t(lang, 'explore.upload.error.human')])
   const fileName = (file as File).name
   const bytes = new Uint8Array(await (file as File).arrayBuffer())
   let slug: string; let previews: { zh: string; en: string } | null
@@ -176,9 +188,9 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
 }
 
 /** `sub` is the path under /<lang>/explore/ without its trailing slash: `upload`, `mine`, `review/action`, … */
-export async function handleUploads(request: Request, env: AppEnv, lang: Lang, sub: string, viewer: Viewer | null, shell: Shell, now: Date): Promise<Response> {
+export async function handleUploads(request: Request, env: AppEnv, lang: Lang, sub: string, viewer: Viewer | null, shell: Shell, now: Date, fetcher: typeof fetch = fetch): Promise<Response> {
   if (sub === 'welcome') return welcome(request, env, lang, viewer, shell, now)
-  if (sub === 'upload') return upload(request, env, lang, viewer, shell, now)
+  if (sub === 'upload') return upload(request, env, lang, viewer, shell, now, fetcher)
   if (sub === 'mine' || sub === 'mine/withdraw') return minePage(request, env, lang, viewer, shell, sub)
   if (sub === 'review' || sub.startsWith('review/')) return review(request, env, lang, viewer, shell, sub, now)
   return shell.notFound()

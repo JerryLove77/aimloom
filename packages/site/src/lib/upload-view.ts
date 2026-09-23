@@ -38,10 +38,11 @@ const crumbs = (lang: Lang, last: string): string => `<nav class="ex-crumbs" ari
 const field = (id: string, label: string, control: string, hint?: string): string => `<div class="ex-field"><label for="${id}">${label}</label>${control}${hint ? `<p class="small muted">${hint}</p>` : ''}</div>`
 const input = (id: string, name: string, value: string, extra = ''): string => `<input id="${id}" name="${name}" value="${esc(value)}" maxlength="400" ${extra} />`
 
-export function uploadFormHtml(lang: Lang, v: FormValues, errors: string[], viewer: Viewer | null): string {
+export function uploadFormHtml(lang: Lang, v: FormValues, errors: string[], viewer: Viewer | null, siteKey: string | null = null): string {
   const here = localizePath(lang, '/explore/upload')
   const head = crumbs(lang, tt(lang, 'explore.account.upload')) + `<h1>${tt(lang, 'explore.upload.title')}</h1>` + accountBar(lang, viewer, here)
   if (!viewer) return head + `<p class="panel">${tt(lang, 'explore.upload.needSignIn')}</p>`
+  if (!siteKey) return head + `<p class="panel">${tt(lang, 'explore.upload.closed')}</p>`
   const errorBox = errors.length ? `<div class="notice ex-notice-error" role="alert"><p><strong>${tt(lang, 'explore.upload.error.heading')}</strong></p><ul>${errors.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''
   const licences = UPLOAD_LICENCES.map(l => `<option value="${l}"${v.licence === l ? ' selected' : ''}>${tt(lang, `explore.upload.licence.${l}`)}</option>`).join('')
   // The kind comes from the file's extension; the name from its stem unless typed. One title field
@@ -62,6 +63,8 @@ export function uploadFormHtml(lang: Lang, v: FormValues, errors: string[], view
     + field('up-name', tt(lang, 'explore.upload.name'), input('up-name', nameField, nameValue, 'maxlength="80"'), tt(lang, 'explore.upload.name.hint'))
     + `<label class="ex-confirm"><input type="checkbox" name="confirm" value="yes"${v.confirm ? ' checked' : ''} /> <span>${tt(lang, 'explore.upload.agree')}</span></label>`
     + more
+    // Cloudflare Turnstile adds a hidden cf-turnstile-response field; the Worker checks it with Cloudflare.
+    + `<div class="cf-turnstile" data-sitekey="${esc(siteKey)}" data-language="${lang === 'zh' ? 'zh-cn' : 'en'}"></div><script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>`
     + `<div class="ex-rules small muted"><p>${tt(lang, 'explore.upload.note.review', { n: UPLOADS_PER_DAY })}</p><p>${tt(lang, 'explore.upload.note.rules')}</p></div>`
     + `<div class="ex-actions"><a class="button button--secondary" href="${esc(localizePath(lang, '/explore'))}">${tt(lang, 'explore.upload.cancel')}</a><button type="submit" class="button button--primary">${tt(lang, 'explore.upload.submit')}</button></div></form>`
 }

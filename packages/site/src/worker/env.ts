@@ -23,6 +23,9 @@ export interface AppEnv {
   UPLOADS: R2Bucket
   /** Comma-separated SteamID64s allowed on the review page. A secret: `wrangler secret put ADMIN_STEAM_IDS`. Never in git. */
   ADMIN_STEAM_IDS?: string
+  /** Cloudflare Turnstile, the human check on every upload. Both are secrets; without them uploads stay closed. */
+  TURNSTILE_SITE_KEY?: string
+  TURNSTILE_SECRET?: string
   /** The owner's mailbox. A secret: `wrangler secret put REPORT_TO`. Never in git. */
   REPORT_TO: string
 }

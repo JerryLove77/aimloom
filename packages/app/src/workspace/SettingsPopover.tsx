@@ -34,8 +34,11 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
   const mountedRef = useRef(true)
   useEffect(() => () => { mountedRef.current = false }, [])
 
-  // Account: the stored Steam name, or the connect form.
+  // Account: the player's own name for their Steam account, or the connect form. After a link
+  // resolves, the name starts as the Steam name and the player may change it before saving
+  // (user, 2026-09-23: 「App 也能自己起名」); the same name box renames a saved account.
   const [account, setAccount] = useState<Account | null>(() => readAccount(settings.storage))
+  const [draft, setDraft] = useState<Account | null>(null)
   const [url, setUrl] = useState('')
   const [resolving, setResolving] = useState(false)
   const [accountError, setAccountError] = useState<Msg | null>(null)
@@ -45,13 +48,19 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
     setResolving(true)
     settings.accountResolve(url).then(resolved => {
       if (!mountedRef.current) return
-      setResolving(false); setAccount(resolved); writeAccount(settings.storage, resolved)
+      setResolving(false); setDraft(resolved)
     }).catch((error: unknown) => {
       if (!mountedRef.current) return
       setResolving(false); setAccountError(errorMsg(error, { key: 'settings.account.error' }))
     })
   }
-  const removeAccount = () => { setAccount(null); writeAccount(settings.storage, null); setUrl(''); setAccountError(null) }
+  const removeAccount = () => { setAccount(null); setDraft(null); writeAccount(settings.storage, null); setUrl(''); setAccountError(null) }
+  const draftName = draft?.name.trim() ?? ''
+  const saveDraft = () => {
+    if (!draft || !draftName || draftName.length > 64) return
+    const saved = { steamId: draft.steamId, name: draftName }
+    setAccount(saved); writeAccount(settings.storage, saved); setDraft(null); setUrl('')
+  }
 
   // Updates: the startup-check switch and, once the launch check has answered, its result.
   const [updatesOn, setUpdatesOn] = useState(() => readUpdatesEnabled(settings.storage))
@@ -82,10 +91,16 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
 
     <section className="ws-settings-section">
       <h3>{t('settings.account')}</h3>
-      {account ? <div className="ws-settings-account">
+      {draft ? <div className="ws-settings-account">
+        <label className="ws-muted" htmlFor="ws-account-name">{t('settings.account.name.hint')}</label>
+        <input id="ws-account-name" type="text" value={draft.name} maxLength={64} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+        <button type="button" className="ki-button ki-button-secondary" onClick={saveDraft} disabled={!draftName}>{t('settings.account.save')}</button>
+        <button type="button" className="ki-button ki-button-ghost" onClick={() => setDraft(null)}>{t('settings.account.cancel')}</button>
+      </div> : account ? <div className="ws-settings-account">
         {/* Says only that it worked. A word about verification here reads as "it did not connect";
             verification belongs to the explorer's upload page, the one place that needs it. */}
         <p><span className="ws-settings-account-name">{account.name}</span><span className="ws-settings-account-tag">{t('settings.account.connected')}</span></p>
+        <button type="button" className="ki-button ki-button-ghost" onClick={() => setDraft(account)}>{t('settings.account.rename')}</button>
         <button type="button" className="ki-button ki-button-ghost" onClick={removeAccount}>{t('settings.account.remove')}</button>
       </div> : <div className="ws-settings-account">
         <p className="ws-muted">{t('settings.account.hint')}</p>

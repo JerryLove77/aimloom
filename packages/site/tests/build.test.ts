@@ -43,6 +43,8 @@ describe('build output', () => {
   it('allows the explorer\'s file origin for images and sound, and nothing else new', () => {
     const headers = readFileSync(join(dist, '_headers'), 'utf8')
     expect(headers).toContain("img-src 'self' data: https://dl.aimloom.dev; media-src 'self' https://dl.aimloom.dev;")
+    // Cloudflare Turnstile, the human check on uploads: its script and its frame, nothing else.
+    expect(headers).toContain("script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com;")
   })
 
   it('loads nothing from the network', () => {

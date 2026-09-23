@@ -11,7 +11,14 @@ const base = testEnv as unknown as Pick<AppEnv, 'DB' | 'FILES' | 'UPLOADS'>
 const NOW = new Date('2026-10-20T12:00:00Z')
 const shellHtml = `<!doctype html><html><head><title>Explore · Aimloom</title><meta name="description" content="shell" /></head><body><div id="explore-root"></div></body></html>`
 const assets = { fetch: async (req: Request) => (/^\/(zh|en)\/explore\/(item-shell|upload|mine|review|welcome)?\/?$/.test(new URL(req.url).pathname) ? new Response(shellHtml, { headers: { 'content-type': 'text/html' } }) : new Response('the 404 page', { status: 404 })) }
-const env = { ...base, ASSETS: assets, FILES_ORIGIN: 'https://dl.test.invalid', ADMIN_STEAM_IDS: ` ${ADMIN} ` } as unknown as AppEnv
+const env = { ...base, ASSETS: assets, FILES_ORIGIN: 'https://dl.test.invalid', ADMIN_STEAM_IDS: ` ${ADMIN} `, TURNSTILE_SITE_KEY: 'test-site-key', TURNSTILE_SECRET: 'test-secret' } as unknown as AppEnv
+// Cloudflare's siteverify, faked: the token "human" passes, anything else fails. Records what it was sent.
+const siteverify: string[] = []
+const fetcher = (async (input: string, init?: RequestInit) => {
+  if (input !== 'https://challenges.cloudflare.com/turnstile/v0/siteverify') throw new Error(`unexpected fetch ${input}`)
+  const body = String(init?.body); siteverify.push(body)
+  return Response.json({ success: new URLSearchParams(body).get('response') === 'human' })
+}) as typeof fetch
 const ctx = { waitUntil() {}, passThroughOnException() {} } as unknown as ExecutionContext
 const ORIGIN = 'https://aimloom.dev'
 const png = () => { const d = new Uint8Array(16 * 16 * 4); for (let i = 0; i < 16; i++) d.set([0, 255, 102, 255], (i * 16 + 8) * 4); return encodePng({ width: 16, height: 16, data: d, warnings: [] }) }
@@ -23,10 +30,11 @@ async function cookieFor(steamId: string, named = true): Promise<string> {
 }
 const send = (path: string, init: RequestInit & { cookie?: string } = {}) => {
   const headers = new Headers(init.headers); if (init.cookie) headers.set('cookie', init.cookie)
-  return handleExplore(new Request(ORIGIN + path, { ...init, headers, redirect: 'manual' }), env, ctx, NOW)
+  return handleExplore(new Request(ORIGIN + path, { ...init, headers, redirect: 'manual' }), env, ctx, NOW, fetcher)
 }
 function form(fields: Record<string, string>, file: { name: string; bytes: Uint8Array; type: string } | null = { name: 'small dot.png', bytes: png(), type: 'image/png' }): FormData {
   const fd = new FormData()
+  if (file) fd.set('cf-turnstile-response', 'human')
   for (const [k, v] of Object.entries(fields)) fd.set(k, v)
   if (file) fd.set('file', new File([file.bytes as BlobPart], file.name, { type: file.type }))
   return fd
@@ -111,6 +119,24 @@ describe('the upload page', () => {
     await post('/en/explore/welcome/', form({ author: '<img src=x onerror=alert(1)>', next: '/en/explore/' }, null), cookie)
     const html = await (await send('/en/explore/', { cookie }))!.text()
     expect(html).not.toContain('<img src=x'); expect(html).toContain('Name: &lt;img src=x onerror=alert(1)&gt;')
+  })
+  it('shows the human check on the form, refuses an upload that fails it, and sends Cloudflare no IP', async () => {
+    const cookie = await cookieFor(CREATOR)
+    const html = await (await send('/en/explore/upload/', { cookie }))!.text()
+    expect(html).toContain('<div class="cf-turnstile" data-sitekey="test-site-key"'); expect(html).toContain('https://challenges.cloudflare.com/turnstile/v0/api.js')
+    const bot = form(VALID); bot.set('cf-turnstile-response', 'robot')
+    expect(await (await post('/en/explore/upload/', bot, cookie))!.text()).toContain('The human check did not pass')
+    expect(await base.DB.prepare('SELECT COUNT(*) AS c FROM item').first<number>('c')).toBe(0)
+    const sent = new URLSearchParams(siteverify.at(-1)!)
+    expect([...sent.keys()].sort()).toEqual(['response', 'secret'])
+  })
+  it('keeps uploads closed while the Turnstile keys are missing', async () => {
+    const closed = { ...env, TURNSTILE_SITE_KEY: undefined, TURNSTILE_SECRET: undefined } as unknown as AppEnv
+    const cookie = await cookieFor(CREATOR)
+    const get = await handleExplore(new Request(`${ORIGIN}/en/explore/upload/`, { headers: { cookie } }), closed, ctx, NOW, fetcher)
+    expect(await get!.text()).toContain('Uploads are not open yet')
+    const put = await handleExplore(new Request(`${ORIGIN}/en/explore/upload/`, { method: 'POST', body: form(VALID), headers: { cookie, origin: ORIGIN } }), closed, ctx, NOW, fetcher)
+    expect(put!.status).toBe(403)
   })
   it('names what is missing instead of uploading', async () => {
     const cookie = await cookieFor(CREATOR)
