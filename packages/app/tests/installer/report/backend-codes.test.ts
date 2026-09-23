@@ -32,6 +32,8 @@ const FALLS_BACK_ON_PURPOSE: Record<string, string> = {
   UNSUPPORTED_MEDIA_TYPE: 'the HTTP client always sends application/json; a player cannot cause it',
   INVALID_JSON: 'the payload is serialised natively, never typed; a player cannot cause it',
   STORAGE_FAILED: 'a transient server fault — "try again later" is exactly the right advice',
+  FORBIDDEN: 'only the site\'s sign-in and upload routes answer it (Origin check); the App never calls them',
+  UNAUTHORIZED: 'only the site\'s upload routes answer it (no session); the App never calls them',
 }
 
 describe('every failure the backend can answer with is accounted for in the App', () => {
