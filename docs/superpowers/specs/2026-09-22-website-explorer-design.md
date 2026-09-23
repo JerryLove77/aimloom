@@ -2,7 +2,8 @@
 
 Date: 2026-09-22. Status: **decisions taken with the user on 2026-09-22; drawn in Figma (round 1)
 and built the same day. Not provisioned (R2, `dl.aimloom.dev`), not deployed, no real content yet.**
-§10 lists where the build departs from the first draft of this document. Roadmap entry: v0.1.5 — the website explorer (EXP).
+§10 lists where the build departs from the first draft of this document. §11 (sign-in and
+uploads, decided the same evening) is built too; it still needs the private bucket and the admin secret. Roadmap entry: v0.1.5 — the website explorer (EXP).
 
 This document amends [the 2026-09-17 website design](2026-09-17-aimloom-website-and-explore-design.md).
 It **replaces** that document's §3 (the explorer), §5 (data layer) and §6 (the ZIP contract and
@@ -220,3 +221,70 @@ Where the implementation departs from the first draft above, and why:
 - **The detail page shell** is prerendered at `/<lang>/explore/item-shell/`; that slug is reserved.
 - **The App link** sits on its own line under each list (the Figma draft put it beside the count).
 
+
+## 11. Sign-in and uploads (decided 2026-09-22, the same evening)
+
+The user: 「那不行，做登录和允许上传」 — the explorer does not ship without them. This section replaces
+"no sign-in and no uploads" in §1 and "the maintainer command is the only writer" in §6 (the command
+stays, for the maintainer's own items).
+
+### 11.1 Decisions
+
+| Question | Decision (user, 2026-09-22) |
+|---|---|
+| Who may upload | Anyone signed in **through Steam** (verified OpenID 2.0). This is still the only feature that needs verification (rule of 2026-09-20). |
+| When an upload appears | A creator on the maintainer's **trusted list** goes live at once. Anyone else's upload waits in a **review queue** until the maintainer approves it. |
+| What a creator manages | Their own uploads' status (waiting, live, rejected with the reason, withdrawn), and **withdrawing** an upload. Replacing a file with a new version is later. |
+| Public identity | The creator's own **display name** and optional https link. The SteamID is stored on the server only, never shown. |
+
+### 11.2 Sign-in
+
+- `/auth/steam/login?next=<path>` redirects to Steam's OpenID endpoint; `/auth/steam/callback`
+  verifies the answer with Steam (`check_authentication`, server to server) and reads the SteamID64
+  from `claimed_id`. Nothing else from Steam is read.
+- A session is a random 256-bit token in an `HttpOnly; Secure; SameSite=Lax` cookie; the database
+  keeps only its SHA-256, the SteamID and an expiry (30 days). Sign-out deletes the row.
+- Every state-changing request is a `POST` whose `Origin` must be the site's own.
+- Nothing else on the site or in the App needs or offers sign-in.
+
+### 11.3 Upload
+
+`/<lang>/explore/upload/` (signed in): kind, the file, title and summary (zh and/or en; one language
+fills both when only one is given), display name, optional link, licence (CC0-1.0, CC-BY-4.0,
+CC-BY-SA-4.0, or "permission": free to download through Aimloom, other use needs the author's
+consent), a crosshair's optional code, and a required confirmation: *I made this or have the right to
+share it, and I agree to it being offered on aimloom.dev under the licence above.* The same checks as
+the publish command run in the Worker (§6), plus a per-account limit (10 uploads a day).
+
+- **Trusted creator:** the file goes to the public bucket and the item is `published`.
+- **Everyone else:** the file goes to a **private** bucket `aimloom-uploads` (no domain, no r2.dev) and
+  the item is `pending`. Nothing pending is reachable by the public.
+
+### 11.4 The creator's page and the review page
+
+- `/<lang>/explore/mine/`: the signed-in creator's uploads with their status, the rejection reason,
+  and a **Withdraw** button (status `withdrawn`; the page and download stop at once).
+- `/<lang>/explore/review/`, only for SteamIDs in the Worker secret `ADMIN_STEAM_IDS` (never in git):
+  the queue with previews (pending files streamed from the private bucket to the admin only),
+  **Approve** (copy to the public bucket, render a theme's previews, `published`), **Reject** with a
+  reason, **Trust / untrust** the creator, and **Hide** any published item.
+
+### 11.5 Data (migration 0003)
+
+`item` gains `source` (`maintainer` | `upload`), `uploader` (SteamID, NULL for the maintainer's),
+`reject_reason`, and statuses `pending`, `rejected`, `withdrawn`. New tables `session` and `creator`
+(SteamID, `trusted`, first upload). The Worker gains R2 bindings for both buckets and the secret
+`ADMIN_STEAM_IDS`.
+
+### 11.6 What the public pages say
+
+The Privacy page says what sign-in stores (SteamID, session expiry), that an upload is linked to the
+SteamID on the server and not shown, and how to ask for deletion. An **upload rules** section (on
+the upload page) says what may be uploaded, that the uploader must have the right to share it, and
+how a rights holder asks for removal (`feedback@aimloom.dev`). The explorer's lists gain a
+"Sign in to upload" entry.
+
+### 11.7 Needs from the maintainer
+
+Create the private bucket `aimloom-uploads` (no custom domain, r2.dev off) and set the Worker secret
+`ADMIN_STEAM_IDS` to their own SteamID. Figma: the upload form, the creator's page and the review page.
