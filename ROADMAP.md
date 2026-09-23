@@ -117,8 +117,8 @@ user on 2026-09-22 and written down in
   published only by a maintainer command. Routes are added to the existing Worker.
 - **Download requests are counted** per file per day, with nothing about the requester; the
   Privacy page says so.
-- **No sign-in and no uploads.** A verified Steam sign-in is built only with uploads (user,
-  2026-09-20), and uploads are not in 0.1.5.
+- **Sign-in and uploads are in** (user, 2026-09-22 evening, reversing the morning's decision): Steam
+  OpenID sign-in, needed for uploading only; trusted creators go live at once, others are reviewed.
 - **The App gains a link** to the explorer on Theme, Sounds and Crosshair, released as
   **`0.1.5-beta.N` through the beta channel**; the stable release stays 0.1.4 (user, 2026-09-22).
 
@@ -127,10 +127,12 @@ user on 2026-09-22 and written down in
 | Amend the spec | **Done** 2026-09-22; §10 records what changed while building |
 | Figma: list and detail, zh/en × desktop/phone | **Drawn** 2026-09-22 (round 1); the user moved on to code |
 | Worker routes, pages, migration, publish command | **Built** 2026-09-22: site suites (node and workerd), axe at 1280/390 on a local Worker with fake sample items. Not deployed |
+| **Sign-in through Steam and uploads** (spec §11; user, 2026-09-22 evening: 「做登录和允许上传」): anyone signed in may upload, a trusted creator's file goes live at once, others wait for the admin's review; a creator sees and withdraws their own | **Built** 2026-09-22: `auth.ts`, `uploads.ts`, migration 0003, workerd tests (77). Needs the private bucket `aimloom-uploads` and the `ADMIN_STEAM_IDS` secret; not deployed |
 | App link on Theme, Sounds, Crosshair (`installer_open_explore`) | **Built** 2026-09-22: Rust and App tests, checked in the browser demo. Not yet seen on Windows |
 | Provision R2 `aimloom-files` + `dl.aimloom.dev`; apply the migration | Next — the maintainer's Cloudflare account (site README, "The explorer") |
 | Content with permission | The user, in parallel |
-| Deploy the site; `0.1.5-beta.1` through the beta channel | After provisioning and the first permitted content |
+| `0.1.5-beta.1` on GitHub | **Done** 2026-09-22 (pre-release only; the site's beta field is not set) |
+| Deploy the site; `0.1.5-beta.2` | After the private bucket, the admin secret and migration 0003 |
 
 ## After v0.1.5
 
