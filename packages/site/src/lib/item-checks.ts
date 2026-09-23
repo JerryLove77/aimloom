@@ -4,7 +4,7 @@
  */
 import { parseScheme } from '../../../core/src/scheme/document'
 import { renderSchemePreview } from '../../../core/src/scheme/preview'
-import { canonicalPngIssue, MAX_DIMENSION, MAX_PNG_BYTES } from '../../../crosshair/src/png'
+import { canonicalPngIssue, encodePng, MAX_DIMENSION, MAX_PNG_BYTES } from '../../../crosshair/src/png'
 import { parseCs2 } from '../../../crosshair/src/cs2'
 import { parseValorant } from '../../../crosshair/src/valorant'
 import { RESERVED_SLUGS } from './explore-types'
@@ -99,30 +99,149 @@ export function parseManifest(bytes: Uint8Array): Manifest {
 }
 
 const u32 = (b: Uint8Array, at: number): number => ((b[at]! << 24) | (b[at + 1]! << 16) | (b[at + 2]! << 8) | b[at + 3]!) >>> 0
+const u32le = (b: Uint8Array, at: number): number => (b[at]! | (b[at + 1]! << 8) | (b[at + 2]! << 16) | (b[at + 3]! << 24)) >>> 0
+const u16le = (b: Uint8Array, at: number): number => b[at]! | (b[at + 1]! << 8)
 const ascii = (b: Uint8Array, at: number, n: number): string => String.fromCharCode(...b.subarray(at, at + n))
 
-/** The per-kind content check. A theme also yields its preview, rendered once per language. */
-export function checkFile(kind: Kind, name: string, bytes: Uint8Array): { previews: { zh: string; en: string } | null } {
+// ---- strict media checks (user, 2026-09-23: 「这肯定得加，到时候被黑了我都不会修」) ----------
+// Nothing uploaded is scanned by Cloudflare, so every file must be exactly a medium of its kind:
+// no chunk, page or byte that is not part of the picture or the sound, and nothing after the end.
+
+const PNG_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0 } return t })()
+export function pngCrc(bytes: Uint8Array): number { let c = 0xffffffff; for (const b of bytes) c = PNG_CRC[(c ^ b) & 0xff]! ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0 }
+const OGG_CRC = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n << 24; for (let k = 0; k < 8; k++) c = c & 0x80000000 ? (c << 1) ^ 0x04c11db7 : c << 1; t[n] = c >>> 0 } return t })()
+export function oggCrc(bytes: Uint8Array): number { let c = 0; for (const b of bytes) c = ((c << 8) ^ OGG_CRC[((c >>> 24) ^ b) & 0xff]!) >>> 0; return c >>> 0 }
+
+/** Inflates a zlib stream, refusing any output longer than `max` (no decompression bomb). */
+async function inflateCapped(data: Uint8Array, max: number): Promise<Uint8Array> {
+  const stream = new Blob([data as unknown as ArrayBuffer]).stream().pipeThrough(new DecompressionStream('deflate'))
+  const out = new Uint8Array(max + 1); let n = 0
+  const reader = stream.getReader()
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    if (n + value.length > max) { await reader.cancel(); return fail('crosshair: the PNG\'s image data is larger than its size says') }
+    out.set(value, n); n += value.length
+  }
+  return out.subarray(0, n)
+}
+
+const paeth = (a: number, b: number, c: number): number => { const p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c); return pa <= pb && pa <= pc ? a : pb <= pc ? b : c }
+
+/**
+ * Walks every chunk (CRC checked; only IHDR, IDAT, IEND and small ancillary chunks; nothing after
+ * IEND), decodes every pixel, and returns a freshly encoded canonical PNG of those pixels. What is
+ * stored is the re-encoded picture, so nothing the uploader added besides pixels survives.
+ */
+async function cleanPng(bytes: Uint8Array): Promise<Uint8Array> {
+  if (bytes.length > MAX_PNG_BYTES) fail(`crosshair PNG is larger than ${MAX_PNG_BYTES} bytes`)
+  const issue = canonicalPngIssue(bytes)
+  if (issue) fail(`crosshair: ${issue.en}`)
+  const w = u32(bytes, 16), h = u32(bytes, 20)
+  if (w < 1 || h < 1 || w > MAX_DIMENSION || h > MAX_DIMENSION) fail(`crosshair PNG is ${w}×${h}; Aimloom accepts at most ${MAX_DIMENSION}×${MAX_DIMENSION}`)
+  const idat: Uint8Array[] = []; let pos = 8; let sawEnd = false; let first = true; let ancillary = 0
+  while (pos < bytes.length) {
+    if (sawEnd) fail('crosshair: the PNG has data after its end')
+    if (pos + 12 > bytes.length) fail('crosshair: the PNG is cut off')
+    const len = u32(bytes, pos); const type = ascii(bytes, pos + 4, 4)
+    if (len > bytes.length || pos + 12 + len > bytes.length) fail('crosshair: the PNG is cut off')
+    if (pngCrc(bytes.subarray(pos + 4, pos + 8 + len)) !== u32(bytes, pos + 8 + len)) fail(`crosshair: the PNG's ${type} chunk is damaged`)
+    if (first && type !== 'IHDR') fail('crosshair: the PNG does not start with IHDR')
+    first = false
+    if (type === 'IDAT') idat.push(bytes.subarray(pos + 8, pos + 8 + len))
+    else if (type === 'IEND') sawEnd = true
+    else if (type !== 'IHDR') {
+      // A critical chunk (upper-case first letter) Aimloom does not draw, or a large ancillary one, is refused.
+      if (/^[A-Z]/.test(type) || !/^[a-z][a-zA-Z]{3}$/.test(type)) fail(`crosshair: the PNG has a ${type} chunk Aimloom does not accept`)
+      ancillary += len; if (ancillary > 64 * 1024) fail('crosshair: the PNG carries too much extra data')
+    }
+    pos += 12 + len
+  }
+  if (!sawEnd || idat.length === 0) fail('crosshair: the PNG has no image data or no end')
+  const stride = w * 4
+  const raw = await inflateCapped(new Uint8Array(idat.reduce<number[]>((a, c) => (a.push(...c), a), [])), h * (stride + 1))
+  if (raw.length !== h * (stride + 1)) fail('crosshair: the PNG\'s image data does not match its size')
+  const px = new Uint8Array(h * stride)
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (stride + 1)]!; const src = raw.subarray(y * (stride + 1) + 1, (y + 1) * (stride + 1)); const row = y * stride
+    if (f > 4) fail('crosshair: the PNG uses an unknown filter')
+    for (let x = 0; x < stride; x++) {
+      const a = x >= 4 ? px[row + x - 4]! : 0, b = y > 0 ? px[row - stride + x]! : 0, c = x >= 4 && y > 0 ? px[row - stride + x - 4]! : 0
+      const v = src[x]!
+      px[row + x] = (f === 0 ? v : f === 1 ? v + a : f === 2 ? v + b : f === 3 ? v + ((a + b) >> 1) : v + paeth(a, b, c)) & 0xff
+    }
+  }
+  return encodePng({ width: w, height: h, data: px, warnings: [] })
+}
+
+/** RIFF/WAVE, every chunk accounted for, only audio chunks, sane format, nothing after the last chunk. */
+function checkWav(b: Uint8Array): void {
+  const bad = (why: string): never => fail(`sound: ${why}`)
+  if (b.length < 44 || ascii(b, 0, 4) !== 'RIFF' || ascii(b, 8, 4) !== 'WAVE') bad('the content is not a RIFF/WAVE file')
+  if (u32le(b, 4) + 8 !== b.length) bad('the WAV\'s declared size does not match the file (extra or missing data)')
+  let pos = 12; let fmt = false; let data = false
+  while (pos < b.length) {
+    if (pos + 8 > b.length) bad('the WAV is cut off')
+    const id = ascii(b, pos, 4); const size = u32le(b, pos + 4); const next = pos + 8 + size + (size & 1)
+    if (next > b.length) bad('the WAV is cut off')
+    if (id === 'fmt ') {
+      if (fmt || ![16, 18, 40].includes(size)) bad('the WAV\'s format chunk is not valid')
+      const tag = u16le(b, pos + 8), ch = u16le(b, pos + 10), rate = u32le(b, pos + 12), bits = u16le(b, pos + 22)
+      if (![1, 3, 0xfffe].includes(tag) || ch < 1 || ch > 8 || rate < 4000 || rate > 384000 || ![8, 16, 24, 32].includes(bits)) bad('the WAV\'s audio format is not one Aimloom accepts')
+      fmt = true
+    } else if (id === 'data') {
+      if (!fmt || data || size === 0) bad('the WAV\'s audio data is missing or out of place')
+      data = true
+    } else if (id === 'fact' || id === 'LIST') {
+      if (size > 64 * 1024) bad(`the WAV's ${id.trim()} chunk is too large`)
+    } else bad(`the WAV has a "${id.replace(/[^\x20-\x7e]/g, '?')}" chunk Aimloom does not accept`)
+    pos = next
+  }
+  if (!fmt || !data) bad('the WAV has no audio')
+}
+
+/** One Ogg Vorbis or Opus stream: every page CRC-checked, begin and end pages, nothing between or after. */
+function checkOgg(b: Uint8Array): void {
+  const bad = (why: string): never => fail(`sound: ${why}`)
+  let pos = 0; let serial: number | null = null; let pages = 0; let last = 0
+  while (pos < b.length) {
+    if (pos + 27 > b.length || ascii(b, pos, 4) !== 'OggS' || b[pos + 4] !== 0) bad(pages ? 'the Ogg file has data between or after its pages' : 'the content is not an Ogg file')
+    const flags = b[pos + 5]!; const segs = b[pos + 26]!
+    if (pos + 27 + segs > b.length) bad('the Ogg file is cut off')
+    let body = 0; for (let i = 0; i < segs; i++) body += b[pos + 27 + i]!
+    const end = pos + 27 + segs + body
+    if (end > b.length) bad('the Ogg file is cut off')
+    const page = b.slice(pos, end); page.fill(0, 22, 26)
+    if (oggCrc(page) !== u32le(b, pos + 22)) bad('an Ogg page is damaged')
+    const s = u32le(b, pos + 14)
+    if (serial === null) {
+      if (!(flags & 2)) bad('the Ogg file does not begin a stream')
+      const head = pos + 27 + segs
+      if (!(ascii(b, head, 7) === '\x01vorbis' || ascii(b, head, 8) === 'OpusHead')) bad('the Ogg file is not Vorbis or Opus audio')
+      serial = s
+    } else if (s !== serial || flags & 2) bad('the Ogg file holds more than one stream')
+    last = flags; pages++; pos = end
+  }
+  if (pages < 2 || !(last & 4)) bad('the Ogg file does not end its stream')
+}
+
+/**
+ * The per-kind content check, strict (see above). Returns the bytes to store — a crosshair is
+ * re-encoded; a theme and a sound are kept as they are once every byte is accounted for — and a
+ * theme's preview, rendered once per language.
+ */
+export async function checkFile(kind: Kind, name: string, bytes: Uint8Array): Promise<{ bytes: Uint8Array; previews: { zh: string; en: string } | null }> {
   checkFileName(kind, name)
   if (kind === 'theme') {
     if (bytes.length > MAX_THEME_BYTES) fail(`theme is larger than ${MAX_THEME_BYTES} bytes`)
     let doc
     try { doc = parseScheme(bytes) } catch (e) { return fail(`theme: Aimloom's theme reader refuses it (${e instanceof Error ? e.message : String(e)})`) }
-    return { previews: { zh: renderSchemePreview(doc, 'zh'), en: renderSchemePreview(doc, 'en') } }
+    return { bytes, previews: { zh: renderSchemePreview(doc, 'zh'), en: renderSchemePreview(doc, 'en') } }
   }
-  if (kind === 'crosshair') {
-    if (bytes.length > MAX_PNG_BYTES) fail(`crosshair PNG is larger than ${MAX_PNG_BYTES} bytes`)
-    const issue = canonicalPngIssue(bytes)
-    if (issue) fail(`crosshair: ${issue.en}`)
-    const w = u32(bytes, 16), h = u32(bytes, 20)
-    if (w < 1 || h < 1 || w > MAX_DIMENSION || h > MAX_DIMENSION) fail(`crosshair PNG is ${w}×${h}; Aimloom accepts at most ${MAX_DIMENSION}×${MAX_DIMENSION}`)
-    return { previews: null }
-  }
+  if (kind === 'crosshair') return { bytes: await cleanPng(bytes), previews: null }
   if (bytes.length === 0 || bytes.length > MAX_SOUND_BYTES) fail(`sound must be between 1 byte and ${MAX_SOUND_BYTES} bytes`)
-  const ext = name.slice(name.lastIndexOf('.')).toLowerCase()
-  const ok = ext === '.wav' ? ascii(bytes, 0, 4) === 'RIFF' && ascii(bytes, 8, 4) === 'WAVE' : ascii(bytes, 0, 4) === 'OggS'
-  if (!ok) fail(`sound: the content is not ${ext === '.wav' ? 'a RIFF/WAVE file' : 'an Ogg file'}`)
-  return { previews: null }
+  if (extensionOf(name) === '.wav') checkWav(bytes); else checkOgg(bytes)
+  return { bytes, previews: null }
 }
 
 /** A licence the upload form offers; the publish command also takes any SPDX id. */

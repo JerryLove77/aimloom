@@ -15,8 +15,8 @@ export function buildRow(m: Manifest, fileName: string, bytes: Uint8Array, publi
 }
 
 /** The objects to put in R2: the file itself, and a theme's two previews. Keys are content-addressed and never reused. */
-export function uploadsFor(row: Row, filePath: string, previews: { zh: string; en: string } | null): Upload[] {
-  const out: Upload[] = [{ key: row.file_key, path: filePath, contentType: CONTENT_TYPE[extensionOf(row.file_name)]!, disposition: `attachment; filename*=UTF-8''${encodeURIComponent(row.file_name)}` }]
+export function uploadsFor(row: Row, filePath: string | null, previews: { zh: string; en: string } | null, body?: Uint8Array): Upload[] {
+  const out: Upload[] = [{ key: row.file_key, ...(filePath ? { path: filePath } : {}), ...(body ? { body } : {}), contentType: CONTENT_TYPE[extensionOf(row.file_name)]!, disposition: `attachment; filename*=UTF-8''${encodeURIComponent(row.file_name)}` }]
   if (previews) for (const lang of ['zh', 'en'] as const) out.push({ key: `previews/${row.sha256}/${lang}.svg`, body: new TextEncoder().encode(previews[lang]), contentType: 'image/svg+xml', disposition: 'inline' })
   return out
 }
