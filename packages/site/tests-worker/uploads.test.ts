@@ -106,6 +106,12 @@ describe('the upload page', () => {
     expect(await item('small-dot')).toMatchObject({ author: 'Chosen name', author_url: 'https://example.com/me' })
     expect(await (await send('/en/explore/mine/', { cookie }))!.text()).toContain('Name: Chosen name')
   })
+  it('escapes the display name wherever the account bar shows it', async () => {
+    const cookie = await cookieFor(CREATOR, false)
+    await post('/en/explore/welcome/', form({ author: '<img src=x onerror=alert(1)>', next: '/en/explore/' }, null), cookie)
+    const html = await (await send('/en/explore/', { cookie }))!.text()
+    expect(html).not.toContain('<img src=x'); expect(html).toContain('Name: &lt;img src=x onerror=alert(1)&gt;')
+  })
   it('names what is missing instead of uploading', async () => {
     const cookie = await cookieFor(CREATOR)
     const html = await (await post('/en/explore/upload/', form({ ...VALID, confirm: '' }), cookie))!.text()
