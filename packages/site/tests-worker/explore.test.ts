@@ -69,7 +69,10 @@ describe('the list page', () => {
     await seed({ slug: 'night-blue' })
     const miss = await (await get('/zh/explore/?q=' + encodeURIComponent('<b>霓虹')))!.text()
     expect(miss).toContain('没有匹配「&lt;b&gt;霓虹」的背景'); expect(miss).toContain('清空搜索')
-    expect(await (await get('/zh/explore/?kind=crosshair'))!.text()).toContain('这里还没有准星')
+    const empty = await (await get('/zh/explore/?kind=crosshair'))!.text()
+    expect(empty).toContain('这里还没有准星')
+    // Signed out, the way in is Steam sign-in, returning to this very page.
+    expect(empty).toContain('href="/auth/steam/login?next=%2Fzh%2Fexplore%2F%3Fkind%3Dcrosshair"')
   })
   it('pages 24 at a time and links the neighbouring pages', async () => {
     await seed(...Array.from({ length: PAGE_SIZE + 1 }, (_, i) => ({ slug: `t${String(i).padStart(2, '0')}`, published_at: `2026-10-${String(1 + (i % 28)).padStart(2, '0')}T00:00:${String(i).padStart(2, '0')}Z` })))
