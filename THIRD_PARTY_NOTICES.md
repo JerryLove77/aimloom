@@ -1,6 +1,7 @@
 # Third-party notices
 
 The crosshair module uses/adapts the sources below. No Valve or Riot game source is included.
+The release packages also carry PowerShell 7 (last section).
 
 ## csgo-sharecode
 
@@ -122,4 +123,38 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+```
+
+## PowerShell 7
+
+Source: https://github.com/PowerShell/PowerShell (the official `PowerShell-<version>-win-x64.zip`
+release asset; the version and SHA-256 are pinned in `scripts/installer/test-build/pwsh-runtime.json`)
+
+Use: the release packages (the portable ZIP and the Setup) carry it, unmodified, in their `pwsh\`
+folder; the App runs its PowerShell engine with it. Nothing from it is in this repository. Its own
+`LICENSE.txt` and `ThirdPartyNotices.txt` (the notices for the components it includes) ship beside
+it in that folder, unchanged.
+
+```text
+Copyright (c) Microsoft Corporation.
+
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```

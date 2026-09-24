@@ -4,14 +4,13 @@ KovaaK setup manager: background, sounds, crosshair, enemy look, and training Pr
 
 [Before you start]
 - Windows 10 or 11 (64-bit)
-- PowerShell 7: if you do not have it, run winget install --id Microsoft.PowerShell
-  in Terminal, or download it from https://aka.ms/powershell, then reopen this app
+- PowerShell 7: included in the pwsh folder beside it; nothing to install
 - WebView2: built into Windows 11; on Windows 10, if the window does not open,
   install the Microsoft Edge WebView2 Runtime
 
 [How to open]
 1. Put this whole folder anywhere, not inside the game folder. Do not take Aimloom.exe
-   out on its own: it needs the scripts folder beside it.
+   out on its own: it needs the scripts and pwsh folders beside it.
 2. Double-click Aimloom.exe.
 3. If a blue "Windows protected your PC" screen appears: choose More info, then Run anyway.
    Aimloom has no code-signing certificate yet, so Windows does not recognize it.

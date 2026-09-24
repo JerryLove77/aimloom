@@ -217,8 +217,9 @@ interpolates a name or path outside quotes; counts, limits, JSON keys and codes 
   `FPSAimTrainer-Win64-Shipping` before and during writes. Detection failure means stop; never
   force-close, never auto-elevate, never touch execution policy. (The App does remove the
   browser-download mark — the `Zone.Identifier` stream — from the files in **its own** `scripts\`
-  folder at startup, as Properties → Unblock would; without that, RemoteSigned refuses the worker
-  in every browser download. Nothing outside that folder, and never the policy.) The exceptions are
+  and `pwsh\` folders at startup, as Properties → Unblock would; without that, RemoteSigned refuses
+  the worker in every browser download, and the bundled PowerShell cannot load its own modules.
+  Nothing outside those folders, and never the policy.) The exceptions are
   the writes that only place files — Crosshair replace/add and the theme/sound add (`planFileAdd`)
   — which pass `-AllowRunningGame`; installer and restore callers must not use that switch.
   **Anything that writes `PrimaryUserSettings.json` (Theme, Sounds, Enemy, Profile apply) requires
@@ -238,10 +239,15 @@ reading the ZIP back before replacing the previous output. **The Setup is not re
 gives a different file on every bundle of identical inputs, so it is built once, and the file that
 was accepted is the file that is released — never rebuild it "identically". On Windows,
 `scripts/installer/test-build/package-test-build.ps1` packages the folder and the ZIP, and
-`package-setup.ps1 -Folder <that folder>` bundles the same `scripts\**` and `VERSION.txt` into the
-Setup. The installer's behaviour lives in `packages/app/src-tauri/windows/` (`installer.nsi` is
-Tauri 2.11.4's template with one line changed, pinned by SHA-256; `hooks.nsh` refuses the data
-folder before install and offers PowerShell 7 after it) and is pinned by
+`package-setup.ps1 -Folder <that folder>` bundles the same `scripts\**`, `pwsh\**` and
+`VERSION.txt` into the Setup. **PowerShell 7 ships inside every release** as `pwsh\`: the official
+`PowerShell-<version>-win-x64.zip`, passed as `-PwshZip`, refused unless its size and SHA-256 match
+`scripts/installer/test-build/pwsh-runtime.json`, extracted unchanged. The App tries it before any
+installed PowerShell (`pwsh_candidates` in `worker.rs`), so a player installs nothing; moving the
+pin to a new PowerShell release means running every suite on it first. The installer's behaviour
+lives in `packages/app/src-tauri/windows/` (`installer.nsi` is Tauri 2.11.4's template with one
+line changed, pinned by SHA-256; `hooks.nsh` refuses the data folder before install and, only when
+no PowerShell 7 answers after it — the bundled one first — offers one through winget) and is pinned by
 `tests/installer/setup-installer.test.ts`. A preview deploy must never move `aimloom.dev`: every
 wrangler environment other than production declares `"routes": []`
 (`packages/site/tests/deploy-config.test.ts`).

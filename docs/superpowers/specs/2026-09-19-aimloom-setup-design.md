@@ -109,7 +109,10 @@ under `%LOCALAPPDATA%\Aimloom`.
 ### 3.3 PowerShell 7 (`NSIS_HOOK_POSTINSTALL`)
 
 1. **Detect** the same way the App does:
-   - first `$PROGRAMFILES64\PowerShell\7\pwsh.exe`. NSIS is a 32-bit process, so plain
+   - first `$INSTDIR\pwsh\pwsh.exe`, the PowerShell 7 the Setup has just installed with the
+     App (added 2026-09-24: every release carries it, so a normal install finds it and never
+     asks; everything below is the fallback for a bundled copy that does not run);
+   - then `$PROGRAMFILES64\PowerShell\7\pwsh.exe`. NSIS is a 32-bit process, so plain
      `$PROGRAMFILES` would point at `Program Files (x86)`;
    - then `pwsh.exe` on `PATH`;
    - a candidate counts only if `pwsh -NoProfile -NonInteractive -Command

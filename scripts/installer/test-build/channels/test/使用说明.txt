@@ -2,12 +2,11 @@ Aimloom · 测试版 {{VERSION}}
 
 【运行前需要】
 · Windows 10 或 11（64 位）
-· PowerShell 7：没有的话，在「终端」中运行 winget install --id Microsoft.PowerShell，
-  或访问 https://aka.ms/powershell 下载安装，然后重新打开本程序
+· PowerShell 7：已经随附在旁边的 pwsh 文件夹里，不用另外安装
 · WebView2：Windows 11 已自带；Windows 10 如果窗口打不开，请安装 Microsoft Edge WebView2 运行时
 
 【怎么打开】
-1. 把整个文件夹放在任意位置。不要只拿出 Aimloom.exe，它需要旁边的 scripts 文件夹。
+1. 把整个文件夹放在任意位置。不要只拿出 Aimloom.exe，它需要旁边的 scripts 和 pwsh 文件夹。
 2. 双击 Aimloom.exe。
 3. 如果出现蓝色的「Windows 已保护你的电脑」：点「更多信息」→「仍要运行」。
    测试版没有购买代码签名证书，所以 Windows 不认识它。

@@ -5,8 +5,8 @@ Turns the packaged Aimloom folder into Aimloom-Setup-v<label>.exe with Tauri's N
 
 .DESCRIPTION
 Run after package-test-build.ps1, on the machine that ran the Tauri build. The installer's
-payload is that folder's own scripts\** and VERSION.txt, so the Setup and the ZIP carry the same
-bytes. The EXE comes from the build (target\<triple>\release\Aimloom.exe); the bundler marks its
+payload is that folder's own scripts\**, pwsh\** (the bundled PowerShell 7) and VERSION.txt, so
+the Setup and the ZIP carry the same bytes. The EXE comes from the build (target\<triple>\release\Aimloom.exe); the bundler marks its
 copy as an NSIS install (__TAURI_BUNDLE_TYPE_VAR_UNK becomes ..._NSS), which is the only
 difference from the ZIP's EXE. -ConfigOnly writes the generated bundle config and stops.
 
@@ -29,14 +29,15 @@ Set-StrictMode -Version 3.0
 $name = Split-Path $Folder -Leaf
 if ($name -notmatch '^Aimloom-v(.+)$') { throw "$Folder is not a packaged Aimloom-v<label> folder." }
 $label = $Matches[1]
-foreach ($required in 'Aimloom.exe', 'VERSION.txt', 'scripts\gui\kvk-gui-worker.ps1') {
+foreach ($required in 'Aimloom.exe', 'VERSION.txt', 'scripts\gui\kvk-gui-worker.ps1', 'pwsh\pwsh.exe') {
     if (-not (Test-Path -LiteralPath (Join-Path $Folder $required) -PathType Leaf)) { throw "$Folder lacks $required; run package-test-build.ps1 first." }
 }
 
-# Every payload file keeps its place relative to the folder: scripts\... and VERSION.txt.
+# Every payload file keeps its place relative to the folder: scripts\..., pwsh\... and VERSION.txt.
 $resources = [ordered]@{}
 $payload = @(Get-Item -LiteralPath (Join-Path $Folder 'VERSION.txt')) +
-    @(Get-ChildItem -LiteralPath (Join-Path $Folder 'scripts') -Recurse -File | Sort-Object FullName)
+    @(Get-ChildItem -LiteralPath (Join-Path $Folder 'scripts') -Recurse -File | Sort-Object FullName) +
+    @(Get-ChildItem -LiteralPath (Join-Path $Folder 'pwsh') -Recurse -File | Sort-Object FullName)
 foreach ($file in $payload) {
     $resources[($file.FullName -replace '\\', '/')] = [IO.Path]::GetRelativePath($Folder, $file.FullName) -replace '\\', '/'
 }
