@@ -16,6 +16,7 @@
     "check:links": "node scripts/check-links.mjs dist",
     "check:a11y": "node scripts/check-a11y.mjs dist",
     "stage:release": "node scripts/stage-release.mjs",
+    "release:upload": "node scripts/release-upload.mjs",
     "wrangler-config": "node scripts/wrangler-config.mjs",
     "report": "node scripts/wrangler-config.mjs && node scripts/report.mjs",
     "reports": "node scripts/wrangler-config.mjs && node scripts/report.mjs --list",

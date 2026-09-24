@@ -29,6 +29,13 @@ const TOP_KEYS = ['schemaVersion', 'recommended', 'beta', 'releases'] as const
 export const SITE_FILE = /^\/files\/[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/
 /** A Windows Setup served by the site itself, beside the ZIP; staged and checked the same way. */
 export const SITE_SETUP = /^\/files\/[A-Za-z0-9][A-Za-z0-9._-]*\.exe$/
+/**
+ * A release file in the public R2 bucket, for files over the 25 MiB a Worker's static asset may be
+ * (every release that carries PowerShell 7). scripts/release-upload.mjs puts it there; the deploy
+ * checks it is live with the described size.
+ */
+export const HOSTED_FILE = /^https:\/\/dl\.aimloom\.dev\/releases\/[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/
+export const HOSTED_SETUP = /^https:\/\/dl\.aimloom\.dev\/releases\/[A-Za-z0-9][A-Za-z0-9._-]*\.exe$/
 
 function fail(message: string): never { throw new Error(`releases.json: ${message}`) }
 
@@ -79,7 +86,7 @@ function setupFile(v: unknown, where: string): SetupFile | null {
   if (!isRecord(v)) fail(`${where}.setup must be {url, bytes, sha256} or null`)
   onlyKeys(v, ['url', 'bytes', 'sha256'], `${where}.setup`)
   const url = str(v.url, `${where}.setup.url`)
-  if (!SITE_SETUP.test(url)) fail(`${where}.setup.url must be /files/<name>.exe`)
+  if (!SITE_SETUP.test(url) && !HOSTED_SETUP.test(url)) fail(`${where}.setup.url must be /files/<name>.exe or https://dl.aimloom.dev/releases/<name>.exe`)
   if (typeof v.bytes !== 'number' || !Number.isInteger(v.bytes) || v.bytes <= 0) fail(`${where}.setup.bytes must be a positive integer`)
   const sha256 = str(v.sha256, `${where}.setup.sha256`)
   if (!/^[0-9a-f]{64}$/.test(sha256)) fail(`${where}.setup.sha256 must be 64 lowercase hex characters`)

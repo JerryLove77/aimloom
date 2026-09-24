@@ -70,8 +70,14 @@ describe('parseReleases', () => {
   it('reads a release without a Setup as setup: null', () => {
     expect(parseReleases(wrap(stable)).releases[0]?.setup).toBeNull()
   })
-  it('rejects a Setup that is not an .exe under /files/, or lacks a size or a SHA-256', () => {
+  it('accepts a Setup hosted in the public R2 bucket under releases/, for files too big for a static asset', () => {
+    const hosted = { ...setupFile, url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.0.exe' }
+    expect(parseReleases(wrap({ ...stable, setup: hosted })).releases[0]?.setup).toEqual(hosted)
+  })
+  it('rejects a Setup that is not an .exe under /files/ or R2 releases/, or lacks a size or a SHA-256', () => {
     for (const bad of [{ ...setupFile, url: 'https://dl.example/x.exe' }, { ...setupFile, url: '/files/x.zip' },
+                       { ...setupFile, url: 'https://dl.aimloom.dev/files/x.exe' }, { ...setupFile, url: 'https://dl.aimloom.dev/releases/x.zip' },
+                       { ...setupFile, url: 'http://dl.aimloom.dev/releases/x.exe' }, { ...setupFile, url: 'https://dl.aimloom.dev.example/releases/x.exe' },
                        { ...setupFile, bytes: 0 }, { ...setupFile, sha256: 'nope' }, { ...setupFile, extra: 1 }]) {
       expect(() => parseReleases(wrap({ ...stable, setup: bad })), JSON.stringify(bad)).toThrow(/setup/)
     }
