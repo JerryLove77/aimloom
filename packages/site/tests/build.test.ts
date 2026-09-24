@@ -72,13 +72,15 @@ describe('build output', () => {
     }
     expect(page('en')).toContain('One setup for each way you train.')
   })
-  it('download page shows the stable release, the Setup first and the portable ZIP second, both hashes, and no source link', () => {
+  it('download page offers only the Setup of the stable release, with its hash, and no source link', () => {
+    // The portable ZIP is on the GitHub release only (user, 2026-09-24): two download buttons made
+    // it easy to take the wrong one.
     for (const r of ['zh/download', 'en/download']) {
       const html = page(r)
       expect(html, r).toContain('data-download-state="stable"')
-      expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="/files/Aimloom-Setup-v0.1.4.exe"', 'href="/files/Aimloom-v0.1.4.zip"'])
+      expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="/files/Aimloom-Setup-v0.1.4.exe"'])
       expect(html, r).toContain('aef57e8284b3a68ebb0eb09bbcba10122c3b920e4c9c79bc3758e34369a0095a')
-      expect(html, r).toContain('8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14')
+      expect(html, r).not.toContain('8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')
       expect(html, r).not.toContain('id="beta"')

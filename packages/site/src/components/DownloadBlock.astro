@@ -34,7 +34,6 @@ const { lang, view, compact = false } = Astro.props
     {view.kind === 'beta' && <p class="notice">{t(lang, 'download.beta.notice')}</p>}
     <p class="row">
       {view.setup !== null && <a class="button button--primary" href={view.setup.url} download>{t(lang, 'download.setup')}</a>}
-      {view.setup !== null && !compact && <a class="button button--secondary" href={view.primaryUrl} download>{t(lang, 'download.portable')}</a>}
       {view.setup === null && <a class="button button--primary" href={view.primaryUrl} download>{t(lang, 'download.primary')}</a>}
       {!compact && view.mirrorUrl !== null && <a class="button button--secondary" href={view.mirrorUrl}>{t(lang, 'download.mirror')}</a>}
     </p>
