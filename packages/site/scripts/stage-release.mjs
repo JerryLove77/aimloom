@@ -5,10 +5,14 @@
 //
 // The ZIP is never committed. It is the file built on Windows and attached to the GitHub
 // release; put a copy in packages/site/release-files/ (gitignored) before deploying.
+//
+// A file hosted on R2 instead (https://dl.aimloom.dev/releases/<name>, put there by
+// release-upload.mjs) is not staged; the deploy only goes on once it is live with its size.
 import { createHash } from 'node:crypto'
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, statSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { hostedReleaseFiles, liveState } from './release-upload.mjs'
 
 const SITE_FILE = /^\/files\/[A-Za-z0-9][A-Za-z0-9._-]*\.zip$/
 const SITE_SETUP = /^\/files\/[A-Za-z0-9][A-Za-z0-9._-]*\.exe$/
@@ -48,12 +52,24 @@ export function stageRelease({ dist, source, releasesPath }) {
   return staged
 }
 
+/** Throws unless every R2-hosted release file is live with its described size: a page never links to a missing download. */
+export async function checkHosted({ source, releasesPath, fetchImpl = fetch }) {
+  const files = hostedReleaseFiles({ source, releasesPath })
+  for (const file of files) {
+    if (await liveState(file, fetchImpl) !== 'live') throw new Error(`v${file.version}: ${file.url} is not live. Run npm run release:upload -w @kvk/site first.`)
+  }
+  return files
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const site = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+  const paths = { source: join(site, 'release-files'), releasesPath: join(site, 'src/data/releases.json') }
   try {
-    const staged = stageRelease({ dist: join(site, 'dist'), source: join(site, 'release-files'), releasesPath: join(site, 'src/data/releases.json') })
+    const staged = stageRelease({ dist: join(site, 'dist'), ...paths })
     for (const s of staged) console.log(`staged files/${s.file} (${s.bytes} bytes)`)
-    if (!staged.length) console.log('no release ZIP is served from the site')
+    const hosted = await checkHosted(paths)
+    for (const h of hosted) console.log(`live on R2: ${h.url} (${h.bytes} bytes)`)
+    if (!staged.length && !hosted.length) console.log('no release file is served')
   } catch (error) {
     console.error(error instanceof Error ? error.message : error)
     process.exit(1)

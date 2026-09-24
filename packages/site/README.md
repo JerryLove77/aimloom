@@ -37,7 +37,16 @@ Neither file is in git. Before a deploy, put the exact files attached to the Git
 `npm run stage:release` (run by both deploy scripts after `astro build`) copies each to
 `dist/files/` only if its size and SHA-256 match `releases.json`, and fails the deploy otherwise.
 `npm test` rebuilds `dist/` and so removes staged files: run the link and a11y checks after
-`build` + `stage:release`, not after the tests. `mirrorUrl` is optional while the repository
+`build` + `stage:release`, not after the tests.
+
+**Releases over 25 MiB are hosted on R2.** A Worker's static asset may be at most 25 MiB, and every
+release that carries PowerShell 7 is about 100 MB. Such a release names its files
+`https://dl.aimloom.dev/releases/<name>` (the ZIP's `primaryUrl` and `setup.url`), in the public
+bucket `aimloom-files`. With the files in `release-files/`, `npm run release:upload -w @kvk/site`
+checks each against `releases.json`, puts what is not yet live (`--dry-run` only prints), and reads
+it back over the public URL byte for byte. A name already live is never overwritten; another size
+under it stops the run. `stage:release`, and so every deploy, then refuses to go on unless each
+hosted file answers with its described size, so the Download page never links to a missing file. `mirrorUrl` is optional while the repository
 is private; the Download page then shows one link.
 
 ## The feedback address
