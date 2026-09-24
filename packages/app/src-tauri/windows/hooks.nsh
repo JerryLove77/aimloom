@@ -7,8 +7,8 @@
 ; own variables (PassiveMode and the rest) and loads its languages after this include. So the
 ; texts are plain defines picked at run time by $LANGUAGE, not LangStrings.
 
-!define AIMLOOM_PWSH_ASK_ZH "Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网；Windows 会请求管理员权限。"
-!define AIMLOOM_PWSH_ASK_EN "Aimloom needs PowerShell 7. Install it now with winget? This needs an internet connection, and Windows will ask for administrator permission."
+!define AIMLOOM_PWSH_ASK_ZH "Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网下载约 120 MB，网速慢时可能要几分钟。下载进度显示在弹出的窗口里，关掉那个窗口即可取消。Windows 可能会请求管理员权限。"
+!define AIMLOOM_PWSH_ASK_EN "Aimloom needs PowerShell 7. Install it now with winget? It downloads about 120 MB, which can take several minutes on a slow connection. A separate window shows the progress; close it to cancel. Windows may ask for administrator permission."
 ; Identical to PWSH_MISSING and PWSH_MISSING_EN in packages/app/src-tauri/src/installer/worker.rs
 ; (a test checks both).
 !define AIMLOOM_PWSH_MISSING_ZH "没有找到 PowerShell 7。请先安装，然后重新打开本程序：在「终端」中运行 winget install --id Microsoft.PowerShell，或访问 https://aka.ms/powershell 下载。"
@@ -17,9 +17,22 @@
 !define AIMLOOM_PWSH_FOUND_EN "PowerShell 7: found"
 !define AIMLOOM_PWSH_SILENT_ZH "PowerShell 7：未找到。静默安装不会自动安装它"
 !define AIMLOOM_PWSH_SILENT_EN "PowerShell 7: not found. A silent install does not install it"
-!define AIMLOOM_PWSH_INSTALLING_ZH "正在用 winget 安装 PowerShell 7…"
-!define AIMLOOM_PWSH_INSTALLING_EN "Installing PowerShell 7 with winget..."
+!define AIMLOOM_PWSH_INSTALLING_ZH "正在用 winget 安装 PowerShell 7，进度见弹出的窗口…"
+!define AIMLOOM_PWSH_INSTALLING_EN "Installing PowerShell 7 with winget; its window shows the progress..."
+; Tried first: the Microsoft Store's copy of PowerShell 7, an MSIX package like the GitHub
+; .msixbundle the winget source picks (the tester's PC runs the Store-signed one). The Store
+; serves it from Microsoft's CDN, which players in China reach without a proxy. The winget
+; source hands its GitHub download to Delivery Optimization (winget's log says so), a system
+; service widely reported not to use the player's proxy settings, so a download could stall
+; there while the browser works.
+!define AIMLOOM_WINGET_STORE_ARGS "install --id 9MZ1SNWT0N5D --exact --source msstore --accept-package-agreements --accept-source-agreements"
+; Then the winget source, for a Windows without the Store (LTSC, trimmed builds).
 !define AIMLOOM_WINGET_ARGS "install --id Microsoft.PowerShell --exact --source winget --accept-package-agreements --accept-source-agreements"
+; Last, the browser, which does use the player's proxy. Microsoft's install page lists the
+; current MSI (aka.ms/powershell-release answered 404 on 2026-09-24).
+!define AIMLOOM_PWSH_PAGE_URL "https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-windows"
+!define AIMLOOM_PWSH_PAGE_ZH "现在用浏览器打开 PowerShell 7 的下载页吗？"
+!define AIMLOOM_PWSH_PAGE_EN "Open the PowerShell 7 download page in your browser now?"
 ; Refusal shown when the chosen folder is the data folder (see AimloomInsideDataDir below).
 !define AIMLOOM_DATADIR_ZH "不能安装到 Aimloom 的数据文件夹：备份和 Profile 保存在那里。请重新运行安装程序，换一个文件夹。"
 !define AIMLOOM_DATADIR_EN "Aimloom cannot be installed into its own data folder, where backups and Profiles are kept. Run the installer again and choose another folder."
@@ -76,8 +89,23 @@ Function AimloomFindPwsh
   ${EndIf}
 FunctionEnd
 
-; Only in an interactive install, and only after Yes. The UAC prompt belongs to winget and the
-; PowerShell MSI; the player answers it.
+; One winget install in its own console window, not through nsExec: winget prints no progress
+; into a pipe (checked: a piped download of the ~120 MB package writes six lines and nothing
+; while it downloads), so a hidden run on a slow connection looked like a frozen installer with
+; no way out. The window shows winget's own progress bar, and closing it cancels; either way the
+; detection that follows decides what happens next. $R0 = winget.exe; uses $R3.
+!macro AIMLOOM_WINGET_INSTALL ARGS
+  ClearErrors
+  ExecWait '"$R0" ${ARGS}' $R3
+  ${If} ${Errors}
+    StrCpy $R3 "not started"
+  ${EndIf}
+  DetailPrint "winget ${ARGS}: $R3"
+  Call AimloomFindPwsh
+!macroend
+
+; Only in an interactive install, and only after Yes. Any UAC prompt belongs to winget and the
+; package it runs; the player answers it.
 Function AimloomOfferPwsh
   Push $R0
   Push $R1
@@ -100,15 +128,17 @@ Function AimloomOfferPwsh
     ${If} $R2 == "0"
       !insertmacro AIMLOOM_TEXT $R1 PWSH_INSTALLING
       DetailPrint "$R1"
-      ; /OEM: readable winget output in the details pane, for the same UTF-16 reason as above.
-      nsExec::ExecToLog /OEM '"$R0" ${AIMLOOM_WINGET_ARGS}'
-      Pop $R0
-      DetailPrint "winget: $R0"
-      Call AimloomFindPwsh
+      !insertmacro AIMLOOM_WINGET_INSTALL "${AIMLOOM_WINGET_STORE_ARGS}"
+      ${If} $AimloomPwsh != "1"
+        !insertmacro AIMLOOM_WINGET_INSTALL "${AIMLOOM_WINGET_ARGS}"
+      ${EndIf}
     ${EndIf}
     ${If} $AimloomPwsh != "1"
       !insertmacro AIMLOOM_TEXT $R1 PWSH_MISSING
-      MessageBox MB_OK|MB_ICONEXCLAMATION "$R1" /SD IDOK
+      !insertmacro AIMLOOM_TEXT $R2 PWSH_PAGE
+      ${If} ${Cmd} `MessageBox MB_YESNO|MB_ICONEXCLAMATION "$R1$\n$\n$R2" /SD IDNO IDYES`
+        ExecShell "open" "${AIMLOOM_PWSH_PAGE_URL}"
+      ${EndIf}
     ${EndIf}
   ${EndIf}
   Pop $R3
