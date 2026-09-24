@@ -99,6 +99,17 @@ npm run test:site                                   # the website: Node suite + 
 python3 -m unittest discover -s scripts/privacy -p 'test_*.py'   # the privacy scanner
 ```
 
+`scripts/dev/check.sh` runs these with Node 24 and cargo put on PATH by `scripts/dev/env.sh`
+(source it in any shell that finds no node, the wrong major, or no cargo), from the repository
+root, and prints each step's summary, then a PASS/FAIL table:
+
+```sh
+npm run check -- ts                              # typecheck + npm test
+npm run check -- ts --project installer controller   # that vitest filter + typecheck
+npm run check -- rust site py privacy            # cargo test, test:site, the Python suites, denyscan + gitleaks
+npm run check -- all                             # everything above; the PowerShell suites still need Windows
+```
+
 Installer frontend (`-w @kvk/app`):
 
 ```sh

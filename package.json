@@ -18,6 +18,7 @@
     "crosshair:pack": "npm run prepare:pack -w @kvk/crosshair --",
     "dev:site": "npm run dev -w @kvk/site",
     "build:site": "npm run build -w @kvk/site",
-    "test:site": "npm test -w @kvk/site"
+    "test:site": "npm test -w @kvk/site",
+    "check": "bash scripts/dev/check.sh"
   }
 }
