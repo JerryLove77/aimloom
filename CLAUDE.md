@@ -105,20 +105,6 @@ npm run build:installer -w @kvk/app   # -> packages/app/dist-installer
 npm run build:installer:windows -w @kvk/app   # Windows only, by design
 ```
 
-Docker development (repository root; [details](docs/docker-development.md)):
-
-```sh
-npm run docker:config          # validate Compose without starting containers
-npm run docker:dev             # build + live installer preview on 127.0.0.1:5173
-npm run docker:check           # rebuild source snapshot; Vitest + typecheck in Linux
-npm run docker:build           # frontend files -> dist/docker-installer, not a Windows EXE
-npm run docker:down            # remove only this project's containers/network/dependency volumes
-```
-
-The dev service mounts only selected browser source inputs read-only; dependencies are Linux-only
-anonymous volumes renewed at startup. Tests and builds use rebuilt image snapshots. Update the
-Dockerfile manifest copies and `.dockerignore` when adding workspaces.
-
 Native + packaging (each layer has its own suite; `npm test` covers none of them):
 
 ```sh
@@ -129,7 +115,7 @@ pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
 pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1 -CaseFilter '<substring>'   # single case
 ```
 
-CI (`.github/workflows/ci.yml`) runs all of the above except Docker, plus the sixteen PowerShell
+CI (`.github/workflows/ci.yml`) runs all of the above, plus the sixteen PowerShell
 suites on Windows. `distribution`, `windows-entrypoints` and `gui-distribution` need an extracted
 release ZIP and are not in CI. If `cargo` is missing from a non-interactive shell,
 `export PATH="$HOME/.cargo/bin:$PATH"`.

@@ -275,5 +275,5 @@ user on 2026-09-22 and written down in
   check, and degrades without it; anything beyond that is a visible design decision (see CUR-S2).
 - **No code-signing certificate** (user, 2026-09-20): Aimloom will not buy one. The SmartScreen prompt stays a
   known issue, explained on the Download page and in the Guide; do not propose signing again.
-- Windows is the player target. Mac, browser and Docker are development and preview hosts.
-  Players need no Docker, WSL or Node.
+- Windows is the player target. Mac and the browser are development and preview hosts.
+  Players need no WSL or Node.

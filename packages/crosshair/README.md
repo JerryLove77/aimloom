@@ -117,13 +117,10 @@ from manual KovaaK observations. Prepare a uniquely named six-case, scale-1 PNG 
 ```sh
 npm run test:crosshair:auto
 npm run test:crosshair:prepare
-npm run docker:check
-npm run docker:build
 ```
 
-The Docker context includes this workspace and runs its tests with the existing installer
-and core suites. Browser/native UI integration and real-game visual calibration are
-separate acceptance tasks.
+`npm test` runs this workspace's tests with the installer and core suites. Browser/native UI
+integration and real-game visual calibration are separate acceptance tasks.
 
 ## UI-independent preview and replacement functions
 
