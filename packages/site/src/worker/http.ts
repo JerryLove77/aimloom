@@ -3,6 +3,7 @@ export type ErrorCode =
   | 'UNKNOWN_CLIENT' | 'RATE_LIMITED' | 'DAILY_LIMIT' | 'STORAGE_FULL' | 'STORAGE_FAILED'
   | 'INVALID_STEAM_URL' | 'STEAM_NOT_FOUND' | 'STEAM_UNREACHABLE'
   | 'FORBIDDEN' | 'UNAUTHORIZED'
+  | 'INVALID_TICKET' | 'HUMAN_CHECK_FAILED' | 'TICKETS_CLOSED'
 
 const HEADERS = { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' }
 export const json = (body: unknown, status = 200): Response => new Response(JSON.stringify(body), { status, headers: HEADERS })

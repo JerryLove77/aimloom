@@ -39,7 +39,8 @@
   ],
   "ratelimits": [
     { "name": "REPORT_LIMIT", "namespace_id": "2001", "simple": { "limit": 3, "period": 60 } },
-    { "name": "STEAM_LIMIT", "namespace_id": "2002", "simple": { "limit": 10, "period": 60 } }
+    { "name": "STEAM_LIMIT", "namespace_id": "2002", "simple": { "limit": 10, "period": 60 } },
+    { "name": "TICKET_LIMIT", "namespace_id": "2003", "simple": { "limit": 3, "period": 60 } }
   ],
   "env": {
     "preview": {
@@ -57,7 +58,8 @@
       ],
       "ratelimits": [
         { "name": "REPORT_LIMIT", "namespace_id": "2101", "simple": { "limit": 3, "period": 60 } },
-        { "name": "STEAM_LIMIT", "namespace_id": "2102", "simple": { "limit": 10, "period": 60 } }
+        { "name": "STEAM_LIMIT", "namespace_id": "2102", "simple": { "limit": 10, "period": 60 } },
+        { "name": "TICKET_LIMIT", "namespace_id": "2103", "simple": { "limit": 3, "period": 60 } }
       ]
     }
   }

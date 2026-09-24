@@ -27,7 +27,7 @@ describe('Worker deployment config', () => {
       expect(d1?.database_name, name).toBe(`aimloom-${name}`)
       expect(env.r2_buckets, name).toEqual([{ binding: 'FILES', bucket_name: 'aimloom-files' }, { binding: 'UPLOADS', bucket_name: 'aimloom-uploads' }]) // the explorer's buckets; report bodies still live in D1
       expect(env.send_email, name).toEqual([{ name: 'MAIL' }])
-      expect((env.ratelimits as { name: string }[]).map(r => r.name).sort(), name).toEqual(['REPORT_LIMIT', 'STEAM_LIMIT'])
+      expect((env.ratelimits as { name: string }[]).map(r => r.name).sort(), name).toEqual(['REPORT_LIMIT', 'STEAM_LIMIT', 'TICKET_LIMIT'])
     }
   })
   it('runs the script first for /api/*, the explorer and /d/* only: every other page and release file stays a static asset', () => {
@@ -51,6 +51,7 @@ describe('Worker deployment config', () => {
     expect(config.ratelimits).toEqual([
       { name: 'REPORT_LIMIT', namespace_id: '2001', simple: { limit: 3, period: 60 } },
       { name: 'STEAM_LIMIT', namespace_id: '2002', simple: { limit: 10, period: 60 } },
+      { name: 'TICKET_LIMIT', namespace_id: '2003', simple: { limit: 3, period: 60 } },
     ])
   })
   it('deletes expired reports once a day, everywhere, so the Privacy page\'s promise holds with no traffic', () => {

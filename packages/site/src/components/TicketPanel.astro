@@ -1,0 +1,49 @@
+---
+// The feedback panel: a button fixed at the bottom right (and a footer link) opens a side panel
+// with a ticket form. A native <dialog> opened as a modal keeps focus inside, closes on Esc and
+// makes the page behind it inert. The form posts to /api/tickets (src/worker/tickets.ts); the
+// Turnstile widget is loaded only when the panel first opens, and only if the Worker has a key.
+import { localizePath, t, type Lang, type MessageKey } from '../i18n'
+interface Props { lang: Lang }
+const { lang } = Astro.props
+const messageKeys: MessageKey[] = ['ticket.sending', 'ticket.submit', 'ticket.done', 'ticket.closed', 'ticket.error.description', 'ticket.error.human',
+  'ticket.error.humanFailed', 'ticket.error.rate', 'ticket.error.daily', 'ticket.error.generic']
+const messages = Object.fromEntries(messageKeys.map(k => [k, t(lang, k)]))
+---
+<button type="button" class="ticket-fab" data-ticket-open aria-haspopup="dialog">{t(lang, 'ticket.fab')}</button>
+<dialog class="ticket" id="ticket" aria-labelledby="ticket-title" data-lang={lang} data-messages={JSON.stringify(messages)}>
+  <div class="ticket__head">
+    <h2 id="ticket-title">{t(lang, 'ticket.title')}</h2>
+    <button type="button" class="ticket__close" data-ticket-close aria-label={t(lang, 'ticket.close')}>×</button>
+  </div>
+  <p class="muted ticket__intro">{t(lang, 'ticket.intro')}</p>
+  <form class="ticket__form" id="ticket-form" novalidate>
+    <fieldset class="ticket__kinds">
+      <legend>{t(lang, 'ticket.kind')}</legend>
+      {(['problem', 'idea', 'other'] as const).map((kind, i) => (
+        <label><input type="radio" name="kind" value={kind} checked={i === 0} /> {t(lang, `ticket.kind.${kind}`)}</label>
+      ))}
+    </fieldset>
+    <label class="ticket__field">
+      <span>{t(lang, 'ticket.description')}</span>
+      <textarea name="description" rows="6" maxlength="2000" required aria-describedby="ticket-description-hint"></textarea>
+      <span class="small muted" id="ticket-description-hint">{t(lang, 'ticket.description.hint')}</span>
+    </label>
+    <label class="ticket__field">
+      <span>{t(lang, 'ticket.contact')}</span>
+      <input type="text" name="contact" maxlength="200" autocomplete="email" aria-describedby="ticket-contact-hint" />
+      <span class="small muted" id="ticket-contact-hint">{t(lang, 'ticket.contact.hint')}</span>
+    </label>
+    <div class="ticket__human" id="ticket-human"><p class="small muted">{t(lang, 'ticket.loading')}</p></div>
+    <p class="ticket__status" id="ticket-status" role="status" aria-live="polite"></p>
+    <div class="row">
+      <button type="submit" class="button button--primary" id="ticket-submit">{t(lang, 'ticket.submit')}</button>
+    </div>
+    <p class="small muted">{t(lang, 'ticket.privacy')} <a href={`${localizePath(lang, '/privacy')}#ticket`}>{t(lang, 'footer.privacy')}</a></p>
+  </form>
+  <div class="ticket__done" id="ticket-done" hidden>
+    <p class="notice" id="ticket-done-text" role="status"></p>
+    <div class="row"><button type="button" class="button button--secondary" id="ticket-again">{t(lang, 'ticket.again')}</button></div>
+  </div>
+</dialog>
+<script>import '../scripts/ticket.client'</script>

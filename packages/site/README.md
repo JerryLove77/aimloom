@@ -162,6 +162,18 @@ Turnstile pass: set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET` as secrets in bo
 uploads stay closed.
 A new file gets a new SHA-256 key; old objects are never overwritten or deleted by the command.
 
+## Tickets from the website
+
+Every page has a **Feedback** button (bottom right) and a footer link that open a side panel
+(`src/components/TicketPanel.astro`, `src/scripts/ticket.client.ts`). It posts to `/api/tickets`
+(`src/worker/tickets.ts`): the site's own Origin, a Cloudflare Turnstile pass (the same two secrets
+as uploads; without them `GET /api/tickets/key` answers `null` and the panel says tickets are
+closed, which is always the case on preview), a per-address limit (`TICKET_LIMIT`, 3 a minute) and
+100 tickets a UTC day. A ticket keeps the kind, the description, an optional contact, the page's
+language and path — no IP address — in the D1 table `tickets`, is mailed to `REPORT_TO`, and is
+deleted after 180 days like a report (the Privacy page's `#ticket` section says so). Apply
+`0004_tickets.sql` to both databases, like 0002, **before** deploying the Worker that writes it.
+
 ## The report backend
 
 `src/worker/index.ts` runs first for `/api/*` only (everything else stays a static asset,
