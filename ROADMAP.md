@@ -135,6 +135,9 @@ user on 2026-09-22 and written down in
 | `0.1.5-beta.1` on GitHub | **Done** 2026-09-22 (pre-release only; the site's beta field is not set) |
 | Deploy the site | **Done** 2026-09-23 (PRs #15 and #16; the READMEs followed in #17) |
 | `0.1.5-beta.2` / the site's beta field | Not released: the only 0.1.5 build is `0.1.5-beta.1`, and `latest.json`'s `beta` is `null` |
+| **PowerShell 7 in every release** (user, 2026-09-24: a tester in China, with a proxy, saw the Setup's winget step stall with no progress; 「不行就把powershell 7直接打进aimloom」): the official 7.6.6 ZIP, pinned, in `pwsh\`, tried first by the App and the Setup; the winget offer kept as a fallback, Store first and in a visible window | **Built** 2026-09-24 on `feat/bundled-pwsh`: suites on the tester's PC, the engine suites run under the bundled copy, a real `0.1.5-test.99` Setup (77 MB) and ZIP (109 MB). Not yet installed on a clean PC |
+| **Releases over 25 MiB on R2**; the site offers **only the Setup**, the portable ZIP stays on GitHub (user, 2026-09-24) | **Built** 2026-09-24 (`release:upload`, the deploy's live check, the Download page) |
+| **Feedback tickets on the site**: a side panel from a fixed button and the footer; the changelog moves to the footer (user, 2026-09-24) | **Built** 2026-09-24: `/api/tickets`, migration 0004, workerd tests, checked in a browser with Turnstile's test key. Not designed in Figma |
 
 ## After v0.1.5
 

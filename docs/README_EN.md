@@ -20,8 +20,8 @@
 
 ## Download
 
-Get the Setup or the portable ZIP from [aimloom.dev](https://aimloom.dev/en/download/), which lists
-each file's SHA-256. The same files are attached to the
+Get the Setup from [aimloom.dev](https://aimloom.dev/en/download/), which lists its SHA-256. The
+Setup and the portable ZIP are both attached to the
 [GitHub release](https://github.com/JerryLove77/aimloom/releases/latest). The current release is
 **v0.1.4**.
 
@@ -52,13 +52,16 @@ settings when it exits, so a change made while it runs would be lost.
   - Uploads are checked strictly: only theme `.json`, sound `.wav` / `.ogg` and crosshair `.png`,
     every byte must fit the format, and crosshair images are re-encoded. A new creator's upload is
     reviewed before it goes public, and creators can withdraw their own files at any time.
+- **Feedback** — the Feedback button at the bottom right of every page sends a ticket, no account
+  needed; leave an email to get a reply.
 - **[Crosshair code tool](https://aimloom.dev/en/crosshair/)** — no install: paste a CS2 or VALORANT
   code in the browser, preview it, fine-tune it and download the PNG. Nothing is uploaded.
 
 ## Requirements
 
 - Windows 10 or 11, x64.
-- **PowerShell 7** — the Setup offers to install it through winget if it is missing.
+- **PowerShell 7** — included in Aimloom (its `pwsh` folder): nothing to install, and the
+  PowerShell on your system is left alone.
 - WebView2, which Windows 10/11 normally has.
 
 Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose *More info* →

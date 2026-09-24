@@ -19,8 +19,8 @@
 
 ## 下载
 
-到 [aimloom.dev](https://aimloom.dev/zh/download/) 下载安装程序或便携版 ZIP，页面上有每个文件的 SHA-256。
-同样的文件也挂在 [GitHub Releases](https://github.com/JerryLove77/aimloom/releases/latest)。当前版本是 **v0.1.4**。
+到 [aimloom.dev](https://aimloom.dev/zh/download/) 下载安装程序，页面上有它的 SHA-256。
+安装程序和免安装的便携版 ZIP 都挂在 [GitHub Releases](https://github.com/JerryLove77/aimloom/releases/latest)。当前版本是 **v0.1.4**。
 
 ## 功能
 
@@ -37,12 +37,13 @@
 - **[探索](https://aimloom.dev/zh/explore/)**：浏览、试听、下载别人分享的背景、音效和准星。下载的就是原文件，拖进 Aimloom 对应的页面就能用。
   - **上传**：用 Steam 登录（只拿 SteamID，不碰密码），起一个署名，选文件就能传；每次上传还有一道 Cloudflare Turnstile 真人验证。
   - 上传的文件会被严格检查：只收主题 `.json`、音效 `.wav` / `.ogg`、准星 `.png`，每个字节都要对得上格式，准星图片会重新编码。新作者的上传先经审核再公开；作者可以随时下架自己的文件。
+- **反馈**：每个页面右下角的「反馈」可以直接提交工单，不用注册；留个邮箱就能收到回复。
 - **[准星代码工具](https://aimloom.dev/zh/crosshair/)**：不用安装 App，在浏览器里粘贴 CS2 / VALORANT 准星代码，预览、微调、下载 PNG，全程不上传任何东西。
 
 ## 运行要求
 
 - Windows 10 或 11，64 位。
-- **PowerShell 7**：没有的话，安装程序会提出用 winget 帮你装。
+- **PowerShell 7**：已经打包在 Aimloom 里（`pwsh` 文件夹），不用另外安装，也不会动系统里的 PowerShell。
 - WebView2，Windows 10/11 一般都自带。
 
 Aimloom 没有代码签名，第一次运行时 Windows SmartScreen 可能会提示：点「更多信息」→「仍要运行」。下载页给出了每个文件的 SHA-256，可以用来核对下载的文件。
