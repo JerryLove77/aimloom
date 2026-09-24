@@ -72,12 +72,18 @@ Function AimloomTryPwsh
   Pop $R0
 FunctionEnd
 
-; The App's order: Program Files first, then PATH. NSIS is a 32-bit process, so plain
-; $PROGRAMFILES would be "Program Files (x86)".
+; The App's order (pwsh_candidates in worker.rs): the PowerShell 7 the Setup has just put in
+; $INSTDIR\pwsh, then Program Files, then PATH. So a normal install finds the bundled copy and
+; never asks; the winget offer is left for a bundled copy that does not run. NSIS is a 32-bit
+; process, so plain $PROGRAMFILES would be "Program Files (x86)".
 Function AimloomFindPwsh
   StrCpy $AimloomPwsh "0"
-  Push "$PROGRAMFILES64\PowerShell\7\pwsh.exe"
+  Push "$INSTDIR\pwsh\pwsh.exe"
   Call AimloomTryPwsh
+  ${If} $AimloomPwsh != "1"
+    Push "$PROGRAMFILES64\PowerShell\7\pwsh.exe"
+    Call AimloomTryPwsh
+  ${EndIf}
   ${If} $AimloomPwsh != "1"
     Push $R0
     SearchPath $R0 "pwsh.exe"

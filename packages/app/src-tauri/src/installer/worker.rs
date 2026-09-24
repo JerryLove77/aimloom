@@ -37,7 +37,14 @@ impl WorkerConfig {
         }
         #[cfg(target_os = "windows")]
         {
-            let executable = discover_pwsh()?;
+            // <exe dir>\pwsh: the PowerShell 7 the release ships. Unblocked before it is tried,
+            // for the same reason as the scripts (see unblock_own_scripts).
+            let bundled = std::env::current_exe().ok()
+                .and_then(|exe| exe.parent().map(|dir| dir.join("pwsh")));
+            if let Some(dir) = &bundled {
+                unblock_bundled_pwsh(dir);
+            }
+            let executable = discover_pwsh(bundled.as_deref())?;
             let script = production_worker_path()?;
             // scripts\gui\kvk-gui-worker.ps1 → scripts\. See unblock_own_scripts.
             if let Some(scripts) = script.parent().and_then(Path::parent) {
@@ -126,6 +133,23 @@ const WORKER_EXITED_EN: &str = "The background worker stopped unexpectedly and t
 /// leaves startup as it was. Returns how many marks were removed.
 #[cfg(any(test, target_os = "windows"))]
 fn unblock_own_scripts(root: &Path) -> usize {
+    unblock_tree(root, 4, 1000)
+}
+
+/// Unblocks the PowerShell 7 that ships beside the app, in its own `pwsh` folder.
+///
+/// The same Explorer extraction marks it too, and then it starts but cannot load its own
+/// modules: `Microsoft.PowerShell.Security` refused its `Security.types.ps1xml` ("AuthorizationManager
+/// check failed"), observed on 2026-09-24 with 7.6.6 and every file marked. The official ZIP has
+/// 698 entries up to five folders deep, so this walk goes deeper and further than the scripts'.
+/// Only this folder, and only the mark; the execution policy is never changed.
+#[cfg(target_os = "windows")]
+fn unblock_bundled_pwsh(root: &Path) -> usize {
+    unblock_tree(root, 8, 5000)
+}
+
+#[cfg(any(test, target_os = "windows"))]
+fn unblock_tree(root: &Path, max_depth: usize, max_entries: usize) -> usize {
     let mut removed = 0;
     let mut visited = 0;
     let mut folders = vec![(root.to_path_buf(), 0)];
@@ -133,7 +157,7 @@ fn unblock_own_scripts(root: &Path) -> usize {
         let Ok(entries) = fs::read_dir(&folder) else { continue };
         for entry in entries.flatten() {
             visited += 1;
-            if visited > 1000 {
+            if visited > max_entries {
                 return removed;
             }
             let path = entry.path();
@@ -142,7 +166,7 @@ fn unblock_own_scripts(root: &Path) -> usize {
                 continue;
             }
             if meta.is_dir() {
-                if depth < 4 {
+                if depth < max_depth {
                     folders.push((path, depth + 1));
                 }
             } else if meta.is_file() && remove_download_mark(&path) {
@@ -259,19 +283,31 @@ fn validated_pwsh(path: &Path) -> bool {
         .and_then(|s| s.trim().parse::<u32>().ok()).map(|major| major >= 7).unwrap_or(false)
 }
 
+/// Where to look for PowerShell 7, in order: the copy the release ships (`bundled`, the app's
+/// own `pwsh` folder), so every player runs the version the suites ran; then an installed one,
+/// the normal MSI location first and then each folder on `PATH`. The first that proves itself
+/// with [`validated_pwsh`] is used, so a damaged bundled copy falls back to an installed one.
+#[cfg(any(test, target_os = "windows"))]
+fn pwsh_candidates(bundled: Option<&Path>, program_files: &Path, path: Option<&std::ffi::OsStr>) -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(dir) = bundled {
+        candidates.push(dir.join("pwsh.exe"));
+    }
+    candidates.push(program_files.join("PowerShell").join("7").join("pwsh.exe"));
+    if let Some(path) = path {
+        candidates.extend(std::env::split_paths(path).map(|directory| directory.join("pwsh.exe")));
+    }
+    candidates
+}
+
 #[cfg(target_os = "windows")]
-fn discover_pwsh() -> Result<PathBuf, Issue> {
+fn discover_pwsh(bundled: Option<&Path>) -> Result<PathBuf, Issue> {
     let program_files = std::env::var_os("ProgramFiles")
         .map(PathBuf::from).unwrap_or_else(|| PathBuf::from(r"C:\Program Files"));
-    let normal = program_files.join("PowerShell").join("7").join("pwsh.exe");
-    if validated_pwsh(&normal) { return pin_interpreter(&normal); }
-
-    if let Some(path) = std::env::var_os("PATH") {
-        for directory in std::env::split_paths(&path) {
-            let candidate = directory.join("pwsh.exe");
-            if validated_pwsh(&candidate) {
-                return pin_interpreter(&candidate);
-            }
+    let path = std::env::var_os("PATH");
+    for candidate in pwsh_candidates(bundled, &program_files, path.as_deref()) {
+        if validated_pwsh(&candidate) {
+            return pin_interpreter(&candidate);
         }
     }
     Err(Issue::new(ErrorCode::WorkerUnavailable, PWSH_MISSING, PWSH_MISSING_EN))
@@ -693,6 +729,43 @@ mod tests {
         assert_eq!(unblock_own_scripts(&scripts), 0);
         assert_eq!(fs::read_to_string(scripts.join("kvk-engine.ps1")).unwrap(), "engine");
         let _ = fs::remove_dir_all(scripts.parent().unwrap());
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn unblock_reaches_every_file_of_the_bundled_powershell_and_nothing_beside_it() {
+        // The official ZIP nests five folders deep; the scripts' walk stops at four.
+        let root = log_dir("unblock-pwsh");
+        let pwsh = root.join("pwsh");
+        let deep = pwsh.join("a").join("b").join("c").join("d").join("e");
+        fs::create_dir_all(&deep).unwrap();
+        let exe = pwsh.join("pwsh.exe");
+        let nested = deep.join("Security.types.ps1xml");
+        let beside = root.join("Aimloom.exe");
+        for path in [&exe, &nested, &beside] {
+            fs::write(path, "x").unwrap();
+            mark(path);
+        }
+        assert_eq!(unblock_bundled_pwsh(&pwsh), 2);
+        assert!(!marked(&exe) && !marked(&nested), "every bundled file must be unblocked");
+        assert!(marked(&beside), "nothing outside the pwsh folder may be touched");
+        let _ = fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn the_bundled_powershell_is_tried_first_then_program_files_then_path() {
+        let bundled = PathBuf::from("app").join("pwsh");
+        let program_files = PathBuf::from("pf");
+        let path = std::env::join_paths([PathBuf::from("p1"), PathBuf::from("p2")]).unwrap();
+        let candidates = pwsh_candidates(Some(&bundled), &program_files, Some(&path));
+        assert_eq!(candidates, vec![
+            bundled.join("pwsh.exe"),
+            program_files.join("PowerShell").join("7").join("pwsh.exe"),
+            PathBuf::from("p1").join("pwsh.exe"),
+            PathBuf::from("p2").join("pwsh.exe"),
+        ]);
+        // Without a bundled copy (a development build) the installed ones are all that is left.
+        assert_eq!(pwsh_candidates(None, &program_files, None), vec![program_files.join("PowerShell").join("7").join("pwsh.exe")]);
     }
 
     #[test]

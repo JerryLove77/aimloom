@@ -47,7 +47,14 @@ describe('the PowerShell 7 hook', () => {
 
   it('runs after the files are in place', () => expect(macro).not.toBe(''))
 
-  it('looks where the App looks: 64-bit Program Files first, then PATH, and needs a major version of 7+', () => {
+  it('looks where the App looks: the bundled copy, then 64-bit Program Files, then PATH, and needs a major version of 7+', () => {
+    const find = /^Function AimloomFindPwsh$([\s\S]*?)^FunctionEnd$/m.exec(hooks)?.[1] ?? ''
+    const bundled = find.indexOf('Push "$INSTDIR\\pwsh\\pwsh.exe"')
+    const programFiles = find.indexOf('Push "$PROGRAMFILES64\\PowerShell\\7\\pwsh.exe"')
+    const path = find.indexOf('SearchPath $R0 "pwsh.exe"')
+    expect(bundled).toBeGreaterThan(-1)
+    expect(programFiles).toBeGreaterThan(bundled)
+    expect(path).toBeGreaterThan(programFiles)
     expect(hooks).toContain('"$PROGRAMFILES64\\PowerShell\\7\\pwsh.exe"')
     expect(hooks).not.toMatch(/\$PROGRAMFILES\\PowerShell/)
     expect(hooks).toMatch(/SearchPath \$R0 "pwsh\.exe"/)

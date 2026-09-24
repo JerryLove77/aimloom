@@ -8,6 +8,7 @@ $packager = Join-Path (Split-Path $PSScriptRoot -Parent) 'test-build/package-tes
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 $appVersion = (Get-Content -LiteralPath (Join-Path $repo 'packages/app/src-tauri/tauri.installer.conf.json') -Raw | ConvertFrom-Json).version
 
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 $script:Count = 0
 function Test-Case([string]$Name,[scriptblock]$Action) {
     if ($CaseFilter -and $Name -notlike "*$CaseFilter*") { return }
@@ -16,10 +17,30 @@ function Test-Case([string]$Name,[scriptblock]$Action) {
     # Only the MZ header is checked, so a four-byte stand-in is enough.
     $script:Exe = Join-Path $root 'app.exe'; [IO.File]::WriteAllBytes($script:Exe, [byte[]](0x4D, 0x5A, 0, 0))
     $script:Out = Join-Path $root 'out'; $null = [IO.Directory]::CreateDirectory($script:Out)
+    # A stand-in for the official PowerShell ZIP: the running pwsh.exe (only its version resource
+    # is read), a licence and one nested file, with a pin that describes exactly these bytes.
+    $source = Join-Path $root 'pwsh-source'
+    $null = [IO.Directory]::CreateDirectory((Join-Path $source 'Modules/Fake'))
+    Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination (Join-Path $source 'pwsh.exe')
+    [IO.File]::WriteAllText((Join-Path $source 'LICENSE.txt'), 'MIT')
+    [IO.File]::WriteAllText((Join-Path $source 'Modules/Fake/Fake.psd1'), '@{}')
+    $script:PwshZip = Join-Path $root 'PowerShell-win-x64.zip'
+    [IO.Compression.ZipFile]::CreateFromDirectory($source, $script:PwshZip)
+    $script:PwshVersion = "$((Get-Item -LiteralPath (Join-Path $source 'pwsh.exe')).VersionInfo.ProductVersion)".Split(' ')[0]
+    $script:PwshPin = Join-Path $root 'pwsh-runtime.json'
+    Write-Pin @{}
     try { & $Action; $script:Count++; Write-Host "PASS $Name" } finally { Remove-Item -LiteralPath $root -Recurse -Force }
 }
+function Write-Pin([hashtable]$Change) {
+    $pin = @{ schemaVersion = 1; version = $script:PwshVersion; url = 'https://example.invalid/pwsh.zip'
+        bytes = (Get-Item -LiteralPath $script:PwshZip).Length
+        sha256 = (Get-FileHash -LiteralPath $script:PwshZip -Algorithm SHA256).Hash.ToLowerInvariant() }
+    foreach ($key in $Change.Keys) { $pin[$key] = $Change[$key] }
+    $pin | ConvertTo-Json | Set-Content -LiteralPath $script:PwshPin -Encoding utf8NoBOM
+}
 function Invoke-Packager([hashtable]$Arguments) {
-    $all = @{ Exe = $script:Exe; Commit = 'abc1234'; OutRoot = $script:Out } + $Arguments
+    $all = @{ Exe = $script:Exe; Commit = 'abc1234'; OutRoot = $script:Out; PwshZip = $script:PwshZip; PwshPin = $script:PwshPin }
+    foreach ($key in $Arguments.Keys) { $all[$key] = $Arguments[$key] }
     return & $packager @all
 }
 function Expect-Refusal([scriptblock]$Body,[string]$Match) {
@@ -85,6 +106,51 @@ Test-Case 'a beta build is labelled as a beta everywhere a player looks' {
     }
 }
 
+Test-Case 'PowerShell 7 ships in pwsh\, extracted from the pinned ZIP byte for byte' {
+    $result = Invoke-Packager @{ Version = $appVersion; Channel = 'release' }
+    Assert ($result.Pwsh -ceq $script:PwshVersion) "Wrong bundled version: $($result.Pwsh)"
+    $zip = [IO.Compression.ZipFile]::OpenRead($script:PwshZip)
+    try {
+        $entries = @($zip.Entries | Where-Object { $_.Name })
+        $shipped = @($result.Files | Where-Object { $_ -like 'pwsh\*' } | ForEach-Object { $_.Substring(5) -replace '\\', '/' } | Sort-Object)
+        $expected = @($entries | ForEach-Object { $_.FullName -replace '\\', '/' } | Sort-Object)
+        Assert (($shipped -join '|') -ceq ($expected -join '|')) "pwsh\ holds $($shipped -join ', '), the ZIP $($expected -join ', ')"
+        foreach ($entry in $entries) {
+            $reader = $entry.Open(); $memory = [IO.MemoryStream]::new()
+            try { $reader.CopyTo($memory) } finally { $reader.Dispose() }
+            $onDisk = [IO.File]::ReadAllBytes((Join-Path $result.Folder "pwsh/$($entry.FullName)"))
+            Assert ([Convert]::ToHexString($onDisk) -ceq [Convert]::ToHexString($memory.ToArray())) "pwsh/$($entry.FullName) differs from the ZIP"
+        }
+    } finally { $zip.Dispose() }
+    $lines = @(Get-Content -LiteralPath (Join-Path $result.Folder 'VERSION.txt'))
+    Assert ($lines -contains "PowerShell $script:PwshVersion") 'VERSION.txt must name the bundled PowerShell'
+    Assert ($lines[0] -ceq "Aimloom $appVersion") 'The first line stays the build label'
+}
+
+Test-Case 'a PowerShell ZIP that is not the pinned one is refused, and nothing is left behind' {
+    Write-Pin @{ sha256 = '0' * 64 }
+    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'SHA-256'
+    Write-Pin @{ bytes = 1 }
+    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'bytes'
+    Write-Pin @{}
+    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release'; PwshZip = (Join-Path $script:Out 'missing.zip') } } 'does not exist'
+    Write-Pin @{ sha256 = 'not-a-hash' }
+    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'not a valid PowerShell pin'
+}
+
+Test-Case 'a pwsh.exe that states another version than the pin is refused, and nothing is left behind' {
+    Write-Pin @{ version = '0.0.1' }
+    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'says version'
+}
+
+Test-Case 'the tracked pin names the official PowerShell 7 ZIP' {
+    $pin = Get-Content -LiteralPath (Join-Path (Split-Path $packager -Parent) 'pwsh-runtime.json') -Raw | ConvertFrom-Json -AsHashtable
+    Assert ($pin.schemaVersion -eq 1) 'schemaVersion 1'
+    Assert ($pin.version -cmatch '^7\.\d+\.\d+$') "A PowerShell 7 release: $($pin.version)"
+    Assert ($pin.url -ceq "https://github.com/PowerShell/PowerShell/releases/download/v$($pin.version)/PowerShell-$($pin.version)-win-x64.zip") "The official win-x64 ZIP: $($pin.url)"
+    Assert ($pin.sha256 -cmatch '^[0-9a-f]{64}$' -and $pin.bytes -gt 0) 'Size and SHA-256'
+}
+
 Test-Case 'a label that disagrees with the app version or the channel is refused' {
     Expect-Refusal { Invoke-Packager @{ Version = '9.9.9'; Channel = 'release' } } $appVersion
     Expect-Refusal { Invoke-Packager @{ Version = '9.9.9-test.1' } } $appVersion
@@ -96,14 +162,15 @@ Test-Case 'a label that disagrees with the app version or the channel is refused
 }
 $setupPackager = Join-Path (Split-Path $PSScriptRoot -Parent) 'test-build/package-setup.ps1'
 
-Test-Case 'the Setup payload is exactly the packaged folder: every script and VERSION.txt, nothing else' {
+Test-Case 'the Setup payload is exactly the packaged folder: every script, the bundled PowerShell and VERSION.txt, nothing else' {
     $result = Invoke-Packager @{ Version = $appVersion; Channel = 'release' }
     $plan = & $setupPackager -Folder $result.Folder -OutRoot $script:Out -ConfigOnly
-    $expected = @($result.Files | Where-Object { $_ -like 'scripts\*' -or $_ -eq 'VERSION.txt' } | ForEach-Object { $_ -replace '\\', '/' } | Sort-Object)
+    $expected = @($result.Files | Where-Object { $_ -like 'scripts\*' -or $_ -like 'pwsh\*' -or $_ -eq 'VERSION.txt' } | ForEach-Object { $_ -replace '\\', '/' } | Sort-Object)
     $targets = @($plan.Resources.Values | Sort-Object)
     Assert (($targets -join '|') -ceq ($expected -join '|')) "Payload $($targets -join ', ') differs from $($expected -join ', ')"
     foreach ($source in $plan.Resources.Keys) { Assert (Test-Path -LiteralPath $source -PathType Leaf) "Missing payload source $source" }
     Assert ($targets -notcontains 'Aimloom.exe' -and $targets -notcontains '使用说明.txt') 'The EXE comes from the build and the readme is for the ZIP only'
+    Assert ($targets -contains 'pwsh/pwsh.exe' -and $targets -contains 'pwsh/Modules/Fake/Fake.psd1') 'The Setup must carry the bundled PowerShell'
     $json = Get-Content -LiteralPath $plan.Config -Raw | ConvertFrom-Json -AsHashtable
     Assert ($json.bundle.resources.Count -eq $targets.Count) 'The written config must carry the same map'
 }
