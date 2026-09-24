@@ -69,16 +69,43 @@ describe('the PowerShell 7 hook', () => {
   })
 
   it('asks in the installer\'s language: Chinese for 2052, English otherwise', () => {
-    expect(hooks).toContain('!define AIMLOOM_PWSH_ASK_ZH "Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网；Windows 会请求管理员权限。"')
-    expect(hooks).toContain('!define AIMLOOM_PWSH_ASK_EN "Aimloom needs PowerShell 7. Install it now with winget? This needs an internet connection, and Windows will ask for administrator permission."')
+    expect(hooks).toContain('!define AIMLOOM_PWSH_ASK_ZH "Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网下载约 120 MB，网速慢时可能要几分钟。下载进度显示在弹出的窗口里，关掉那个窗口即可取消。Windows 可能会请求管理员权限。"')
+    expect(hooks).toContain('!define AIMLOOM_PWSH_ASK_EN "Aimloom needs PowerShell 7. Install it now with winget? It downloads about 120 MB, which can take several minutes on a slow connection. A separate window shows the progress; close it to cancel. Windows may ask for administrator permission."')
     expect(hooks).toMatch(/\$\{If\} \$LANGUAGE == 2052/)
     const english = [...hooks.matchAll(/!define AIMLOOM_\w+_EN "([^"]+)"/g)].map(m => m[1])
     expect(english.length).toBeGreaterThanOrEqual(4)
     for (const text of english) expect(text).not.toMatch(/[　-〿㐀-鿿＀-￯“”‘’]/)
   })
 
-  it('installs with exactly the approved winget command', () => {
+  it('installs with exactly the approved winget commands', () => {
+    expect(hooks).toContain('!define AIMLOOM_WINGET_STORE_ARGS "install --id 9MZ1SNWT0N5D --exact --source msstore --accept-package-agreements --accept-source-agreements"')
     expect(hooks).toContain('!define AIMLOOM_WINGET_ARGS "install --id Microsoft.PowerShell --exact --source winget --accept-package-agreements --accept-source-agreements"')
+  })
+
+  it('runs each install in a window the player can see and close, never hidden behind a pipe', () => {
+    // winget writes no progress into a pipe, so a hidden install on a slow connection looked
+    // like a frozen Setup. ExecWait gives the console app its own window with winget's
+    // progress bar; closing that window is the way to cancel.
+    const install = /^!macro AIMLOOM_WINGET_INSTALL ARGS$([\s\S]*?)^!macroend$/m.exec(hooks)?.[1] ?? ''
+    expect(install).toContain(`ExecWait '"$R0" \${ARGS}' $R3`)
+    expect(install).toContain('Call AimloomFindPwsh')
+    expect(hooks).not.toMatch(/nsExec::\S+.*(\$\{ARGS\}|AIMLOOM_WINGET)/)
+  })
+
+  it('tries the Store, then the winget source, then offers the browser, each only while PowerShell 7 is still missing', () => {
+    // The winget source downloads from GitHub through Delivery Optimization, which does not use
+    // the player's proxy; the Store's CDN needs none, and the browser uses the proxy.
+    const offer = /^Function AimloomOfferPwsh$([\s\S]*?)^FunctionEnd$/m.exec(hooks)?.[1] ?? ''
+    const store = offer.indexOf('AIMLOOM_WINGET_INSTALL "${AIMLOOM_WINGET_STORE_ARGS}"')
+    const source = offer.indexOf('AIMLOOM_WINGET_INSTALL "${AIMLOOM_WINGET_ARGS}"')
+    const page = offer.indexOf('ExecShell "open" "${AIMLOOM_PWSH_PAGE_URL}"')
+    expect(store).toBeGreaterThan(-1)
+    expect(source).toBeGreaterThan(store)
+    expect(page).toBeGreaterThan(source)
+    expect(offer.slice(store, source)).toContain('${If} $AimloomPwsh != "1"')
+    expect(offer.slice(source, page)).toContain('${If} $AimloomPwsh != "1"')
+    expect(offer).toMatch(/MessageBox MB_YESNO\|MB_ICONEXCLAMATION "\$R1\$\\n\$\\n\$R2" \/SD IDNO IDYES/)
+    expect(hooks).toContain('!define AIMLOOM_PWSH_PAGE_URL "https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-windows"')
   })
 
   it('tells a player still without PowerShell 7 exactly what the App tells them, in both languages', () => {

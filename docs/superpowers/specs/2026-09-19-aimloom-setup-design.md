@@ -117,15 +117,34 @@ under `%LOCALAPPDATA%\Aimloom`.
 2. **If it is found,** say nothing.
 3. **If it is missing,** ask, in Chinese, Yes/No:
 
-   > Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网；Windows 会请求管理员权限。
+   > Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网下载约 120 MB，网速慢时可能要几分钟。下载进度显示在弹出的窗口里，关掉那个窗口即可取消。Windows 可能会请求管理员权限。
 
    The silent default is No: `/S` installs never trigger a download or UAC.
-4. **On Yes,** run
-   `winget install --id Microsoft.PowerShell --exact --source winget --accept-package-agreements --accept-source-agreements`
-   with its output in the installer's details pane, then detect again.
-5. **If there is no `winget`, it fails, or PowerShell 7 is still not found,** show the App's
-   existing message (install command plus https://aka.ms/powershell). The installer finishes
-   either way; the App keeps its own check and message as the backstop.
+4. **On Yes,** try in order, each only while PowerShell 7 is still not found, and detect again
+   after each:
+   1. the Microsoft Store's copy:
+      `winget install --id 9MZ1SNWT0N5D --exact --source msstore --accept-package-agreements --accept-source-agreements`;
+   2. the winget source:
+      `winget install --id Microsoft.PowerShell --exact --source winget --accept-package-agreements --accept-source-agreements`.
+
+   Both install PowerShell 7 as an MSIX package; the winget source picks the GitHub
+   `.msixbundle`, and the tester's PC, where every suite runs, has the Store-signed
+   `Microsoft.PowerShell` 7.6.6. The order is for the network. winget's own log shows the winget
+   source downloading from GitHub through Delivery Optimization, a system service that is widely
+   reported not to use the player's own proxy settings. A tester in China whose browser works
+   through a proxy saw the install stall (2026-09-24; cause not observed on that PC). The Store
+   serves from Microsoft's CDN, which needs no proxy there; the winget source stays for a
+   Windows without the Store.
+
+   Each runs in its own console window (`ExecWait`), not behind `nsExec`: winget writes no
+   progress into a pipe, so a hidden download of the ~120 MB package looked like a frozen
+   installer with no way to cancel. The window shows winget's progress bar, and closing it
+   cancels.
+5. **If there is no `winget`, both fail, or PowerShell 7 is still not found,** show the App's
+   existing message (install command plus https://aka.ms/powershell) and ask whether to open
+   Microsoft's install page (which lists the current MSI) in the browser, which does use the
+   player's proxy. The installer finishes either way; the App keeps its own check and message
+   as the backstop.
 
 **Rules.** Aimloom never elevates itself: the UAC prompt belongs to winget and the MSI, and
 the player answers it. Nothing touches the execution policy, and nothing is installed without
