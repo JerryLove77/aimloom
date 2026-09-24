@@ -34,6 +34,9 @@ const FALLS_BACK_ON_PURPOSE: Record<string, string> = {
   STORAGE_FAILED: 'a transient server fault — "try again later" is exactly the right advice',
   FORBIDDEN: 'only the site\'s sign-in and upload routes answer it (Origin check); the App never calls them',
   UNAUTHORIZED: 'only the site\'s upload routes answer it (no session); the App never calls them',
+  INVALID_TICKET: 'only the website\'s feedback panel (/api/tickets) answers it; the App never calls that route',
+  HUMAN_CHECK_FAILED: 'only /api/tickets answers it (a failed Turnstile check); the App never calls that route',
+  TICKETS_CLOSED: 'only /api/tickets answers it (no Turnstile keys); the App never calls that route',
 }
 
 describe('every failure the backend can answer with is accounted for in the App', () => {

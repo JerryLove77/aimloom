@@ -6,6 +6,7 @@ import { notify } from './notify'
 import { handleExplore } from './explore'
 import { handleAuth } from './auth'
 import { deleteExpiredSessions } from './catalogue'
+import { deleteExpiredTickets, handleTickets, notifyTicket } from './tickets'
 
 /** `null` lets the request through. The address is the key and is written nowhere (spec §5.4). */
 export async function limited(limit: RateLimit, request: Request, failOpen: boolean): Promise<Response | null> {
@@ -30,6 +31,9 @@ export default {
     if (!pathname.startsWith('/api/')) return env.ASSETS.fetch(request)
     if (pathname === '/api/reports') return (await limited(env.REPORT_LIMIT, request, true)) ?? handleReport(request, env, ctx, { afterStore: notify })
     if (pathname === '/api/steam/resolve') return (await limited(env.STEAM_LIMIT, request, false)) ?? handleSteamResolve(request)
+    // The key is read on every panel opening, so only a sent ticket counts against the limit.
+    if (pathname === '/api/tickets/key') return await handleTickets(request, env, ctx) ?? fail('NOT_FOUND', 404)
+    if (pathname === '/api/tickets') return (await limited(env.TICKET_LIMIT, request, true)) ?? await handleTickets(request, env, ctx, { afterStore: notifyTicket }) ?? fail('NOT_FOUND', 404)
     return fail('NOT_FOUND', 404)
   },
   // The Cron Trigger (wrangler.jsonc's top-level `triggers`, inherited by every environment) is what
@@ -38,5 +42,6 @@ export default {
   async scheduled(_controller: ScheduledController, env: AppEnv, ctx: ExecutionContext): Promise<void> {
     ctx.waitUntil(deleteExpired(env, new Date()))
     ctx.waitUntil(deleteExpiredSessions(env.DB, new Date()))
+    ctx.waitUntil(deleteExpiredTickets(env, new Date()))
   },
 } satisfies ExportedHandler<AppEnv>

@@ -118,9 +118,36 @@ describe('build output', () => {
       const html = page(r)
       const toc = html.match(/<nav class="toc"[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? ''
       const ids = [...toc.matchAll(/href="#([a-z-]+)"/g)].map(m => m[1])
-      expect(ids, r).toEqual(['versions', 'when', 'sent', 'never', 'kept', 'explore', 'signin', 'contact'])
+      expect(ids, r).toEqual(['versions', 'when', 'sent', 'never', 'kept', 'explore', 'signin', 'ticket', 'contact'])
       for (const id of ids) expect(html, `${r}#${id}`).toContain(`id="${id}"`)
       expect(toc, r).toContain(r.startsWith('zh') ? '本页内容' : 'On this page')
+    }
+  })
+  it('keeps the changelog out of the top bar and links it from every footer (user, 2026-09-24: the top bar was crowded)', () => {
+    for (const r of routes) {
+      const lang = r.startsWith('zh') ? 'zh' : 'en'
+      const header = page(r).match(/<header class="nav"[^>]*>([\s\S]*?)<\/header>/)?.[1] ?? ''
+      const footer = page(r).match(/<footer class="footer"[^>]*>([\s\S]*?)<\/footer>/)?.[1] ?? ''
+      expect(header, r).not.toContain(`/${lang}/changelog/`)
+      expect(footer, r).toMatch(new RegExp(`<a href="/${lang}/changelog/"[^>]*>${lang === 'zh' ? '更新记录' : 'Changelog'}</a>`))
+    }
+    expect(page('en/changelog').match(/<footer class="footer"[^>]*>([\s\S]*?)<\/footer>/)?.[1]).toContain('aria-current="page"')
+  })
+  it('offers the feedback panel on every page: a side dialog opened from a fixed button and the footer, never a card on the page', () => {
+    for (const r of routes) {
+      const html = page(r)
+      const lang = r.startsWith('zh') ? 'zh' : 'en'
+      expect(html.match(/<dialog class="ticket" id="ticket"[^>]*>/g)?.length, r).toBe(1)
+      expect(html, r).toMatch(new RegExp(`<button type="button" class="ticket-fab" data-ticket-open aria-haspopup="dialog">${lang === 'zh' ? '反馈' : 'Feedback'}</button>`))
+      const footer = html.match(/<footer class="footer"[^>]*>([\s\S]*?)<\/footer>/)?.[1] ?? ''
+      expect(footer, r).toContain('data-ticket-open')
+      // The panel is a modal dialog with a name, a close button and a status line read aloud.
+      expect(html, r).toContain('aria-labelledby="ticket-title"')
+      expect(html, r).toContain('data-ticket-close')
+      expect(html, r).toContain('id="ticket-status" role="status" aria-live="polite"')
+      expect(html, r).toContain(`href="/${lang}/privacy/#ticket"`)
+      // Nothing is loaded from Cloudflare until the panel opens: the script adds the widget then.
+      expect(html, r).not.toMatch(/<script[^>]+src="https:\/\/challenges\.cloudflare\.com/)
     }
   })
   it('links the Privacy page from every footer, in the page\'s language', () => {

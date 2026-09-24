@@ -2,6 +2,7 @@
 import '../styles/tokens.css'
 import '../styles/global.css'
 import Nav from '../components/Nav.astro'
+import TicketPanel from '../components/TicketPanel.astro'
 import { HTML_LANG, LANGS, localizePath, t, type Lang } from '../i18n'
 interface Props { lang: Lang; title: string; description: string; path: '/' | '/download' | '/guide' | '/changelog' | '/privacy' | '/crosshair' | '/explore' }
 const { lang, title, description, path } = Astro.props
@@ -28,7 +29,10 @@ const FEEDBACK_EMAIL = 'feedback@aimloom.dev'
     </main>
     <footer class="footer">
       <p lang="en">{NAME_ORIGIN}</p>
-      <p>{t(lang, 'footer.feedback')}<a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a> · <a href={localizePath(lang, '/privacy')}>{t(lang, 'footer.privacy')}</a></p>
+      <!-- The changelog lives here, not in the top bar (user, 2026-09-24: the top bar was crowded). -->
+      <p><a href={localizePath(lang, '/changelog')} aria-current={path === '/changelog' ? 'page' : undefined}>{t(lang, 'nav.changelog')}</a> · <button type="button" class="footer-link" data-ticket-open aria-haspopup="dialog">{t(lang, 'ticket.footer')}</button> · <a href={localizePath(lang, '/privacy')}>{t(lang, 'footer.privacy')}</a></p>
+      <p>{t(lang, 'footer.feedback')}<a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a></p>
     </footer>
+    <TicketPanel lang={lang} />
   </body>
 </html>

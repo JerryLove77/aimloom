@@ -14,6 +14,8 @@ export interface AppEnv {
   // buildMail's output against the platform's real EmailMessageBuilder, not a hand-written stand-in.
   MAIL: SendEmail
   REPORT_LIMIT: RateLimit
+  /** The website's feedback panel (`/api/tickets`). */
+  TICKET_LIMIT: RateLimit
   STEAM_LIMIT: RateLimit
   /** Where the explorer's files are served from: the R2 bucket's custom domain (spec 2026-09-22 §4). */
   FILES_ORIGIN: string
@@ -23,7 +25,7 @@ export interface AppEnv {
   UPLOADS: R2Bucket
   /** Comma-separated SteamID64s allowed on the review page. A secret: `wrangler secret put ADMIN_STEAM_IDS`. Never in git. */
   ADMIN_STEAM_IDS?: string
-  /** Cloudflare Turnstile, the human check on every upload. Both are secrets; without them uploads stay closed. */
+  /** Cloudflare Turnstile, the human check on every upload and ticket. Both are secrets; without them both stay closed. */
   TURNSTILE_SITE_KEY?: string
   TURNSTILE_SECRET?: string
   /** The owner's mailbox. A secret: `wrangler secret put REPORT_TO`. Never in git. */

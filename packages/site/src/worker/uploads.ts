@@ -11,6 +11,7 @@ import type { Item } from '../lib/explore-types'
 import { accountBar, emptyForm, MAX_UPLOAD_BYTES, mineHtml, reviewHtml, uploadDoneHtml, uploadFormHtml, UPLOADS_PER_DAY, welcomeHtml, type FormValues, type Viewer } from '../lib/upload-view'
 import { creatorOf, fileNameTaken, freeSlug, insertItem, itemAnyStatus, liveItems, mine, pendingItems, rememberCreator, setStatus, setTrusted, trustedCreators, uploadsToday } from './catalogue'
 import { requireSameOrigin } from './auth'
+import { humanCheck } from './turnstile'
 import type { AppEnv } from './env'
 import { fail } from './http'
 
@@ -25,15 +26,6 @@ const publicMeta = (name: string) => ({ contentType: CONTENT_TYPE[extensionOf(na
 async function publishToFiles(env: AppEnv, key: string, name: string, bytes: Uint8Array, hash: string, previews: { zh: string; en: string } | null): Promise<void> {
   await env.FILES.put(key, bytes, { httpMetadata: publicMeta(name) })
   if (previews) for (const lang of ['zh', 'en'] as const) await env.FILES.put(`previews/${hash}/${lang}.svg`, previews[lang], { httpMetadata: { contentType: 'image/svg+xml', cacheControl: 'public, max-age=31536000, immutable' } })
-}
-
-/** Cloudflare Turnstile's server-side check. No IP is sent: only the widget's token. */
-async function humanCheck(env: AppEnv, token: string, fetcher: typeof fetch): Promise<boolean> {
-  if (!token || !env.TURNSTILE_SECRET) return false
-  try {
-    const r = await fetcher('https://challenges.cloudflare.com/turnstile/v0/siteverify', { method: 'POST', body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token }) })
-    return r.ok && (await r.json() as { success?: unknown }).success === true
-  } catch { return false }
 }
 
 async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, now: Date, fetcher: typeof fetch): Promise<Response> {
