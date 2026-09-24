@@ -40,9 +40,10 @@ Neither file is in git. Before a deploy, put the exact files attached to the Git
 `build` + `stage:release`, not after the tests.
 
 **Releases over 25 MiB are hosted on R2.** A Worker's static asset may be at most 25 MiB, and every
-release that carries PowerShell 7 is about 100 MB. Such a release names its files
-`https://dl.aimloom.dev/releases/<name>` (the ZIP's `primaryUrl` and `setup.url`), in the public
-bucket `aimloom-files`. With the files in `release-files/`, `npm run release:upload -w @kvk/site`
+release that carries PowerShell 7 is about 100 MB. From that release on (user, 2026-09-24) the
+site hosts **only the Setup**, at `https://dl.aimloom.dev/releases/<name>.exe` (`setup.url`) in the
+public bucket `aimloom-files`; the portable ZIP stays on the GitHub release, and `primaryUrl` is
+that asset's URL, so the Download page's portable button leads there. With the files in `release-files/`, `npm run release:upload -w @kvk/site`
 checks each against `releases.json`, puts what is not yet live (`--dry-run` only prints), and reads
 it back over the public URL byte for byte. A name already live is never overwritten; another size
 under it stops the run. `stage:release`, and so every deploy, then refuses to go on unless each

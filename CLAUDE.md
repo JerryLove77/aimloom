@@ -46,8 +46,10 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
   browser-safe entry exports parsers, geometry, RGBA and SVG, and `@kvk/crosshair/node` holds the
   Node-only PNG functions. Decoder provenance and limitations are in `docs/research/`; keep
   `THIRD_PARTY_NOTICES.md`, including inside images.
-- **Releases** are exactly the files the website serves: a Setup
-  (`Aimloom-Setup-v<version>.exe`, Tauri's NSIS installer with our hooks) and the portable ZIP.
+- **Releases** are two files, both attached to the GitHub release: a Setup
+  (`Aimloom-Setup-v<version>.exe`, Tauri's NSIS installer with our hooks), which the website also
+  serves from R2, and the portable ZIP, which the website links to on GitHub. Since PowerShell 7
+  ships inside, each is about 100 MB (`packages/site/README.md`).
 - **A Mac or Linux machine is a development host only.** Browser preview and tests run there; the
   App target is Windows. `npm run build:installer:windows` deliberately exits 2 elsewhere, and the
   Rust `installer::run()` refuses to start off Windows.
