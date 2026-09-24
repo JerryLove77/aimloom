@@ -1,6 +1,6 @@
 # Aimloom roadmap
 
-Updated 2026-09-22. This is the repository-wide scheduling entry point.
+Updated 2026-09-23. This is the repository-wide scheduling entry point.
 [Shared workspace design](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
 is the product authority. The website is designed in
 [the website and explorer spec](docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md),
@@ -80,7 +80,7 @@ the Settings switch.
 | PF-LAUNCH | **「用这个 Profile 启动游戏」 / "Start the game with this Profile".** Game closed → apply the Profile (the existing `planProfileApply`) → start KovaaK through Steam (`steam://rungameid/824270`). Game open → says to quit first. Steam not running → applies and tells the player to start the game | **Built** (2026-09-22): a second action in the apply dialog runs the same apply, then `installer_launch_game` opens `steam://rungameid/824270` (built in Rust, no UI-supplied target). The launch is best effort and never changes the apply's result; the status says so. Not yet seen starting a real game |
 | CUR-C2 | **Crosshair tuner.** Paste a CS2 / VALORANT code → sliders for what that game exposes (length, thickness, gap, outline, colour, centre dot, alpha) → live preview on a dark and a light swatch → save as a new PNG through the existing add path. **No export back to a code, no drawing from a blank canvas** (user, 2026-09-22). See the notes after this table | **Built 2026-09-22:** `packages/crosshair/src/tuning.ts` (`tune`/`getTuningParams`/`readTuningValue`, 18 tests) plus the fine-tune section in `CodeExportDialog.tsx` and `export-controller.ts` (13 + 22 App tests). Verified by the full suite (1412 tests), typecheck, `build:installer`, and a playwright pass pasting one CS2 and one VALORANT code in zh and en with no console errors — not yet checked against the real game or Figma. |
 | PF-CARDS | Profile cards in the Crosshair X layout: a corner chip naming the card, the preview filling the card's body, the name on a bottom line, an orange outline marking a card the Profile records (as opposed to one that keeps the current game setting), and a single muted sentence for the empty state. Two cards now (Theme, Sounds); Profile no longer manages the enemy or the crosshair | **Built** (2026-09-22): `ProfilesApp.tsx`'s `Slot` renders the chip/preview/name layout, reusing `AssetPreview` for Theme and a per-event list for Sounds; verified by `npm test`, `npm run typecheck`, `npm run build:installer -w @kvk/app` and a playwright pass in zh and en. Not yet seen against Figma |
-| WEB-CROSSHAIR | **A crosshair code tool on aimloom.dev** (`/zh/crosshair`, `/en/crosshair`): paste a CS2 or VALORANT code, preview it on a dark and a light swatch, fine-tune it with the App's controls, download the PNG for KovaaK. Runs in the browser on `@kvk/crosshair`'s browser-safe entry; nothing is uploaded and no network call is added | **Built** (2026-09-22): `packages/site/src/pages/[lang]/crosshair.astro` and `scripts/crosshair-tool.client.ts`, pinned by `tests/crosshair-tool.test.ts` and `build.test.ts`. Not deployed: the site goes out once, with the rest of v0.1.4. Not yet seen against Figma |
+| WEB-CROSSHAIR | **A crosshair code tool on aimloom.dev** (`/zh/crosshair`, `/en/crosshair`): paste a CS2 or VALORANT code, preview it on a dark and a light swatch, fine-tune it with the App's controls, download the PNG for KovaaK. Runs in the browser on `@kvk/crosshair`'s browser-safe entry; nothing is uploaded and no network call is added | **Built** (2026-09-22): `packages/site/src/pages/[lang]/crosshair.astro` and `scripts/crosshair-tool.client.ts`, pinned by `tests/crosshair-tool.test.ts` and `build.test.ts`. Deployed with v0.1.4 (2026-09-22). Not yet seen against Figma |
 | LOG | `worker.log` kept the worker's stderr in the console code page (GBK on a Chinese Windows) | **Closed:** fixed 2026-09-20 (the worker pins stderr to UTF-8); re-verified 2026-09-22 on the tester's PC in the App's launch shape — without the pin, code page 936 and invalid UTF-8; with it, readable |
 | UNK | Two plain `throw`s in `Invoke-KvkInstall` (a lock failure, an unfinished batch) surfaced as `unknown` | **Closed:** fixed 2026-09-20 — they carry `BUSY` and `RECOVERY_REQUIRED`, pinned by the engine suite |
 | PF4 | A → B → A → undo acceptance pass across Theme, Sounds, Enemy and Profile on the real game | **Passed** (2026-09-22) on `0.1.4-beta.2` from `856fb40`, by the user on the tester's PC: A → B → A on all four, the Beta mark, the tuner, 应用并启动游戏 and the Profile sheets' search (「都对」). The going-back path is re-applying the earlier choice; the page button that drops an unapplied choice is renamed 退出 / Cancel (user: it always meant leaving, not undo) |
@@ -126,13 +126,15 @@ user on 2026-09-22 and written down in
 |---|---|
 | Amend the spec | **Done** 2026-09-22; §10 records what changed while building |
 | Figma: list and detail, zh/en × desktop/phone | **Drawn** 2026-09-22 (round 1); the user moved on to code |
-| Worker routes, pages, migration, publish command | **Built** 2026-09-22: site suites (node and workerd), axe at 1280/390 on a local Worker with fake sample items. Not deployed |
-| **Sign-in through Steam and uploads** (spec §11; user, 2026-09-22 evening: 「做登录和允许上传」): anyone signed in may upload, a trusted creator's file goes live at once, others wait for the admin's review; a creator sees and withdraws their own | **Built** 2026-09-22: `auth.ts`, `uploads.ts`, migration 0003, workerd tests (77). Needs the private bucket `aimloom-uploads` and the `ADMIN_STEAM_IDS` secret; not deployed |
-| App link on Theme, Sounds, Crosshair (`installer_open_explore`) | **Built** 2026-09-22: Rust and App tests, checked in the browser demo. Not yet seen on Windows |
-| Provision R2 `aimloom-files` + `dl.aimloom.dev`; apply the migration | Next — the maintainer's Cloudflare account (site README, "The explorer") |
-| Content with permission | The user, in parallel |
+| Worker routes, pages, migration, publish command | **Live** 2026-09-23: built 2026-09-22 (site suites, node and workerd; axe at 1280/390 on a local Worker with fake sample items), deployed with PR #15 |
+| **Sign-in through Steam and uploads** (spec §11; user, 2026-09-22 evening: 「做登录和允许上传」): anyone signed in may upload, a trusted creator's file goes live at once, others wait for the admin's review; a creator sees and withdraws their own | **Live** 2026-09-23 (PR #15): `auth.ts`, `uploads.ts`, migration 0003, workerd tests. The user signed in and uploaded for real |
+| **Safer, simpler uploads** (PR #16): a three-field form, the display name picked once at `/explore/welcome/`, a Turnstile check on every upload, strict media checks (PNGs re-encoded, WAV and Ogg fully accounted for) on upload, approval and publish, and `site:backup` | **Live** 2026-09-23. An upload through Turnstile on the real site, and the rotated Turnstile secret, reported done by the user on 2026-09-23. Backups: D1 Time Travel (7 days) plus `site:backup` about weekly. Preview deployments keep uploads closed by design |
+| App link on Theme, Sounds, Crosshair (`installer_open_explore`) | **Built** 2026-09-22: Rust and App tests, checked in the browser demo; reported seen on Windows by the user on 2026-09-23 |
+| Provision R2 `aimloom-files` + `dl.aimloom.dev`, the private bucket, the admin secret; apply the migrations | **Done** 2026-09-23 on the maintainer's Cloudflare account (site README, "The explorer") |
+| Content with permission | **Open** — the user asks the authors; the explorer has little curated content until then |
 | `0.1.5-beta.1` on GitHub | **Done** 2026-09-22 (pre-release only; the site's beta field is not set) |
-| Deploy the site; `0.1.5-beta.2` | After the private bucket, the admin secret and migration 0003 |
+| Deploy the site | **Done** 2026-09-23 (PRs #15 and #16; the READMEs followed in #17) |
+| `0.1.5-beta.2` / the site's beta field | Not released: the only 0.1.5 build is `0.1.5-beta.1`, and `latest.json`'s `beta` is `null` |
 
 ## After v0.1.5
 
@@ -140,7 +142,6 @@ user on 2026-09-22 and written down in
 |---|---|---|
 | APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; ordered after the website explorer on 2026-09-22 (user: 「app探索页放在0.1.5后面」); not designed |
 | INSTALL-REDESIGN | **Quick import redesigned**, landing with APP-NAV — see the notes after this table | Decided by the user 2026-09-21; not designed |
-| UPLOAD | Community uploads to the explorer, with the verified Steam sign-in that only this needs, and moderation | Only if wanted; the catalogue design recorded what it brings back (submission and report tables, identity, moderation) |
 
 **APP-NAV — the shell the user described (2026-09-21):**
 - The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
