@@ -6,6 +6,12 @@ use std::sync::Arc;
 use tauri::State;
 
 use super::commands::{blocking, InstallerRuntime};
+#[cfg(target_os = "windows")]
+use super::commands::decode;
+#[cfg(target_os = "windows")]
+use super::protocol::BackupIndex;
+#[cfg(target_os = "windows")]
+use serde_json::json;
 use super::protocol::{ErrorCode, Issue};
 use super::worker::worker_log_path;
 
