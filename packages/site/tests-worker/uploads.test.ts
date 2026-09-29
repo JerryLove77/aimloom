@@ -42,6 +42,8 @@ function form(fields: Record<string, string>, file: { name: string; bytes: Uint8
 const VALID = { kind: 'crosshair', title_zh: '小点', title_en: 'Small dot', summary_zh: '绿色小点', summary_en: 'A green dot', licence: 'CC-BY-4.0', code: '', confirm: 'yes' }
 const post = (path: string, fd: FormData, cookie: string, origin: string | null = ORIGIN) => send(path, { method: 'POST', body: fd, cookie, headers: origin ? { origin } : {} })
 const item = (slug: string) => base.DB.prepare('SELECT * FROM item WHERE slug = ?').bind(slug).first<Record<string, unknown>>()
+/** Where an item's file is kept now; a waiting file's key has a random part. */
+const keyOf = async (slug: string) => String((await item(slug))!.file_key)
 
 describe('sign in through Steam', () => {
   it('sends the browser to Steam with the callback and the page to return to', async () => {
@@ -158,8 +160,9 @@ describe('the upload page', () => {
     const html = await r.text()
     expect(r.status).toBe(200); expect(html).toContain('It will appear on Explore once approved')
     const row = (await item('small-dot'))!
-    expect(row).toMatchObject({ status: 'pending', source: 'upload', uploader: CREATOR, file_key: 'pending/small-dot/small dot.png', author: 'Sample author', kind: 'crosshair' })
-    expect(await base.UPLOADS.get('pending/small-dot/small dot.png')).not.toBeNull()
+    expect(row).toMatchObject({ status: 'pending', source: 'upload', uploader: CREATOR, author: 'Sample author', kind: 'crosshair' })
+    expect(String(row.file_key)).toMatch(/^pending\/small-dot\/[0-9a-f]{16}\/small dot\.png$/)
+    expect(await base.UPLOADS.get(String(row.file_key))).not.toBeNull()
     expect((await base.FILES.list()).objects).toHaveLength(0)
     expect(await (await send('/en/explore/?kind=crosshair'))!.text()).not.toContain('Small dot')
     expect((await send('/en/explore/small-dot/'))!.status).toBe(404)
@@ -192,13 +195,14 @@ describe('my uploads', () => {
     expect((await send('/en/explore/mine/'))!.status).toBe(302)
     const html = await (await send('/en/explore/mine/', { cookie }))!.text()
     expect(html).toContain('Small dot'); expect(html).toContain('Awaiting review'); expect(html).toContain('name="slug" value="small-dot"')
+    const pending = await keyOf('small-dot')
     const other = await cookieFor(TRUSTED)
     await post('/en/explore/mine/withdraw', form({ slug: 'small-dot' }, null), other)
     expect((await item('small-dot'))!.status).toBe('pending')
     const r = (await post('/en/explore/mine/withdraw', form({ slug: 'small-dot' }, null), cookie))!
     expect(r.status).toBe(303)
     expect((await item('small-dot'))!.status).toBe('withdrawn')
-    expect(await base.UPLOADS.get('pending/small-dot/small dot.png')).toBeNull()
+    expect(await base.UPLOADS.get(pending)).toBeNull()
   })
 })
 
@@ -216,21 +220,24 @@ describe('the review page', () => {
     expect(html).toContain('小点 / Small dot'); expect(html).toContain(`Uploader SteamID ${CREATOR}`); expect(html).toContain('src="/en/explore/review/file/small-dot"')
     const file = (await send('/en/explore/review/file/small-dot', { cookie: admin }))!
     expect(file.status).toBe(200); expect(file.headers.get('content-type')).toBe('image/png'); expect(file.headers.get('cache-control')).toBe('private, no-store')
+    const pending = await keyOf('small-dot')
+    expect(await base.UPLOADS.get(pending)).not.toBeNull()
     const r = (await post('/en/explore/review/action', form({ slug: 'small-dot', action: 'approve' }, null), admin))!
     expect(r.status).toBe(303)
     const row = (await item('small-dot'))!
     expect(row.status).toBe('published'); expect(String(row.file_key)).toMatch(/^files\//); expect(row.published_at).toBe(NOW.toISOString())
-    expect(await base.FILES.get(String(row.file_key))).not.toBeNull(); expect(await base.UPLOADS.get('pending/small-dot/small dot.png')).toBeNull()
+    expect(await base.FILES.get(String(row.file_key))).not.toBeNull(); expect(await base.UPLOADS.get(pending)).toBeNull()
     expect(await (await send('/en/explore/?kind=crosshair'))!.text()).toContain('Small dot')
   })
   it('rejects only with a reason the creator then sees, trusts a creator, and hides a live item', async () => {
     const creator = await cookieFor(CREATOR); const admin = await cookieFor(ADMIN)
     await post('/en/explore/upload/', form(VALID), creator)
+    const pending = await keyOf('small-dot')
     const noReason = await (await post('/en/explore/review/action', form({ slug: 'small-dot', action: 'reject' }, null), admin))!.text()
     expect(noReason).toContain('A rejection needs a reason.'); expect((await item('small-dot'))!.status).toBe('pending')
     await post('/en/explore/review/action', form({ slug: 'small-dot', action: 'reject', reason: 'Too similar to an existing one' }, null), admin)
     expect((await item('small-dot'))!).toMatchObject({ status: 'rejected', reject_reason: 'Too similar to an existing one' })
-    expect(await base.UPLOADS.get('pending/small-dot/small dot.png')).toBeNull()
+    expect(await base.UPLOADS.get(pending)).toBeNull()
     expect(await (await send('/en/explore/mine/', { cookie: creator }))!.text()).toContain('Too similar to an existing one')
     await post('/en/explore/review/action', form({ slug: 'small-dot', action: 'trust' }, null), admin)
     expect(await base.DB.prepare('SELECT trusted FROM creator WHERE steam_id = ?').bind(CREATOR).first<number>('trusted')).toBe(1)
@@ -239,5 +246,89 @@ describe('the review page', () => {
     await post('/en/explore/review/action', form({ slug: 'second', action: 'hide' }, null), admin)
     expect((await item('second'))!.status).toBe('hidden')
     expect((await send('/en/explore/second/'))!.status).toBe(404)
+  })
+})
+
+// The same requests as above, sent at the same time: whatever order they land in, the database's
+// rules leave one consistent outcome and no stray file.
+describe('racing requests', () => {
+  const objects = async (bucket: R2Bucket, prefix: string) => (await bucket.list({ prefix })).objects.length
+  const log = () => base.DB.prepare('SELECT actor, action, slug, from_status, to_status FROM moderation_log ORDER BY id').all().then(r => r.results)
+
+  it('lets one of two same-name uploads in, and keeps no file for the other', async () => {
+    const before = await objects(base.UPLOADS, 'pending/')
+    const cookies = [await cookieFor(CREATOR), await cookieFor(TRUSTED)]
+    const pages = await Promise.all(cookies.map(c => post('/en/explore/upload/', form(VALID), c).then(r => r!.text())))
+    expect(pages.filter(h => h.includes('already on Explore'))).toHaveLength(1)
+    expect(await base.DB.prepare('SELECT COUNT(*) AS c FROM item').first<number>('c')).toBe(1)
+    expect(await objects(base.UPLOADS, 'pending/') - before).toBe(1)
+  })
+  it('keeps the daily limit when eleven uploads arrive at once', async () => {
+    const before = await objects(base.UPLOADS, 'pending/')
+    const cookie = await cookieFor(CREATOR)
+    const pages = await Promise.all(Array.from({ length: 11 }, (_, i) => post('/en/explore/upload/', form(VALID, { name: `dot ${i}.png`, bytes: png(), type: 'image/png' }), cookie).then(r => r!.text())))
+    expect(pages.filter(h => h.includes('You have uploaded 10 today'))).toHaveLength(1)
+    expect(await base.DB.prepare('SELECT COUNT(*) AS c FROM item WHERE uploader = ?').bind(CREATOR).first<number>('c')).toBe(10)
+    expect(await objects(base.UPLOADS, 'pending/') - before).toBe(10)
+  })
+  it('leaves no public file behind for a trusted creator\'s upload over the limit', async () => {
+    await base.DB.prepare("INSERT INTO creator (steam_id, trusted, display_name, first_seen) VALUES (?, 1, 'Trusted one', '2026-10-01T00:00:00.000Z')").bind(TRUSTED).run()
+    const cookie = await cookieFor(TRUSTED)
+    await Promise.all(Array.from({ length: 11 }, (_, i) => post('/en/explore/upload/', form(VALID, { name: `dot ${i}.png`, bytes: png(), type: 'image/png' }), cookie)))
+    expect(await base.DB.prepare("SELECT COUNT(*) AS c FROM item WHERE status = 'published'").first<number>('c')).toBe(10)
+    expect(await objects(base.FILES, 'files/')).toBe(10)
+  })
+  it('lets one of two racing review decisions win, logs only it, and leaves nothing public for a rejected file', async () => {
+    await post('/en/explore/upload/', form(VALID), await cookieFor(CREATOR))
+    const pending = await keyOf('small-dot'); const admin = await cookieFor(ADMIN)
+    const publicBefore = await objects(base.FILES, 'files/')
+    const answers = await Promise.all([
+      post('/en/explore/review/action', form({ slug: 'small-dot', action: 'approve' }, null), admin),
+      post('/en/explore/review/action', form({ slug: 'small-dot', action: 'reject', reason: 'Too similar' }, null), admin),
+    ])
+    const status = String((await item('small-dot'))!.status)
+    expect(['published', 'rejected']).toContain(status)
+    expect(await log()).toEqual([expect.objectContaining({ slug: 'small-dot', from_status: 'pending', to_status: status })])
+    expect(await objects(base.FILES, 'files/') - publicBefore).toBe(status === 'published' ? 1 : 0)
+    expect(await base.UPLOADS.get(pending)).toBeNull()
+    // The loser either saw the item already decided (a plain redirect) or lost the write and says so.
+    for (const a of answers) if (a!.status === 200) expect(await a!.text()).toContain('Someone else acted on this item first')
+  })
+  it('an owner withdrawing while an admin approves: one wins, and nothing is left behind', async () => {
+    const creator = await cookieFor(CREATOR)
+    await post('/en/explore/upload/', form(VALID), creator)
+    const pending = await keyOf('small-dot'); const publicBefore = await objects(base.FILES, 'files/')
+    await Promise.all([
+      post('/en/explore/review/action', form({ slug: 'small-dot', action: 'approve' }, null), await cookieFor(ADMIN)),
+      post('/en/explore/mine/withdraw', form({ slug: 'small-dot' }, null), creator),
+    ])
+    const status = String((await item('small-dot'))!.status)
+    expect(['published', 'withdrawn']).toContain(status)
+    expect(await log()).toHaveLength(1)
+    expect(await objects(base.FILES, 'files/') - publicBefore).toBe(status === 'published' ? 1 : 0)
+    expect(await base.UPLOADS.get(pending)).toBeNull()
+  })
+})
+
+describe('the moderation log', () => {
+  it('records every decision and withdrawal with who made it, and a trust only when it changes', async () => {
+    const creator = await cookieFor(CREATOR); const admin = await cookieFor(ADMIN)
+    for (const name of ['a.png', 'b.png', 'c.png']) await post('/en/explore/upload/', form(VALID, { name, bytes: png(), type: 'image/png' }), creator)
+    const act = (fields: Record<string, string>) => post('/en/explore/review/action', form(fields, null), admin)
+    await act({ slug: 'a', action: 'approve' })
+    await act({ slug: 'b', action: 'reject', reason: 'Too similar' })
+    await post('/en/explore/mine/withdraw', form({ slug: 'c' }, null), creator)
+    await act({ slug: 'a', action: 'hide' })
+    await act({ slug: 'a', action: 'hide' }) // already hidden: nothing to log
+    await act({ steam_id: CREATOR, action: 'trust' }); await act({ steam_id: CREATOR, action: 'trust' }); await act({ steam_id: CREATOR, action: 'untrust' })
+    const rows = (await base.DB.prepare('SELECT actor, action, slug, creator, from_status, to_status, reason FROM moderation_log ORDER BY id').all()).results
+    expect(rows).toEqual([
+      { actor: ADMIN, action: 'approve', slug: 'a', creator: null, from_status: 'pending', to_status: 'published', reason: null },
+      { actor: ADMIN, action: 'reject', slug: 'b', creator: null, from_status: 'pending', to_status: 'rejected', reason: 'Too similar' },
+      { actor: CREATOR, action: 'withdraw', slug: 'c', creator: null, from_status: 'pending', to_status: 'withdrawn', reason: null },
+      { actor: ADMIN, action: 'hide', slug: 'a', creator: null, from_status: 'published', to_status: 'hidden', reason: null },
+      { actor: ADMIN, action: 'trust', slug: null, creator: CREATOR, from_status: null, to_status: null, reason: null },
+      { actor: ADMIN, action: 'untrust', slug: null, creator: CREATOR, from_status: null, to_status: null, reason: null },
+    ])
   })
 })

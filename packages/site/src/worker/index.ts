@@ -5,7 +5,7 @@ import { handleSteamResolve } from './steam'
 import { notify } from './notify'
 import { handleExplore } from './explore'
 import { handleAuth } from './auth'
-import { deleteExpiredSessions } from './catalogue'
+import { deleteExpiredSessions, deleteOldModerationLog, rollupDownloads } from './catalogue'
 import { deleteExpiredTickets, handleTickets, notifyTicket } from './tickets'
 
 /** `null` lets the request through. The address is the key and is written nowhere (spec §5.4). */
@@ -43,5 +43,7 @@ export default {
     ctx.waitUntil(deleteExpired(env, new Date()))
     ctx.waitUntil(deleteExpiredSessions(env.DB, new Date()))
     ctx.waitUntil(deleteExpiredTickets(env, new Date()))
+    ctx.waitUntil(deleteOldModerationLog(env.DB, new Date()))
+    ctx.waitUntil(rollupDownloads(env.DB, new Date()))
   },
 } satisfies ExportedHandler<AppEnv>

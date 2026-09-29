@@ -8,7 +8,7 @@ import { renderSchemePreview, parseScheme } from '@kvk/theme'
 import { checkFile, CONTENT_TYPE, extensionOf, parseManifest, PublishError, sha256Hex, UPLOAD_LICENCES, type Kind } from '../lib/item-checks'
 import type { Item } from '../lib/explore-types'
 import { accountBar, emptyForm, MAX_UPLOAD_BYTES, mineHtml, reviewHtml, uploadDoneHtml, uploadFormHtml, UPLOADS_PER_DAY, welcomeHtml, type FormValues, type Viewer } from '../lib/upload-view'
-import { creatorOf, fileNameTaken, freeSlug, insertItem, itemAnyStatus, liveItems, mine, pendingItems, rememberCreator, setStatus, setTrusted, trustedCreators, uploadsToday } from './catalogue'
+import { creatorOf, fileKeyInUse, fileNameTaken, freeSlug, insertItem, itemAnyStatus, liveItems, mine, pendingItems, pendingKey, rememberCreator, setTrusted, transition, trustedCreators, uploadsToday, utcDay } from './catalogue'
 import { requireSameOrigin } from './auth'
 import { humanCheck } from './turnstile'
 import type { AppEnv } from './env'
@@ -71,12 +71,15 @@ async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     // Strict: every byte accounted for; a crosshair is stored re-encoded (only its pixels survive).
     ;({ bytes, previews } = await checkFile(v.kind, fileName, bytes))
   } catch (e) { return form([e instanceof PublishError ? e.message : String(e)]) }
-  if (await fileNameTaken(env.DB, v.kind, fileName)) return form([t(lang, 'explore.upload.error.duplicate')])
+  // Early answers for the common case; the insert below is what actually enforces both rules.
+  const duplicate = () => form([t(lang, 'explore.upload.error.duplicate')])
+  const limit = (n: number) => form([t(lang, 'explore.upload.error.limit').replace('{n}', String(n))])
+  if (await fileNameTaken(env.DB, v.kind, fileName)) return duplicate()
   const today = await uploadsToday(env.DB, viewer.steamId, now)
-  if (today >= UPLOADS_PER_DAY) return form([t(lang, 'explore.upload.error.limit').replace('{n}', String(today))])
+  if (today >= UPLOADS_PER_DAY) return limit(today)
   const trusted = (await creatorOf(env.DB, viewer.steamId))?.trusted === 1
   const hash = await sha256Hex(bytes)
-  const key = trusted ? `files/${hash}/${fileName}` : `pending/${slug}/${fileName}`
+  const key = trusted ? `files/${hash}/${fileName}` : pendingKey(slug, fileName)
   if (trusted) await publishToFiles(env, key, fileName, bytes, hash, previews)
   else await env.UPLOADS.put(key, bytes, { httpMetadata: { contentType: CONTENT_TYPE[extensionOf(fileName)]! } })
   const row: Omit<Item, 'featured'> = {
@@ -84,7 +87,19 @@ async function upload(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     author: v.author, author_url: v.author_url || null, licence: v.licence, file_name: fileName, file_key: key, bytes: bytes.length, sha256: hash,
     code: v.kind === 'crosshair' && v.code ? v.code : null, published_at: now.toISOString(), source: 'upload', uploader: viewer.steamId, uploaded_at: now.toISOString(), reject_reason: null,
   }
-  await insertItem(env.DB, row)
+  const dayStart = `${utcDay(now)}T00:00:00.000Z`
+  let result = await insertItem(env.DB, row, UPLOADS_PER_DAY, dayStart)
+  // Another upload took the slug between freeSlug and the insert: take the next free one, once.
+  if (result === 'slug') { row.slug = await freeSlug(env.DB, fileName); result = await insertItem(env.DB, row, UPLOADS_PER_DAY, dayStart) }
+  if (result !== 'ok') {
+    // A waiting file with no row is nobody's. A trusted file's key is its content, so another item
+    // may hold the same key: take it down only when none does, as a losing approve does.
+    if (!trusted) await env.UPLOADS.delete(key)
+    else if (!(await fileKeyInUse(env.DB, key))) await env.FILES.delete(key)
+    if (result === 'limit') return limit(UPLOADS_PER_DAY)
+    if (result === 'duplicate') return duplicate()
+    throw new Error('no free slug')
+  }
   return shell.fill('upload', uploadDoneHtml(lang, { ...row, featured: null }, viewer), t(lang, 'explore.upload.title'))
 }
 
@@ -107,7 +122,7 @@ async function welcome(request: Request, env: AppEnv, lang: Lang, viewer: Viewer
   return Response.redirect(new URL(to, request.url).toString(), 303)
 }
 
-async function minePage(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, sub: string): Promise<Response> {
+async function minePage(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, sub: string, now: Date): Promise<Response> {
   if (!viewer) return request.method === 'GET' ? loginFor(request, lang, 'mine') : fail('UNAUTHORIZED', 401)
   if (!viewer.name) return welcomeFirst(request, lang, 'mine')
   if (sub === 'mine/withdraw') {
@@ -116,8 +131,9 @@ async function minePage(request: Request, env: AppEnv, lang: Lang, viewer: Viewe
     const slug = str(await request.formData(), 'slug', 64)
     const item = await itemAnyStatus(env.DB, slug)
     if (item && item.uploader === viewer.steamId && (item.status === 'pending' || item.status === 'published')) {
-      await setStatus(env.DB, slug, 'withdrawn')
-      if (item.status === 'pending') await env.UPLOADS.delete(item.file_key)
+      const done = await transition(env.DB, { slug, from: item.status, to: 'withdrawn', action: 'withdraw', actor: viewer.steamId, owner: viewer.steamId, at: now.toISOString() })
+      // Only the request that made the change removes the waiting file; one that lost changed nothing.
+      if (done && item.status === 'pending') await env.UPLOADS.delete(item.file_key)
     }
     return Response.redirect(new URL(localizePath(lang, '/explore/mine'), request.url).toString(), 303)
   }
@@ -152,6 +168,9 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     const fd = await request.formData()
     const action = str(fd, 'action', 16); const slug = str(fd, 'slug', 64); const reason = str(fd, 'reason', 400)
     const item = slug ? await itemAnyStatus(env.DB, slug) : null
+    const at = now.toISOString()
+    // Another admin (or the owner) changed the item between this page's read and this action.
+    const stale = () => reviewPage(env, lang, viewer, shell, t(lang, 'explore.review.error.stale'))
     if (action === 'approve' && item?.status === 'pending') {
       const obj = await env.UPLOADS.get(item.file_key)
       if (obj) {
@@ -160,18 +179,22 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
         const hash = await sha256Hex(bytes)
         const key = `files/${hash}/${item.file_name}`
         await publishToFiles(env, key, item.file_name, bytes, hash, previews)
-        await setStatus(env.DB, slug, 'published', { publishedAt: now.toISOString(), fileKey: key })
+        if (!(await transition(env.DB, { slug, from: 'pending', to: 'published', action: 'approve', actor: viewer.steamId, at, publishedAt: at, fileKey: key }))) {
+          // The copy just made is public; unless some item already points at it, take it back down.
+          if (!(await fileKeyInUse(env.DB, key))) await env.FILES.delete(key)
+          return stale()
+        }
         await env.UPLOADS.delete(item.file_key)
       }
     } else if (action === 'reject' && item?.status === 'pending') {
       if (!reason) return reviewPage(env, lang, viewer, shell, t(lang, 'explore.review.error.reason'))
-      await setStatus(env.DB, slug, 'rejected', { reason })
+      if (!(await transition(env.DB, { slug, from: 'pending', to: 'rejected', action: 'reject', actor: viewer.steamId, at, reason }))) return stale()
       await env.UPLOADS.delete(item.file_key)
     } else if (action === 'hide' && item?.status === 'published') {
-      await setStatus(env.DB, slug, 'hidden')
+      if (!(await transition(env.DB, { slug, from: 'published', to: 'hidden', action: 'hide', actor: viewer.steamId, at }))) return stale()
     } else if (action === 'trust' || action === 'untrust') {
       const steamId = item?.uploader ?? str(fd, 'steam_id', 20)
-      if (/^7656119\d{10}$/.test(steamId)) await setTrusted(env.DB, steamId, action === 'trust', now)
+      if (/^7656119\d{10}$/.test(steamId)) await setTrusted(env.DB, steamId, action === 'trust', viewer.steamId, now)
     }
     return Response.redirect(new URL(localizePath(lang, '/explore/review'), request.url).toString(), 303)
   }
@@ -183,7 +206,7 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
 export async function handleUploads(request: Request, env: AppEnv, lang: Lang, sub: string, viewer: Viewer | null, shell: Shell, now: Date, fetcher: typeof fetch = fetch): Promise<Response> {
   if (sub === 'welcome') return welcome(request, env, lang, viewer, shell, now)
   if (sub === 'upload') return upload(request, env, lang, viewer, shell, now, fetcher)
-  if (sub === 'mine' || sub === 'mine/withdraw') return minePage(request, env, lang, viewer, shell, sub)
+  if (sub === 'mine' || sub === 'mine/withdraw') return minePage(request, env, lang, viewer, shell, sub, now)
   if (sub === 'review' || sub.startsWith('review/')) return review(request, env, lang, viewer, shell, sub, now)
   return shell.notFound()
 }
