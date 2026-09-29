@@ -96,17 +96,9 @@ function New-KvkAudioPlan($Context,[string]$Event,[string[]]$Names) {
         $changes=@([pscustomobject]@{Section='stringSettings';Key=$edit.Key;Event=$Event;Before=@((Get-KvkAudioBindings $Context)[$Event]);After=@($selected);BeforeText=$beforeText;AfterText=$afterText})
     }
     $newBytes=$settings.Encoding.GetPreamble()+$settings.Encoding.GetBytes($updated)
-    $stage=Join-Path (Get-KvkDataRoot $Context.LocalDataRoot) ('audio-previews/'+[guid]::NewGuid().ToString('N'))
-    $gamePrefix=$Context.GameRoot+[IO.Path]::DirectorySeparatorChar
-    if ($stage.StartsWith($gamePrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Audio staging must be outside the game directory.' }
-    New-KvkDirectory $stage
-    Write-KvkDurableFile (Join-Path $stage 'PrimaryUserSettings.json') $newBytes
-    $plan=New-KvkPlan $Context $stage @('primary')
-    if ($plan.Items.Count -ne 1 -or $plan.Items[0].Key -cne 'primary/PrimaryUserSettings.json' -or
-        $plan.Items[0].AfterHash -cne (Get-KvkHash (Join-Path $stage 'PrimaryUserSettings.json')) -or
-        $plan.Items[0].BeforeHash -cne $settingsHash -or $settingsHash -cne (Get-KvkHash $target)) {
-        Throw-KvkFailure 'PLAN_STALE' '准备预览期间音效来源发生了变化。' 'Audio source changed during preview preparation.'
-    }
+    $staged=New-KvkSettingsPreviewPlan $Context $target $settingsHash $newBytes 'audio-previews' 'Audio staging must be outside the game directory.'
+    if ($null -eq $staged) { Throw-KvkFailure 'PLAN_STALE' '准备预览期间音效来源发生了变化。' 'Audio source changed during preview preparation.' }
+    $stage=$staged.Stage;$plan=$staged.Plan
     return [pscustomobject]@{Event=$Event;Names=@($selected);SettingsHash=$settingsHash;Changes=@($changes);InstallerPlan=$plan}
 }
 
