@@ -7,10 +7,10 @@
  * typed, the page's language and path; never an IP address (the rate limit's key is written
  * nowhere). The owner is mailed each one, and it is deleted after 180 days, as reports are.
  */
-import { readCapped } from './body'
 import { requireSameOrigin } from './auth'
 import type { AppEnv, MailMessage } from './env'
-import { fail, json, requireContentLengthWithin, requireJsonContentType } from './http'
+import { fail, json, readJsonBody, requireJsonContentType } from './http'
+import { EMAIL, head, sendAndRecord } from './notify'
 import { reportNumber } from './report-number'
 import { RETENTION_DAYS } from './reports'
 import { humanCheck, turnstileSiteKey } from './turnstile'
@@ -65,13 +65,8 @@ export async function handleTickets(request: Request, env: AppEnv, ctx: { waitUn
   const refused = requireSameOrigin(request); if (refused) return refused
   if (turnstileSiteKey(env) === null) return fail('TICKETS_CLOSED', 503)
   const badType = requireJsonContentType(request); if (badType) return badType
-  const tooLarge = requireContentLengthWithin(request, MAX_TICKET_BODY); if (tooLarge) return tooLarge
-  let capped: { bytes: Uint8Array; truncated: boolean }
-  try { capped = await readCapped(request, MAX_TICKET_BODY) } catch { return fail('INVALID_JSON', 400) }
-  if (capped.truncated) return fail('TOO_LARGE', 413)
-  let value: unknown
-  try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(capped.bytes)) } catch { return fail('INVALID_JSON', 400) }
-  const parsed = parseTicket(value)
+  const read = await readJsonBody(request, MAX_TICKET_BODY, 'INVALID_JSON'); if (!read.ok) return read.response
+  const parsed = parseTicket(read.value)
   if (!parsed.ok) return fail('INVALID_TICKET', 400, { field: parsed.field })
   if (!(await humanCheck(env, parsed.token, deps.fetcher ?? fetch))) return fail('HUMAN_CHECK_FAILED', 403)
 
@@ -94,10 +89,6 @@ export async function handleTickets(request: Request, env: AppEnv, ctx: { waitUn
   return json({ number })
 }
 
-const EMAIL = /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/
-// Collapsing every run of whitespace keeps a CR or LF out of the subject: no header injection.
-const head = (s: string, max: number) => { const chars = [...s.replace(/\s+/g, ' ').trim()]; return chars.length <= max ? chars.join('') : chars.slice(0, max).join('') + '…' }
-
 export function buildTicketMail(number: string, ticket: Ticket, to: string): MailMessage {
   const message: MailMessage = {
     to, from: { email: 'reports@aimloom.dev', name: 'Aimloom tickets' },
@@ -109,13 +100,5 @@ export function buildTicketMail(number: string, ticket: Ticket, to: string): Mai
 }
 
 /** Best effort: the outcome is written to the row and nothing is thrown. */
-export async function notifyTicket(number: string, ticket: Ticket, env: AppEnv): Promise<void> {
-  let state = 'sent'
-  try {
-    if (!env.REPORT_TO) state = 'failed:NO_MAILBOX'
-    else await env.MAIL.send(buildTicketMail(number, ticket, env.REPORT_TO))
-  } catch (error) {
-    state = `failed:${/E_[A-Z_]+/.exec(String(error))?.[0] ?? 'UNKNOWN'}`
-  }
-  try { await env.DB.prepare('UPDATE tickets SET mail = ? WHERE number = ?').bind(state, number).run() } catch { /* the ticket itself is safe */ }
-}
+export const notifyTicket = (number: string, ticket: Ticket, env: AppEnv): Promise<void> =>
+  sendAndRecord(env, 'tickets', number, to => buildTicketMail(number, ticket, to))

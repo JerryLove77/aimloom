@@ -1,3 +1,5 @@
+import { readCapped } from './body'
+
 export type ErrorCode =
   | 'NOT_FOUND' | 'METHOD_NOT_ALLOWED' | 'UNSUPPORTED_MEDIA_TYPE' | 'TOO_LARGE' | 'INVALID_JSON' | 'INVALID_REPORT'
   | 'UNKNOWN_CLIENT' | 'RATE_LIMITED' | 'DAILY_LIMIT' | 'STORAGE_FULL' | 'STORAGE_FAILED'
@@ -23,4 +25,16 @@ export function requireJsonContentType(request: Request): Response | null {
 export function requireContentLengthWithin(request: Request, max: number): Response | null {
   const contentLength = request.headers.get('content-length')
   return contentLength !== null && Number(contentLength) > max ? fail('TOO_LARGE', 413) : null
+}
+
+/**
+ * The JSON body of a request, read at most `max` bytes: a declared or actual size over `max` is
+ * TOO_LARGE, and a body that is not UTF-8 JSON answers `invalid`, the route's own code for it.
+ */
+export async function readJsonBody(request: Request, max: number, invalid: ErrorCode): Promise<{ ok: true; value: unknown } | { ok: false; response: Response }> {
+  const tooLarge = requireContentLengthWithin(request, max); if (tooLarge) return { ok: false, response: tooLarge }
+  let capped: { bytes: Uint8Array; truncated: boolean }
+  try { capped = await readCapped(request, max) } catch { return { ok: false, response: fail(invalid, 400) } }
+  if (capped.truncated) return { ok: false, response: fail('TOO_LARGE', 413) }
+  try { return { ok: true, value: JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(capped.bytes)) } } catch { return { ok: false, response: fail(invalid, 400) } }
 }

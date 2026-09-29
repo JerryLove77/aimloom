@@ -16,7 +16,7 @@ export type { ParsedCrosshair, CrosshairProfile, RenderOptions, CrosshairRect, C
 export { canonicalPngIssue, encodePng, isCanonicalPng, sha256Hex, MAX_DIMENSION, MAX_PNG_BYTES } from './png';
 export type { RgbaImage, CanonicalPngIssue } from './png';
 
-export { getTuningParams, readTuningValue, tune } from './tuning';
+export { getTuningParams, readTuningValue, tune, PALETTE_OWNED_IDS, dependencyDisabled } from './tuning';
 export type { TuningParam, TuningParamKind, TuneChanges, TuneValue } from './tuning';
 
 export { CS2_PALETTE, VALORANT_PALETTE } from './palette';

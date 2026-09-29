@@ -53,27 +53,8 @@ export function tuneLabel(game: 'cs2' | 'valorant', id: string, lang: 'zh' | 'en
   return entry ? entry[lang] : id
 }
 
-/** Same rule as `packages/app/src/crosshair/CodeExportDialog.tsx`'s `PALETTE_OWNED_IDS`: these
- * ids are drawn inside the custom-colour control, never as their own row. */
-export const PALETTE_OWNED_IDS: Record<'cs2' | 'valorant', readonly string[]> = {
-  cs2: ['red', 'green', 'blue'],
-  valorant: ['customColor', 'useCustomColor'],
-}
-
-/** Same rule as the App's `dependencyDisabled`: a value survives while its parent switch is off,
- * but is not editable. */
-export function dependencyDisabled(game: 'cs2' | 'valorant', id: string, values: Record<string, unknown>): boolean {
-  if (game === 'cs2') {
-    if (id === 'outline') return values.outlineEnabled !== true
-    if (id === 'alpha') return values.alphaEnabled !== true
-    return false
-  }
-  if (id === 'outlineThickness' || id === 'outlineOpacity') return values.outlines !== true
-  if (id === 'dotThickness' || id === 'dotOpacity') return values.centerDot !== true
-  if (id.startsWith('inner.') && id !== 'inner.enabled') return values['inner.enabled'] !== true
-  if (id.startsWith('outer.') && id !== 'outer.enabled') return values['outer.enabled'] !== true
-  return false
-}
+/** The tuning rules the App's code sheet uses too; they live in `@kvk/crosshair`. */
+export { PALETTE_OWNED_IDS, dependencyDisabled } from '@kvk/crosshair'
 
 export interface PaletteSwatch { index: number; rgb: readonly [number, number, number]; name: string; checked: boolean }
 export interface PaletteState { label: string; swatches: PaletteSwatch[]; custom: { name: string; checked: boolean } }

@@ -253,3 +253,25 @@ export function tune(parsed: ParsedCrosshair, changes: TuneChanges): ParsedCross
   if (parsed.game === 'valorant') return tuneValorant(parsed, changes);
   throw new CrosshairError('INVALID_VALUE', '无法识别准星游戏类型。', 'Unrecognized crosshair game type.');
 }
+
+/** Ids a tuning UI draws inside its custom-colour control instead of as their own row: CS2's
+ * red/green/blue as one colour picker, VALORANT's custom hex and its "is it active" flag as the
+ * custom swatch's selection. Shared by the App's code sheet and the site's crosshair tool. */
+export const PALETTE_OWNED_IDS: Record<CrosshairGame, readonly string[]> = {
+  cs2: ['red', 'green', 'blue'],
+  valorant: ['customColor', 'useCustomColor'],
+};
+
+/** Which controls a toggle governs: a value survives while its parent is off, but is not editable. */
+export function dependencyDisabled(game: CrosshairGame, id: string, values: Record<string, unknown>): boolean {
+  if (game === 'cs2') {
+    if (id === 'outline') return values.outlineEnabled !== true;
+    if (id === 'alpha') return values.alphaEnabled !== true;
+    return false;
+  }
+  if (id === 'outlineThickness' || id === 'outlineOpacity') return values.outlines !== true;
+  if (id === 'dotThickness' || id === 'dotOpacity') return values.centerDot !== true;
+  if (id.startsWith('inner.') && id !== 'inner.enabled') return values['inner.enabled'] !== true;
+  if (id.startsWith('outer.') && id !== 'outer.enabled') return values['outer.enabled'] !== true;
+  return false;
+}

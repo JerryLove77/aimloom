@@ -1,6 +1,5 @@
-import { readCapped } from './body'
 import type { AppEnv } from './env'
-import { fail, json, requireClient, requireContentLengthWithin, requireJsonContentType } from './http'
+import { fail, json, readJsonBody, requireClient, requireJsonContentType } from './http'
 import { reportNumber } from './report-number'
 import { parseReport, type Report } from './report-schema'
 
@@ -27,13 +26,8 @@ export async function handleReport(request: Request, env: AppEnv, ctx: { waitUnt
   if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
   const badType = requireJsonContentType(request); if (badType) return badType
   const badClient = requireClient(request); if (badClient) return badClient
-  const tooLarge = requireContentLengthWithin(request, MAX_BODY_BYTES); if (tooLarge) return tooLarge
-  let capped: { bytes: Uint8Array; truncated: boolean }
-  try { capped = await readCapped(request, MAX_BODY_BYTES) } catch { return fail('INVALID_JSON', 400) }
-  if (capped.truncated) return fail('TOO_LARGE', 413)
-  let value: unknown
-  try { value = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(capped.bytes)) } catch { return fail('INVALID_JSON', 400) }
-  const parsed = parseReport(value)
+  const read = await readJsonBody(request, MAX_BODY_BYTES, 'INVALID_JSON'); if (!read.ok) return read.response
+  const parsed = parseReport(read.value)
   if (!parsed.ok) return fail('INVALID_REPORT', 400, { field: parsed.field.slice(0, 64) })
 
   const now = (deps.now ?? (() => new Date()))(); const random = deps.random ?? (n => crypto.getRandomValues(new Uint8Array(n)))
