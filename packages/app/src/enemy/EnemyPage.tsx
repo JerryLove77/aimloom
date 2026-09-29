@@ -5,8 +5,10 @@ import { WorkspaceShell, type WorkspaceSection } from '../workspace/WorkspaceShe
 import { StatusStrip, Tag, Toast, useToast } from '../ui/status'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import type { EnemySkin, EnemySkinChoice } from '../bridge/contracts'
-import { useLang, useMsg, useT } from '../i18n'
+import { useMsg, useT } from '../i18n'
 import { createEnemyController, ENEMY_SHAPES, ENEMY_SHAPE_KEYS, type EnemyBridge } from './controller'
+import { LocatePanel } from '../section/LocatePanel'
+import { TabRow } from '../ui/TabRow'
 import '../scheme/scheme.css'
 import './enemy.css'
 
@@ -25,7 +27,6 @@ export function EnemyPage({ bridge, isDemo = false, isActive = true, section, on
   /** Files dragged in from outside the app. The Enemy section never accepts one. */
   fileDrops?: FileDropSource
 }) {
-  const { lang } = useLang()
   const t = useT()
   const msg = useMsg()
   const controller = useMemo(() => createEnemyController(bridge), [bridge])
@@ -62,26 +63,18 @@ export function EnemyPage({ bridge, isDemo = false, isActive = true, section, on
 
       {state.phase === 'locating' ? <p role="status">{t('enemy.status.locating')}</p> : null}
       {state.phase === 'loading' ? <p role="status">{t('enemy.status.loading')}</p> : null}
-      {state.phase === 'needs-location' ? <div className="sc-locate">
-        <p>{state.candidates.length ? t('enemy.locate.multiple') : t('enemy.locate.none')}</p>
-        {state.candidates.map(candidate => <button type="button" className="sc-candidate" key={candidate} disabled={locked} onClick={() => void controller.chooseGameRoot(candidate)}>{candidate}</button>)}
-        <Button variant="primary" disabled={locked} onClick={() => void controller.chooseFolder(lang)}>{t('enemy.locate.chooseFolder')}</Button>
-      </div> : null}
-      {state.phase === 'error' ? <div className="sc-locate"><Button variant="primary" onClick={() => void controller.chooseFolder(lang)}>{t('enemy.locate.chooseGameFolder')}</Button></div> : null}
+      <LocatePanel section="enemy" phase={state.phase} candidates={state.candidates} locked={locked} controller={controller} />
 
       {ready ? <>
         {/* One row of shape tabs; the selected shape's equipped pair is in the strip below.
             Each tab keeps its value and any pending pick in its accessible name, plus a dot. */}
-        <div className="em-tabs" role="group" aria-label={t('enemy.tabs.ariaLabel')}>{ENEMY_SHAPES.map(shape => {
+        <TabRow prefix="em" label={t('enemy.tabs.ariaLabel')} selected={state.shape} locked={locked} onSelect={shape => controller.selectShape(shape)} tabs={ENEMY_SHAPES.map(shape => {
           const shapeCurrent = state.current[shape]
           const value = shapeCurrent === null ? t('enemy.tab.noBlock') : choiceLabel(shapeCurrent, state.skins)
           const pending = state.selected[shape] !== undefined
-          return <button type="button" className="em-tab" key={shape} aria-pressed={shape === state.shape} disabled={locked}
-            aria-label={t('enemy.tab.status', { label: t(ENEMY_SHAPE_KEYS[shape]), value }) + (pending ? t('enemy.tab.pendingSuffix') : '')}
-            onClick={() => controller.selectShape(shape)}>
-            {t(ENEMY_SHAPE_KEYS[shape])}{pending ? <span className="em-tab-dot" aria-hidden="true" /> : null}
-          </button>
-        })}</div>
+          return { key: shape, text: t(ENEMY_SHAPE_KEYS[shape]), pending,
+            accessibleName: t('enemy.tab.status', { label: t(ENEMY_SHAPE_KEYS[shape]), value }) + (pending ? t('enemy.tab.pendingSuffix') : '') }
+        })} />
 
         {currentChoice === null
           ? <Notice tone="warning"><p>{t('enemy.notice.missingBlock')}</p></Notice>

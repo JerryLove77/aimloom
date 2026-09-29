@@ -14,6 +14,7 @@ import { createCrosshairController, type CrosshairBridge } from './controller'
 import { CodeExportDialog } from './CodeExportDialog'
 import type { CrosshairExportBridge } from './export-controller'
 import { assetMime, type ProfileAssetBridge } from '../bridge/assets'
+import { LocatePanel } from '../section/LocatePanel'
 import './crosshair.css'
 
 /** One PNG preview, read through the existing read-only asset boundary. */
@@ -146,12 +147,7 @@ export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true,
 
       {state.phase === 'locating' ? <p role="status">{t('crosshair.status.locating')}</p> : null}
       {state.phase === 'loading' ? <p role="status">{t('crosshair.status.loading')}</p> : null}
-      {state.phase === 'needs-location' ? <div className="sc-locate">
-        <p>{state.candidates.length ? t('crosshair.locate.multiple') : t('crosshair.locate.none')}</p>
-        {state.candidates.map(candidate => <button type="button" className="sc-candidate" key={candidate} disabled={locked} onClick={() => void controller.chooseGameRoot(candidate)}>{candidate}</button>)}
-        <Button variant="primary" disabled={locked} onClick={() => void controller.chooseFolder(lang)}>{t('crosshair.locate.chooseFolder')}</Button>
-      </div> : null}
-      {state.phase === 'error' ? <div className="sc-locate"><Button variant="primary" onClick={() => void controller.chooseFolder(lang)}>{t('crosshair.locate.chooseGameFolder')}</Button></div> : null}
+      <LocatePanel section="crosshair" phase={state.phase} candidates={state.candidates} locked={locked} controller={controller} />
 
       {state.phase === 'ready' ? <>
         <div className="cx-entries">

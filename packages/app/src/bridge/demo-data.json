@@ -1,4 +1,6 @@
 {
   "chineseSound": "命中提示.wav",
-  "chineseCrosshair": "十字.png"
+  "chineseCrosshair": "十字.png",
+  "profiles": { "daily": "日常跟枪", "focus": "专注练习" },
+  "schemes": { "blue": "蓝色训练室", "warm": "暖色训练室" }
 }

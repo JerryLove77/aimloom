@@ -1,5 +1,4 @@
-import { InstallerFailure, type Category, type InstallerBridge, type Issue, type Job, type Preview } from '../bridge/contracts'
-import { localIssue } from './issue'
+import { InstallerFailure, localIssue, type Category, type InstallerBridge, type Issue, type Job, type Preview } from '../bridge/contracts'
 import type { Lang } from '../i18n'
 import { browserStorage } from '../i18n'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'

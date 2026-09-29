@@ -1,7 +1,6 @@
-import { hasCjk, isEnglishText, t, type Msg } from '../i18n'
+import { isEnglishText, t, type Msg } from '../i18n'
 import type { Issue } from '../bridge/contracts'
 
-export { hasCjk, isEnglishText }
 const usable = (text: unknown): text is string => typeof text === 'string' && isEnglishText(text)
 
 /**
@@ -34,9 +33,4 @@ export function engineErrorText(lang: 'zh' | 'en', text: string): string {
 export function executionErrorText(lang: 'zh' | 'en', text: string, english: string | undefined): string {
   if (lang === 'zh') return text
   return usable(english) ? english : engineErrorText('en', text)
-}
-
-/** Builds a bilingual issue from one dictionary entry, for the issues this UI raises itself. */
-export function localIssue(code: Issue['code'], key: Parameters<typeof t>[1], params?: Parameters<typeof t>[2]): Issue {
-  return { code, message: t('zh', key, params), messageEn: t('en', key, params), path: null }
 }

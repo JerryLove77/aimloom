@@ -2,7 +2,9 @@ import type { ExecuteRequest, Job, Preview } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage, type LocateBridge } from '../section/game-root'
 import { errorMsg } from '../section/issue-text'
-import { t, type Lang, type Msg } from '../i18n'
+import type { Lang, Msg } from '../i18n'
+import { createStore } from '../section/controller'
+import { incompleteMsg, waitForJob } from '../section/run-plan'
 import type { TrainingProfile } from './model'
 
 /** The subset of the installer bridge the apply dialog needs. */
@@ -30,38 +32,23 @@ export interface ApplyState {
   error: Msg | null
 }
 
-/** A status code the engine returns, or none. Mirrors the Scheme controller's own helper. */
-function incompleteMsg(status: string | undefined): Msg {
-  if (status !== undefined) return { key: 'profile.apply.error.incomplete', params: { status } }
-  return {
-    zh: t('zh', 'profile.apply.error.incomplete', { status: t('zh', 'common.unknownStatus') }),
-    en: t('en', 'profile.apply.error.incomplete', { status: t('en', 'common.unknownStatus') }),
-  }
-}
-
 /**
  * Owns applying one saved Profile to the game: locate -> plan -> confirm -> execute -> job ->
  * unknown/reconcile, the same shape every current-configuration section already uses. Nothing
  * here reads or writes an editor draft; `open` always takes the saved Profile record.
  */
 export function createApplyController(bridge: ApplyBridge, storage: GameRootStorage = browserStorage()) {
-  let state: ApplyState = { phase: 'idle', profile: null, gameRoot: null, candidates: [], canConfirm: false, error: null }
-  const listeners = new Set<() => void>()
+  const idle = (): ApplyState => ({ phase: 'idle', profile: null, gameRoot: null, candidates: [], canConfirm: false, error: null })
+  const { getState, subscribe, publish } = createStore<ApplyState>(idle())
   let session = 0
   let revision = 0
   let planId: string | null = null
   let operationId: string | null = null
-  const publish = (patch: Partial<ApplyState>) => {
-    state = { ...state, ...patch }
-    listeners.forEach(listener => listener())
-  }
-  const terminal = (jobState: string) => ['finished', 'failed', 'unknown', 'reconciled'].includes(jobState)
-  const idle = (): ApplyState => ({ phase: 'idle', profile: null, gameRoot: null, candidates: [], canConfirm: false, error: null })
 
   async function plan(gameRoot: string, mine: number): Promise<void> {
     publish({ phase: 'planning', gameRoot, error: null })
     try {
-      const preview = await bridge.planProfileApply({ gameRoot, id: state.profile!.id, revision: ++revision })
+      const preview = await bridge.planProfileApply({ gameRoot, id: getState().profile!.id, revision: ++revision })
       if (mine !== session) return
       planId = preview.planId
       publish({ phase: 'ready', canConfirm: true, error: null })
@@ -80,15 +67,15 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
    */
   async function replanAfter(failure: ApplyState['error'], mine: number): Promise<void> {
     planId = null
-    const gameRoot = state.gameRoot
+    const gameRoot = getState().gameRoot
     if (gameRoot === null) { publish({ phase: 'ready', canConfirm: false, error: failure }); return }
     await plan(gameRoot, mine)
-    if (mine === session && state.canConfirm) publish({ error: failure })
+    if (mine === session && getState().canConfirm) publish({ error: failure })
   }
 
   return {
-    getState: () => state,
-    subscribe(listener: () => void) { listeners.add(listener); return () => { listeners.delete(listener) } },
+    getState,
+    subscribe,
     /** Opens the dialog for `profile` (the saved record) and starts resolving the game folder. */
     async open(profile: TrainingProfile): Promise<void> {
       const mine = ++session
@@ -132,18 +119,14 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
      * successful apply stays successful whether or not the game actually started.
      */
     async confirm(launch = false): Promise<ApplyOutcome> {
+      const state = getState()
       if (state.phase !== 'ready' || !planId || !state.profile) return 'failed'
       const mine = session
       const id = crypto.randomUUID()
       operationId = id
       publish({ phase: 'applying', error: null })
       try {
-        await bridge.execute({ operationId: id, planId, confirmation: 'install', allowConflicts: false })
-        let job = await bridge.job(id)
-        for (let attempt = 0; !terminal(job.state) && attempt < 240; attempt++) {
-          await new Promise(resolve => setTimeout(resolve, 250))
-          job = await bridge.job(id)
-        }
+        const job = await waitForJob(bridge, id, planId)
         if (mine !== session) return 'failed'
         if (job.state === 'unknown') {
           publish({ phase: 'unresolved', error: { key: 'profile.apply.error.unresolved' } })
@@ -161,7 +144,7 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
           if (launch) { try { await bridge.launchGame() } catch { /* best effort: never turns a successful apply into a failure */ } }
           return status
         }
-        await replanAfter(incompleteMsg(status), mine)
+        await replanAfter(incompleteMsg('profile.apply.error.incomplete', status), mine)
         return 'failed'
       } catch (error) {
         if (mine === session) await replanAfter(errorMsg(error, { key: 'profile.apply.error.failed' }), mine)
@@ -180,7 +163,8 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
     },
     /** Cancel/Esc: never allowed to interrupt a running execute or an unresolved outcome. */
     close(): void {
-      if (state.phase === 'applying' || state.phase === 'unresolved') return
+      const { phase } = getState()
+      if (phase === 'applying' || phase === 'unresolved') return
       session++
       planId = null
       publish(idle())

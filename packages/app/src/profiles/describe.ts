@@ -1,6 +1,7 @@
 import type { useT } from '../i18n'
 import type { CurrentGame } from './current-game'
-import { AUDIO_EVENTS, type AudioEvent, type ProfileAudio, type ProfileFileReference } from './model'
+import { AUDIO_EVENTS, type AudioEvent } from '../bridge/contracts'
+import type { ProfileAudio, ProfileFileReference } from './model'
 
 type T = ReturnType<typeof useT>
 
