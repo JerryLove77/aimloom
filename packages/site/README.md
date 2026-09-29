@@ -1,15 +1,15 @@
-# @kvk/site — the Aimloom website (Phase 1)
+# @kvk/site — the Aimloom website
 
-Static, bilingual product site. Design: `docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md`.
+Bilingual product site and the explorer. Design: `docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md`.
 
     npm run dev -w @kvk/site       # http://127.0.0.1:4321/
     npm run build -w @kvk/site     # -> packages/site/dist
     npm test -w @kvk/site          # site-local Vitest 4.1; NOT part of the root `npm test`
     npm run typecheck -w @kvk/site
 
-Deployment is one Cloudflare Worker (`aimloom-site`) serving `dist/` as static assets;
-see `wrangler.jsonc`. Phase 2 (the explorer, D1, R2, the publish command) is not in this
-workspace yet.
+Deployment is one Cloudflare Worker (`aimloom-site`) serving `dist/` as static assets, with a
+script that runs first for `/api/*`, the explorer's pages, `/d/*` and `/auth/*`, backed by D1
+and R2; see `wrangler.jsonc`.
 
 Version facts live only in `src/data/releases.json`. A release whose status is
 `preparing` renders no download link anywhere.
@@ -130,6 +130,33 @@ That page opens only for the SteamIDs in the secret `ADMIN_STEAM_IDS` (`npx wran
 ADMIN_STEAM_IDS --config .wrangler.generated.jsonc --env=""`, and again `--env preview`; a
 comma-separated list, never in git). Apply `0003_uploads.sql` like 0002, before the deploy.
 
+**Integrity, the moderation log and statistics** (migrations 0005–0007). The database now
+enforces what the upload path used to check only in code, so concurrent requests cannot get round
+it:
+
+- `item_live_name`, a partial unique index, allows one live, pending or hidden item per kind and
+  file name, ignoring case.
+- The upload insert counts the uploader's items for the day in the same statement
+  (`INSERT … SELECT … WHERE (SELECT COUNT(*) …) < 10`).
+- Every review action and withdrawal is an `UPDATE … WHERE slug = ? AND status = ?`. It runs in one
+  `batch()` with its row in `moderation_log`, and that insert carries the same condition. An admin
+  who loses a race sees "someone else acted on this item first".
+
+`moderation_log` rows are kept 365 days. `download_monthly` holds download counts older than 90
+days, so an item's all-time total is its months plus its days. The Worker serves the numbers as JSON
+only: `/api/explore/mine/stats` for a signed-in creator's own items and `/api/explore/admin/stats`
+for admins.
+
+Before applying 0005 to a database with data, run this read-only check. Any row it returns would
+make the `CREATE UNIQUE INDEX` fail, so resolve those items first:
+
+    npx wrangler d1 execute aimloom --remote --config .wrangler.generated.jsonc --env="" --command \
+      "SELECT kind, file_name COLLATE NOCASE AS name, COUNT(*) AS n FROM item WHERE status IN ('published','pending','hidden') GROUP BY 1, 2 HAVING COUNT(*) > 1"
+
+Then apply 0005–0007 in order to both databases, before deploying the Worker that uses them. The
+workerd suite builds its schema from `migrations/` with `applyD1Migrations`, and empties both
+buckets before every test, so a new migration needs no change to the tests.
+
 **Backups.** D1's Time Travel restores any minute of the last 7 days (free plan). About once a week,
 with the weekly look at the database, run `npm run site:backup -w @kvk/site`: it writes the
 production database as SQL and every uploaded file it points at to `private/backups/<date>/`
@@ -226,7 +253,9 @@ Retention is 180 days (`RETENTION_DAYS`), enforced two ways: every incoming repo
 (`wrangler.jsonc`'s top-level `triggers`, `17 4 * * *` UTC, calling the same `deleteExpired`
 through the Worker's `scheduled` export in `src/worker/index.ts`) runs it once a day regardless of
 traffic — so the Privacy page's "deleted after 180 days" holds even in a week with no reports at
-all, not only "whenever a new report arrives".
+all, not only "whenever a new report arrives". The same run expires tickets and sessions, deletes
+moderation log rows older than 365 days, and moves download days older than 90 into
+`download_monthly` (one batch, so a retry never counts a day twice).
 
 ### What a report must look like
 
