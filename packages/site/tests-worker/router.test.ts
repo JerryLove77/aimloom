@@ -29,4 +29,21 @@ describe('the scheduled handler (the daily Cron Trigger)', () => {
     await Promise.all(pending)
     expect(await base.DB.prepare("SELECT COUNT(*) AS c FROM reports WHERE number = 'AL-260301-EXP0'").first('c')).toBe(0)
   })
+  it('also rolls old download days into months and drops year-old moderation log rows', async () => {
+    const now = new Date()
+    const day = (offset: number) => new Date(now.getTime() + offset * 86_400_000).toISOString().slice(0, 10)
+    await base.DB.batch([
+      base.DB.prepare("INSERT INTO item (slug, kind, status, title_zh, title_en, summary_zh, summary_en, author, licence, file_name, file_key, bytes, sha256, published_at) VALUES ('a', 'theme', 'published', 't', 't', '', '', 'Sample author', 'CC0', 'a.json', 'files/a/a.json', 1, ?, '2026-01-01T00:00:00.000Z')").bind('c'.repeat(64)),
+      base.DB.prepare("INSERT INTO download_daily (slug, day, count) VALUES ('a', ?, 4), ('a', ?, 1)").bind(day(-100), day(-1)),
+      base.DB.prepare("INSERT INTO moderation_log (at, actor, action, slug) VALUES (?, '76561198000000042', 'hide', 'a')").bind(new Date(now.getTime() - 400 * 86_400_000).toISOString()),
+    ])
+    const pending: Promise<unknown>[] = []
+    const cronCtx = { waitUntil: (p: Promise<unknown>) => { pending.push(p) }, passThroughOnException() {} } as unknown as ExecutionContext
+    // @ts-expect-error — scheduled is optional on ExportedHandler's type but always present on this worker
+    await worker.scheduled({ cron: '17 4 * * *', scheduledTime: now.getTime(), noRetry() {} } as unknown as ScheduledController, env, cronCtx)
+    await Promise.all(pending)
+    expect(await base.DB.prepare('SELECT COUNT(*) AS c FROM download_daily').first('c')).toBe(1)
+    expect(await base.DB.prepare('SELECT SUM(count) AS c FROM download_monthly').first('c')).toBe(4)
+    expect(await base.DB.prepare('SELECT COUNT(*) AS c FROM moderation_log').first('c')).toBe(0)
+  })
 })
