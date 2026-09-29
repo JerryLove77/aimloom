@@ -1,17 +1,11 @@
-import { env } from 'cloudflare:workers'
+import { applyD1Migrations } from 'cloudflare:test'
 import { beforeEach } from 'vitest'
-import reports from '../migrations/0001_reports.sql?raw'
-import catalogue from '../migrations/0002_catalogue.sql?raw'
-import uploads from '../migrations/0003_uploads.sql?raw'
-import tickets from '../migrations/0004_tickets.sql?raw'
+import { emptyBucket, emptyDatabase, test } from './seed'
 
-// Comments go first (whole-line and trailing): a ';' inside one must not split a statement.
-const statements = (sql: string): string[] => sql.replace(/--.*$/gm, '').split(';').map(s => s.trim()).filter(Boolean)
-
+// Every test starts from empty buckets and an empty database brought up by the real migrations,
+// in order, as production was.
 beforeEach(async () => {
-  const db = (env as unknown as { DB: D1Database }).DB
-  await db.batch([
-    ...['download_daily', 'download_daily_new', 'item', 'item_new', 'session', 'creator', 'reports', 'tickets'].map(t => db.prepare(`DROP TABLE IF EXISTS ${t}`)),
-    ...[...statements(reports), ...statements(catalogue), ...statements(uploads), ...statements(tickets)].map(s => db.prepare(s)),
-  ])
+  await Promise.all([emptyBucket(test.FILES), emptyBucket(test.UPLOADS)])
+  await emptyDatabase(test.DB)
+  await applyD1Migrations(test.DB, test.TEST_MIGRATIONS)
 })
