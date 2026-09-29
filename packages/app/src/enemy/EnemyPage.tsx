@@ -9,7 +9,6 @@ import { useMsg, useT } from '../i18n'
 import { createEnemyController, ENEMY_SHAPES, ENEMY_SHAPE_KEYS, type EnemyBridge } from './controller'
 import { LocatePanel } from '../section/LocatePanel'
 import { TabRow } from '../ui/TabRow'
-import '../scheme/scheme.css'
 import './enemy.css'
 
 function choiceLabel(choice: EnemySkinChoice, skins: EnemySkin[]): string {

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, Ref } from 'react';
+import './components.css'
 export function Button({ variant = 'secondary', className = '', type = 'button', onClick, ref, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   ref?: Ref<HTMLButtonElement>;

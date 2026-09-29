@@ -1,6 +1,7 @@
 import { Button } from '../ui/Button'
 import { useLang, useT } from '../i18n'
 import type { SectionPhase } from './controller'
+import './locate.css'
 
 /**
  * Finding the game folder, before a game-side section can list anything: the candidates

@@ -1,0 +1,139 @@
+/* Buttons, notices, dialogs and the brand mark: shared by every page, Quick import included. */
+.ki-target {
+  color:var(--ki-accent);
+  width:40px;
+  height:40px
+}
+.ki-button {
+  border:1px solid var(--ki-line);
+  background:var(--ki-raised);
+  color:var(--ki-text);
+  border-radius:var(--ki-control-radius);
+  min-height:42px;
+  padding:9px 16px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  font-size:13px!important;
+  font-weight:600!important;
+  transition:background var(--ki-motion),border-color var(--ki-motion)
+}
+.ki-button:hover:enabled {
+  background:var(--ki-line);
+  border-color:var(--ki-control)
+}
+.ki-button-primary {
+  background:var(--ki-accent);
+  color:var(--ki-on-accent);
+  border-color:var(--ki-accent);
+  min-height:44px
+}
+.ki-button-primary:hover:enabled {
+  background:var(--ki-accent-hover);
+  border-color:var(--ki-accent-hover)
+}
+.ki-button-ghost {
+  background:transparent;
+  border-color:transparent
+}
+.ki-button-danger {
+  color:var(--ki-error)
+}
+.ki-notice {
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  border:1px solid var(--ki-line);
+  border-radius:8px;
+  background:var(--ki-surface);
+  padding:13px 15px;
+  margin:16px 0;
+  font-size:13px;
+  color:var(--ki-secondary)
+}
+.ki-notice>svg {
+  margin-top:2px
+}
+.ki-notice>div {
+  min-width:0
+}
+.ki-notice strong {
+  display:block;
+  font-weight:600;
+  margin-bottom:3px;
+  color:var(--ki-text)
+}
+.ki-notice-warning>svg {
+  color:var(--ki-warning)
+}
+.ki-notice-error {
+  border-color:var(--ki-error)
+}
+.ki-notice-success>svg {
+  color:var(--ki-success)
+}
+.ki-notice .ki-button {
+  margin-top:10px
+}
+.ki-dialog-backdrop {
+  position:fixed;
+  inset:0;
+  z-index:100;
+  background:var(--ki-overlay);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px
+}
+.ki-dialog {
+  background:var(--ki-raised);
+  border:1px solid var(--ki-control);
+  border-radius:var(--ki-radius);
+  padding:28px;
+  max-width:600px;
+  width:100%;
+  max-height:calc(100dvh - 48px);
+  overflow:auto;
+  box-shadow:var(--ki-modal-shadow)
+}
+.ki-dialog>h2 {
+  font-size:20px;
+  line-height:28px;
+  margin-bottom:18px
+}
+.ki-dialog>p {
+  font-size:13px;
+  color:var(--ki-secondary)
+}
+.ki-dialog-actions {
+  display:flex;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:24px
+}
+@media(max-width:540px) {
+  .ki-target {
+    width:32px;
+    height:32px
+  }
+  .ki-dialog-backdrop {
+    padding:14px
+  }
+  .ki-dialog {
+    padding:22px;
+    max-height:calc(100dvh - 28px)
+  }
+  .ki-dialog-actions {
+    flex-direction:column-reverse
+  }
+  .ki-dialog-actions .ki-button {
+    width:100%
+  }
+}
+@media(forced-colors:active) {
+  .ki-button-primary {
+    border:2px solid ButtonText
+  }
+}

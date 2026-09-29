@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Icon } from './Icon';
+import './components.css'
 export function Notice({ children, tone = 'info', title }: {
   children: ReactNode;
   tone?: 'info' | 'warning' | 'error' | 'success';
