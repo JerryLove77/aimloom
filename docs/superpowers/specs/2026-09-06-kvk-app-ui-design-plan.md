@@ -5,9 +5,9 @@
 > Preserve the historical implementation/evidence below and applicable file-safety/recovery
 > constraints; do not reintroduce its older Profile bar, embedded settings or product shell.
 
-日期：2026-09-06。状态：**已进入实施规划；高保真设计稿和界面尚未完成**。用户要求基于本设计继续完成 [UI Implementation Plan](../plans/2026-09-06-kvk-app-ui-implementation.md)，高保真画面的评审单独进行。
+日期：2026-09-06。状态：**已进入实施规划；高保真设计稿和界面尚未完成**。用户要求基于本设计继续完成 UI Implementation Plan (private record)，高保真画面的评审单独进行。
 
-本方案细化 [v0.1.0 实施计划的 Task 5](../plans/2026-09-06-kvk-installer-v010.md)，以 [v0.1.x 产品设计](../../v0.1.x-design.md) 的安装、备份和恢复规则为准。目标是让用户清楚地完成配置管理，同时形成一眼可识别的 KovaaK 视觉风格。
+本方案细化 v0.1.0 实施计划的 Task 5 (private record)，以 [v0.1.x 产品设计](../../v0.1.x-design.md) 的安装、备份和恢复规则为准。目标是让用户清楚地完成配置管理，同时形成一眼可识别的 KovaaK 视觉风格。
 
 ## 1. 设计结论与范围
 

@@ -101,7 +101,7 @@ current. The legacy whole-theme writer must not be used for the combined workflo
 
 ## Applying a saved combination
 
-**Built 2026-09-21** ([plan](../plans/2026-09-21-profile-apply.md)): an 应用 / "Apply" action on
+**Built 2026-09-21** (plan (private record)): an 应用 / "Apply" action on
 each library row applies the **saved** JSON as one plan, one backup batch and one rollback
 (`planProfileApply`). Any reference not found in the game refuses the whole application; an
 empty sound list keeps that binding; the game may be running. Not yet observed in the game.
@@ -147,7 +147,7 @@ them.
 Defer asset databases, immutable revisions, migration engines, continuous drift/history,
 cloud sync and external generation providers. Browser delivery remains a separate workstream.
 
-See the [execution plan](../plans/2026-09-13-training-profiles.md),
-[page verification](../notes/2026-09-15-profile-page-verification.md),
-[example JSON](../../examples/profiles/profile1.json), and
-[historical activation evidence](../notes/2026-09-13-profile-activation-evidence.md).
+See the execution plan (private record),
+page verification (private record),
+example JSON (private record), and
+historical activation evidence (private record).

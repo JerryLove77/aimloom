@@ -25,7 +25,7 @@ their content/feature order around the [Profile product contract](2026-09-13-aim
 Clearly label upcoming capabilities until corresponding features ship; do not present a
 Profile mockup or future generated asset as an available product feature.
 
-**Design workflow amendment — 2026-09-13:** the user requires the website and software UI to be designed in **Figma** before their corresponding screens are implemented. This written specification supplies the website content and visual starting point; it is not a completed Figma design. Record editable file/node links, desktop/mobile and Chinese/English frame coverage, reviewed screenshots and component/token mappings. The current schedule and execution steps are in [ROADMAP.md](../../../ROADMAP.md) and the [delivery plan](../plans/2026-09-13-docker-crosshair-figma.md).
+**Design workflow amendment — 2026-09-13:** the user requires the website and software UI to be designed in **Figma** before their corresponding screens are implemented. This written specification supplies the website content and visual starting point; it is not a completed Figma design. Record editable file/node links, desktop/mobile and Chinese/English frame coverage, reviewed screenshots and component/token mappings. The current schedule and execution steps are in [ROADMAP.md](../../../ROADMAP.md) and the delivery plan (private record).
 
 状态：用户已确认品牌名称、信息架构和功能范围，并要求视觉参考 F1 迈凯轮，稍微时尚潮流，有 Gulf 海湾赛车风。下文的具体配色、排版和构图是据此提出的设计建议，尚未完成视觉稿确认。
 

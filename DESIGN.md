@@ -20,7 +20,7 @@ resource paths wrap, native audio controls remain visible, and all media is loca
 ## Shared workspace behavior
 
 The [workspace contract](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
-and [execution plan](docs/superpowers/plans/2026-09-13-training-profiles.md) own the five
+and execution plan (private record) own the five
 sections and their state boundaries. Profile manages saved combinations; Scheme, Audio,
 Crosshair and Enemy manage current configuration. Preview controls can be reused across
 contexts, but Profile drafts and current-setting state must remain separate.
@@ -32,7 +32,7 @@ application is future work with a separate entry, not an implicit part of Save.
 
 Future screens and the website retain the Figma-first requirement unless explicitly
 waived. The Profile-only exception above is recorded with the actual blank-file status in
-[the Figma index](docs/design/figma/README.md). Do not claim pending designs or game acceptance.
+the Figma index (private record). Do not claim pending designs or game acceptance.
 
 ## Historical installer visual baseline
 
@@ -67,7 +67,7 @@ The user requires **both the website and software UI to be designed in Figma**. 
 visual contracts below are the starting point for editable frames, variables and component
 variants. Record the actual Figma file/node links and reviewed screenshots before implementing
 the corresponding screens; see [ROADMAP.md](ROADMAP.md) and the
-[execution plan](docs/superpowers/plans/2026-09-13-docker-crosshair-figma.md).
+execution plan (private record).
 
 No Figma file has been authored in this planning task. Figma design ownership does not change
 the app's runtime token ownership: `packages/app/src/ui/tokens.css` remains canonical
@@ -156,4 +156,4 @@ Body typography is Microsoft YaHei UI → Microsoft YaHei → PingFang SC → sy
 
 Shared behavior owners and verification are maintained in [installer UI interactions](docs/installer-ui-interactions.md). `Button`, `PathField`, `CategoryCard`, `Dialog`, `Notice`, `FileTable`, `BackupList`, and `StepRail` are installer-scoped because the old editor has incompatible snapshot/write semantics. Installation and restoration reuse these owners rather than duplicating controls.
 
-Visual evidence and live-prototype coverage are tracked in [installer design evidence](docs/design/kvk-installer/README.md). Rendered screenshots, browser keyboard checks, and tests support claims separately; a passing static audit does not establish native Windows correctness.
+Visual evidence and live-prototype coverage are tracked in installer design evidence (private record). Rendered screenshots, browser keyboard checks, and tests support claims separately; a passing static audit does not establish native Windows correctness.
