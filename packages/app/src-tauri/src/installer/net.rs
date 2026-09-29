@@ -95,12 +95,6 @@ impl Http {
     }
 }
 
-impl Default for Http {
-    fn default() -> Self {
-        Http::new()
-    }
-}
-
 /// Reads at most `MAX_RESPONSE_BYTES` of the body — a larger answer is cut, not buffered in
 /// full and then discarded. Never treated as an error: the caller gets what fit.
 fn read_capped(mut response: ureq::http::Response<ureq::Body>) -> (u16, String) {

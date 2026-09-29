@@ -1,5 +1,12 @@
 import { t, type Msg } from '../../i18n'
-import { validateAudioFile } from './model'
+
+/** A local .ogg/.wav path the preview may open: no device path, URL scheme or control character. */
+function validateAudioFile(file: unknown): asserts file is string {
+  if (typeof file !== 'string' || file.length > 4096 || /^[\\/]{2}[?.][\\/]/.test(file) || !/\.(ogg|wav)$/i.test(file) || /[\u0000-\u001f\u007f]/.test(file)
+    || (/^[a-z][a-z\d+.-]*:/i.test(file) && !/^[a-z]:[\\/]/i.test(file))) {
+    throw new Error(t('zh', 'audio.error.invalidFile'))
+  }
+}
 
 export type AudioPreviewError = 'format' | 'read' | 'decode' | 'blocked' | 'timeout'
 export type AudioPreviewState =

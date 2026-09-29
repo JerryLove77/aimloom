@@ -8,16 +8,13 @@ const CJK = /[　-〿㐀-鿿＀-￯]/
 
 /**
  * The core files the App imports directly (see CLAUDE.md and the Task 6/7 briefs). Every other
- * core module may still carry Chinese error text; only these are scanned. A later task appends
- * its own two enemy files here.
+ * core module may still carry Chinese error text; only these are scanned.
  */
 const SCANNED = [
   "src/scheme/document.ts",
   "src/scheme/preview.ts",
   "src/theme/decode.ts",
   "src/types.ts",
-  "src/enemy/model.ts",
-  "src/enemy/preview.ts",
 ]
 
 /** True when `node`'s start/end position sits within `range`'s. */

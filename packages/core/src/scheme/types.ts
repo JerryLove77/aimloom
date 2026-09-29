@@ -12,7 +12,3 @@ export type SchemeDocument = {
   provenance?: { kind: "imported" | "local" | "generated"; generator?: string }
   warnings: string[]
 }
-
-/** Profile stores only the selected filename and path; null keeps current. */
-export type SchemeSelection = { name: string; path: string } | null
-export type SchemeFileReader = (file: string) => Promise<Uint8Array>

@@ -14,7 +14,6 @@
     "crosshair": "npm run generate -w @kvk/crosshair --",
     "test:crosshair:auto": "npm test -- --project crosshair && npm run typecheck -w @kvk/crosshair",
     "test:crosshair:prepare": "npm run prepare:test-kit -w @kvk/crosshair --",
-    "verify": "npm run verify -w @kvk/core",
     "crosshair:pack": "npm run prepare:pack -w @kvk/crosshair --",
     "dev:site": "npm run dev -w @kvk/site",
     "build:site": "npm run build -w @kvk/site",
