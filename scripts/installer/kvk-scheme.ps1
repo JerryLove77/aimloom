@@ -144,17 +144,9 @@ function New-KvkSchemePlan($Context,[string]$FileName) {
         $updated=$next
     }
     $newBytes=$settings.Encoding.GetPreamble()+$settings.Encoding.GetBytes($updated)
-    $stage=Join-Path (Get-KvkDataRoot $Context.LocalDataRoot) ('scheme-previews/'+[guid]::NewGuid().ToString('N'))
-    $gamePrefix=$Context.GameRoot+[IO.Path]::DirectorySeparatorChar
-    if ($stage.StartsWith($gamePrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Scheme staging must be outside the game directory.' }
-    New-KvkDirectory $stage
-    Write-KvkDurableFile (Join-Path $stage 'PrimaryUserSettings.json') $newBytes
-    $plan=New-KvkPlan $Context $stage @('primary')
-    if ($plan.Items.Count -ne 1 -or $plan.Items[0].Key -cne 'primary/PrimaryUserSettings.json' -or
-        $plan.Items[0].AfterHash -cne (Get-KvkHash (Join-Path $stage 'PrimaryUserSettings.json')) -or
-        $plan.Items[0].BeforeHash -cne $settingsHash -or $settingsHash -cne (Get-KvkHash $target)) {
-        Throw-KvkFailure 'PLAN_STALE' '准备预览期间背景来源发生了变化。' 'Scheme source changed during preview preparation.'
-    }
+    $staged=New-KvkSettingsPreviewPlan $Context $target $settingsHash $newBytes 'scheme-previews' 'Scheme staging must be outside the game directory.'
+    if ($null -eq $staged) { Throw-KvkFailure 'PLAN_STALE' '准备预览期间背景来源发生了变化。' 'Scheme source changed during preview preparation.' }
+    $stage=$staged.Stage;$plan=$staged.Plan
     return [pscustomobject]@{FileName=$FileName;ThemeName=$source.ThemeName;ThemePath=$source.ThemePath;ThemeHash=$source.ThemeHash;
         SettingsHash=$settingsHash;StagedDir=$stage;Changes=@($changes);InstallerPlan=$plan}
 }

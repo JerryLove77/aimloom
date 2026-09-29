@@ -118,17 +118,9 @@ function New-KvkEnemySkinPlan($Context,[string]$Shape,[string]$Model,[string]$Sk
     $updated=Set-KvkEnemySkinField $source.Text $shapeKey 'characterModel' $Model
     $updated=Set-KvkEnemySkinField $updated $shapeKey 'characterSkin' $Skin
     $after=$source.Encoding.GetPreamble()+$source.Encoding.GetBytes($updated)
-    $stage=Join-Path (Get-KvkDataRoot $Context.LocalDataRoot) ('enemy-previews/'+[guid]::NewGuid().ToString('N'))
-    $gamePrefix=$Context.GameRoot+[IO.Path]::DirectorySeparatorChar
-    if ($stage.StartsWith($gamePrefix,[StringComparison]::OrdinalIgnoreCase)) { throw 'Enemy skin preview staging must be outside the game directory.' }
-    New-KvkDirectory $stage
-    Write-KvkDurableFile (Join-Path $stage 'PrimaryUserSettings.json') $after
-    $plan=New-KvkPlan $Context $stage @('primary')
-    if ($plan.Items.Count -ne 1 -or $plan.Items[0].Key -cne 'primary/PrimaryUserSettings.json' -or
-        $plan.Items[0].AfterHash -cne (Get-KvkHash (Join-Path $stage 'PrimaryUserSettings.json')) -or
-        $plan.Items[0].BeforeHash -cne $settingsHash -or $settingsHash -cne (Get-KvkHash $target)) {
-        Throw-KvkFailure 'PLAN_STALE' '准备预览期间敌人皮肤来源发生了变化。' 'Enemy skin source changed during preview preparation.'
-    }
+    $staged=New-KvkSettingsPreviewPlan $Context $target $settingsHash $after 'enemy-previews' 'Enemy skin preview staging must be outside the game directory.'
+    if ($null -eq $staged) { Throw-KvkFailure 'PLAN_STALE' '准备预览期间敌人皮肤来源发生了变化。' 'Enemy skin source changed during preview preparation.' }
+    $stage=$staged.Stage;$plan=$staged.Plan
     return [pscustomobject]@{Shape=$Shape;ShapeKey=$shapeKey;Model=$Model;Skin=$Skin;SettingsPath=$target;SettingsHash=$settingsHash;Plan=$plan}
 }
 

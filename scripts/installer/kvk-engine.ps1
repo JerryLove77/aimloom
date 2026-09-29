@@ -416,6 +416,25 @@ function Enter-KvkLock($Context) {
     } catch { foreach ($lock in $locks) {$lock.Dispose()}; Throw-KvkFailure 'BUSY' "另一个 Aimloom 可能正在运行，或者无法使用锁文件：「$($_.Exception.Message)」" "Another Aimloom may be running, or the lock files could not be used: `"$($_.Exception.Message)`"" }
 }
 function Exit-KvkLock($Locks) { foreach ($lock in $Locks) { $lock.Dispose() } }
+# Stages an edited PrimaryUserSettings.json in the data folder, never inside the game, and plans
+# it as the one primary-file replacement. `$Target` and `$SettingsHash` name the settings file the
+# edit started from: if it changed meanwhile, or the plan is anything else, the preview is stale
+# and this returns $null, so the caller refuses with its own PLAN_STALE wording.
+function New-KvkSettingsPreviewPlan($Context,[string]$Target,[string]$SettingsHash,$Bytes,[string]$Folder,[string]$OutsideMessage) {
+    $stage=Join-Path (Get-KvkDataRoot $Context.LocalDataRoot) ($Folder+'/'+[guid]::NewGuid().ToString('N'))
+    $gamePrefix=$Context.GameRoot+[IO.Path]::DirectorySeparatorChar
+    if ($stage.StartsWith($gamePrefix,[StringComparison]::OrdinalIgnoreCase)) { throw $OutsideMessage }
+    New-KvkDirectory $stage
+    Write-KvkDurableFile (Join-Path $stage 'PrimaryUserSettings.json') $Bytes
+    $plan=New-KvkPlan $Context $stage @('primary')
+    if ($plan.Items.Count -ne 1 -or $plan.Items[0].Key -cne 'primary/PrimaryUserSettings.json' -or
+        $plan.Items[0].AfterHash -cne (Get-KvkHash (Join-Path $stage 'PrimaryUserSettings.json')) -or
+        $plan.Items[0].BeforeHash -cne $SettingsHash -or $SettingsHash -cne (Get-KvkHash $Target)) {
+        return $null
+    }
+    return [pscustomobject]@{Stage=$stage;Plan=$plan}
+}
+
 function Write-KvkDurableFile([string]$Path, [byte[]]$Bytes) {
     Assert-KvkSafePath $Path
     $s=[IO.FileStream]::new($Path,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None,4096,[IO.FileOptions]::WriteThrough)
@@ -546,7 +565,8 @@ function Test-KvkOwned($Item) {
     }
     return $false
 }
-# -AllowRunningGame is an explicit opt-in used only by the user-approved scheme flow.
+# -AllowRunningGame is an explicit opt-in for the writes that only place files: crosshair replace
+# and add, and adding a theme or sound (planFileAdd). Settings writes never pass it.
 # Every other caller keeps the game-closed requirement.
 function Assert-KvkGameClosedUnless([bool]$Allowed) { if (-not $Allowed) { Assert-KvkGameClosed } }
 function Invoke-KvkFileChange($Context,$Manifest,$Item,[string]$Source,[switch]$AllowRunningGame) {

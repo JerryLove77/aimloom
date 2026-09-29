@@ -133,6 +133,24 @@ function Get-KvkGuiMappedIssue($Exception) {
     return (New-KvkGuiIssue 'ENGINE_ERROR' $Exception.Message $english $null)
 }
 
+function Assert-KvkGuiRevision($Revision) {
+    if (($Revision -isnot [int] -and $Revision -isnot [long]) -or $Revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+}
+
+# Every plan op refuses while a batch is still unfinished; each words the refusal for itself.
+function Test-KvkGuiPendingBatch($Context) {
+    return @(Get-KvkManifests $Context | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0
+}
+
+# Records the one plan this session may execute and returns its preview. `Adapter` names the
+# section whose Invoke-* carries it out (`install` is the engine's own install); `AdapterPlan`
+# is that section's plan object.
+function Set-KvkGuiPlan($Session,$Context,$Plan,$Revision,[string]$Adapter,$AdapterPlan) {
+    $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $Context $Plan ([int]$Revision) $id
+    $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$Context;Plan=$Plan;Revision=[int]$Revision;Preview=$preview;Adapter=$Adapter;AdapterPlan=$AdapterPlan}
+    return $preview
+}
+
 function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$Observer) {
     switch -CaseSensitive ($Op) {
         'profileAssetList' {
@@ -193,7 +211,7 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$packRoot=Get-KvkGuiValue $RequestArgs 'packRoot';$categories=Get-KvkGuiArrayValue $RequestArgs 'categories';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $packRoot 'packRoot'
             if ($categories -isnot [array]) { Throw-KvkGuiIssue 'INVALID_PACK' 'categories must be an array.' 'categories must be an array.' }
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $seenCategories=@{}
             foreach($category in $categories){
                 if($category -isnot [string] -or $category -cnotin @('themes','sounds','crosshairs','ui','palette','primary')){Throw-KvkGuiIssue 'INVALID_PACK' 'categories contains an unknown value.' 'categories contains an unknown value.'}
@@ -201,11 +219,9 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
                 $seenCategories[$category]=$true
             }
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能安装。' 'An unfinished operation must be recovered before installing.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能安装。' 'An unfinished operation must be recovered before installing.' }
             $plan=New-KvkPlan $ctx $packRoot ([string[]]$categories)
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $plan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$plan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$false}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $plan $revision 'install' $null)
         }
         'schemeList' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot') 'args'
@@ -220,15 +236,13 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $Session.Plan=$null
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$file=Get-KvkGuiValue $RequestArgs 'file';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $file 'file'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
             # The game rewrites PrimaryUserSettings.json when it exits; a write made while it runs is lost.
             Assert-KvkGameClosed
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能更换背景。' 'An unfinished operation must be recovered before changing the scheme.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能更换背景。' 'An unfinished operation must be recovered before changing the scheme.' }
             $scheme=New-KvkSchemePlan $ctx $file
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $scheme.InstallerPlan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$scheme.InstallerPlan;Revision=[int]$revision;Preview=$preview;SchemePlan=$scheme;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$false}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $scheme.InstallerPlan $revision 'scheme' $scheme)
         }
         'audioList' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot') 'args'
@@ -244,15 +258,13 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$event=Get-KvkGuiValue $RequestArgs 'event';$names=Get-KvkGuiArrayValue $RequestArgs 'names';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $event 'event'
             if ($names -isnot [array]) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'names must be an array.' 'names must be an array.' }
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
             # The game rewrites PrimaryUserSettings.json when it exits; a write made while it runs is lost.
             Assert-KvkGameClosed
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能更换音效。' 'An unfinished operation must be recovered before changing sounds.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能更换音效。' 'An unfinished operation must be recovered before changing sounds.' }
             $audio=New-KvkAudioPlan $ctx $event ([string[]]$names)
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $audio.InstallerPlan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$audio.InstallerPlan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$audio;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$false}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $audio.InstallerPlan $revision 'audio' $audio)
         }
         'crosshairList' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot') 'args'
@@ -268,16 +280,14 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$file=Get-KvkGuiValue $RequestArgs 'file'
             $encoded=Get-KvkGuiValue $RequestArgs 'pngBase64';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $file 'file';Assert-KvkGuiString $encoded 'pngBase64'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}$') { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效或超出大小限制。' 'The crosshair PNG encoding is invalid or over the size limit.' }
             try { $png=[Convert]::FromBase64String($encoded) } catch { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效。' 'The crosshair PNG encoding is invalid.' }
             if ([Convert]::ToBase64String($png) -cne $encoded) { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码不是规范 base64。' 'The crosshair PNG encoding is not canonical base64.' }
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能替换准星。' 'An unfinished operation must be recovered before replacing a crosshair.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能替换准星。' 'An unfinished operation must be recovered before replacing a crosshair.' }
             $crosshair=New-KvkCrosshairImagePlan $ctx $file $png
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $crosshair.Plan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$crosshair.Plan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$crosshair;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$true}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $crosshair.Plan $revision 'crosshair' $crosshair)
         }
         'planCrosshairAdd' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot','file','pngBase64','revision') 'args'
@@ -285,16 +295,14 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$file=Get-KvkGuiValue $RequestArgs 'file'
             $encoded=Get-KvkGuiValue $RequestArgs 'pngBase64';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $file 'file';Assert-KvkGuiString $encoded 'pngBase64'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}$') { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效或超出大小限制。' 'The crosshair PNG encoding is invalid or over the size limit.' }
             try { $png=[Convert]::FromBase64String($encoded) } catch { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效。' 'The crosshair PNG encoding is invalid.' }
             if ([Convert]::ToBase64String($png) -cne $encoded) { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码不是规范 base64。' 'The crosshair PNG encoding is not canonical base64.' }
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能添加准星。' 'An unfinished operation must be recovered before adding a crosshair.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能添加准星。' 'An unfinished operation must be recovered before adding a crosshair.' }
             $crosshair=New-KvkCrosshairAddPlan $ctx $file $png
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $crosshair.Plan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$crosshair.Plan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$crosshair;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$true}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $crosshair.Plan $revision 'crosshairAdd' $crosshair)
         }
         'planFileAdd' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot','kind','sourcePath','sourceSha256','file','revision') 'args'
@@ -303,14 +311,12 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $sourcePath=Get-KvkGuiValue $RequestArgs 'sourcePath';$sourceHash=Get-KvkGuiValue $RequestArgs 'sourceSha256';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $kind 'kind';Assert-KvkGuiString $file 'file'
             Assert-KvkGuiString $sourcePath 'sourcePath';Assert-KvkGuiString $sourceHash 'sourceSha256'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '上一次操作没有完成，请先到「一键拖入」处理，再添加文件 (an unfinished operation must be recovered first)。' 'The last operation did not finish. Resolve it in Quick import before adding files.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '上一次操作没有完成，请先到「一键拖入」处理，再添加文件 (an unfinished operation must be recovered first)。' 'The last operation did not finish. Resolve it in Quick import before adding files.' }
             # The engine reads the source itself and checks it against the hash the sheet previewed.
             $add=New-KvkFileAddPlan $ctx $kind $sourcePath $sourceHash $file
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $add.Plan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$add.Plan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$add;ProfileApplyPlan=$null;AllowRunningGame=$true}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $add.Plan $revision 'fileAdd' $add)
         }
         'enemyList' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot') 'args'
@@ -326,43 +332,39 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$shape=Get-KvkGuiValue $RequestArgs 'shape'
             $model=Get-KvkGuiValue $RequestArgs 'model';$skin=Get-KvkGuiValue $RequestArgs 'skin';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $shape 'shape';Assert-KvkGuiString $model 'model';Assert-KvkGuiString $skin 'skin'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
             # The game rewrites PrimaryUserSettings.json when it exits; a write made while it runs is lost.
             Assert-KvkGameClosed
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能更换敌人皮肤。' 'An unfinished operation must be recovered before changing the enemy skin.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能更换敌人皮肤。' 'An unfinished operation must be recovered before changing the enemy skin.' }
             $enemy=New-KvkEnemySkinPlan $ctx $shape $model $skin
-            $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $enemy.Plan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='install';Context=$ctx;Plan=$enemy.Plan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$enemy;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$false}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $enemy.Plan $revision 'enemy' $enemy)
         }
         'planProfileApply' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot','id','revision') 'args'
             $Session.Plan=$null
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$id=Get-KvkGuiValue $RequestArgs 'id';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $id 'id'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
             # The game rewrites PrimaryUserSettings.json when it exits; a write made while it runs is lost.
             Assert-KvkGameClosed
-            if (@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')}).Count -gt 0) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能应用 Profile。' 'An unfinished operation must be recovered before applying a Profile.' }
+            if (Test-KvkGuiPendingBatch $ctx) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先恢复未完成的操作，才能应用 Profile。' 'An unfinished operation must be recovered before applying a Profile.' }
             $apply=New-KvkProfileApplyPlan $ctx $id
-            $planId=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiInstallPreview $Session $ctx $apply.InstallerPlan ([int]$revision) $planId
-            $Session.Plan=[pscustomobject]@{Id=$planId;Kind='install';Context=$ctx;Plan=$apply.InstallerPlan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$apply;AllowRunningGame=$false}
-            return $preview
+            return (Set-KvkGuiPlan $Session $ctx $apply.InstallerPlan $revision 'profileApply' $apply)
         }
         'planRestore' {
             Assert-KvkGuiFields $RequestArgs @('gameRoot','sourceId','revision') 'args'
             $Session.Plan=$null
             $gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot';$sourceId=Get-KvkGuiValue $RequestArgs 'sourceId';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $sourceId 'sourceId'
-            if (($revision -isnot [int] -and $revision -isnot [long]) -or $revision -lt 0) { Throw-KvkGuiIssue 'ENGINE_ERROR' 'revision must be a non-negative integer.' 'revision must be a non-negative integer.' }
+            Assert-KvkGuiRevision $revision
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
             $pending=@(Get-KvkManifests $ctx | Where-Object {$_.Status -in @('prepared','applying','recovery-required')})
             if($pending.Count -gt 0 -and $sourceId -cnotin @($pending | ForEach-Object {$_.Id})) { Throw-KvkGuiIssue 'RECOVERY_REQUIRED' '必须先处理未完成的恢复批次，才能再次恢复。' 'The pending recovery batch must be handled before another restore.' }
             $plan=New-KvkRestorePlan $ctx $sourceId
             $id=[Guid]::NewGuid().ToString('N');$preview=ConvertTo-KvkGuiRestorePreview $ctx $plan ([int]$revision) $id
-            $Session.Plan=[pscustomobject]@{Id=$id;Kind='restore';Context=$ctx;Plan=$plan;Revision=[int]$revision;Preview=$preview;SchemePlan=$null;AudioPlan=$null;CrosshairPlan=$null;CrosshairAddPlan=$null;EnemyPlan=$null;FileAddPlan=$null;ProfileApplyPlan=$null;AllowRunningGame=$false}
+            $Session.Plan=[pscustomobject]@{Id=$id;Kind='restore';Context=$ctx;Plan=$plan;Revision=[int]$revision;Preview=$preview;Adapter='restore';AdapterPlan=$null}
             return $preview
         }
         'exportFile' {
@@ -386,14 +388,16 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             if ($confirmation -cne $cached.Kind) { Throw-KvkGuiIssue 'PLAN_STALE' '确认内容与缓存的清单不一致。' 'Confirmation does not match the cached plan.' }
             if ($cached.Kind -eq 'install') {
                 if ($allow) { Throw-KvkGuiIssue 'CONFLICT' '安装清单不接受冲突覆盖许可。' 'Install plans do not accept conflict permission.' }
-                if ($null -ne $cached.SchemePlan) { $report=Invoke-KvkSchemeReplacement $cached.Context $cached.SchemePlan -Observer $Observer }
-                elseif ($null -ne $cached.AudioPlan) { $report=Invoke-KvkAudioReplacement $cached.Context $cached.AudioPlan -Observer $Observer }
-                elseif ($null -ne $cached.CrosshairPlan) { $report=Invoke-KvkCrosshairImageReplacement $cached.Context $cached.CrosshairPlan -Observer $Observer }
-                elseif ($null -ne $cached.CrosshairAddPlan) { $report=Invoke-KvkCrosshairAdd $cached.Context $cached.CrosshairAddPlan -Observer $Observer }
-                elseif ($null -ne $cached.EnemyPlan) { $report=Invoke-KvkEnemySkinReplacement $cached.Context $cached.EnemyPlan -Observer $Observer }
-                elseif ($null -ne $cached.FileAddPlan) { $report=Invoke-KvkFileAdd $cached.Context $cached.FileAddPlan -Observer $Observer }
-                elseif ($null -ne $cached.ProfileApplyPlan) { $report=Invoke-KvkProfileApply $cached.Context $cached.ProfileApplyPlan -Observer $Observer }
-                else { $report=Invoke-KvkInstall $cached.Context $cached.Plan -Observer $Observer }
+                $report=switch -CaseSensitive ($cached.Adapter) {
+                    'scheme' { Invoke-KvkSchemeReplacement $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    'audio' { Invoke-KvkAudioReplacement $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    'crosshair' { Invoke-KvkCrosshairImageReplacement $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    'crosshairAdd' { Invoke-KvkCrosshairAdd $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    'enemy' { Invoke-KvkEnemySkinReplacement $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    'fileAdd' { Invoke-KvkFileAdd $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    'profileApply' { Invoke-KvkProfileApply $cached.Context $cached.AdapterPlan -Observer $Observer }
+                    default { Invoke-KvkInstall $cached.Context $cached.Plan -Observer $Observer }
+                }
             } else {
                 if (@($cached.Plan.Items | Where-Object {$_.Unowned}).Count -gt 0) { Throw-KvkGuiIssue 'UNOWNED_FILE' '无法确认文件由本工具创建，不能删除。' 'Cannot delete a file without proof that this installer created it.' }
                 if (@($cached.Plan.Items | Where-Object {$_.Conflict}).Count -gt 0 -and -not $allow) { Throw-KvkGuiIssue 'CONFLICT' '恢复冲突需要明确确认。' 'Restore conflicts require explicit confirmation.' }
