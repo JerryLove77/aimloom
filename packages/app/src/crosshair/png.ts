@@ -1,6 +1,6 @@
-import { canonicalPngIssue, encodePng, isCanonicalPng, MAX_DIMENSION, MAX_PNG_BYTES } from '../../../crosshair/src/png'
+import { canonicalPngIssue, encodePng, isCanonicalPng, MAX_DIMENSION, MAX_PNG_BYTES } from '@kvk/crosshair'
 import { t, type MessageKey, type Params } from '../i18n'
-import { LocalizedError } from '../../../core/src/types'
+import { LocalizedError } from '@kvk/theme'
 
 /** The same refusal in both languages, so an English player reads the real reason. */
 const pngError = (key: MessageKey, params?: Params) => new LocalizedError(t('zh', key, params), t('en', key, params))

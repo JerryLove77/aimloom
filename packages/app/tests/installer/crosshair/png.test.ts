@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { encodePng, canonicalPngIssue } from '../../../../crosshair/src/png'
+import { encodePng, canonicalPngIssue } from '@kvk/crosshair'
 import { toCanonicalPng, type RgbaDecoder } from '../../../src/crosshair/png'
 import { errorMsg } from '../../../src/workspace/issue-text'
 import { renderMsg, type Msg } from '../../../src/i18n'

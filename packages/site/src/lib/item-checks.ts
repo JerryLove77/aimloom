@@ -2,11 +2,8 @@
  * The item checks shared by the publish command and the Worker's upload route (spec 2026-09-22
  * §6, §11.3). Pure and platform-neutral: no Node, no bindings.
  */
-import { parseScheme } from '../../../core/src/scheme/document'
-import { renderSchemePreview } from '../../../core/src/scheme/preview'
-import { canonicalPngIssue, encodePng, MAX_DIMENSION, MAX_PNG_BYTES } from '../../../crosshair/src/png'
-import { parseCs2 } from '../../../crosshair/src/cs2'
-import { parseValorant } from '../../../crosshair/src/valorant'
+import { parseScheme, renderSchemePreview } from '@kvk/theme'
+import { canonicalPngIssue, encodePng, MAX_DIMENSION, MAX_PNG_BYTES, parseCs2, parseValorant } from '@kvk/crosshair'
 import { RESERVED_SLUGS } from './explore-types'
 
 export type Kind = 'theme' | 'sound' | 'crosshair'

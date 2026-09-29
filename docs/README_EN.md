@@ -93,7 +93,7 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 | `packages/app` | The App: React front end, Tauri (Rust) shell |
 | `scripts/installer` | The PowerShell engine — every write to the game goes through it |
 | `packages/crosshair` | CS2 / VALORANT crosshair code parser and PNG renderer |
-| `packages/core` | TypeScript settings library (parked) |
+| `packages/theme` | Theme parsing and the background preview (shared by the App and site) |
 | `packages/site` | The aimloom.dev website and its Cloudflare Worker (reports, Explore, sign-in and uploads) |
 | `docs/` | Design documents (`superpowers/specs/`), research, the UI interaction contract |
 
@@ -106,7 +106,7 @@ The App targets Windows; a Mac or Linux machine runs the browser demo and the te
 
 ```sh
 npm ci
-npm test                                  # Vitest: App, @kvk/core, crosshair
+npm test                                  # Vitest: App, @kvk/theme, crosshair
 npm run typecheck
 npm run dev:installer -w @kvk/app         # browser demo at http://127.0.0.1:5173/installer.html; touches no files
 cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installer-ui

@@ -62,7 +62,7 @@ Aimloom 没有代码签名，第一次运行时 Windows SmartScreen 可能会提
 | `packages/app` | App：React 前端，Tauri（Rust）外壳 |
 | `scripts/installer` | PowerShell 引擎，所有写入游戏的操作都经过它 |
 | `packages/crosshair` | CS2 / VALORANT 准星代码解析和 PNG 渲染 |
-| `packages/core` | TypeScript 设置库（暂停开发） |
+| `packages/theme` | 主题解析和背景预览图（App 与官网共用） |
 | `packages/site` | aimloom.dev 官网和它的 Cloudflare Worker（反馈报告、探索页、登录与上传） |
 | `docs/` | 设计文档（`superpowers/specs/`）、技术研究、界面交互规范 |
 
@@ -74,7 +74,7 @@ App 的目标平台是 Windows；Mac 或 Linux 可以跑浏览器演示和测试
 
 ```sh
 npm ci
-npm test                                  # Vitest：App、@kvk/core、crosshair
+npm test                                  # Vitest：App、@kvk/theme、crosshair
 npm run typecheck
 npm run dev:installer -w @kvk/app         # 浏览器演示 http://127.0.0.1:5173/installer.html，不会改动任何文件
 cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installer-ui

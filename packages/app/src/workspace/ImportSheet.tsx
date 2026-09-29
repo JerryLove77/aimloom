@@ -1,5 +1,5 @@
 import { useEffect, useId, useState, type ReactNode } from 'react'
-import { sha256Hex } from '../../../crosshair/src/png'
+import { sha256Hex } from '@kvk/crosshair'
 import { Button } from '../installer/components/Button'
 import { Dialog } from '../installer/components/Dialog'
 import { Notice } from '../installer/components/Notice'

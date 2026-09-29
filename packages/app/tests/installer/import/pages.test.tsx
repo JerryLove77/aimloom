@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { encodePng } from '../../../../crosshair/src/png'
+import { encodePng } from '@kvk/crosshair'
 import { SchemePage } from '../../../src/scheme/SchemePage'
 import { AudioPage } from '../../../src/audio/AudioPage'
 import { CrosshairPage } from '../../../src/crosshair/CrosshairPage'

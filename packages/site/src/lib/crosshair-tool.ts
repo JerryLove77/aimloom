@@ -5,17 +5,14 @@
  * unit-tested with plain input/output, with no DOM. `src/scripts/crosshair-tool.client.ts` wires
  * these functions to the page's controls.
  *
- * Reuses `@kvk/crosshair`'s browser-safe entry only (`src/index.ts`/`src/png.ts`) — never
- * `src/node.ts`, which depends on Node's `Buffer`/`zlib` and does not run in a visitor's browser.
- * The relative import depth mirrors `packages/app/src/crosshair/export-controller.ts`, which
- * resolves the same package the same way.
+ * Reuses `@kvk/crosshair`'s browser-safe entry only — never `@kvk/crosshair/node`, which
+ * depends on Node's `Buffer`/`zlib` and does not run in a visitor's browser.
  */
 import {
-  parseCrosshair, renderCrosshair, toSvg, getTuningParams, readTuningValue, tune,
+  parseCrosshair, renderCrosshair, toSvg, getTuningParams, readTuningValue, tune, canonicalPngIssue, encodePng,
   CrosshairError, type CrosshairGame, type CrosshairWarning, type ParsedCrosshair,
   type TuneChanges, type TuneValue, type TuningParam,
-} from '../../../crosshair/src/index'
-import { canonicalPngIssue, encodePng } from '../../../crosshair/src/png'
+} from '@kvk/crosshair'
 
 export type { CrosshairGame, ParsedCrosshair, TuneValue, TuningParam, CrosshairWarning }
 export { getTuningParams, readTuningValue, tune, CrosshairError }

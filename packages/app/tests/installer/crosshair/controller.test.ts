@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { encodePng } from '../../../../crosshair/src/png'
+import { encodePng } from '@kvk/crosshair'
 import { createCrosshairController } from '../../../src/crosshair/controller'
 import type { InstalledCrosshair } from '../../../src/installer/contracts'
 import { renderMsg } from '../../../src/i18n'

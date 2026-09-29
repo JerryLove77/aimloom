@@ -4,8 +4,7 @@
  * creator's file goes straight to the public bucket; anyone else's waits in the private one.
  */
 import { localizePath, t, type Lang } from '../i18n'
-import { renderSchemePreview } from '../../../core/src/scheme/preview'
-import { parseScheme } from '../../../core/src/scheme/document'
+import { renderSchemePreview, parseScheme } from '@kvk/theme'
 import { checkFile, CONTENT_TYPE, extensionOf, parseManifest, PublishError, sha256Hex, UPLOAD_LICENCES, type Kind } from '../lib/item-checks'
 import type { Item } from '../lib/explore-types'
 import { accountBar, emptyForm, MAX_UPLOAD_BYTES, mineHtml, reviewHtml, uploadDoneHtml, uploadFormHtml, UPLOADS_PER_DAY, welcomeHtml, type FormValues, type Viewer } from '../lib/upload-view'

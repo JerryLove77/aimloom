@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canonicalPngIssue } from '../../../../crosshair/src/png'
+import { canonicalPngIssue } from '@kvk/crosshair'
 import { createCrosshairExportController } from '../../../src/crosshair/export-controller'
 import { renderMsg } from '../../../src/i18n'
 

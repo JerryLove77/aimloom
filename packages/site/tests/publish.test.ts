@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { encodePng } from '../../crosshair/src/png'
+import { encodePng } from '@kvk/crosshair'
 import { buildRow, checkFile, checkFileName, checkSlug, parseManifest, PublishError, upsertSql, uploadsFor, type Manifest } from '../scripts/publish-lib'
 import { oggCrc, pngCrc } from '../src/lib/item-checks'
 

@@ -1,6 +1,6 @@
 import { hasCjk, isEnglishText, renderMsg, t, type Msg } from '../i18n'
-import { LocalizedError } from '../../../core/src/types'
-import { CrosshairError } from '../../../crosshair/src/errors'
+import { LocalizedError } from '@kvk/theme'
+import { CrosshairError } from '@kvk/crosshair'
 
 /** Refusals whose meaning is fixed by their code, whatever English text a layer attached. */
 const CODED: Record<string, Msg> = {

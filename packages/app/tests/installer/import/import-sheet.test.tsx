@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { ImportSheet } from '../../../src/workspace/ImportSheet'
-import { sha256Hex } from '../../../../crosshair/src/png'
+import { sha256Hex } from '@kvk/crosshair'
 import type { ProfileAssetBridge } from '../../../src/profiles/assets'
 import type { InstalledEntry } from '../../../src/workspace/import-check'
 import type { FileImportInput } from '../../../src/workspace/file-import'
