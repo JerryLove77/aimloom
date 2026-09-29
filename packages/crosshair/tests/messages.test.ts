@@ -3,9 +3,6 @@
  * App's Crosshair page (Task 8). The CLI and every other existing test keep reading `.message`
  * unchanged; this only checks the English half is present and has no Chinese in it.
  */
-import { mkdtemp, rm } from 'node:fs/promises'
-import { join } from 'node:path'
-import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
 import { CrosshairError } from '../src/errors'
 import { parseCrosshair, parseCrosshairForGame } from '../src/index'
@@ -14,7 +11,6 @@ import { parseValorant } from '../src/valorant'
 import { createScene, renderCrosshair, renderScene, toSvg } from '../src/render'
 import { canonicalPngIssue, encodePng } from '../src/png'
 import { decodePng, encodePng as encodePngNode } from '../src/node'
-import { previewCrosshair, prepareCrosshairReplacement, validateCrosshairFileName } from '../src/service'
 
 const CJK = /[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/
 const sampleCs2 = 'CSGO-Cn37R-YE7vo-pLCAL-aURmZ-z6zkG'
@@ -74,9 +70,6 @@ const cases: [string, () => unknown][] = [
   ['decodePng: bad signature', () => decodePng(new Uint8Array(64))],
   ['encodePng (node): bad dimensions', () => encodePngNode({ width: 0, height: 1, data: new Uint8Array(0), warnings: [] })],
 
-  ['previewCrosshair: invalid input', () => previewCrosshair({ kind: 'bad' } as never)],
-  ['previewCrosshair: invalid PNG input', () => previewCrosshair({ kind: 'png', options: {} } as never)],
-  ['validateCrosshairFileName: unsafe name', () => validateCrosshairFileName('../escape.png')],
 ]
 
 describe('every CrosshairError carries a CJK-free English message', () => {
@@ -97,20 +90,5 @@ describe('every CrosshairError carries a CJK-free English message', () => {
     expect(issue).not.toBeNull()
     expect(issue!.en).not.toMatch(CJK)
     expect(issue!.zh).toMatch(CJK)
-  })
-
-  it('prepareCrosshairReplacement: an existing output directory is refused in English too', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'crosshair-messages-'))
-    try {
-      const output = join(root, 'replacement')
-      await prepareCrosshairReplacement({ kind: 'code', code: sampleValorant }, { outputDirectory: output, targetFileName: 'mine.png' })
-      const error = await prepareCrosshairReplacement({ kind: 'code', code: sampleValorant }, { outputDirectory: output, targetFileName: 'mine.png' })
-        .then(() => { throw new Error('expected a refusal') }, (thrown: unknown) => thrown as CrosshairError)
-      expect(error).toBeInstanceOf(CrosshairError)
-      expect(error.code).toBe('OUTPUT_EXISTS')
-      expect(error.en).not.toMatch(CJK)
-    } finally {
-      await rm(root, { recursive: true, force: true })
-    }
   })
 })

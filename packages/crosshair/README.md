@@ -122,18 +122,9 @@ npm run test:crosshair:prepare
 `npm test` runs this workspace's tests with the installer and core suites. Browser/native UI
 integration and real-game visual calibration are separate acceptance tasks.
 
-## UI-independent preview and replacement functions
-
-`@kvk/crosshair/service` (Node only) exports `previewCrosshair(input)` for code/PNG
-preview and `prepareCrosshairReplacement(input, {outputDirectory, targetFileName})`
-for a new, explicitly named single-asset pack. This supports replacing an existing
-crosshair rather than always adding a unique new filename. It does not write to a game.
-The Windows `scripts/installer/kvk-crosshair.ps1` adapter previews and confirms the
-replacement through the existing backup/install/restore engine. See
-[function contracts and examples](../../docs/crosshair-functions.md).
+## Browser-safe preview
 
 For explicit code-type selection, use browser-safe `CROSSHAIR_GAMES` and
 `previewCrosshairCode('cs2' | 'valorant', code, options?)`. Both return static
-RGBA/SVG plus warnings. A code of the wrong selected game is rejected. Node service
-code inputs accept the same `game` field and preserve it through replacement preparation;
-omitting it retains legacy auto-detection. No selector screen is included.
+RGBA/SVG plus warnings. A code of the wrong selected game is rejected. No selector screen is
+included.
