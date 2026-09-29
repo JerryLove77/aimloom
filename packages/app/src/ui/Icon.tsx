@@ -1,3 +1,4 @@
+import './components.css'
 export function Icon({ name, size = 20 }: {
   name: string;
   size?: number;
