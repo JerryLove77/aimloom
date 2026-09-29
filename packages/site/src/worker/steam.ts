@@ -1,5 +1,5 @@
-import { readCapped, readCappedText } from './body'
-import { fail, json, requireClient, requireContentLengthWithin, requireJsonContentType } from './http'
+import { readCappedText } from './body'
+import { fail, json, readJsonBody, requireClient, requireJsonContentType } from './http'
 
 const NAME_MAX = 64, ANSWER_MAX = 64 * 1024, TIMEOUT_MS = 8000, MAX_BODY_BYTES = 4 * 1024
 
@@ -27,12 +27,8 @@ export async function handleSteamResolve(request: Request, fetcher: typeof fetch
   if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)
   const badType = requireJsonContentType(request); if (badType) return badType
   const badClient = requireClient(request); if (badClient) return badClient
-  const tooLarge = requireContentLengthWithin(request, MAX_BODY_BYTES); if (tooLarge) return tooLarge
-  let capped: { bytes: Uint8Array; truncated: boolean }
-  try { capped = await readCapped(request, MAX_BODY_BYTES) } catch { return fail('INVALID_STEAM_URL', 400) }
-  if (capped.truncated) return fail('TOO_LARGE', 413)
-  let body: unknown
-  try { body = JSON.parse(new TextDecoder('utf-8', { fatal: true, ignoreBOM: false }).decode(capped.bytes)) } catch { return fail('INVALID_STEAM_URL', 400) }
+  const read = await readJsonBody(request, MAX_BODY_BYTES, 'INVALID_STEAM_URL'); if (!read.ok) return read.response
+  const body = read.value
   const link = typeof body === 'object' && body !== null && typeof (body as { url?: unknown }).url === 'string' ? (body as { url: string }).url : ''
   const target = parseSteamUrl(link)
   if (target === null) return fail('INVALID_STEAM_URL', 400)

@@ -1,5 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react'
-import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor, type TuneValue, type TuningParam } from '@kvk/crosshair'
+import { CS2_PALETTE, VALORANT_PALETTE, PALETTE_OWNED_IDS, dependencyDisabled, type PaletteColor, type TuneValue, type TuningParam } from '@kvk/crosshair'
 import { Button } from '../ui/Button'
 import { Dialog } from '../ui/Dialog'
 import { Notice } from '../ui/Notice'
@@ -8,28 +8,6 @@ import { crosshairFileName, crosshairNameIssue, type CrosshairController } from 
 import { createCrosshairExportController, type CrosshairExportBridge } from './export-controller'
 
 type Game = 'cs2' | 'valorant'
-
-// Ids the fine-tune list would otherwise render as their own row, but that PaletteControl
-// draws inside its own custom-color control instead (red/green/blue as one colour picker; the
-// VALORANT custom hex and its "is it active" flag as the custom swatch's selection state).
-const PALETTE_OWNED_IDS: Record<Game, readonly string[]> = {
-  cs2: ['red', 'green', 'blue'],
-  valorant: ['customColor', 'useCustomColor'],
-}
-
-/** Which controls a toggle governs: a value survives while its parent is off, but is not editable. */
-function dependencyDisabled(game: Game, id: string, values: Record<string, TuneValue>): boolean {
-  if (game === 'cs2') {
-    if (id === 'outline') return values.outlineEnabled !== true
-    if (id === 'alpha') return values.alphaEnabled !== true
-    return false
-  }
-  if (id === 'outlineThickness' || id === 'outlineOpacity') return values.outlines !== true
-  if (id === 'dotThickness' || id === 'dotOpacity') return values.centerDot !== true
-  if (id.startsWith('inner.') && id !== 'inner.enabled') return values['inner.enabled'] !== true
-  if (id.startsWith('outer.') && id !== 'outer.enabled') return values['outer.enabled'] !== true
-  return false
-}
 
 function toHex2(value: number): string {
   return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0').toUpperCase()
