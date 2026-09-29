@@ -142,6 +142,7 @@ React  packages/app/src/
         │  + 9 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info
 Rust   packages/app/src-tauri/src/installer/
   commands.rs     validates every op in AND out; owns plan→gameRoot ownership and operationId idempotency
+  dialogs.rs shell.rs reporting.rs account.rs update.rs   the commands that never touch the engine
   worker.rs       spawns ONE pwsh 7 child; JSONL over stdin/stdout, v=1, 16 MiB line cap
   jobs.rs         job state machine: running / finished / failed / unknown / reconciled
         │  JSONL

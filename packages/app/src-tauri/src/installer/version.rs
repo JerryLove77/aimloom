@@ -317,6 +317,11 @@ fn parse_semver(version: &str) -> Option<SemverParts> {
     Some(SemverParts { major, minor, patch, prerelease })
 }
 
+#[tauri::command]
+pub fn installer_app_info() -> AppInfo {
+    app_info()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

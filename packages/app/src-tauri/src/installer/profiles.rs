@@ -41,12 +41,16 @@ fn english(value: &Value) -> Result<(), Fault> {
     Ok(())
 }
 
+/// A Windows device name (con, prn, aux, nul, com1-9, lpt1-9), given in lower case.
+fn reserved_device_name(lower: &str) -> bool {
+    matches!(lower,"con"|"prn"|"aux"|"nul") || (lower.len()==4 && (lower.starts_with("com") || lower.starts_with("lpt")) && matches!(lower.as_bytes()[3],b'1'..=b'9'))
+}
+
 pub(super) fn safe_id(value: &Value) -> Result<&str, Fault> {
     let id=value.as_str().ok_or_else(|| fault("Profile 标识必须是文本", "The Profile id must be text."))?;
     let allowed=id.len()<=64 && !id.is_empty() && id.as_bytes()[0].is_ascii_alphanumeric()
         && id.bytes().all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c==b'_' || c==b'-');
-    let reserved=matches!(id,"con"|"prn"|"aux"|"nul") || (id.len()==4 && (id.starts_with("com") || id.starts_with("lpt")) && matches!(id.as_bytes()[3],b'1'..=b'9'));
-    if !allowed || reserved {return Err(fault("Profile 标识不是安全的文件名", "The Profile id is not a safe file name."));}
+    if !allowed || reserved_device_name(id) {return Err(fault("Profile 标识不是安全的文件名", "The Profile id is not a safe file name."));}
     Ok(id)
 }
 
@@ -119,9 +123,7 @@ fn asset_path(value: &Value) -> Result<String, Fault> {
     }
     for part in path.split('/').filter(|p| !p.is_empty()) {
         let stem = part.split('.').next().unwrap_or("").to_ascii_lowercase();
-        let reserved = matches!(stem.as_str(), "con"|"prn"|"aux"|"nul")
-            || (stem.len()==4 && (stem.starts_with("com") || stem.starts_with("lpt")) && matches!(stem.as_bytes()[3], b'1'..=b'9'));
-        if matches!(part,"."|"..") || part.ends_with([' ','.']) || reserved { return Err(fault("资源路径含不安全文件名", "The asset path contains an unsafe file name.")); }
+        if matches!(part,"."|"..") || part.ends_with([' ','.']) || reserved_device_name(&stem) { return Err(fault("资源路径含不安全文件名", "The asset path contains an unsafe file name.")); }
     }
     Ok(path.trim_end_matches('/').to_string())
 }

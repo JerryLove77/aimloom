@@ -634,13 +634,7 @@ pub fn validate_read(op: &str, args: Value) -> Result<Value, Issue> {
             }
             Ok(args)
         }
-        "planCrosshairAdd" => {
-            let args = normalize::<PlanCrosshairArgs>(args)?;
-            validate_crosshair_file_name(args["file"].as_str().unwrap_or_default())?;
-            validate_crosshair_base64(args["pngBase64"].as_str().unwrap_or_default())?;
-            Ok(args)
-        }
-        "planCrosshair" => {
+        "planCrosshairAdd" | "planCrosshair" => {
             let args = normalize::<PlanCrosshairArgs>(args)?;
             validate_crosshair_file_name(args["file"].as_str().unwrap_or_default())?;
             validate_crosshair_base64(args["pngBase64"].as_str().unwrap_or_default())?;
