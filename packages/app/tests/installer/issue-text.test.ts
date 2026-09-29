@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { InstallerFailure } from '../../src/installer/contracts'
 import { errorMsg } from '../../src/workspace/issue-text'
 import { renderMsg } from '../../src/i18n'
-import { LocalizedError } from '../../../core/src/types'
-import { CrosshairError } from '../../../crosshair/src/errors'
+import { LocalizedError } from '@kvk/theme'
+import { CrosshairError } from '@kvk/crosshair'
 
 const fallback = { zh: '新增失败', en: 'Add failed' }
 const render = (msg: ReturnType<typeof errorMsg>) => ({ zh: renderMsg('zh', msg), en: renderMsg('en', msg) })

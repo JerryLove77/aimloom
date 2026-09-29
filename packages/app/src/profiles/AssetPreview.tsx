@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { parseScheme } from '../../../core/src/scheme/document'
-import { renderSchemePreview } from '../../../core/src/scheme/preview'
+import { parseScheme, renderSchemePreview } from '@kvk/theme'
 import { useLang, useMsg, useT, type Msg } from '../i18n'
 import { errorMsg } from '../workspace/issue-text'
 import { resolveProfileAssetPath, type ProfileFileReference } from './model'

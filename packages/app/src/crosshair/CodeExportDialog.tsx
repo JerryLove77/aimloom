@@ -1,6 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react'
-import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor } from '../../../crosshair/src/palette'
-import type { TuneValue, TuningParam } from '../../../crosshair/src/tuning'
+import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor, type TuneValue, type TuningParam } from '@kvk/crosshair'
 import { Button } from '../installer/components/Button'
 import { Dialog } from '../installer/components/Dialog'
 import { Notice } from '../installer/components/Notice'

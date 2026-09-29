@@ -14,6 +14,8 @@
     "build:installer:windows": "node scripts/installer-native.mjs build"
   },
   "dependencies": {
+    "@kvk/crosshair": "0.0.0",
+    "@kvk/theme": "0.0.0",
     "@tauri-apps/api": "2.11.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"

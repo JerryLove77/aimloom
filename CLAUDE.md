@@ -40,11 +40,11 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
   `tests/installer/report/backend-paths.test.ts` (paths), `command-shapes.test.ts` (what each
   command answers) and `backend-codes.test.ts` (failure codes). A fake standing where the real
   counterpart should be compared once shipped three defects.
-- **`@kvk/core`** (parked) is not an installer runtime dependency. Its browser-safe scheme leaf
-  modules are reused for previews; keep Node adapters and stores out of the front end, and never
-  require a player to have Node. **`@kvk/crosshair`** stays independent of `@kvk/core`: its
+- **`@kvk/theme`** decodes and parses themes and renders the scheme preview SVG, for the App's
+  previews and the site's upload checks. It is browser-safe and writes nothing; never require a
+  player to have Node. **`@kvk/crosshair`** stays independent of `@kvk/theme`: its
   browser-safe entry exports parsers, geometry, RGBA and SVG, and `@kvk/crosshair/node` holds the
-  Node-only PNG functions. Decoder provenance and limitations are in `docs/research/`; keep
+  Node-only PNG functions. The App and site import both packages by name, never their `src/`. Decoder provenance and limitations are in `docs/research/`; keep
   `THIRD_PARTY_NOTICES.md`, including inside images.
 - **Releases** are two files, both attached to the GitHub release: a Setup
   (`Aimloom-Setup-v<version>.exe`, Tauri's NSIS installer with our hooks), which the website also
@@ -90,10 +90,10 @@ written.
 ## Commands
 
 ```sh
-npm test                      # vitest, all three projects: installer, @kvk/core and crosshair
+npm test                      # vitest, all three projects: installer, @kvk/theme and crosshair
 npm run typecheck             # tsc --noEmit in all workspaces
 npx vitest run --project installer controller       # one project + filename filter
-npx vitest run packages/core/tests/parse.test.ts    # one file
+npx vitest run packages/theme/tests/parse.test.ts   # one file
 npm run test:site                                   # the website: Node suite + the Worker's D1/mail suite in workerd
 python3 -m unittest discover -s scripts/privacy -p 'test_*.py'   # the privacy scanner
 ```
@@ -186,9 +186,9 @@ interpolates a name or path outside quotes; counts, limits, JSON keys and codes 
 - **Original bytes.** Copy as-is: no renaming, no JSON re-serialization, no re-encoding, no
   auto-suffixing. A theme's internal `themeName` differing from its filename is not a reason to
   rewrite anything.
-- **Backups** live in `%LOCALAPPDATA%\Aimloom\backups\<install id>\`, independent of the game dir
-  and of `@kvk/core`'s backup format. Two record kinds: per-path *first-protection* (permanent,
-  never rewritten) and per-batch install backup. Call it 首次保护状态, never "factory settings".
+- **Backups** live in `%LOCALAPPDATA%\Aimloom\backups\<install id>\`, independent of the game dir.
+  Two record kinds: per-path *first-protection* (permanent, never rewritten) and per-batch
+  install backup. Call it 首次保护状态, never "factory settings".
 - **One data folder, never two.** The folder was `KovaaKConfigInstaller` before the rename.
   `Get-KvkDataRoot` (engine) and `data_root` (Rust `worker.rs`) implement the same rule and must
   stay in step: `Aimloom` wins if it exists; otherwise an existing old folder is adopted by a single
@@ -282,12 +282,12 @@ UTF-16LE. The refusal prints only the rule and a hit count, never the matched te
   `zh.ts` is the source and `en.ts` must carry the same keys; no Chinese literal belongs in UI code
   outside that folder. Engine, Rust and package messages carry both texts at the source:
   `Throw-KvkFailure <code> <zh> <en>` and `Throw-KvkGuiIssue` in PowerShell,
-  `Issue::new(code, zh, en)` in Rust, `LocalizedError` in `@kvk/core`, `CrosshairError` in
+  `Issue::new(code, zh, en)` in Rust, `LocalizedError` in `@kvk/theme`, `CrosshairError` in
   `@kvk/crosshair`. The console wizard (`kvk-config.ps1`) and the crosshair CLI stay Chinese. Five
   guards hold this: `packages/app/tests/installer/i18n/no-chinese-in-ui.test.ts`,
   `packages/app/tests/installer/i18n/core.test.tsx` (dictionary parity, and no CJK in `en`),
   `packages/app/tests/installer/i18n/engine-messages.test.ts`,
-  `packages/core/tests/i18n-messages.test.ts` and `packages/crosshair/tests/messages.test.ts`. The
+  `packages/theme/tests/i18n-messages.test.ts` and `packages/crosshair/tests/messages.test.ts`. The
   language choice is `aimloom.lang` in WebView storage (`'system' | 'zh' | 'en'`), set from the
   Settings popover; on first launch `'system'` follows the Windows display language. Commit
   messages are English conventional commits (`feat:`, `docs:`, `chore:`). **Documents are written

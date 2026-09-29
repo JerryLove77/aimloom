@@ -1,6 +1,6 @@
 import { env as testEnv } from 'cloudflare:workers'
 import { describe, expect, it } from 'vitest'
-import { encodePng } from '../../crosshair/src/png'
+import { encodePng } from '@kvk/crosshair'
 import { createSession, handleAuth, readSession, safeNext } from '../src/worker/auth'
 import { handleExplore } from '../src/worker/explore'
 import type { AppEnv } from '../src/worker/env'

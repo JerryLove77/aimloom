@@ -6,8 +6,7 @@
  * the client-side island (built with no framework) needs it as a plain runtime table rather than
  * Astro's server-side `t()`.
  */
-import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor } from '../../../crosshair/src/palette'
-import type { TuneValue } from '../../../crosshair/src/tuning'
+import { CS2_PALETTE, VALORANT_PALETTE, type PaletteColor, type TuneValue } from '@kvk/crosshair'
 
 export interface Bilingual { zh: string; en: string }
 

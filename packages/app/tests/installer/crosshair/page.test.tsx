@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { canonicalPngIssue, encodePng } from '../../../../crosshair/src/png'
+import { canonicalPngIssue, encodePng } from '@kvk/crosshair'
 import { CrosshairPage } from '../../../src/crosshair/CrosshairPage'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
 import type { ProfileAssetBridge } from '../../../src/profiles/assets'

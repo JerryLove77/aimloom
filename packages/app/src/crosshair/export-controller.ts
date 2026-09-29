@@ -1,6 +1,5 @@
-import { parseCrosshair, renderCrosshair, toSvg, getTuningParams, readTuningValue, tune,
-  type CrosshairGame, type ParsedCrosshair, type TuneValue, type TuningParam } from '../../../crosshair/src/index'
-import { canonicalPngIssue, encodePng } from '../../../crosshair/src/png'
+import { parseCrosshair, renderCrosshair, toSvg, getTuningParams, readTuningValue, tune, canonicalPngIssue, encodePng,
+  type CrosshairGame, type ParsedCrosshair, type TuneValue, type TuningParam } from '@kvk/crosshair'
 import { errorMsg } from '../workspace/issue-text'
 import { type Lang, type Msg } from '../i18n'
 import { toBase64 } from './png'
