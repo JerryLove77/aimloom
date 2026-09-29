@@ -1,5 +1,5 @@
 import { it, expect } from 'vitest'
-import { createDemoBridge } from '../../src/installer/demo-bridge'
+import { createDemoBridge } from '../../../src/bridge/demo'
 it('the demonstration restores original personal settings rather than deleting them', async()=>{
  const bridge=createDemoBridge({durationMs:0})
  const found=await bridge.discover()

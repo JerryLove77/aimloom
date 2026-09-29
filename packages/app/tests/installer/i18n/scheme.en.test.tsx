@@ -5,9 +5,9 @@ import { renderSchemePreview, parseScheme } from '@kvk/theme'
 import { SchemePage } from '../../../src/scheme/SchemePage'
 import { SchemePreview } from '../../../src/scheme/SchemePreview'
 import { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
-import { createDemoAssetBridge } from '../../../src/profiles/demo'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:scheme-en'), revokeObjectURL: vi.fn() }))
 

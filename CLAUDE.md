@@ -135,9 +135,9 @@ release ZIP and are not in CI. If `cargo` is missing from a non-interactive shel
 ## Request stack
 
 ```
-React  packages/app/src/installer/
-  controller.ts   single owner of every state transition; pages/ are presentation only
-  bridge.ts       @tauri-apps/api invoke      demo-bridge.ts   browser fake, no filesystem
+React  packages/app/src/
+  <page>/controller.ts   single owner of that page's state transitions; pages are presentation only
+  bridge/native.ts       @tauri-apps/api invoke      bridge/demo.ts   browser fake, no filesystem
         │  8 engine commands: installer_read / _profile / _execute / _job / _reconcile / _pick_folder / _pick_file / _open_backup
         │  + 9 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info
 Rust   packages/app/src-tauri/src/installer/
@@ -151,10 +151,17 @@ PowerShell 7  scripts/installer/gui/
 scripts/installer/kvk-engine.ps1   the transaction engine — every filesystem write happens here
 ```
 
+The front end is split by who the code is for: `main.tsx` (entry), `bridge/` (every `invoke`,
+the wire types in `contracts.ts`, and the browser fakes), `ui/` (domain-free components and
+`tokens.css`), `section/` (what several pages share: game-folder lookup, the plan runner, adding
+an outside file, failure text), `workspace/` (the shell: window, sidebar, Settings, reports),
+`installer/` (Quick import only), `profiles/`, `scheme/`, `audio/`, `enemy/`, `crosshair/` (one
+folder per section) and `i18n/` (dictionaries only).
+
 `kvk-config.ps1` (the console wizard behind `安装配置.cmd` / `恢复配置.cmd`) drives the *same*
 engine. The GUI adds no write rules of its own; fix write behaviour in the engine, not in a shell.
 
-**The wire contract is mirrored in four places and must change in lockstep:** `contracts.ts` (TS)
+**The wire contract is mirrored in four places and must change in lockstep:** `bridge/contracts.ts` (TS)
 → `protocol.rs` (serde + `validate_read`) → `gui/protocol.schema.json` (request schema) →
 `gui/kvk-gui-service.ps1` (producer). camelCase on the wire; Rust renames. `PROTOCOL_VERSION = 1`.
 
@@ -265,7 +272,7 @@ UTF-16LE. The refusal prints only the rule and a hit count, never the matched te
 
 ## Conventions
 
-- **UI:** `packages/app/src/installer/tokens.css` owns the Quick import page's tokens (DESIGN.md
+- **UI:** `packages/app/src/ui/tokens.css` owns the Quick import page's tokens (DESIGN.md
   §6 mirrors the values; legacy `index.css` is not imported). They are light and carry the
   workspace's colours: `tests/installer/theme.test.tsx` fails if a colour differs between the two
   roots, so change a colour in both files. The **workspace** redeclares the same `--ki-*` names in

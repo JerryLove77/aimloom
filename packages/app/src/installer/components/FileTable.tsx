@@ -1,9 +1,9 @@
 import { plural, useT, type MessageKey } from '../../i18n';
 import { useMemo, useRef, useState } from 'react';
-import type { FileRow } from '../contracts';
+import type { FileRow } from '../../bridge/contracts';
 import { queryFiles } from '../file-query';
-import { Button } from './Button';
-import { Icon } from './Icon';
+import { Button } from '../../ui/Button';
+import { Icon } from '../../ui/Icon';
 export const actionNames: Record<FileRow['action'], MessageKey> = { create: 'installer.action.create', replace: 'installer.action.replace', skip: 'installer.action.skip', restore: 'installer.action.restore', delete: 'installer.action.delete' };
 export function FileTable({ rows, restore = false }: {
   rows: FileRow[];

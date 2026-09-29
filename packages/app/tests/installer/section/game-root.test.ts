@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { GAME_ROOT_STORAGE_KEY, readGameRoot, resolveGameRoot, writeGameRoot } from '../../../src/workspace/game-root'
+import { GAME_ROOT_STORAGE_KEY, readGameRoot, resolveGameRoot, writeGameRoot } from '../../../src/section/game-root'
 
 /** A minimal store that behaves like localStorage, plus one that fails the way a blocked one does. */
 function store(initial: Record<string, string> = {}) {

@@ -1,7 +1,7 @@
 import { createContext, createElement, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { zh } from './zh'
 import { en } from './en'
-import type { Issue } from '../installer/contracts'
+import type { Issue } from '../bridge/contracts'
 
 export type Lang = 'zh' | 'en'
 export type LangChoice = 'system' | Lang

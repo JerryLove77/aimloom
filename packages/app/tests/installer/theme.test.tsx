@@ -3,10 +3,10 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { InstallerApp } from '../../src/installer/InstallerApp'
-import { createDemoBridge } from '../../src/installer/demo-bridge'
+import { createDemoBridge } from '../../src/bridge/demo'
 
 const src = join(import.meta.dirname, '..', '..', 'src')
-const tokensCss = readFileSync(join(src, 'installer', 'tokens.css'), 'utf8')
+const tokensCss = readFileSync(join(src, 'ui', 'tokens.css'), 'utf8')
 const workspaceCss = readFileSync(join(src, 'workspace', 'workspace.css'), 'utf8')
 const stylesCss = readFileSync(join(src, 'installer', 'styles.css'), 'utf8')
 

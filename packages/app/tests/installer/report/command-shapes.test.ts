@@ -2,7 +2,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
+import { createDemoBridge } from '../../../src/bridge/demo'
 
 /**
  * The first report sent from a real screen succeeded and showed an empty report number. Rust

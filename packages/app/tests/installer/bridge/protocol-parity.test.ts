@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 // its own way when one is forgotten: Rust answers "unsupported installer read operation", the
 // service "Unknown operation", and a missing response arm leaves a plan that cannot execute
 // (PLAN_MISSING). This reads the four sources and checks that they name the same operations.
-const root = resolve(__dirname, '../../../..')
+const root = resolve(__dirname, '../../../../..')
 const read = (path: string) => readFileSync(resolve(root, path), 'utf8')
 const sorted = (values: Iterable<string>) => [...new Set(values)].sort()
 
@@ -23,7 +23,7 @@ const armsIn = (source: string, signature: string) => {
 }
 const rustRequestOps = armsIn(read('packages/app/src-tauri/src/installer/protocol.rs'), 'pub fn validate_read(')
 const rustResponseOps = armsIn(read('packages/app/src-tauri/src/installer/commands.rs'), 'fn validate_read_response(')
-const bridgeOps = [...read('packages/app/src/installer/bridge.ts').matchAll(/read\('([A-Za-z]+)'/g)].map(match => match[1]!)
+const bridgeOps = [...read('packages/app/src/bridge/native.ts').matchAll(/read\('([A-Za-z]+)'/g)].map(match => match[1]!)
 const profileOps = schemaOps.filter(op => op.startsWith('profile'))
 
 describe('wire contract parity', () => {

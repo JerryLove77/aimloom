@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ProfileBridge, ProfileList, ProfileRead, ProfileSave } from '../../../src/profiles/bridge'
+import type { ProfileBridge, ProfileList, ProfileRead, ProfileSave } from '../../../src/bridge/profiles'
 import { createTrainingProfile } from '../../../src/profiles/model'
 import { createProfileEditor } from '../../../src/profiles/editor'
 import { renderMsg, t } from '../../../src/i18n'

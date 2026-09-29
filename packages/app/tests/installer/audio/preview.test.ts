@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createAudioPreview, type PreviewMedia } from '../../../src/profiles/audio/preview'
+import { createAudioPreview, type PreviewMedia } from '../../../src/audio/preview'
 
 function deferred<T>() {
   let resolve!: (value: T) => void

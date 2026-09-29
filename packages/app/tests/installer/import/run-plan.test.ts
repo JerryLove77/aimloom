@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { runPlan } from '../../../src/workspace/run-plan'
+import { runPlan } from '../../../src/section/run-plan'
 
 const bridge = (jobs: { state: string; result?: { status: string } | null; error?: { code: string; message: string } | null }[]) => {
   const executed: unknown[] = []

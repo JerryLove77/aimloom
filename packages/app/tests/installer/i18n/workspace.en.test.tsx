@@ -2,10 +2,10 @@ import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
 import { Workspace } from '../../../src/workspace/Workspace'
-import { ImportSheet } from '../../../src/workspace/ImportSheet'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
-import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/profiles/demo'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import { ImportSheet } from '../../../src/section/ImportSheet'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:preview'), revokeObjectURL: vi.fn() }))
 

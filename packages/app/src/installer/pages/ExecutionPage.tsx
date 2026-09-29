@@ -1,10 +1,10 @@
 import { useLang, useT, type MessageKey } from '../../i18n';
 import { executionErrorText } from '../issue';
 import { ExecutionFiles } from '../components/ExecutionFiles';
-import type { Job, Phase, Preview } from '../contracts';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { Notice } from '../components/Notice';
+import type { Job, Phase, Preview } from '../../bridge/contracts';
+import { Button } from '../../ui/Button';
+import { Icon } from '../../ui/Icon';
+import { Notice } from '../../ui/Notice';
 const phases: Record<Phase, MessageKey> = { preparing: 'installer.phase.preparing', protecting: 'installer.phase.protecting', installing: 'installer.phase.installing', verifying: 'installer.phase.verifying', restoring: 'installer.phase.restoring', 'rolling-back': 'installer.phase.rollingBack' };
 export function ExecutionPage({ job, preview, busy, isDemo, onDone, onBackups, onOpenBackup, onReconcile }: {
   job: Job | null;

@@ -2,10 +2,10 @@ import { plural, useLang, useT } from '../../i18n';
 import type { InstallerState } from '../state';
 import type { InstallerController } from '../controller';
 import { BackupList } from '../components/BackupList';
-import { Button } from '../components/Button';
+import { Button } from '../../ui/Button';
 import { PathField } from '../components/PathField';
-import { Notice } from '../components/Notice';
-import { Icon } from '../components/Icon';
+import { Notice } from '../../ui/Notice';
+import { Icon } from '../../ui/Icon';
 export function RestorePage({ state, controller }: {
   state: InstallerState;
   controller: InstallerController;

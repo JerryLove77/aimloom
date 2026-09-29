@@ -1,9 +1,9 @@
-import type { AudioBindings, AudioEvent, InstalledSound } from '../installer/contracts'
+import type { AudioBindings, AudioEvent, InstalledSound } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
-import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../workspace/game-root'
-import { errorMsg } from '../workspace/issue-text'
+import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'
+import { errorMsg } from '../section/issue-text'
 import { t, type Lang, type MessageKey, type Msg } from '../i18n'
-import { addFileToGame, type FileImportBridge, type FileImportInput, type FileImportState } from '../workspace/file-import'
+import { addFileToGame, type FileImportBridge, type FileImportInput, type FileImportState } from '../section/file-import'
 
 /** The subset of the installer bridge that the Audio page needs. */
 export interface AudioBridge extends FileImportBridge {

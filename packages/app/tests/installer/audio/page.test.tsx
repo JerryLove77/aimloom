@@ -3,8 +3,8 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AudioPage } from '../../../src/audio/AudioPage'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
-import type { AudioBindings, InstalledSound } from '../../../src/installer/contracts'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
+import type { AudioBindings, InstalledSound } from '../../../src/bridge/contracts'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:audio'), revokeObjectURL: vi.fn() }))
 

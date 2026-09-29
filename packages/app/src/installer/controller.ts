@@ -1,8 +1,8 @@
-import { InstallerFailure, type Category, type InstallerBridge, type Issue, type Job, type Preview } from './contracts'
+import { InstallerFailure, type Category, type InstallerBridge, type Issue, type Job, type Preview } from '../bridge/contracts'
 import { localIssue } from './issue'
 import type { Lang } from '../i18n'
 import { browserStorage } from '../i18n'
-import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../workspace/game-root'
+import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'
 import { createInitialState, hasPendingBackup, installerReducer, operationBlocksNavigation, type InstallerState, type Route, type Step } from './state'
 const issueOf=(error:unknown):Issue => error instanceof InstallerFailure ? error.issue : {code:'ENGINE_ERROR',message:error instanceof Error?error.message:String(error),messageEn:error instanceof Error?error.message:String(error),path:null}
 const fail=(code:Issue['code'],key:Parameters<typeof localIssue>[1])=>new InstallerFailure(localIssue(code,key))

@@ -219,7 +219,7 @@ export const zh = {
   'scheme.import.selected': '已添加「{file}」并选中；点「应用背景」才会生效。',
   'scheme.import.added': '已添加「{file}」。',
 
-  // audio.* — AudioPage.tsx, controller.ts, profiles/audio/preview.ts.
+  // audio.* — AudioPage.tsx, controller.ts, preview.ts.
   'audio.eyebrow': 'SOUNDS · 当前配置',
   'audio.title': '音效',
   'audio.noun': '音效',

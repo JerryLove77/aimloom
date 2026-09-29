@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
 import { EnemyPage } from '../../../src/enemy/EnemyPage'
 import { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
+import { createDemoBridge } from '../../../src/bridge/demo'
 
 const CJK = /[　-〿㐀-鿿＀-￯]/
 

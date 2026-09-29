@@ -1,4 +1,4 @@
-import type { FileAddKind } from '../installer/contracts'
+import type { FileAddKind } from '../bridge/contracts'
 import { t, type Msg } from '../i18n'
 
 /** An installed theme (name = its internal themeName) or sound (name = its stem). */

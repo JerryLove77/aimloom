@@ -1,12 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { ImportSheet } from '../../../src/workspace/ImportSheet'
+import { ImportSheet } from '../../../src/section/ImportSheet'
 import { sha256Hex } from '@kvk/crosshair'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
-import type { InstalledEntry } from '../../../src/workspace/import-check'
-import type { FileImportInput } from '../../../src/workspace/file-import'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
+import type { InstalledEntry } from '../../../src/section/import-check'
+import type { FileImportInput } from '../../../src/section/file-import'
 import { LangProvider, type Msg } from '../../../src/i18n'
-import { InstallerFailure } from '../../../src/installer/contracts'
+import { InstallerFailure } from '../../../src/bridge/contracts'
 
 const themeBytes = (themeName: string) => new TextEncoder().encode(JSON.stringify({ themeName, wallTint: { x: 0, y: 0, z: 0 } }))
 const SOURCE = 'C:\\Users\\me\\Downloads\\Night.json'

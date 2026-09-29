@@ -1,7 +1,7 @@
 import { useT, type MessageKey } from '../../i18n'
 import { useState } from 'react'
-import type { Execution } from '../contracts'
-import { Button } from './Button'
+import type { Execution } from '../../bridge/contracts'
+import { Button } from '../../ui/Button'
 const labels:Record<string,MessageKey>={pending:'installer.execFiles.pending',writing:'installer.execFiles.writing',applied:'installer.execFiles.applied',restored:'installer.execFiles.restored',protected:'installer.execFiles.protected',skip:'installer.execFiles.skip',create:'installer.execFiles.applied',replace:'installer.execFiles.applied'}
 export function ExecutionFiles({items}: {items:Execution['items']}) {
   const [page,setPage]=useState(1)

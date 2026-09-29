@@ -1,4 +1,4 @@
-import { t, type Msg } from '../../i18n'
+import { t, type Msg } from '../i18n'
 
 /** A local .ogg/.wav path the preview may open: no device path, URL scheme or control character. */
 function validateAudioFile(file: unknown): asserts file is string {

@@ -1,7 +1,7 @@
-import type { EnemyList, EnemyShape, EnemySkin, EnemySkinChoice } from '../installer/contracts'
+import type { EnemyList, EnemyShape, EnemySkin, EnemySkinChoice } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
-import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../workspace/game-root'
-import { errorMsg } from '../workspace/issue-text'
+import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'
+import { errorMsg } from '../section/issue-text'
 import { t, type Lang, type MessageKey, type Msg } from '../i18n'
 
 /** The subset of the installer bridge that the Enemy page needs. */

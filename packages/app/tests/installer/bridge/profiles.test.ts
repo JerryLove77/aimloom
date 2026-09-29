@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { invoke } from '@tauri-apps/api/core'
-import { createNativeProfileBridge } from '../../../src/profiles/bridge'
+import { createNativeProfileBridge } from '../../../src/bridge/profiles'
 import { createTrainingProfile } from '../../../src/profiles/model'
-import { InstallerFailure } from '../../../src/installer/contracts'
+import { InstallerFailure } from '../../../src/bridge/contracts'
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 const native = vi.mocked(invoke)

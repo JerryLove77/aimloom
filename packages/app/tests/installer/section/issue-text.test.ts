@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { InstallerFailure } from '../../src/installer/contracts'
-import { errorMsg } from '../../src/workspace/issue-text'
-import { renderMsg } from '../../src/i18n'
+import { InstallerFailure } from '../../../src/bridge/contracts'
+import { errorMsg } from '../../../src/section/issue-text'
+import { renderMsg } from '../../../src/i18n'
 import { LocalizedError } from '@kvk/theme'
 import { CrosshairError } from '@kvk/crosshair'
 

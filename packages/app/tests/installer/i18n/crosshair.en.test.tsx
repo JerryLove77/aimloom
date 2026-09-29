@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
 import { CrosshairPage } from '../../../src/crosshair/CrosshairPage'
 import { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
-import { createDemoAssetBridge } from '../../../src/profiles/demo'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:crosshair-en'), revokeObjectURL: vi.fn() }))
 

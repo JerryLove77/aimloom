@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { importFileName, importIssue, themeNameOf } from '../../../src/workspace/import-check'
+import { importFileName, importIssue, themeNameOf } from '../../../src/section/import-check'
 import { renderMsg } from '../../../src/i18n'
 
 const utf8 = (text: string) => new TextEncoder().encode(text)

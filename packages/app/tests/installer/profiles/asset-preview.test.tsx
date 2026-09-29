@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { AssetPreview } from '../../../src/profiles/AssetPreview'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 const bytes = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])
 const assets: ProfileAssetBridge = { chooseDirectory: vi.fn(), list: vi.fn(), read: vi.fn() }
 const reference = { name: '准星', path: 'a.png' }

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
-import type { ProfileBridge } from '../../../src/profiles/bridge'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import type { ProfileBridge } from '../../../src/bridge/profiles'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 import { createTrainingProfile, type TrainingProfile } from '../../../src/profiles/model'
 
 /**

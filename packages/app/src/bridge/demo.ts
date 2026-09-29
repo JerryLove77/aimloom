@@ -1,4 +1,4 @@
-import { localIssue } from './issue'
+import { localIssue } from '../installer/issue'
 import demoData from './demo-data.json'
 import { InstallerFailure, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme } from './contracts'
 const gameRoot='D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'

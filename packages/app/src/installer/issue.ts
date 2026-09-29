@@ -1,5 +1,5 @@
 import { hasCjk, isEnglishText, t, type Msg } from '../i18n'
-import type { Issue } from './contracts'
+import type { Issue } from '../bridge/contracts'
 
 export { hasCjk, isEnglishText }
 const usable = (text: unknown): text is string => typeof text === 'string' && isEnglishText(text)

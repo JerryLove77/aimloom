@@ -1,6 +1,6 @@
 import { plural, useT, type MessageKey } from '../../i18n';
-import type { Category } from '../contracts';
-import { Icon } from './Icon';
+import type { Category } from '../../bridge/contracts';
+import { Icon } from '../../ui/Icon';
 export const categoryNames: Record<Category, MessageKey> = { themes: 'installer.category.themes', sounds: 'installer.category.sounds', crosshairs: 'installer.category.crosshairs', ui: 'installer.category.ui', palette: 'installer.category.palette', primary: 'installer.category.primary' };
 export const categoryDescriptions: Record<Category, MessageKey> = { themes: 'installer.category.desc.themes', sounds: 'installer.category.desc.sounds', crosshairs: 'installer.category.desc.crosshairs', ui: 'installer.category.desc.ui', palette: 'installer.category.desc.palette', primary: 'installer.category.desc.primary' };
 export function CategoryCard({ category, count, checked, onChange, disabled = false, compact = false }: {

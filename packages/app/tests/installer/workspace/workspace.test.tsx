@@ -1,9 +1,9 @@
 import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { Workspace } from '../../src/workspace/Workspace'
-import { createDemoBridge } from '../../src/installer/demo-bridge'
-import { createDemoProfileBridge, createDemoAssetBridge } from '../../src/profiles/demo'
-import { createManualFileDropSource } from '../../src/workspace/file-drop'
+import { Workspace } from '../../../src/workspace/Workspace'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
+import { createManualFileDropSource } from '../../../src/workspace/file-drop'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:preview'), revokeObjectURL: vi.fn() }))
 

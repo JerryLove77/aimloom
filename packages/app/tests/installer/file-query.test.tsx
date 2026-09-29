@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FileTable } from '../../src/installer/components/FileTable';
 import { queryFiles } from '../../src/installer/file-query';
-import type { FileRow } from '../../src/installer/contracts';
+import type { FileRow } from '../../src/bridge/contracts';
 const rows: FileRow[] = Array.from({ length: 65 }, (_, i) => ({ key: String(i), category: 'themes', source: null, target: `/game/themes/file-${String(i).padStart(2, '0')}.ini`, action: i % 2 ? 'create' : 'replace', conflict: false, unowned: false }));
 describe('file review', () => {
     it('paginates 30 rows and clamps pages after filtering', () => { expect(queryFiles(rows, '', false, 1).rows).toHaveLength(30); const result = queryFiles(rows, 'file-64', false, 3); expect(result.page).toBe(1); expect(result.total).toBe(1); });

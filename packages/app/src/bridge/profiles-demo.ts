@@ -1,11 +1,11 @@
-import type { ProfileBridge } from './bridge'
+import type { ProfileBridge } from './profiles'
 import type { AssetKind, ProfileAssetBridge } from './assets'
-import { createTrainingProfile, parseTrainingProfile, type TrainingProfile } from './model'
-import { referenceFromPath } from './file-reference'
-import { InstallerFailure } from '../installer/contracts'
+import { createTrainingProfile, parseTrainingProfile, type TrainingProfile } from '../profiles/model'
+import { referenceFromPath } from '../profiles/file-reference'
+import { InstallerFailure } from './contracts'
 import { t, type MessageKey } from '../i18n'
 // Demo content (sample Profile and theme names) is data, not UI text.
-import data from './demo-data.json'
+import data from './profiles-demo-data.json'
 
 /** A demo failure in both languages, thrown the way the native bridges throw theirs. */
 const failure = (key: MessageKey) => new InstallerFailure({ code: 'ENGINE_ERROR', message: t('zh', key), messageEn: t('en', key), path: null })

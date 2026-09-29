@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { encodePng, canonicalPngIssue } from '@kvk/crosshair'
 import { toCanonicalPng, type RgbaDecoder } from '../../../src/crosshair/png'
-import { errorMsg } from '../../../src/workspace/issue-text'
+import { errorMsg } from '../../../src/section/issue-text'
 import { renderMsg, type Msg } from '../../../src/i18n'
 
 const renderEn = (msg: Msg) => renderMsg('en', msg)

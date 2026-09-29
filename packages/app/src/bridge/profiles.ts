@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
-import { InstallerFailure, type Issue } from '../installer/contracts'
+import { InstallerFailure, type Issue } from './contracts'
 import { isEnglishText, t } from '../i18n'
-import { parseTrainingProfile, validateProfileId, type TrainingProfile } from './model'
+import { parseTrainingProfile, validateProfileId, type TrainingProfile } from '../profiles/model'
 
 /** Each unreadable file carries both languages: `message` is Chinese, `messageEn` its English twin. */
 export interface ProfileList { directory: string; profiles: TrainingProfile[]; errors: { fileName: string; message: string; messageEn: string }[] }

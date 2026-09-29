@@ -1,4 +1,4 @@
-import type { AudioBindings } from '../installer/contracts'
+import type { AudioBindings } from '../bridge/contracts'
 
 /**
  * What the game is set to right now, so that 「保持当前」 can say what it keeps. Each part is

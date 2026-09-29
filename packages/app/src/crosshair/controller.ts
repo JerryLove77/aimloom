@@ -1,7 +1,7 @@
-import type { InstalledCrosshair } from '../installer/contracts'
+import type { InstalledCrosshair } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
-import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../workspace/game-root'
-import { errorMsg } from '../workspace/issue-text'
+import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'
+import { errorMsg } from '../section/issue-text'
 import { t, type Lang, type Msg } from '../i18n'
 import { toBase64, toCanonicalPng, type RgbaDecoder } from './png'
 

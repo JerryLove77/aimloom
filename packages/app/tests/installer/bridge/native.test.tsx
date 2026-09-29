@@ -6,11 +6,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const invoke = vi.fn()
 vi.mock('@tauri-apps/api/core', () => ({ invoke: (...args: unknown[]) => invoke(...args) }))
 
-import { createNativeBridge } from '../../src/installer/bridge'
-import { InstallerFailure } from '../../src/installer/contracts'
-import { SchemePage } from '../../src/scheme/SchemePage'
-import type { WorkspaceSection } from '../../src/workspace/WorkspaceShell'
-import type { ProfileAssetBridge } from '../../src/profiles/assets'
+import { createNativeBridge } from '../../../src/bridge/native'
+import { InstallerFailure } from '../../../src/bridge/contracts'
+import { SchemePage } from '../../../src/scheme/SchemePage'
+import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 const PWSH_MISSING = '没有找到 PowerShell 7。请先安装，然后重新打开本程序：在「终端」中运行 winget install --id Microsoft.PowerShell，或访问 https://aka.ms/powershell 下载。'
 const assets: ProfileAssetBridge = {

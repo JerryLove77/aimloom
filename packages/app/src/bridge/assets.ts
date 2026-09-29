@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
-import { InstallerFailure, type Issue } from '../installer/contracts'
+import { InstallerFailure, type Issue } from './contracts'
 import { isEnglishText, t, type Lang } from '../i18n'
-import { parseFileReference, referenceFromPath, type ProfileFileReference } from './file-reference'
+import { parseFileReference, referenceFromPath, type ProfileFileReference } from '../profiles/file-reference'
 
 export type AssetKind = 'scheme' | 'audio' | 'crosshair' | 'enemy'
 /** Each unreadable file carries both languages: `message` is Chinese, `messageEn` its English twin. */

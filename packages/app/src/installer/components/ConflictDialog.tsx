@@ -1,8 +1,8 @@
 import { useT } from '../../i18n';
-import type { FileRow } from '../contracts';
-import { Dialog } from './Dialog';
-import { Button } from './Button';
-import { Notice } from './Notice';
+import type { FileRow } from '../../bridge/contracts';
+import { Dialog } from '../../ui/Dialog';
+import { Button } from '../../ui/Button';
+import { Notice } from '../../ui/Notice';
 export function ConflictDialog({ open, rows, onConfirm, onClose }: {
   open: boolean;
   rows: FileRow[];
