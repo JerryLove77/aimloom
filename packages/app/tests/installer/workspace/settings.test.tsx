@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { LangProvider, LANG_STORAGE_KEY } from '../../../src/i18n'
 import { Workspace } from '../../../src/workspace/Workspace'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
-import { createDemoAssetBridge, createDemoProfileBridge } from '../../../src/profiles/demo'
-import { InstallerFailure } from '../../../src/installer/contracts'
-import type { InstallerBridge } from '../../../src/installer/contracts'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoAssetBridge, createDemoProfileBridge } from '../../../src/bridge/profiles-demo'
+import { InstallerFailure } from '../../../src/bridge/contracts'
+import type { InstallerBridge } from '../../../src/bridge/contracts'
 
 const memory = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v) }, removeItem: (k: string) => { m.delete(k) }, m } }
 

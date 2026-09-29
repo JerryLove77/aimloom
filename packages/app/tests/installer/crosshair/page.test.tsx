@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { canonicalPngIssue, encodePng } from '@kvk/crosshair'
 import { CrosshairPage } from '../../../src/crosshair/CrosshairPage'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:crosshair'), revokeObjectURL: vi.fn() }))
 

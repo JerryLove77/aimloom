@@ -1,7 +1,7 @@
 import { useT } from '../../i18n';
 import { useId } from 'react';
-import { Button } from './Button';
-import { Icon } from './Icon';
+import { Button } from '../../ui/Button';
+import { Icon } from '../../ui/Icon';
 export function PathField({ label, value, onChange, onChoose, hint, disabled = false, error }: {
   label: string;
   value: string;

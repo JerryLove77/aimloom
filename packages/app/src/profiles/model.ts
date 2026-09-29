@@ -1,4 +1,4 @@
-import { InstallerFailure } from '../installer/contracts'
+import { InstallerFailure } from '../bridge/contracts'
 import { t, type MessageKey, type Params } from '../i18n'
 import { parseFileReference, type ProfileFileReference } from './file-reference'
 export type { ProfileFileReference } from './file-reference'

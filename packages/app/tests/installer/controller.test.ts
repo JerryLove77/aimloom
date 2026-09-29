@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { createInstallerController } from '../../src/installer/controller'
 import { createInitialState } from '../../src/installer/state'
-import { createDemoBridge } from '../../src/installer/demo-bridge'
-import type { Location, Preview } from '../../src/installer/contracts'
-import { GAME_ROOT_STORAGE_KEY } from '../../src/workspace/game-root'
+import { createDemoBridge } from '../../src/bridge/demo'
+import type { Location, Preview } from '../../src/bridge/contracts'
+import { GAME_ROOT_STORAGE_KEY } from '../../src/section/game-root'
 
 /** A minimal store that behaves like localStorage, for proving what Quick import remembers. */
 function fakeStorage(initial: Record<string, string> = {}) {

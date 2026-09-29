@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createEnemyController } from '../../../src/enemy/controller'
-import type { EnemyList, EnemyShape } from '../../../src/installer/contracts'
+import type { EnemyList, EnemyShape } from '../../../src/bridge/contracts'
 import { renderMsg } from '../../../src/i18n'
 
 const skins: EnemyList['skins'] = [

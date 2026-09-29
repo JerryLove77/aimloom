@@ -8,8 +8,8 @@ import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
 import { BackupList } from '../../../src/installer/components/BackupList'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
 import { createTrainingProfile } from '../../../src/profiles/model'
-import type { ProfileBridge } from '../../../src/profiles/bridge'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import type { ProfileBridge } from '../../../src/bridge/profiles'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:plurals'), revokeObjectURL: vi.fn() }))
 

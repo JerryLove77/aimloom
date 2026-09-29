@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
-import { ExploreLink } from '../../../src/workspace/ExploreLink'
+import { ExploreLink } from '../../../src/section/ExploreLink'
 import { SettingsState } from '../../../src/workspace/WorkspaceShell'
-import type { ExploreKind } from '../../../src/installer/contracts'
+import type { ExploreKind } from '../../../src/bridge/contracts'
 
 function renderLink(lang: 'zh' | 'en', kind: ExploreKind, openExplore = vi.fn().mockResolvedValue(undefined)) {
   const value = {

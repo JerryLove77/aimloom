@@ -1,9 +1,9 @@
 import { useMsg, useT } from '../../i18n';
 import { installerIssueMsg } from '../issue';
-import type { Discovery, Issue, Location } from '../contracts';
+import type { Discovery, Issue, Location } from '../../bridge/contracts';
 import { PathField } from '../components/PathField';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
+import { Button } from '../../ui/Button';
+import { Icon } from '../../ui/Icon';
 export function LocationPage({ gameRoot, packRoot, location, discovery, issue, busy, onGame, onPack, onChoose, onNext }: {
   gameRoot: string;
   packRoot: string;

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createAudioController } from '../../../src/audio/controller'
 import { renderMsg } from '../../../src/i18n'
-import type { AudioBindings, InstalledSound } from '../../../src/installer/contracts'
+import type { AudioBindings, InstalledSound } from '../../../src/bridge/contracts'
 
 const sounds: InstalledSound[] = [
   { name: 'Bell5', file: 'Bell5.ogg', path: 'D:/Game/FPSAimTrainer/sounds/Bell5.ogg', ambiguous: false },

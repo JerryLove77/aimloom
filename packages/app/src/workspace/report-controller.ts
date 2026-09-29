@@ -1,6 +1,6 @@
 import type { Lang } from '../i18n'
-import type { ReportInput, ReportPreview, SteamAccount } from '../installer/contracts'
-import { errorMsg } from './issue-text'
+import type { ReportInput, ReportPreview, SteamAccount } from '../bridge/contracts'
+import { errorMsg } from '../section/issue-text'
 import type { Msg } from '../i18n'
 
 /** The backend's own limits, counted the way it counts them: `string.length` (UTF-16 units). */

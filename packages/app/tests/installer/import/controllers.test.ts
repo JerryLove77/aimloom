@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createSchemeController } from '../../../src/scheme/controller'
 import { createAudioController } from '../../../src/audio/controller'
-import type { AudioBindings, InstalledSound, PlanFileAddRequest, SchemeTheme } from '../../../src/installer/contracts'
+import type { AudioBindings, InstalledSound, PlanFileAddRequest, SchemeTheme } from '../../../src/bridge/contracts'
 import { renderMsg } from '../../../src/i18n'
 
 type Job = { state: string; result?: { status: string }; error?: { code: string; message: string } }

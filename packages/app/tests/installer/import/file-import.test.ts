@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { addFileToGame, type FileImportBridge } from '../../../src/workspace/file-import'
+import { addFileToGame, type FileImportBridge } from '../../../src/section/file-import'
 import { renderMsg } from '../../../src/i18n'
-import type { PlanFileAddRequest } from '../../../src/installer/contracts'
+import type { PlanFileAddRequest } from '../../../src/bridge/contracts'
 
 const request: PlanFileAddRequest = { gameRoot: 'D:/Game', kind: 'theme', sourcePath: 'C:/x.json', sourceSha256: 'a'.repeat(64), file: 'x.json', revision: 1 }
 

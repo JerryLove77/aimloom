@@ -1,10 +1,10 @@
 import { plural, useT } from '../../i18n';
-import type { Preview } from '../contracts';
+import type { Preview } from '../../bridge/contracts';
 import { FileTable, actionNames } from '../components/FileTable';
 import { categoryNames } from '../components/CategoryCard';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { Notice } from '../components/Notice';
+import { Button } from '../../ui/Button';
+import { Icon } from '../../ui/Icon';
+import { Notice } from '../../ui/Notice';
 export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, onRefresh }: {
   preview: Preview;
   busy: boolean;

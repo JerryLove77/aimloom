@@ -1,4 +1,4 @@
-import type { FileAddKind, PlanFileAddRequest } from '../installer/contracts'
+import type { FileAddKind, PlanFileAddRequest } from '../bridge/contracts'
 import { t, type Lang, type Msg } from '../i18n'
 import { errorMsg } from './issue-text'
 import { runPlan, type PlanRunner } from './run-plan'

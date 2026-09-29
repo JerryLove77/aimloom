@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import { Button } from '../installer/components/Button'
-import { Tag } from './ui'
+import { Button } from './Button'
+import { Tag } from './status'
 import { plural, useT } from '../i18n'
 
 /**

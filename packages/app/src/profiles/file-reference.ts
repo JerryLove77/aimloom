@@ -1,4 +1,4 @@
-import { InstallerFailure } from '../installer/contracts'
+import { InstallerFailure } from '../bridge/contracts'
 import { t } from '../i18n'
 
 export interface ProfileFileReference { name: string; path: string }

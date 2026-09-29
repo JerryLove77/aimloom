@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import { invoke } from '@tauri-apps/api/core'
-import { createNativeAssetBridge } from '../../../src/profiles/assets'
+import { createNativeAssetBridge } from '../../../src/bridge/assets'
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 const call = vi.mocked(invoke)
 beforeEach(() => call.mockReset())

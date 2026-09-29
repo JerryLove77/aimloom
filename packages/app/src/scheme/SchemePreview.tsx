@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { parseScheme, renderSchemePreview } from '@kvk/theme'
-import type { ProfileAssetBridge } from '../profiles/assets'
+import type { ProfileAssetBridge } from '../bridge/assets'
 import { useLang, useMsg, useT, type Msg } from '../i18n'
-import { errorMsg } from '../workspace/issue-text'
+import { errorMsg } from '../section/issue-text'
 
 /** Renders one installed theme as an offline SVG. Read-only: it never writes game files. */
 export function SchemePreview({ path, name, assets, className }: {

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { parseScheme, renderSchemePreview } from '@kvk/theme'
 import { useLang, useMsg, useT, type Msg } from '../i18n'
-import { errorMsg } from '../workspace/issue-text'
+import { errorMsg } from '../section/issue-text'
 import { resolveProfileAssetPath, type ProfileFileReference } from './model'
-import { assetMime, type AssetKind, type ProfileAssetBridge } from './assets'
+import { assetMime, type AssetKind, type ProfileAssetBridge } from '../bridge/assets'
 
 type Status = 'loading' | 'ready' | 'error'
 export interface AssetPreviewProps {

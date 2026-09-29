@@ -2,10 +2,10 @@ import { describe, it, expect, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { Dialog } from '../../src/installer/components/Dialog';
+import { Dialog } from '../../src/ui/Dialog';
 import { CategoryCard } from '../../src/installer/components/CategoryCard';
 import { ConflictDialog } from '../../src/installer/components/ConflictDialog';
-import type { FileRow } from '../../src/installer/contracts';
+import type { FileRow } from '../../src/bridge/contracts';
 const row: FileRow = { key: '1', category: 'themes', source: null, target: '/game/config/edited.ini', action: 'restore', conflict: true, unowned: false };
 describe('installer controls', () => {
     it('selects categories with native checkbox keyboard semantics', async () => {

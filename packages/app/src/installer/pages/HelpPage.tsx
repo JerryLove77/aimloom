@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useMsg, useT, type Msg } from '../../i18n';
 import { helpArticles } from '../help';
-import { Icon } from '../components/Icon';
-import { Button } from '../components/Button';
-import { Notice } from '../components/Notice';
-import { errorMsg } from '../../workspace/issue-text';
+import { Icon } from '../../ui/Icon';
+import { Button } from '../../ui/Button';
+import { Notice } from '../../ui/Notice';
+import { errorMsg } from '../../section/issue-text';
 import { FEEDBACK_EMAIL } from '../../workspace/SettingsPopover';
 export function HelpPage({ onSendReport, onOpenLogs }: {
   /** Absent when this page is reached from a context that cannot send a report or open the log folder (a standalone render, e.g. tests) — the Feedback block then shows only what it can do. */

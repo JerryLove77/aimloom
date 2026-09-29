@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { StatusStrip, Tag, Toast, useToast } from '../../src/workspace/ui'
+import { StatusStrip, Tag, Toast, useToast } from '../../src/ui/status'
 import { WorkspaceShell } from '../../src/workspace/WorkspaceShell'
 
 describe('workspace primitives', () => {

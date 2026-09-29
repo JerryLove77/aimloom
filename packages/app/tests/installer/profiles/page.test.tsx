@@ -2,12 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
 import { Workspace } from '../../../src/workspace/Workspace'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
-import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/profiles/demo'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
 import { createTrainingProfile } from '../../../src/profiles/model'
-import type { ProfileBridge } from '../../../src/profiles/bridge'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
-import type { Job } from '../../../src/installer/contracts'
+import type { ProfileBridge } from '../../../src/bridge/profiles'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
+import type { Job } from '../../../src/bridge/contracts'
 
 beforeEach(() => {
   vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test-preview'), revokeObjectURL: vi.fn() }))

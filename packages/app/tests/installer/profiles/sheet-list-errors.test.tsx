@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
 import { ResourceSheet } from '../../../src/profiles/ResourceSheet'
 import { AudioSheet } from '../../../src/profiles/AudioSheet'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:preview'), revokeObjectURL: vi.fn() }))
 

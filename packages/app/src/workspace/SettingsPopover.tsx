@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from 'react'
 import { LANGUAGE_NAMES, useLang, useMsg, useT, type LangChoice, type Msg } from '../i18n'
-import { errorMsg } from './issue-text'
+import { errorMsg } from '../section/issue-text'
 import { readAccount, writeAccount, looksLikeSteamUrl, type Account } from './account'
 import { readUpdatesEnabled, writeUpdatesEnabled } from './updates'
 import { updateAvailableKey } from './update-text'

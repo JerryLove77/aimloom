@@ -1,4 +1,4 @@
-import { Button } from '../installer/components/Button'
+import { Button } from './Button'
 
 /**
  * The local, immediate substring search box shared by Theme, Sounds and Crosshair: a

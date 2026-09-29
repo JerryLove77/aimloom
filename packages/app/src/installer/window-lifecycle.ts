@@ -1,4 +1,4 @@
-import type { Job } from './contracts';
+import type { Job } from '../bridge/contracts';
 export function canLeaveOperation(job: Job | null): boolean { return !job || !['running', 'unknown'].includes(job.state); }
 /** Browser unload is a final lifecycle guard; in-app confirmation belongs to Dialog. */
 export function installUnloadGuard(getJob: () => Job | null, target: Window = window) { const handler = (event: BeforeUnloadEvent) => { if (!canLeaveOperation(getJob())) {

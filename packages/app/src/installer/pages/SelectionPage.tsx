@@ -1,9 +1,9 @@
 import { plural, useT } from '../../i18n';
-import type { Catalog, Category } from '../contracts';
+import type { Catalog, Category } from '../../bridge/contracts';
 import { CategoryCard } from '../components/CategoryCard';
-import { Button } from '../components/Button';
-import { Icon } from '../components/Icon';
-import { Notice } from '../components/Notice';
+import { Button } from '../../ui/Button';
+import { Icon } from '../../ui/Icon';
+import { Notice } from '../../ui/Notice';
 export function SelectionPage({ catalog, categories, busy, onChange, onBack, onNext }: {
   catalog: Catalog | null;
   categories: Category[];

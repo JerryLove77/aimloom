@@ -70,7 +70,7 @@ the corresponding screens; see [ROADMAP.md](ROADMAP.md) and the
 [execution plan](docs/superpowers/plans/2026-09-13-docker-crosshair-figma.md).
 
 No Figma file has been authored in this planning task. Figma design ownership does not change
-the app's runtime token ownership: `packages/app/src/installer/tokens.css` remains canonical
+the app's runtime token ownership: `packages/app/src/ui/tokens.css` remains canonical
 in code, and any approved visual change must update its mapping and verification together.
 
 ## 6. Installer workspace — approved 2026-09-06 evolution
@@ -85,7 +85,7 @@ The signature is `StepRail`: four ring segments represent four actual wizard ste
 
 ### Canonical token ownership and mapping
 
-Runtime ownership is Model B: `packages/app/src/installer/tokens.css` → scoped `.kvk-installer` CSS variables → shared components in `components/` and page layout in `styles.css`. This document mirrors the runtime values; the legacy `index.css` is not imported by the installer. No remote fonts or images are required.
+Runtime ownership is Model B: `packages/app/src/ui/tokens.css` → scoped `.kvk-installer` CSS variables → shared components in `ui/` and page layout in `installer/styles.css`. This document mirrors the runtime values; the legacy `index.css` is not imported by the installer. No remote fonts or images are required.
 
 **One colour family, two roots (user, 2026-09-20).** Install & restore — the legacy four-step
 installer — was dark until v0.1.1. It now carries the workspace's light colours: the second table

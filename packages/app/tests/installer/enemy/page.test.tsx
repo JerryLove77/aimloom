@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { EnemyPage } from '../../../src/enemy/EnemyPage'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import type { EnemyList, EnemyShape } from '../../../src/installer/contracts'
+import type { EnemyList, EnemyShape } from '../../../src/bridge/contracts'
 
 const skins: EnemyList['skins'] = [
   { label: 'None', model: 'None', skin: 'None', shapes: ['cylindrical', 'cuboid', 'spheroid'] },

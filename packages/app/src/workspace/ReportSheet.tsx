@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '../installer/components/Button'
-import { Dialog } from '../installer/components/Dialog'
-import { Notice } from '../installer/components/Notice'
+import { Button } from '../ui/Button'
+import { Dialog } from '../ui/Dialog'
+import { Notice } from '../ui/Notice'
 import { useMsg, useT, type Lang, type Msg } from '../i18n'
 import { DESCRIPTION_MAX, CONTACT_MAX, type ReportContext, type ReportController } from './report-controller'
 import { FEEDBACK_EMAIL } from './SettingsPopover'
-import { errorMsg } from './issue-text'
-import type { SteamAccount } from '../installer/contracts'
+import { errorMsg } from '../section/issue-text'
+import type { SteamAccount } from '../bridge/contracts'
 
 /**
  * Send a bug report from inside the App (spec §2.2). Owned by `Workspace`, published through

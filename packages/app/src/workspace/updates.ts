@@ -3,7 +3,7 @@
  *
  * On by default, and switchable off from Settings: the App is otherwise entirely offline, so a
  * player who wants it to stay that way must be able to say so. The check itself never fails
- * loudly — see `UpdateCheck` in `installer/contracts.ts` — so this switch is about the request
+ * loudly — see `UpdateCheck` in `bridge/contracts.ts` — so this switch is about the request
  * being made at all, not about how its answer is shown.
  *
  * Storage can be missing or throw, so every access is guarded; unreadable means the default.

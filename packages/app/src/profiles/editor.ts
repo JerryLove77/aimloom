@@ -1,6 +1,6 @@
-import type { ProfileBridge } from './bridge'
+import type { ProfileBridge } from '../bridge/profiles'
 import { t, type Msg } from '../i18n'
-import { errorMsg } from '../workspace/issue-text'
+import { errorMsg } from '../section/issue-text'
 import { createTrainingProfile, parseTrainingProfile, type TrainingProfile } from './model'
 
 export type ProfileComponent = 'scheme' | 'audio'

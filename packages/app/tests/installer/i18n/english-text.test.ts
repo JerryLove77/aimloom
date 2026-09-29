@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import { hasCjk, isEnglishText } from '../../../src/i18n'
 import { engineErrorText, executionErrorText, installerIssueMsg } from '../../../src/installer/issue'
-import { errorMsg } from '../../../src/workspace/issue-text'
+import { errorMsg } from '../../../src/section/issue-text'
 
 /**
  * The shared parity table (ROADMAP I18N-NAMES). "English-safe" means: no CJK outside

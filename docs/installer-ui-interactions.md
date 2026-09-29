@@ -1,6 +1,6 @@
 # Installer UI interaction contract
 
-Scope: Profile workspace and legacy React installer utility; Chinese (`zh-CN`), offline desktop tool. The shared workspace product contract owns section/state boundaries. Installer contracts live in `contracts.ts`, `state.ts`, and `controller.ts`; Profile contracts live in `profiles/model.ts`, `bridge.ts`, and `editor.ts`. Visual intent and exact runtime token ownership are in [DESIGN.md](../DESIGN.md#6-installer-workspace--approved-2026-09-06-evolution).
+Scope: Profile workspace and legacy React installer utility; Chinese (`zh-CN`), offline desktop tool. The shared workspace product contract owns section/state boundaries. Installer contracts live in `bridge/contracts.ts`, `installer/state.ts`, and `installer/controller.ts`; Profile contracts live in `profiles/model.ts`, `bridge/profiles.ts`, and `profiles/editor.ts`. Visual intent and exact runtime token ownership are in [DESIGN.md](../DESIGN.md#6-installer-workspace--approved-2026-09-06-evolution).
 
 ## Canonical UI map
 
@@ -11,9 +11,9 @@ Scope: Profile workspace and legacy React installer utility; Chinese (`zh-CN`), 
 | Select/Listbox | Native `<select>` in Profile audio component editor | Profile workspace section below | Six fixed audio events; OS-owned popup; real label and keyboard semantics | `page.test.tsx` and browser audio-event checks |
 | Selection | `components/CategoryCard.tsx` | This interaction contract and UI design spec | Native checkbox over whole card; empty categories disabled; no implicit Primary opt-in | `components.test.tsx`, `views.test.tsx` |
 | Search and table | `components/FileTable.tsx`, `file-query.ts` | This interaction contract and UI design spec | Local immediate substring search, clear returns focus, 30 rows/page, overwrite-first sorting, full paths accessible; filter changes view, not plan | `file-query.test.tsx` |
-| Dialog | `components/Dialog.tsx` | This interaction contract and UI design spec | App-owned modal, safe initial focus, Tab/Shift-Tab wrap, Escape closes, focus returns to trigger | `components.test.tsx` |
+| Dialog | `ui/Dialog.tsx` | This interaction contract and UI design spec | App-owned modal, safe initial focus, Tab/Shift-Tab wrap, Escape closes, focus returns to trigger | `components.test.tsx` |
 | Conflict | `components/ConflictDialog.tsx` | This interaction contract and UI design spec | Explicit separate permission, no remembered checkbox; unowned files never offer overwrite | `components.test.tsx` |
-| Feedback | `components/Notice.tsx`, `pages/ExecutionPage.tsx` | This interaction contract and UI design spec | Persistent inline notices with icon/text; final outcomes from execution result; no critical toast-only state | `views.test.tsx` |
+| Feedback | `ui/Notice.tsx`, `installer/pages/ExecutionPage.tsx` | This interaction contract and UI design spec | Persistent inline notices with icon/text; final outcomes from execution result; no critical toast-only state | `views.test.tsx` |
 | Scrollbar | `styles.css` | This interaction contract and UI design spec | Global installer baseline; main scroll owner on desktop, bounded table scroll, natural narrow document flow | Browser desktop/narrow inspection |
 | Navigation | `ProfilesApp.tsx`, `InstallerApp.tsx`, `components/StepRail.tsx` | This interaction contract and UI design spec | Five product sections (Profile implemented); legacy utility retains three routes and four install steps; heading focus on transition; preserve choices; running/unknown locks navigation | Root flow tests and browser |
 | Window lifecycle | `window-lifecycle.ts`, native shell | This interaction contract and UI design spec | Running/unknown block departure; browser final unload guard; native blocked-close event opens app-owned dialog; reconciliation uses bridge | `window-lifecycle.test.tsx`, native tests |
@@ -96,7 +96,7 @@ Rules:
   or unresolved, a drop is refused rather than queued.
 - **While the file hovers**, a decorative overlay (`.ws-drop-overlay`, `aria-hidden`, no pointer
   events, no animation under reduced motion) says whether the drop will be accepted.
-- **The sheet** (`workspace/ImportSheet.tsx`) shows the section's preview of the outside file,
+- **The sheet** (`section/ImportSheet.tsx`) shows the section's preview of the outside file,
   来源, 写入位置 and an editable file name with a fixed extension. The destination is the game's
   own folder and is never chosen by the player. 取消 and Escape write nothing; Escape is blocked
   while the add is running.

@@ -4,12 +4,12 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { LangProvider } from '../../../src/i18n'
 import { Workspace } from '../../../src/workspace/Workspace'
 import { WorkspaceShell, SettingsState } from '../../../src/workspace/WorkspaceShell'
-import { Dialog, isAnyDialogOpen } from '../../../src/installer/components/Dialog'
-import { createDemoBridge } from '../../../src/installer/demo-bridge'
-import { createDemoAssetBridge, createDemoProfileBridge } from '../../../src/profiles/demo'
+import { Dialog, isAnyDialogOpen } from '../../../src/ui/Dialog'
+import { createDemoBridge } from '../../../src/bridge/demo'
+import { createDemoAssetBridge, createDemoProfileBridge } from '../../../src/bridge/profiles-demo'
 import { createReportController, type ReportContext } from '../../../src/workspace/report-controller'
-import { GAME_ROOT_STORAGE_KEY } from '../../../src/workspace/game-root'
-import type { InstallerBridge, ReportPreview } from '../../../src/installer/contracts'
+import { GAME_ROOT_STORAGE_KEY } from '../../../src/section/game-root'
+import type { InstallerBridge, ReportPreview } from '../../../src/bridge/contracts'
 
 /** A `reportPreview` mock that never resolves on its own; the test resolves each call in order. */
 function deferredPreview() {

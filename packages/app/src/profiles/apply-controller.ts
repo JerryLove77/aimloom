@@ -1,7 +1,7 @@
-import type { ExecuteRequest, Job, Preview } from '../installer/contracts'
+import type { ExecuteRequest, Job, Preview } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
-import { resolveGameRoot, writeGameRoot, type GameRootStorage, type LocateBridge } from '../workspace/game-root'
-import { errorMsg } from '../workspace/issue-text'
+import { resolveGameRoot, writeGameRoot, type GameRootStorage, type LocateBridge } from '../section/game-root'
+import { errorMsg } from '../section/issue-text'
 import { t, type Lang, type Msg } from '../i18n'
 import type { TrainingProfile } from './model'
 

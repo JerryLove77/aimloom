@@ -2,8 +2,8 @@ import { render, screen, fireEvent, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SchemePage } from '../../../src/scheme/SchemePage'
 import { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
-import type { SchemeTheme } from '../../../src/installer/contracts'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
+import type { SchemeTheme } from '../../../src/bridge/contracts'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:scheme'), revokeObjectURL: vi.fn() }))
 

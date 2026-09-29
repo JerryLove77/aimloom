@@ -2,12 +2,12 @@ import { render, screen, fireEvent, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
 import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
-import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/profiles/demo'
+import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:profile-en'), revokeObjectURL: vi.fn() }))
 
 const CJK = /[　-〿㐀-鿿＀-￯]/
-// The browser demo's own Profile names are Chinese content (see profiles/demo.ts); they are
+// The browser demo's own Profile names are Chinese content (see bridge/profiles-demo.ts); they are
 // expected to remain Chinese even in the English UI, so they are stripped before the CJK check.
 const DEMO_NAMES = ['日常跟枪', '专注练习']
 const stripDemoNames = (text: string) => DEMO_NAMES.reduce((acc, name) => acc.split(name).join(''), text)

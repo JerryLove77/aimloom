@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { InstallerFailure, type InstallerBridge, type Issue } from './contracts'
-import { isEnglishText, localIssue } from './issue'
+import { isEnglishText, localIssue } from '../installer/issue'
 import { t } from '../i18n'
 function normalize(error:unknown):InstallerFailure {
   let candidate=error

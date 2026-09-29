@@ -1,7 +1,7 @@
 import { useContext } from 'react'
 import { useLang, useT } from '../i18n'
-import type { ExploreKind } from '../installer/contracts'
-import { SettingsState } from './WorkspaceShell'
+import type { ExploreKind } from '../bridge/contracts'
+import { SettingsState } from '../workspace/WorkspaceShell'
 
 /**
  * The quiet line under a section's list that opens aimloom.dev's explorer on the same kind

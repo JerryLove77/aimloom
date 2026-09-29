@@ -1,5 +1,5 @@
 import type { MessageKey } from '../i18n'
-import type { UpdateCheck } from '../installer/contracts'
+import type { UpdateCheck } from '../bridge/contracts'
 
 /**
  * Which i18n key names an offered update's line -- the sentence names the line it belongs to

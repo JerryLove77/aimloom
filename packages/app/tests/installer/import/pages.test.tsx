@@ -5,8 +5,8 @@ import { SchemePage } from '../../../src/scheme/SchemePage'
 import { AudioPage } from '../../../src/audio/AudioPage'
 import { CrosshairPage } from '../../../src/crosshair/CrosshairPage'
 import { createManualFileDropSource } from '../../../src/workspace/file-drop'
-import type { ProfileAssetBridge } from '../../../src/profiles/assets'
-import type { PlanFileAddRequest } from '../../../src/installer/contracts'
+import type { ProfileAssetBridge } from '../../../src/bridge/assets'
+import type { PlanFileAddRequest } from '../../../src/bridge/contracts'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:import'), revokeObjectURL: vi.fn() }))
 

@@ -1,13 +1,13 @@
 import { StrictMode } from 'react';
 import { InstallerApp } from '../../src/installer/InstallerApp';
-import { createDemoBridge } from '../../src/installer/demo-bridge';
+import { createDemoBridge } from '../../src/bridge/demo';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SelectionPage } from '../../src/installer/pages/SelectionPage';
 import { ExecutionPage } from '../../src/installer/pages/ExecutionPage';
 import { ReviewPage } from '../../src/installer/pages/ReviewPage';
-import type { Job, Preview } from '../../src/installer/contracts';
+import type { Job, Preview } from '../../src/bridge/contracts';
 const preview: Preview = { planId: 'p', revision: 1, kind: 'install', location: { gameRoot: '/game', backupRoot: '/backup', gameState: 'closed' }, packRoot: '/pack', categories: ['themes'], sourceId: null, skipped: [], rows: [{ key: '1', category: 'themes', source: '/pack/file', target: '/game/file', action: 'replace', conflict: false, unowned: false }] };
 const job: Job = { operationId: 'o', planId: 'p', state: 'running', progress: null, result: null, error: null };
 const resultProps = { preview, busy: false, isDemo: true, onDone: vi.fn(), onBackups: vi.fn(), onOpenBackup: vi.fn(), onReconcile: vi.fn() };
@@ -43,7 +43,7 @@ it('a rejected restore keeps its recovery destination and can rebuild its previe
   const found=await bridge.discover()
   const first=await bridge.planInstall({gameRoot:found.candidates[0]!,packRoot:found.defaultPack!,categories:['sounds'],revision:0})
   await bridge.execute({operationId:'seed',planId:first.planId,confirmation:'install',allowConflicts:false})
-  const {InstallerFailure}=await import('../../src/installer/contracts')
+  const {InstallerFailure}=await import('../../src/bridge/contracts')
   bridge.execute=async()=>{throw new InstallerFailure({code:'PLAN_STALE',message:'预览已改变',messageEn:'The preview changed',path:null})}
   render(<InstallerApp bridge={bridge} isDemo />)
   await waitFor(()=>expect(screen.getByRole('textbox',{name:'游戏目录'})).toHaveValue(found.candidates[0]))

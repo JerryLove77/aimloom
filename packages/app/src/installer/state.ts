@@ -1,4 +1,4 @@
-import type { BackupIndex, Catalog, Category, Discovery, Issue, Job, Location, Preview } from './contracts'
+import type { BackupIndex, Catalog, Category, Discovery, Issue, Job, Location, Preview } from '../bridge/contracts'
 export type Route = 'install'|'restore'|'help'
 export type Step = 1|2|3|4
 export interface InstallerState {

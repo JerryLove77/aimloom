@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createSchemeController } from '../../../src/scheme/controller'
-import type { SchemeTheme } from '../../../src/installer/contracts'
+import type { SchemeTheme } from '../../../src/bridge/contracts'
 import { renderMsg } from '../../../src/i18n'
 
 const blue: SchemeTheme = { name: 'Blue Room', file: 'Blue Room.json', path: 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/Blue Room.json', readable: true, duplicateName: false }
