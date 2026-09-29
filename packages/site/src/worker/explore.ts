@@ -10,6 +10,7 @@ import { RESERVED_SLUG, RESERVED_SLUGS } from '../lib/explore-types'
 import { accountBar, type Viewer } from '../lib/upload-view'
 import { isAdmin, readSession } from './auth'
 import { handleUploads, type Shell } from './uploads'
+import { adminStats, creatorStats } from './stats'
 import type { AppEnv } from './env'
 import { fail, json } from './http'
 
@@ -18,6 +19,7 @@ const LIST = /^\/(zh|en)\/explore\/?$/
 const DETAIL = new RegExp(`^/(zh|en)/explore/(${SLUG})/?$`)
 const SUB = /^\/(zh|en)\/explore\/(upload|mine|review|welcome)(?:\/([a-z0-9_./-]*))?\/?$/
 const DOWNLOAD = new RegExp(`^/d/(${SLUG})$`)
+const STATS = /^\/api\/explore\/(mine|admin)\/stats$/
 const PAGE_CACHE = 'public, max-age=300'
 
 const LANG_OF: Record<string, Lang> = { 'zh-CN': 'zh', en: 'en' }
@@ -105,13 +107,23 @@ async function apiList(env: AppEnv, url: URL, now: Date): Promise<Response> {
   return res
 }
 
+/** A creator's own numbers (401 when signed out), or the admins' (the review page's 404 for anyone else). Personal, so never cached. */
+async function apiStats(request: Request, env: AppEnv, which: string, now: Date): Promise<Response> {
+  const viewer = await viewerOf(request, env, now)
+  let res: Response
+  if (which === 'mine') res = viewer ? json(await creatorStats(env.DB, viewer.steamId, now)) : fail('UNAUTHORIZED', 401)
+  else res = viewer?.admin ? json(await adminStats(env.DB, now)) : fail('NOT_FOUND', 404)
+  res.headers.set('cache-control', 'private, no-store')
+  return res
+}
+
 /** `null` when the path is not the explorer's. */
 export async function handleExplore(request: Request, env: AppEnv, ctx: ExecutionContext, now = new Date(), fetcher: typeof fetch = fetch): Promise<Response | null> {
   const url = new URL(request.url)
   const path = url.pathname
   const isApi = path === '/api/explore/items'
-  const list = LIST.exec(path); const sub = SUB.exec(path); const detail = DETAIL.exec(path); const dl = DOWNLOAD.exec(path)
-  if (!isApi && !list && !sub && !detail && !dl) return null
+  const list = LIST.exec(path); const sub = SUB.exec(path); const detail = DETAIL.exec(path); const dl = DOWNLOAD.exec(path); const stats = STATS.exec(path)
+  if (!isApi && !list && !sub && !detail && !dl && !stats) return null
   if (sub) {
     const lang = sub[1] as Lang
     const viewer = await viewerOf(request, env, now)
@@ -123,6 +135,7 @@ export async function handleExplore(request: Request, env: AppEnv, ctx: Executio
   }
   if (request.method !== 'GET' && request.method !== 'HEAD') return fail('METHOD_NOT_ALLOWED', 405)
   if (isApi) return apiList(env, url, now)
+  if (stats) return apiStats(request, env, stats[1]!, now)
   if (dl) return download(env, ctx, url, request.method, dl[1]!, now)
   if ((list || detail) && !path.endsWith('/')) return Response.redirect(new URL(path + '/' + url.search, url).toString(), 301)
   if (list) return listPage(env, url, list[1] as Lang, await viewerOf(request, env, now), now)
