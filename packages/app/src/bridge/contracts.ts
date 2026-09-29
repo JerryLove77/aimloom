@@ -1,4 +1,4 @@
-import type { Lang } from '../i18n'
+import { t, type Lang, type MessageKey, type Params } from '../i18n'
 export type Category = 'themes'|'sounds'|'crosshairs'|'ui'|'palette'|'primary'
 export type GameState = 'closed'|'running'|'unknown'
 export type Phase = 'preparing'|'protecting'|'installing'|'verifying'|'restoring'|'rolling-back'
@@ -66,7 +66,9 @@ export interface SchemeList {
 }
 export interface PlanSchemeRequest { gameRoot: string; file: string; revision: number }
 
-export type AudioEvent = 'kill' | 'spawn' | 'mbsGood' | 'mbsOkay' | 'mbsBad' | 'mbsChangeNow'
+/** The game's six sound events, in the order every screen lists them. */
+export const AUDIO_EVENTS = ['kill', 'spawn', 'mbsGood', 'mbsOkay', 'mbsBad', 'mbsChangeNow'] as const
+export type AudioEvent = typeof AUDIO_EVENTS[number]
 export interface InstalledSound { name: string; file: string; path: string; ambiguous: boolean }
 /** Kill and Spawn keep an ordered list; the four MBS events hold exactly one name. */
 export interface AudioBindings {
@@ -181,4 +183,9 @@ export interface InstallerBridge {
 
 export class InstallerFailure extends Error {
   constructor(public issue: Issue) { super(issue.message); this.name = "InstallerFailure" }
+}
+
+/** Builds a bilingual issue from one dictionary entry, for the issues this UI raises itself. */
+export function localIssue(code: Issue['code'], key: MessageKey, params?: Params): Issue {
+  return { code, message: t('zh', key, params), messageEn: t('en', key, params), path: null }
 }

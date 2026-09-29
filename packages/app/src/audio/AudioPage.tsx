@@ -7,11 +7,13 @@ import { ImportSheet } from '../section/ImportSheet'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import { SearchBox } from '../ui/SearchBox'
 import { ExploreLink } from '../section/ExploreLink'
-import { createAudioController, AUDIO_EVENTS, AUDIO_TAB_KEYS, type AudioBridge } from './controller'
+import { createAudioController, AUDIO_TAB_KEYS, type AudioBridge } from './controller'
 import { createAudioPreview } from './preview'
 import { assetMime, type ProfileAssetBridge } from '../bridge/assets'
-import type { AudioEvent } from '../bridge/contracts'
+import { AUDIO_EVENTS, type AudioEvent } from '../bridge/contracts'
 import { useLang, useMsg, useT } from '../i18n'
+import { LocatePanel } from '../section/LocatePanel'
+import { TabRow } from '../ui/TabRow'
 import './audio.css'
 
 const LIST_EVENTS: AudioEvent[] = ['kill', 'spawn']
@@ -123,12 +125,7 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
 
       {state.phase === 'locating' ? <p role="status">{t('audio.status.locating')}</p> : null}
       {state.phase === 'loading' ? <p role="status">{t('audio.status.loading')}</p> : null}
-      {state.phase === 'needs-location' ? <div className="sc-locate">
-        <p>{state.candidates.length ? t('audio.locate.multiple') : t('audio.locate.none')}</p>
-        {state.candidates.map(candidate => <button type="button" className="sc-candidate" key={candidate} disabled={locked} onClick={() => void controller.chooseGameRoot(candidate)}>{candidate}</button>)}
-        <Button variant="primary" disabled={locked} onClick={() => void controller.chooseFolder(lang)}>{t('audio.locate.chooseFolder')}</Button>
-      </div> : null}
-      {state.phase === 'error' ? <div className="sc-locate"><Button variant="primary" onClick={() => void controller.chooseFolder(lang)}>{t('audio.locate.chooseGameFolder')}</Button></div> : null}
+      <LocatePanel section="audio" phase={state.phase} candidates={state.candidates} locked={locked} controller={controller} />
 
       {ready && event ? <>
         <StatusStrip current={t('audio.statusStrip.label', { label: eventLabel, value: summary(state.bindings?.[event]) })}
@@ -136,14 +133,11 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
           aside={<><span>{t('audio.backedUpFirst')}</span><Button variant="ghost" onClick={() => void controller.load()} disabled={locked}>{t('audio.refresh')}</Button></>} />
         {/* One row of event tabs; the selected event's current value is in the strip above. The
             value and a pending edit stay in each tab's accessible name. */}
-        <div className="au-tabs" role="group" aria-label={t('audio.tabsAria')}>{AUDIO_EVENTS.map(key => {
+        <TabRow prefix="au" label={t('audio.tabsAria')} selected={event} locked={locked} onSelect={key => controller.open(key)} tabs={AUDIO_EVENTS.map(key => {
           const pending = state.drafts[key] !== undefined
-          return <button type="button" className="au-tab" key={key} aria-pressed={key === event} disabled={locked}
-            aria-label={t('audio.tab.status', { label: label(key), value: summary(state.bindings?.[key]) }) + (pending ? t('audio.tab.pendingSuffix') : '')}
-            onClick={() => controller.open(key)}>
-            {label(key)}{pending ? <span className="au-tab-dot" aria-hidden="true" /> : null}
-          </button>
-        })}</div>
+          return { key, text: label(key), pending,
+            accessibleName: t('audio.tab.status', { label: label(key), value: summary(state.bindings?.[key]) }) + (pending ? t('audio.tab.pendingSuffix') : '') }
+        })} />
         <div>
           <section className="ws-panel au-editor" aria-label={t('audio.editor.ariaLabel', { label: eventLabel })}>
             <div className="ws-panel-head"><h2>{eventLabel}</h2><span className="ws-note">{isList ? t('audio.editor.list') : t('audio.editor.single')} · {audition.status !== 'idle' ? t('audio.editor.auditionPlaying') : t('audio.editor.auditionHint')}</span></div>

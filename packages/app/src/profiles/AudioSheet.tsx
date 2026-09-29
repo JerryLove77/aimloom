@@ -6,12 +6,14 @@ import { Tag } from '../ui/status'
 import { plural, useLang, useMsg, useT, type Lang, type Msg } from '../i18n'
 import { errorMsg } from '../section/issue-text'
 import { AssetPreview } from './AssetPreview'
-import { AUDIO_EVENTS, MAX_AUDIO_FILES, type AudioEvent, type ProfileAudio, type ProfileFileReference } from './model'
+import { AUDIO_EVENTS, type AudioEvent } from '../bridge/contracts'
+import { MAX_AUDIO_FILES, type ProfileAudio, type ProfileFileReference } from './model'
 import type { ProfileAssetBridge } from '../bridge/assets'
 import { ImportSheet } from '../section/ImportSheet'
 import { SearchBox } from '../ui/SearchBox'
 import { importFileName } from '../section/import-check'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
+import { useSheetImport } from './sheet-import'
 
 type Mode = 'keep' | 'none' | 'files'
 const modeOf = (files: ProfileFileReference[] | undefined): Mode => (files === undefined ? 'keep' : files.length ? 'files' : 'none')
@@ -67,16 +69,16 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   const [error, setError] = useState<Msg | null>(null)
   const [search, setSearch] = useState('')
   const request = useRef(0)
-  // The outside file being confirmed in the nested add sheet. Nothing is written until 添加到游戏.
-  const [importPath, setImportPath] = useState<string | null>(null)
-  const [importing, setImporting] = useState(false)
-  const [importError, setImportError] = useState<Msg | null>(null)
-  // `unknown` is never success: this stays true, locking choosing/confirming/further adds, until
-  // 核对结果 reconciles the very operation that came back unresolved.
-  const [unresolved, setUnresolved] = useState(false)
-  const [reconciling, setReconciling] = useState(false)
-  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setSearch(''); setListen(null); setError(null); setFileErrors([]); setImportPath(null); setImportError(null); setUnresolved(false) } }, [open, value])
-  useEffect(() => { onUnresolvedChange?.(unresolved) }, [unresolved, onUnresolvedChange])
+  const importer = useSheetImport({
+    onAddFile, onPickFile, onReconcile, onUnresolvedChange, setError,
+    keys: { generic: GENERIC, unknown: 'audio.error.importUnknown', reconcileFailed: 'audio.error.reconcileFailed' },
+    // A sound that was just added must not stay hidden behind an old search, and it must appear
+    // in this sheet's own list, so re-read the folder it landed in.
+    afterAdd: async () => { setSearch(''); await reloadFolder() },
+    afterReconcile: reloadFolder,
+  })
+  const { importPath, importing, importError, unresolved, reconciling } = importer
+  useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setSearch(''); setListen(null); setError(null); setFileErrors([]); importer.reset() } }, [open, value])
   const eventFiles = temp?.[event]
   const mode = modeOf(eventFiles)
   const setEventFiles = (next: ProfileFileReference[] | undefined) => {
@@ -98,42 +100,9 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   async function browse() {
     try { const path = await assets.chooseDirectory('audio', lang); if (path) await load(path) } catch (reason) { setError(errorMsg(reason, GENERIC)) }
   }
-  async function pickAndOpenImport() {
-    if (!onPickFile) return
-    try { const path = await onPickFile(lang); if (path) { setImportError(null); setImportPath(path) } }
-    catch (reason) { setError(errorMsg(reason, GENERIC)) }
-  }
-  async function addImport(input: FileImportInput): Promise<boolean> {
-    if (!onAddFile) return false
-    setImporting(true); setImportError(null)
-    const outcome = await onAddFile(input)
-    setImporting(false)
-    if (outcome.kind === 'added') {
-      setImportPath(null)
-      // A sound that was just added must not stay hidden behind an old search.
-      setSearch('')
-      // The new sound must appear in this sheet's own list, so re-read the folder it landed in.
-      if (directory) await load(directory)
-      else if (defaultDirectory) await load(defaultDirectory)
-      return true
-    }
-    // The same page-level rule applies here: an unknown result closes this add sheet and locks
-    // the Profile sheet behind it until 核对结果, exactly as Theme/Sounds lock their own page.
-    if (outcome.kind === 'unknown') { setImportPath(null); setUnresolved(true); setError({ key: 'audio.error.importUnknown' }); return false }
-    setImportError(outcome.message)
-    return false
-  }
-  async function reconcileImport() {
-    if (!onReconcile) return
-    setReconciling(true)
-    try {
-      await onReconcile()
-      setUnresolved(false)
-      setError(null)
-      if (directory) await load(directory)
-      else if (defaultDirectory) await load(defaultDirectory)
-    } catch (reason) { setError(errorMsg(reason, { key: 'audio.error.reconcileFailed' })) }
-    finally { setReconciling(false) }
+  async function reloadFolder() {
+    if (directory) await load(directory)
+    else if (defaultDirectory) await load(defaultDirectory)
   }
   // With no folder chosen the sheet used to open on nothing, so the player had to go find one
   // before they could see any sound. The folder they almost always want is the game's own.
@@ -158,9 +127,9 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     {importPath ? <ImportSheet key={importPath} kind="sound" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.audioSheet.dirPlaceholder')}
       installed={files.map(file => ({ name: file.name, file: importFileName(file.path) }))} assets={assets} busy={importing} error={importError}
       preview={<AssetPreview kind="audio" reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
-      onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
+      onAdd={importer.add} onClose={importer.closeImport} /> : null}
     {unresolved ? <Notice tone="warning"><p>{msg(error ?? { key: 'audio.error.importUnknown' })}</p>
-      <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void reconcileImport()}>{reconciling ? t('audio.status.loading') : t('audio.reconcile')}</Button></p></Notice> : <>
+      <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void importer.reconcile()}>{reconciling ? t('audio.status.loading') : t('audio.reconcile')}</Button></p></Notice> : <>
     <div className="pr-audio-event"><label htmlFor="sheet-audio-event">{t('profile.audioSheet.eventLabel')}</label>
       <select id="sheet-audio-event" value={event} onChange={e => { setEvent(e.target.value as AudioEvent); setListen(null) }}>
         {AUDIO_EVENTS.map(key => <option key={key} value={key}>{EVENTS[key]}{same(temp?.[key], value?.[key]) ? '' : t('profile.audioSheet.changedSuffix')}</option>)}
@@ -180,7 +149,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     </div>)}</div> : null}
     {listen ? <AssetPreview key={listen.path} kind="audio" reference={listen} profilePath={profilePath} assets={assets} /> : null}
     <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.audioSheet.dirPlaceholder')}</span><Button variant="ghost" onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button>
-      {onPickFile ? <Button variant="ghost" disabled={importing} onClick={() => void pickAndOpenImport()}>{t('audio.addSound')}</Button> : null}</div>
+      {onPickFile ? <Button variant="ghost" disabled={importing} onClick={() => void importer.pick(lang)}>{t('audio.addSound')}</Button> : null}</div>
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
     {files.length ? <SearchBox id="sheet-search-audio" label={t('audio.search.label')} placeholder={t('audio.search.placeholder')}

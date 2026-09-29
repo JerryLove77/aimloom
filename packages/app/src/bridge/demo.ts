@@ -1,6 +1,5 @@
-import { localIssue } from '../installer/issue'
 import demoData from './demo-data.json'
-import { InstallerFailure, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme } from './contracts'
+import { InstallerFailure, localIssue, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme } from './contracts'
 const gameRoot='D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'
 const packRoot='C:\\Users\\Player\\Downloads\\KVK Settings 2025'
 const categories:Category[]=['themes','sounds','crosshairs','ui','palette','primary']

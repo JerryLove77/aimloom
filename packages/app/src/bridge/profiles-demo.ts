@@ -5,7 +5,7 @@ import { referenceFromPath } from '../profiles/file-reference'
 import { InstallerFailure } from './contracts'
 import { t, type MessageKey } from '../i18n'
 // Demo content (sample Profile and theme names) is data, not UI text.
-import data from './profiles-demo-data.json'
+import data from './demo-data.json'
 
 /** A demo failure in both languages, thrown the way the native bridges throw theirs. */
 const failure = (key: MessageKey) => new InstallerFailure({ code: 'ENGINE_ERROR', message: t('zh', key), messageEn: t('en', key), path: null })

@@ -1,7 +1,7 @@
 import type { FileAddKind, PlanFileAddRequest } from '../bridge/contracts'
-import { t, type Lang, type Msg } from '../i18n'
+import type { Lang, Msg } from '../i18n'
 import { errorMsg } from './issue-text'
-import { runPlan, type PlanRunner } from './run-plan'
+import { incompleteMsg, runPlan, type PlanRunner } from './run-plan'
 
 /** What a section needs from the bridge to add an outside file to the game. */
 export interface FileImportBridge extends PlanRunner {
@@ -30,15 +30,5 @@ export async function addFileToGame(bridge: FileImportBridge, operationId: strin
   if (outcome.kind === 'unknown') return { kind: 'unknown' }
   if (outcome.kind === 'failed') return { kind: 'refused', message: errorMsg(outcome.error, { key: 'import.failed' }) }
   if (outcome.kind === 'no-change') return { kind: 'refused', message: { key: 'import.duplicate' } }
-  // A real status code (an English token, like the engine's own) is language-neutral and can
-  // sit inside either dictionary's template as-is; an absent one needs its own translation, so
-  // this builds the final pair directly instead of leaving `{status}` for later substitution.
-  if (outcome.status !== undefined) return { kind: 'refused', message: { key: 'import.incomplete', params: { status: outcome.status } } }
-  return {
-    kind: 'refused',
-    message: {
-      zh: t('zh', 'import.incomplete', { status: t('zh', 'common.unknownStatus') }),
-      en: t('en', 'import.incomplete', { status: t('en', 'common.unknownStatus') }),
-    },
-  }
+  return { kind: 'refused', message: incompleteMsg('import.incomplete', outcome.status) }
 }

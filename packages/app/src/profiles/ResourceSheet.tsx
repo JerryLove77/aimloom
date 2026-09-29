@@ -13,6 +13,7 @@ import { ImportSheet } from '../section/ImportSheet'
 import { SearchBox } from '../ui/SearchBox'
 import { importFileName } from '../section/import-check'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
+import { useSheetImport } from './sheet-import'
 
 type SingleKind = 'scheme'
 // The lowercase noun, not the section's title: it stands mid-sentence ("does not change the current theme").
@@ -75,16 +76,14 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const [ready, setReady] = useState(false)
   const [page, setPage] = useState(0)
   const request = useRef(0)
-  // The outside file being confirmed in the nested add sheet. Nothing is written until 添加到游戏.
-  const [importPath, setImportPath] = useState<string | null>(null)
-  const [importing, setImporting] = useState(false)
-  const [importError, setImportError] = useState<Msg | null>(null)
-  // `unknown` is never success: this stays true, locking choosing/confirming/further adds, until
-  // 核对结果 reconciles the very operation that came back unresolved.
-  const [unresolved, setUnresolved] = useState(false)
-  const [reconciling, setReconciling] = useState(false)
-  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null); setImportPath(null); setImportError(null); setUnresolved(false) } }, [open, value])
-  useEffect(() => { onUnresolvedChange?.(unresolved) }, [unresolved, onUnresolvedChange])
+  const importer = useSheetImport({
+    onAddFile, onPickFile, onReconcile, onUnresolvedChange, setError,
+    keys: { generic: GENERIC, unknown: 'scheme.error.importUnknown', reconcileFailed: 'scheme.error.reconcileFailed' },
+    afterAdd: () => onAdded?.(),
+    afterReconcile: () => onAdded?.(),
+  })
+  const { importPath, importing, importError, unresolved, reconciling } = importer
+  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null); importer.reset() } }, [open, value])
   async function load(path: string) {
     const own = ++request.current
     setLoading(true); setError(null); setFiles([]); setFileErrors([])
@@ -110,34 +109,6 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   }, [open])
   async function browse() {
     try { const path = await assets.chooseDirectory(kind, lang); if (path) await load(path) } catch (reason) { setError(errorMsg(reason, GENERIC)) }
-  }
-  async function pickAndOpenImport() {
-    if (!onPickFile) return
-    try { const path = await onPickFile(lang); if (path) { setImportError(null); setImportPath(path) } }
-    catch (reason) { setError(errorMsg(reason, GENERIC)) }
-  }
-  async function addImport(input: FileImportInput): Promise<boolean> {
-    if (!onAddFile) return false
-    setImporting(true); setImportError(null)
-    const outcome = await onAddFile(input)
-    setImporting(false)
-    if (outcome.kind === 'added') { setImportPath(null); onAdded?.(); return true }
-    // The same page-level rule applies here: an unknown result closes this add sheet and locks
-    // the Profile sheet behind it until 核对结果, exactly as Theme/Sounds lock their own page.
-    if (outcome.kind === 'unknown') { setImportPath(null); setUnresolved(true); setError({ key: 'scheme.error.importUnknown' }); return false }
-    setImportError(outcome.message)
-    return false
-  }
-  async function reconcileImport() {
-    if (!onReconcile) return
-    setReconciling(true)
-    try {
-      await onReconcile()
-      setUnresolved(false)
-      setError(null)
-      onAdded?.()
-    } catch (reason) { setError(errorMsg(reason, { key: 'scheme.error.reconcileFailed' })) }
-    finally { setReconciling(false) }
   }
   // Everything selectable, by path: the folder listing, the game's own list when there is one,
   // and the Profile's existing reference even when its folder is not on screen.
@@ -167,13 +138,13 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
       ? <AssetPreview key={chosen.path} kind={kind} reference={chosen} profilePath={profilePath} assets={assets} onStatus={status => setReady(status === 'ready')} />
       : <div className="ws-preview-large">{t('profile.resource.keepHint', { noun })}</div>}</div>
     {installed ? null : <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.resource.dirPlaceholder')}</span><Button variant="ghost" disabled={loading || unresolved} onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button></div>}
-    {onPickFile ? <div className="cx-picker-source"><Button variant="ghost" disabled={loading || importing || unresolved} onClick={() => void pickAndOpenImport()}>{t('scheme.addTheme')}</Button></div> : null}
+    {onPickFile ? <div className="cx-picker-source"><Button variant="ghost" disabled={loading || importing || unresolved} onClick={() => void importer.pick(lang)}>{t('scheme.addTheme')}</Button></div> : null}
     {importPath ? <ImportSheet key={importPath} kind="theme" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.resource.dirPlaceholder')}
       installed={(installed ?? []).map(item => ({ name: item.label === item.file ? null : item.label, file: item.file }))} assets={assets} busy={importing} error={importError}
       preview={<AssetPreview kind={kind} reference={{ name: importFileName(importPath), path: importPath }} profilePath={profilePath} assets={assets} />}
-      onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
+      onAdd={importer.add} onClose={importer.closeImport} /> : null}
     {unresolved ? <Notice tone="warning"><p>{msg(error ?? { key: 'scheme.error.importUnknown' })}</p>
-      <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void reconcileImport()}>{reconciling ? t('scheme.status.loading') : t('scheme.reconcile')}</Button></p></Notice> : <>
+      <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void importer.reconcile()}>{reconciling ? t('scheme.status.loading') : t('scheme.reconcile')}</Button></p></Notice> : <>
     <SearchBox id={`sheet-search-${kind}`} label={t('scheme.search.label')} placeholder={t('scheme.search.placeholder')}
       clearLabel={t('scheme.clearSearch')} value={search} onChange={next => { setSearch(next); setPage(0) }} />
     {loading ? <p role="status">{t('profile.resource.loading')}</p> : null}

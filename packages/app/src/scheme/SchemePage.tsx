@@ -13,6 +13,7 @@ import { SchemePreview } from './SchemePreview'
 import { Tiles, type TileChoice } from '../ui/Tiles'
 import type { ProfileAssetBridge } from '../bridge/assets'
 import { useLang, useMsg, useT } from '../i18n'
+import { LocatePanel } from '../section/LocatePanel'
 import './scheme.css'
 
 const PER_PAGE = 12
@@ -112,12 +113,7 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
 
       {state.phase === 'locating' ? <p role="status">{t('scheme.status.locating')}</p> : null}
       {state.phase === 'loading' ? <p role="status">{t('scheme.status.loading')}</p> : null}
-      {state.phase === 'needs-location' ? <div className="sc-locate">
-        <p>{state.candidates.length ? t('scheme.locate.multiple') : t('scheme.locate.none')}</p>
-        {state.candidates.map(candidate => <button type="button" className="sc-candidate" key={candidate} disabled={locked} onClick={() => void controller.chooseGameRoot(candidate)}>{candidate}</button>)}
-        <Button variant="primary" disabled={locked} onClick={() => void controller.chooseFolder(lang)}>{t('scheme.locate.chooseFolder')}</Button>
-      </div> : null}
-      {state.phase === 'error' ? <div className="sc-locate"><Button variant="primary" onClick={() => void controller.chooseFolder(lang)}>{t('scheme.locate.chooseGameFolder')}</Button></div> : null}
+      <LocatePanel section="scheme" phase={state.phase} candidates={state.candidates} locked={locked} controller={controller} />
 
       {ready ? <>
         <StatusStrip current={state.current ?? t('scheme.notSet')} pending={pending ? pending.name : null}
