@@ -1,4 +1,6 @@
-/* Buttons, notices, dialogs and the brand mark: shared by every page, Quick import included. */
+/* Buttons, notices, dialogs and the brand mark: shared by every page, Quick import included.
+   This file comes first in the bundle, so a rule here loses a tie on specificity to any later
+   file (installer/styles.css, workspace.css): scope a rule to .kvk-installer when it must win. */
 .ki-target {
   color:var(--ki-accent);
   width:40px;
@@ -97,7 +99,7 @@
   overflow:auto;
   box-shadow:var(--ki-modal-shadow)
 }
-.ki-dialog>h2 {
+.kvk-installer .ki-dialog>h2 {
   font-size:20px;
   line-height:28px;
   margin-bottom:18px
