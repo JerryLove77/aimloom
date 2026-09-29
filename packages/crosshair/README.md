@@ -110,7 +110,7 @@ Design: [crosshair contract](../../docs/superpowers/specs/2026-09-13-crosshair-c
 
 ## Verification
 
-The [test-track guide](../../docs/testing/crosshair-tests.md) separates automated checks
+The test-track guide (private record) separates automated checks
 from manual KovaaK observations. Prepare a uniquely named six-case, scale-1 PNG kit with
 `npm run test:crosshair:prepare`; its result template starts with every game check unexecuted.
 

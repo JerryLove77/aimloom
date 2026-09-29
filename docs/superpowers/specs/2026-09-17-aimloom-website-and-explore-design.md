@@ -248,7 +248,7 @@ mirror.
 - Astro ships its own Vite (Astro 7.3.3 depends on `vite ^8`). A lockfile-only dry run on
   2026-09-17 showed npm **nesting** Astro's Vite 8 under `node_modules/astro/` while the
   root's pinned `vite 7.3.6 / @vitejs/plugin-react 5.2.0 / vitest 3.2.7` chain stayed in
-  place (see the [verification note](../notes/2026-09-17-website-spec-verification.md)).
+  place (see the verification note (private record)).
   The site is therefore an ordinary workspace. The first implementation task still has to
   confirm this with a real install, `astro build` and the Docker image; if a real install
   ever hoists Vite 8, the site moves to its own lockfile rather than the pin moving.
@@ -273,7 +273,7 @@ amendments go into the `CREATE TABLE` statements of the first migration rather t
 `ALTER TABLE` steps. (SQLite accepts `ADD COLUMN … NOT NULL` without a default only while
 a table is empty and refuses it once rows exist — observed on 3.43.2 — so the amended
 schema was re-verified as a whole; see the
-[verification note](../notes/2026-09-17-website-spec-verification.md), which also records
+verification note (private record), which also records
 the kind-consistency query and the `zip_key` uniqueness test.)
 
 ```sql
@@ -502,14 +502,14 @@ merged into `feature/web`. Phase 1 has no such dependency.
 
 Phase 1 is implemented in `packages/site` and has never been deployed; Phase 2 is planned only.
 
-- Phase 1 — the four static pages: [`plans/2026-09-17-website-phase-1.md`](../plans/2026-09-17-website-phase-1.md);
+- Phase 1 — the four static pages: `plans/2026-09-17-website-phase-1.md` (private record);
   designed in Figma first (`docs/design/figma/README.md`); what was observed is in §3 of the
   verification note.
 - Phase 2 — the explorer, D1, the publish command and the provisioning runbook:
-  [`plans/2026-09-18-website-phase-2.md`](../plans/2026-09-18-website-phase-2.md). Its
+  `plans/2026-09-18-website-phase-2.md` (private record). Its
   prerequisites are Phase 1, the App-branch merge (§8) and the explorer's Figma frames.
 - What has actually been observed is in
-  [`notes/2026-09-17-website-spec-verification.md`](../notes/2026-09-17-website-spec-verification.md).
+  `notes/2026-09-17-website-spec-verification.md` (private record).
 
 Nothing in this document reports a page as designed beyond the frames recorded in
 `docs/design/figma/README.md`, or a capability as shipped.

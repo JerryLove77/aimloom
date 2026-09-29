@@ -39,10 +39,10 @@ the five.
 
 ## Released
 
-- **v0.1.1** (2026-09-19): the first Aimloom App — [soft-launch note](docs/superpowers/notes/2026-09-19-windows-soft-launch-test.md).
+- **v0.1.1** (2026-09-19): the first Aimloom App — soft-launch note (private record).
 - **v0.1.2** (2026-09-20): the App in English with a Settings popover, and the Setup —
-  [English App note](docs/superpowers/notes/2026-09-19-english-app-verification.md),
-  [Setup note](docs/superpowers/notes/2026-09-20-setup-windows-verification.md).
+  English App note (private record),
+  Setup note (private record).
 
 ## Released: v0.1.3 — reports, a Steam account, Profile apply, enemy skins (2026-09-22)
 
@@ -76,7 +76,7 @@ the Settings switch.
 |---|---|---|
 | BETA | **A beta channel**, so beta testers and release users are told apart (user, 2026-09-22). Versions like `0.1.4-beta.1`; a channel-aware update check (a beta build is offered beta updates, a release build never is); a visible Beta mark in the title and Settings; reports tagged with the channel so beta feedback is separable; **the player opts in from Settings, as on Steam** (user, 2026-09-22): a 「参与 Beta 测试」 switch makes the update check follow the beta line and its download button open the beta package; off, it follows the release line and offers the way back once a newer release exists. The App has no auto-update, so installing stays a manual download either way. The build itself carries its channel (`VERSION.txt`), and the Beta mark and report tag follow the build, not the switch. The site's Download page lists the beta package as a secondary link; no separate beta page. Same app id, same data folder: beta and release share Profiles and backups, and a beta install upgrades to the release in place. What exists already: `package-test-build.ps1 -Channel test`, `VERSION.txt` shown in Settings, `latest.json`, the version label on reports | **Built** (2026-09-22): [the beta channel design](docs/superpowers/specs/2026-09-22-aimloom-beta-channel-design.md). `latest.json` = `{version, beta}`; `installer_app_info`; semver precedence; the Settings switch; `-Channel beta`; the site's Beta section and 正式版 / Stable. Not yet seen on a real screen or through a real beta release |
 | SEARCH | Search boxes on Theme and Sounds (Crosshair and Profile already have one; the `pr-search` pattern in `packages/app/src/crosshair/CrosshairPage.tsx`) | **Built** (2026-09-22) on Theme; Sounds already had it. The three search boxes share `workspace/SearchBox.tsx`. Profile's Theme and Sounds sheets got the same box on 2026-09-22 (user: 「profile里面的theme和sounds要做搜索」); the Theme sheet's grid had none, the Sounds sheet had none at all |
-| PF-ADD | Profile's 「更改」 sheet gets "add from my computer", reusing `planFileAdd` ([HANDOFF](HANDOFF.md) Entry 2b) | **Built** (2026-09-22): the add sheet opens over the Profile sheet, and an `unknown` result is reconciled inside it (`docs/installer-ui-interactions.md`) |
+| PF-ADD | Profile's 「更改」 sheet gets "add from my computer", reusing `planFileAdd` (HANDOFF (private record) Entry 2b) | **Built** (2026-09-22): the add sheet opens over the Profile sheet, and an `unknown` result is reconciled inside it (`docs/installer-ui-interactions.md`) |
 | PF-LAUNCH | **「用这个 Profile 启动游戏」 / "Start the game with this Profile".** Game closed → apply the Profile (the existing `planProfileApply`) → start KovaaK through Steam (`steam://rungameid/824270`). Game open → says to quit first. Steam not running → applies and tells the player to start the game | **Built** (2026-09-22): a second action in the apply dialog runs the same apply, then `installer_launch_game` opens `steam://rungameid/824270` (built in Rust, no UI-supplied target). The launch is best effort and never changes the apply's result; the status says so. Not yet seen starting a real game |
 | CUR-C2 | **Crosshair tuner.** Paste a CS2 / VALORANT code → sliders for what that game exposes (length, thickness, gap, outline, colour, centre dot, alpha) → live preview on a dark and a light swatch → save as a new PNG through the existing add path. **No export back to a code, no drawing from a blank canvas** (user, 2026-09-22). See the notes after this table | **Built 2026-09-22:** `packages/crosshair/src/tuning.ts` (`tune`/`getTuningParams`/`readTuningValue`, 18 tests) plus the fine-tune section in `CodeExportDialog.tsx` and `export-controller.ts` (13 + 22 App tests). Verified by the full suite (1412 tests), typecheck, `build:installer`, and a playwright pass pasting one CS2 and one VALORANT code in zh and en with no console errors — not yet checked against the real game or Figma. |
 | PF-CARDS | Profile cards in the Crosshair X layout: a corner chip naming the card, the preview filling the card's body, the name on a bottom line, an orange outline marking a card the Profile records (as opposed to one that keeps the current game setting), and a single muted sentence for the empty state. Two cards now (Theme, Sounds); Profile no longer manages the enemy or the crosshair | **Built** (2026-09-22): `ProfilesApp.tsx`'s `Slot` renders the chip/preview/name layout, reusing `AssetPreview` for Theme and a per-event list for Sounds; verified by `npm test`, `npm run typecheck`, `npm run build:installer -w @kvk/app` and a playwright pass in zh and en. Not yet seen against Figma |
@@ -205,7 +205,7 @@ user on 2026-09-22 and written down in
 | LOGO | A logo and wordmark that carry the name's weaving meaning: interlaced lines, or a crosshair drawn as woven threads | The user's direction, 2026-09-19; Figma first. The site footer already explains the name ("Aim + loom: …") |
 | PUB | Public source release | Deferred on 2026-09-19. The plan is AGPL-3.0, a clean history (no session links, a noreply author), CI and a secret scan. The method is chosen when it happens |
 | CHINA | Reaching players in mainland China | Answered 2026-09-21, nothing to build yet. See the notes after this table |
-| LW0–LW2 | Windows local-browser launcher and transport | Superseded in practice by the Tauri App; kept only for its [delivery plan](docs/superpowers/plans/2026-09-13-local-web-ui-delivery.md)'s access-control notes |
+| LW0–LW2 | Windows local-browser launcher and transport | Superseded in practice by the Tauri App; kept only for its delivery plan (private record)'s access-control notes |
 
 **CUR-S2 — the boundary to settle first:**
 - The App is offline except for its three v0.1.3 calls to `aimloom.dev`, so where the model runs
@@ -243,7 +243,7 @@ user on 2026-09-22 and written down in
 - The order, when it is wanted: measure from a real China connection first (free), then mirror
   the download with its SHA-256 published, then a fallback origin in the App (`ORIGIN` is one
   const in `net.rs`), and only then an in-China deployment.
-- Full reasoning and verification steps: [mainland-China access](docs/superpowers/plans/2026-09-21-mainland-china-access.md).
+- Full reasoning and verification steps: mainland-China access (private record).
 
 ## Done
 

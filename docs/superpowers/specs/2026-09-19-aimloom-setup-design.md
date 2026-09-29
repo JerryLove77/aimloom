@@ -1,8 +1,8 @@
 # Aimloom Setup — a Windows installer that also installs PowerShell 7
 
 Status: **implemented and released in v0.1.2 (2026-09-20).** Approved by the user on 2026-09-19.
-What was and was not observed on Windows:
-[verification note](../notes/2026-09-20-setup-windows-verification.md). Added after this spec was
+What was and was not observed on Windows is in the maintainer's private verification note of
+2026-09-20. Added after this spec was
 written: the installer refuses the data folder on the directory page's behalf (note §8), and §3.4's
 running-App paragraph and §3.5's release rule were corrected from what was observed.
 
@@ -104,7 +104,7 @@ under `%LOCALAPPDATA%\Aimloom`.
     bytes, and writes `Aimloom-Setup-v<version>.exe` beside the ZIP. The installed EXE differs
     from the ZIP's only by Tauri's bundle-type marker;
   - the label checks against `tauri.installer.conf.json` and the EXE's ProductVersion apply to
-    both artifacts. (Refined in [the plan](../plans/2026-09-19-aimloom-setup.md), Task 4.)
+    both artifacts. (Refined in the plan (private record), Task 4.)
 
 ### 3.3 PowerShell 7 (`NSIS_HOOK_POSTINSTALL`)
 
@@ -162,7 +162,7 @@ the Yes.
 - **Running App.** This is Tauri's inherited check (`CheckIfAppIsRunning`), not ours.
   - An interactive install or uninstall asks OK / Cancel; OK closes Aimloom, Cancel aborts.
   - A silent (`/S`) or passive install closes Aimloom **without asking**. Observed on
-    2026-09-20 ([verification note](../notes/2026-09-20-setup-windows-verification.md)); the
+    2026-09-20 (private verification note); the
     first draft of this spec said "asks the player to close it", which was wrong.
   - A write batch interrupted by closing is persisted, and on next launch the App forces
     recovery, as today.
@@ -182,7 +182,7 @@ the Yes.
   release carries both, with matching hashes.
   - **The Setup is not byte-reproducible.** Four bundles of the same source, with an identical
     rendered NSIS script, gave four sizes and hashes, while all 18 packed files were byte-identical
-    ([verification note](../notes/2026-09-20-setup-windows-verification.md) §6). So the Setup is
+    (private verification note, §6). So the Setup is
     built once: the file the user accepted is the file that is released. It is never rebuilt
     "identically" for the release.
 - **Signing.** Neither artifact is code-signed, so the SmartScreen prompt remains. The Setup

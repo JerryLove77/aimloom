@@ -1,8 +1,8 @@
 # Workspace redesign — implementation design
 
 Date: 2026-09-16. Branch: `feature/scheme`. Status: approved direction, implementation pending.
-Design source: the maintainer's workspace Figma file, indexed in
-[docs/design/figma/README.md](../../design/figma/README.md). The Figma **Notes** page is part
+Design source: the maintainer's workspace Figma file, indexed in the maintainer's private
+records. The Figma **Notes** page is part
 of this design; where this document and Notes differ, this document wins and Notes is updated.
 
 ## Goal

@@ -2,7 +2,7 @@
 
 面向使用者的项目介绍、当前功能和使用步骤见 [项目 README](../../README.md)。本页保留安装器构建、发行清单和测试说明。
 
-此目录包含独立的 Windows PowerShell 安装／恢复入口及开发者打包工具。发行状态为 **candidate**；此前脚本候选包在 Windows PowerShell 5.1 上的 23 项引擎测试、CLI、最终 ZIP 整包安装／恢复及 18 项原生 CMD 测试均已通过；完整游戏验收仍待完成。实测记录见 [候选包验证](../../docs/superpowers/notes/2026-09-06-v010-verification.md)。设计和发布条件见 [v0.1.x 设计](../../docs/v0.1.x-design.md)。
+此目录包含独立的 Windows PowerShell 安装／恢复入口及开发者打包工具。发行状态为 **candidate**；此前脚本候选包在 Windows PowerShell 5.1 上的 23 项引擎测试、CLI、最终 ZIP 整包安装／恢复及 18 项原生 CMD 测试均已通过；完整游戏验收仍待完成。实测记录见 候选包验证 (private record)。设计和发布条件见 [v0.1.x 设计](../../docs/v0.1.x-design.md)。
 
 用户解压整个 ZIP 后运行根目录的 `安装配置.cmd` 或 `恢复配置.cmd`。当前源码入口需要已安装的 PowerShell 7+（pwsh.exe），不需要 Python、Node.js 或 Rust。先阅读包内 `使用说明.txt`，按界面核对路径和选择内容；完整设置、UI、Palette 分别选择，默认仅安装素材。游戏必须退出。若系统执行策略阻止脚本，请按错误说明处理；入口不会自动提权或修改策略。
 
