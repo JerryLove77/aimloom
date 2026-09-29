@@ -41,8 +41,8 @@ describe('every path the App calls exists on the backend', () => {
     const generator = root + 'packages/site/src/pages/latest.json.ts'
     const { GET } = await import(/* @vite-ignore */ generator) as { GET(): Response }
     const served = Object.keys(await GET().json()).sort()
-    const check = /fn update_check_with\b[\s\S]*?\n}\n/.exec(readFileSync(root + 'packages/app/src-tauri/src/installer/commands.rs', 'utf8'))?.[0] ?? ''
-    expect(check, 'update_check_with was not found in commands.rs').not.toBe('')
+    const check = /fn update_check_with\b[\s\S]*?\n}\n/.exec(readFileSync(root + 'packages/app/src-tauri/src/installer/update.rs', 'utf8'))?.[0] ?? ''
+    expect(check, 'update_check_with was not found in update.rs').not.toBe('')
     const read = [...new Set([...check.matchAll(/\.get\("([a-z]+)"\)/g)].map(m => m[1]))].sort()
     expect(read).toEqual(served)
     expect(served).toEqual(['beta', 'version'])
@@ -50,7 +50,7 @@ describe('every path the App calls exists on the backend', () => {
 
   it('no call site spells a path by hand instead of using the constants', () => {
     // A literal at a call site is how /report got in. Tests inside `mod tests` may use any path.
-    for (const file of ['report.rs', 'commands.rs']) {
+    for (const file of ['report.rs', 'account.rs', 'update.rs']) {
       const source = readFileSync(root + 'packages/app/src-tauri/src/installer/' + file, 'utf8').split(/\nmod tests\b/)[0]!
       // Only calls on the HTTP client: serde_json's `.get("field")` is not a backend path.
       const literals = [...source.matchAll(/\bhttp\.(?:post_json|get)\(\s*"([^"]*)"/g)].map(m => m[1])

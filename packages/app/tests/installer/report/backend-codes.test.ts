@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest'
  */
 const root = fileURLToPath(new URL('../../../../../', import.meta.url))
 const http = readFileSync(root + 'packages/site/src/worker/http.ts', 'utf8')
-const native = ['report.rs', 'commands.rs']
+const native = ['report.rs', 'account.rs']
   .map(file => readFileSync(root + 'packages/app/src-tauri/src/installer/' + file, 'utf8').split(/\n#\[cfg\(test\)\]/)[0]!)
   .join('\n')
 
