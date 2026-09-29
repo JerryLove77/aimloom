@@ -4,7 +4,7 @@ import { createTrainingProfile, parseTrainingProfile, type TrainingProfile } fro
 import { referenceFromPath } from './file-reference'
 import { InstallerFailure } from '../installer/contracts'
 import { t, type MessageKey } from '../i18n'
-// Demo content (sample Profile names, demo theme and enemy names) is data, not UI text.
+// Demo content (sample Profile and theme names) is data, not UI text.
 import data from './demo-data.json'
 
 /** A demo failure in both languages, thrown the way the native bridges throw theirs. */
@@ -84,12 +84,9 @@ function demoTheme(name: string) {
 
 export function createDemoAssetBridge(): ProfileAssetBridge {
   const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value))
-  const appearance = (bodyColor: string) => ({ schemaVersion:1,kind:'enemy-appearance',name:data.enemy,appearance:{headColor:bodyColor,bodyColor,overrideHead:true,overrideBody:true,changeOnHit:false,changeOnLookAt:false,roughness:.6,metallic:0,fullBright:.3},source:{kind:'builtin'} })
   const files: Record<string, Uint8Array> = {
     '/demo/scheme/Blue-room.json': encode(scheme(data.schemes.blue,{x:.16,y:.25,z:.4},{x:.09,y:.12,z:.18})),
     '/demo/scheme/Warm-room.json': encode(scheme(data.schemes.warm,{x:.4,y:.3,z:.21},{x:.15,y:.12,z:.1})),
-    '/demo/enemy/Blue-target.json': encode(appearance('#3298ff')),
-    '/demo/enemy/Orange-target.json': encode(appearance('#ff8a2e')),
     '/demo/crosshair/Green-cross.png': Uint8Array.from(atob(pngs[0]!),c=>c.charCodeAt(0)),
     '/demo/crosshair/Cyan-cross.png': Uint8Array.from(atob(pngs[1]!),c=>c.charCodeAt(0)),
     '/demo/audio/Soft-hit.wav': tone(620), '/demo/audio/Clear-hit.wav': tone(960),
@@ -111,7 +108,7 @@ export function createDemoAssetBridge(): ProfileAssetBridge {
       if (game) {
         const file = game[1]!
         const stem = file.replace(/\.[^.]+$/, '')
-        if ((kind === 'scheme' || kind === 'enemy') && /\.json$/i.test(file) && stem !== 'Broken') return encode(demoTheme(stem))
+        if (kind === 'scheme' && /\.json$/i.test(file) && stem !== 'Broken') return encode(demoTheme(stem))
         if (kind === 'crosshair' && /\.png$/i.test(file)) return Uint8Array.from(atob(pngs[demoHue(stem) % pngs.length]!), c => c.charCodeAt(0))
         if (kind === 'audio' && /\.(ogg|wav)$/i.test(file)) return tone(400 + demoHue(stem) % 800)
       }

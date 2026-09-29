@@ -1,8 +1,12 @@
 import { InstallerFailure } from '../installer/contracts'
 import { t, type MessageKey, type Params } from '../i18n'
-import { AUDIO_EVENTS, MAX_AUDIO_FILES, type AudioEvent } from './audio/model'
 import { parseFileReference, type ProfileFileReference } from './file-reference'
 export type { ProfileFileReference } from './file-reference'
+
+/** A Profile's six sound events, in the order every Profile screen lists them. */
+export const AUDIO_EVENTS = ['kill', 'spawn', 'mbsGood', 'mbsOkay', 'mbsBad', 'mbsChangeNow'] as const
+export const MAX_AUDIO_FILES = 64
+export type AudioEvent = typeof AUDIO_EVENTS[number]
 
 export type ProfileAudio = Partial<Record<AudioEvent, ProfileFileReference[]>>
 export interface TrainingProfile {

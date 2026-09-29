@@ -94,7 +94,6 @@ npm test                      # vitest, all three projects: installer, @kvk/core
 npm run typecheck             # tsc --noEmit in all workspaces
 npx vitest run --project installer controller       # one project + filename filter
 npx vitest run packages/core/tests/parse.test.ts    # one file
-npm run verify -- <game-or-simulated-dir>           # @kvk/core e2e; does REAL writes — copy first
 npm run test:site                                   # the website: Node suite + the Worker's D1/mail suite in workerd
 python3 -m unittest discover -s scripts/privacy -p 'test_*.py'   # the privacy scanner
 ```

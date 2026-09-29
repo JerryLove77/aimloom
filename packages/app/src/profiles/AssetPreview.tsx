@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { parseScheme } from '../../../core/src/scheme/document'
 import { renderSchemePreview } from '../../../core/src/scheme/preview'
-import { parseEnemyDocument } from '../../../core/src/enemy/model'
-import { renderEnemySvg } from '../../../core/src/enemy/preview'
 import { useLang, useMsg, useT, type Msg } from '../i18n'
 import { errorMsg } from '../workspace/issue-text'
 import { resolveProfileAssetPath, type ProfileFileReference } from './model'
@@ -10,7 +8,8 @@ import { assetMime, type AssetKind, type ProfileAssetBridge } from './assets'
 
 type Status = 'loading' | 'ready' | 'error'
 export interface AssetPreviewProps {
-  kind: AssetKind
+  /** The Profile sheets pass scheme and audio; the preview lifecycle tests drive it with a PNG. */
+  kind: Exclude<AssetKind, 'enemy'>
   reference: ProfileFileReference | null
   profilePath: string
   assets: ProfileAssetBridge
@@ -78,8 +77,8 @@ export function AssetPreview({ kind, reference, profilePath, assets, onStatus, e
         if (current.current !== token || failed) return
         if (!bytes.length || bytes.length > 8 * 1024 * 1024) { update('error', { key: 'profile.preview.error.tooLarge' }); return }
         let blob: Blob
-        if (kind === 'scheme' || kind === 'enemy') {
-          const svg = kind === 'scheme' ? renderSchemePreview(parseScheme(bytes), lang) : renderEnemySvg({}, parseEnemyDocument(new TextDecoder('utf-8', { fatal: true }).decode(bytes)).appearance, {}, lang)
+        if (kind === 'scheme') {
+          const svg = renderSchemePreview(parseScheme(bytes), lang)
           mime = 'image/svg+xml'
           blob = new Blob([svg], { type: mime })
         } else {
@@ -106,6 +105,6 @@ export function AssetPreview({ kind, reference, profilePath, assets, onStatus, e
         const image = event.currentTarget
         finish.current(image.naturalWidth > 0 && image.naturalHeight > 0 && image.naturalWidth <= 8192 && image.naturalHeight <= 8192 ? 'ready' : 'error', { key: 'profile.preview.error.imageDimensions' })
       }} onError={() => { if (active(preview.token)) finish.current('error', { key: 'profile.preview.error.imageDecode' }) }} />)}
-    {(kind === 'scheme' || kind === 'enemy') && <p className="pr-preview-caption">{t(kind === 'scheme' ? 'profile.preview.caption.scheme' : 'profile.preview.caption.enemy')}</p>}
+    {kind === 'scheme' && <p className="pr-preview-caption">{t('profile.preview.caption.scheme')}</p>}
   </div>
 }
