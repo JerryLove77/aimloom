@@ -11,10 +11,6 @@ import type { TuneValue } from '../../../crosshair/src/tuning'
 
 export interface Bilingual { zh: string; en: string }
 
-export const TUNE_HEADING: Bilingual = { zh: '微调', en: 'Fine-tune' }
-export const TUNE_RESET: Bilingual = { zh: '恢复成粘贴的代码', en: 'Reset to the pasted code' }
-export const TUNE_DARK: Bilingual = { zh: '深色底', en: 'Dark' }
-export const TUNE_LIGHT: Bilingual = { zh: '浅色底', en: 'Light' }
 export const TUNE_CUSTOM_SWATCH: Bilingual = { zh: '自定义', en: 'Custom' }
 export const TUNE_CUSTOM_COLOR_PICKER: Bilingual = { zh: '自定义颜色', en: 'Custom color' }
 export const TUNE_CUSTOM_ALPHA: Bilingual = { zh: '自定义颜色透明度', en: 'Custom color alpha' }
