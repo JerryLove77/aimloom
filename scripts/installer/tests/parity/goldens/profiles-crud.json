@@ -7,47 +7,59 @@
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"daily\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":{\"schemaVersion\":2,\"id\":\"daily\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"daily\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":{\"schemaVersion\":2,\"id\":\"daily\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/legacy.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 含未知字段：crosshair\",\"messageEn\":\"The Profile has an unknown field: crosshair.\",\"path\":null}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/legacy.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/legacy.json\",\"profile\":null}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/dbl.json\",\"profile\":{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/dbl.json\",\"profile\":{\"schemaVersion\":2.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/nulls.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/silent.json\",\"profile\":{\"schemaVersion\":2,\"id\":\"silent\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":1,\"id\":\"daily\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}],\"errors\":[]}}"
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/silent.json\",\"profile\":{\"schemaVersion\":2,\"id\":\"silent\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":true,\"data\":{\"deleted\":true}}"
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":null}}"
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 字段必须是 JSON 对象。\",\"messageEn\":\"A Profile field must be a JSON object.\",\"path\":null}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":true,\"data\":{\"deleted\":false}}"
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":2,\"id\":\"daily\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}},{\"schemaVersion\":2.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}},{\"schemaVersion\":2,\"id\":\"silent\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}],\"errors\":[]}}"
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}],\"errors\":[]}}"
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":true,\"data\":{\"deleted\":true}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r13\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r14\",\"type\":\"reply\",\"ok\":true,\"data\":{\"deleted\":false}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r15\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":2.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}},{\"schemaVersion\":2,\"id\":\"silent\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}],\"errors\":[]}}"
     }
   ],
   "files": {
@@ -61,15 +73,11 @@
     "local": [
       {
         "path": "Aimloom/profiles/dbl.json",
-        "text": "{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}"
+        "text": "{\"schemaVersion\":2.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}"
       },
       {
-        "path": "Aimloom/profiles/legacy.json",
-        "text": "{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}"
-      },
-      {
-        "path": "Aimloom/profiles/nulls.json",
-        "text": "{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}"
+        "path": "Aimloom/profiles/silent.json",
+        "text": "{\"schemaVersion\":2,\"id\":\"silent\",\"name\":\"Daily 日常\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}"
       }
     ]
   }

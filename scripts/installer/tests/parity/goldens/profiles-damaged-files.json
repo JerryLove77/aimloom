@@ -3,7 +3,7 @@
   "steps": [
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Old\",\"scheme\":null,\"audio\":null},{\"schemaVersion\":1,\"id\":\"ok\",\"name\":\"N ok\",\"scheme\":null,\"audio\":null}],\"errors\":[{\"fileName\":\"a.b.json\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\"},{\"fileName\":\"bom.json\",\"message\":\"Profile JSON 已损坏或无法读取。\",\"messageEn\":\"The Profile JSON is damaged or could not be read.\"},{\"fileName\":\"broken.json\",\"message\":\"Profile JSON 已损坏或无法读取。\",\"messageEn\":\"The Profile JSON is damaged or could not be read.\"},{\"fileName\":\"dir.json\",\"message\":\"Profile 路径不是文件。\",\"messageEn\":\"The Profile path is not a file.\"},{\"fileName\":\"dup.json\",\"message\":\"Profile JSON 含重复字段。\",\"messageEn\":\"The Profile JSON has a duplicate field.\"},{\"fileName\":\"mismatch.json\",\"message\":\"Profile 标识与文件名不一致。\",\"messageEn\":\"The Profile id does not match its file name.\"},{\"fileName\":\"trailing.json\",\"message\":\"Profile JSON 已损坏或无法读取。\",\"messageEn\":\"The Profile JSON is damaged or could not be read.\"},{\"fileName\":\"Upper.json\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\"}]}}"
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":2,\"id\":\"ok\",\"name\":\"N ok\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}],\"errors\":[{\"fileName\":\"a.b.json\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\"},{\"fileName\":\"bom.json\",\"message\":\"Profile JSON 已损坏或无法读取。\",\"messageEn\":\"The Profile JSON is damaged or could not be read.\"},{\"fileName\":\"broken.json\",\"message\":\"Profile JSON 已损坏或无法读取。\",\"messageEn\":\"The Profile JSON is damaged or could not be read.\"},{\"fileName\":\"dir.json\",\"message\":\"Profile 路径不是文件。\",\"messageEn\":\"The Profile path is not a file.\"},{\"fileName\":\"dup.json\",\"message\":\"Profile JSON 含重复字段。\",\"messageEn\":\"The Profile JSON has a duplicate field.\"},{\"fileName\":\"legacy.json\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\"},{\"fileName\":\"mismatch.json\",\"message\":\"Profile 标识与文件名不一致。\",\"messageEn\":\"The Profile id does not match its file name.\"},{\"fileName\":\"trailing.json\",\"message\":\"Profile JSON 已损坏或无法读取。\",\"messageEn\":\"The Profile JSON is damaged or could not be read.\"},{\"fileName\":\"Upper.json\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\"},{\"fileName\":\"v1-plain.json\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\"}]}}"
     },
     {
       "progress": [],
@@ -15,7 +15,11 @@
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/legacy.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Old\",\"scheme\":null,\"audio\":null}}}"
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
     }
   ],
   "files": {
@@ -29,15 +33,15 @@
     "local": [
       {
         "path": "Aimloom/profiles/Upper.json",
-        "text": "{\"schemaVersion\": 1, \"id\": \"upper\", \"name\": \"N upper\", \"scheme\": null, \"audio\": null}"
+        "text": "{\"schemaVersion\": 2, \"id\": \"upper\", \"name\": \"N upper\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:/Themes/Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}]}}"
       },
       {
         "path": "Aimloom/profiles/a.b.json",
-        "text": "{\"schemaVersion\": 1, \"id\": \"a\", \"name\": \"N a\", \"scheme\": null, \"audio\": null}"
+        "text": "{\"schemaVersion\": 2, \"id\": \"a\", \"name\": \"N a\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:/Themes/Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}]}}"
       },
       {
         "path": "Aimloom/profiles/bom.json",
-        "text": "{\"schemaVersion\": 1, \"id\": \"bom\", \"name\": \"N\", \"scheme\": null, \"audio\": null}"
+        "text": "{\"schemaVersion\": 2, \"id\": \"bom\", \"name\": \"N\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:/Themes/Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}]}}"
       },
       {
         "path": "Aimloom/profiles/broken.json",
@@ -45,7 +49,7 @@
       },
       {
         "path": "Aimloom/profiles/dup.json",
-        "text": "{\"schemaVersion\":1,\"id\":\"dup\",\"id\":\"dup\",\"name\":\"N\",\"scheme\":null,\"audio\":null}"
+        "text": "{\"schemaVersion\":2,\"id\":\"dup\",\"id\":\"dup\",\"name\":\"N\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]}}"
       },
       {
         "path": "Aimloom/profiles/legacy.json",
@@ -53,11 +57,11 @@
       },
       {
         "path": "Aimloom/profiles/mismatch.json",
-        "text": "{\"schemaVersion\": 1, \"id\": \"other\", \"name\": \"N other\", \"scheme\": null, \"audio\": null}"
+        "text": "{\"schemaVersion\": 2, \"id\": \"other\", \"name\": \"N other\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:/Themes/Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}]}}"
       },
       {
         "path": "Aimloom/profiles/ok.json",
-        "text": "{\"schemaVersion\": 1, \"id\": \"ok\", \"name\": \"N ok\", \"scheme\": null, \"audio\": null}"
+        "text": "{\"schemaVersion\": 2, \"id\": \"ok\", \"name\": \"N ok\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:/Themes/Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:/sounds/g.wav\"}]}}"
       },
       {
         "path": "Aimloom/profiles/readme.txt",
@@ -65,7 +69,11 @@
       },
       {
         "path": "Aimloom/profiles/trailing.json",
-        "text": "{\"schemaVersion\":1,\"id\":\"trailing\",\"name\":\"N\",\"scheme\":null,\"audio\":null,}"
+        "text": "{\"schemaVersion\":2,\"id\":\"trailing\",\"name\":\"N\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:/sounds/g.wav\"}]},}"
+      },
+      {
+        "path": "Aimloom/profiles/v1-plain.json",
+        "text": "{\"schemaVersion\": 1, \"id\": \"v1-plain\", \"name\": \"Old\", \"scheme\": null, \"audio\": null}"
       }
     ]
   }
