@@ -34,19 +34,36 @@ profile1.json is one combination; profile2.json is another. List ordinary files 
 native profiles directory; no separate index database or asset ownership system is needed.
 The existing application also records schemaVersion, a safe stable id and a display name.
 
+**Format v2 (user, 2026-09-30): a Profile is a complete snapshot.** There is no "keep current"
+any more, and a new Profile starts as the game is. Version 1 (below the example) is refused in
+every layer; there is no data migration.
+
 ```json
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "profile1",
   "name": "Profile 1",
-  "scheme": { "name": "XXX", "path": "D:/KovaaK/Themes/XXX.json" },
+  "theme": { "name": "XXX.json", "path": "D:/KovaaK/Themes/XXX.json" },
   "audio": {
-    "kill": [{ "name": "Hit", "path": "D:/KovaaK/Sounds/hit.wav" }]
-  },
-  "crosshair": { "name": "Dot", "path": "D:/KovaaK/Crosshairs/dot.png" },
-  "enemy": { "name": "Blue", "path": "D:/KovaaK/Enemies/blue.json" }
+    "kill": [{ "name": "hit.wav", "path": "D:/KovaaK/sounds/hit.wav" }],
+    "spawn": [],
+    "mbsGood": [{ "name": "none.ogg", "path": "D:/KovaaK/sounds/none.ogg" }],
+    "mbsOkay": [{ "name": "none.ogg", "path": "D:/KovaaK/sounds/none.ogg" }],
+    "mbsBad": [{ "name": "none.ogg", "path": "D:/KovaaK/sounds/none.ogg" }],
+    "mbsChangeNow": [{ "name": "change.ogg", "path": "D:/KovaaK/sounds/change.ogg" }]
+  }
 }
 ```
+
+- The theme and all six events are required. Kill and spawn may be empty, which applies as no
+  sound (the game's own empty value). Each MBS event holds exactly one file; the game's silent
+  `none.ogg` is its "no sound". Applying writes all seven.
+- The editor starts a new Profile from the game's current theme and bindings, each resolved to
+  the one installed file of that name; a part it cannot resolve is left unchosen and must be
+  chosen before saving. A library row says 当前使用 when the game holds exactly what the Profile
+  records.
+
+The rest of this section describes version 1 and is history:
 
 - Store selected names and addresses, not scheme contents, enemy parameters, crosshair
   source codes or media bytes. The selected files remain the source of those details.

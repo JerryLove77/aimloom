@@ -180,8 +180,10 @@ Rules:
   `beforeunload` guard.
 - **I.** 保存组合 is disabled while the draft equals its saved JSON. A never-saved Profile counts
   as changed. The Profile sidebar entry reads `Profile（未保存）` while a draft differs.
-- **Apply (2026-09-21).** Each library row has 应用 beside 复制 and 删除, disabled with a reason
-  when all three components keep current. It opens a modal (through the `overlays` slot) that
+- **Apply (2026-09-21, reworked 2026-09-30).** Each library row has 应用 beside 复制 and 删除.
+  When the game holds exactly what the Profile records (theme and all six events), the row shows
+  the 当前使用 tag and a grey 已在使用 instead: grey means in use, bright means it can be applied
+  (user, 0.1.6-test.1). A Profile is a complete snapshot, so there is no "nothing to apply". 应用 opens a modal (through the `overlays` slot) that
   summarises the **saved** Profile, then plan → 确认应用 → job, as the sections do; an `unknown`
   job locks the dialog and the rows until 核对结果. A refusal is shown inside the dialog with no
   confirm button. A failed execute re-plans, because the worker spends a plan on every execute.
