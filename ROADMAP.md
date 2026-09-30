@@ -203,11 +203,17 @@ switch); on 2026-09-30 the user chose a takeover instead:
 - **Either engine reads what the other wrote.** Backups, first-protection records, Profiles, and an
   unfinished (`recovery-required`) batch left by PowerShell (0.1.5) are recovered by Rust, and the
   other way round; `cross.test.ps1` tests both.
-- **An upgrade may leave the old `pwsh\` and `scripts\` folders** (a silent install, or declining the
-  uninstall step). They are unused and harmless; the Setup keeps its rule of never deleting
-  anything (user, 2026-09-30), and the beta's known issues say so.
+- **Players uninstall the old version first, then install 0.1.6** (user, 2026-09-30: 「不要管升级过度了，
+  直接卸了重装」). The release notes say so; upgrade-in-place is not tested. An in-place upgrade
+  could leave the old, unused `pwsh\` and `scripts\` folders; the Setup keeps its rule of never
+  deleting anything.
 - **Before the beta:** every real write done once through Rust on the test PC and seen in the game
-  (a checklist the user clicks through while Claude checks each step remotely). **Deploy the site
+  (a checklist the user clicks through while Claude checks each step remotely). **Done 2026-09-30**
+  on 0.1.6-test.6/7: Quick import install and undo (25 files back to their exact bytes), Theme,
+  Sounds (binding), Enemy, Crosshair add from a code, a v2 Profile applied with spawn silent,
+  refusals while the game runs, and a worker killed before an apply (a new worker started and the
+  apply succeeded), each seen in the game; no PowerShell process at any point. Not checked: adding
+  a sound file, save a copy, upgrading in place. **Deploy the site
   first:** the live Worker refuses unknown report keys, so a 0.1.6 report (it carries
   `system.engine`) is refused until the site from this branch is deployed; 0.1.5 reports keep
   working either way.
