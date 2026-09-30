@@ -681,7 +681,9 @@ export const zh = {
 
   'profile.apply.button': '应用',
   'profile.apply.aria': '应用 {name}',
-  'profile.apply.disabledTitle': '这套组合没有可应用的内容',
+  'profile.apply.inUse': '已在使用',
+  'profile.apply.inUseAria': '「{name}」已在使用',
+  'profile.apply.nothing': '没有要应用的内容',
   'profile.apply.title': '应用「{name}」',
   'profile.apply.note.closeGame': '请先退出 KovaaK：游戏开着时，它退出时会把改动覆盖掉。改动在下次启动游戏时生效。',
   'profile.apply.note.backup': '应用前会先备份当前的设置文件。',
