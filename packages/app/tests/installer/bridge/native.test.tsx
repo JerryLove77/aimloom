@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // The native bridge talks to Rust through Tauri's invoke. Stand in for Rust here, the way
-// it answers when PowerShell 7 is missing: every command rejects with the same Issue.
+// it answers when the engine's worker has stopped: every command rejects with the same Issue.
 const invoke = vi.fn()
 vi.mock('@tauri-apps/api/core', () => ({ invoke: (...args: unknown[]) => invoke(...args) }))
 
@@ -12,26 +12,27 @@ import { SchemePage } from '../../../src/scheme/SchemePage'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
-const PWSH_MISSING = '没有找到 PowerShell 7。请先安装，然后重新打开本程序：在「终端」中运行 winget install --id Microsoft.PowerShell，或访问 https://aka.ms/powershell 下载。'
+// `WORKER_EXITED` in worker.rs, as Rust words it.
+const WORKER_EXITED = '后台组件意外退出，这次操作没有完成。请关闭并重新打开 Aimloom；如果仍然出现，请在「设置」里点「发送问题报告…」，或把 %LOCALAPPDATA%\\Aimloom\\logs\\worker.log 发到 feedback@aimloom.dev。'
 const assets: ProfileAssetBridge = {
   chooseDirectory: async () => null,
   list: async () => ({ directory: '', files: [], errors: [] }),
   read: async () => new Uint8Array(),
 }
 
-describe('native bridge when PowerShell 7 is missing', () => {
-  beforeEach(() => { invoke.mockReset().mockRejectedValue({ code: 'WORKER_UNAVAILABLE', message: PWSH_MISSING, path: null }) })
+describe('native bridge when the engine worker has stopped', () => {
+  beforeEach(() => { invoke.mockReset().mockRejectedValue({ code: 'WORKER_UNAVAILABLE', message: WORKER_EXITED, path: null }) })
 
   it("keeps Rust's message instead of replacing it with the generic fallback", async () => {
     const failure = await createNativeBridge().discover().catch((error: unknown) => error)
     expect(failure).toBeInstanceOf(InstallerFailure)
     expect((failure as InstallerFailure).issue.code).toBe('WORKER_UNAVAILABLE')
-    expect((failure as InstallerFailure).message).toBe(PWSH_MISSING)
+    expect((failure as InstallerFailure).message).toBe(WORKER_EXITED)
   })
 
-  it('shows the install instructions on the section the user opened', async () => {
+  it('shows what happened and what to do on the section the user opened', async () => {
     render(<SchemePage bridge={createNativeBridge()} assets={assets} section={'scheme' as WorkspaceSection} onSelect={() => {}} />)
-    expect(await screen.findByText(PWSH_MISSING)).toBeVisible()
+    expect(await screen.findByText(WORKER_EXITED)).toBeVisible()
   })
 })
 
@@ -41,7 +42,7 @@ describe('native bridge failures that arrive as a bare string', () => {
     const failure = await createNativeBridge().discover().catch((error: unknown) => error) as InstallerFailure
     expect(failure.issue.message).toBe('拒绝访问。')
     expect(failure.issue.messageEn).not.toMatch(/[\u3000-\u303f\u3400-\u9fff\uff00-\uffef]/)
-    expect(failure.issue.messageEn).toContain('PowerShell 7')
+    expect(failure.issue.messageEn).toContain('background engine')
   })
 
   it('keeps a native string that is already English', async () => {

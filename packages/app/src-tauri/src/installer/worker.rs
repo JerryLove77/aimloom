@@ -10,7 +10,6 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
 
-use super::engine_choice::EngineKind;
 use super::jobs::JobManager;
 use super::protocol::{
     parse_worker_line, validate_execution, ErrorCode, ExecuteRequest, Execution, Issue, WorkerMessage, WorkerRequest,
@@ -19,10 +18,10 @@ use super::protocol::{
 
 #[derive(Clone, Debug)]
 pub struct WorkerConfig {
-    /// What is started: `pwsh` running `kvk-gui-worker.ps1`, or `Aimloom.exe --worker`.
+    /// What is started: `Aimloom.exe --worker`, the Rust engine (the only engine the App runs
+    /// from v0.1.6).
     program: PathBuf,
     args: Vec<std::ffi::OsString>,
-    engine: EngineKind,
     /// `%LOCALAPPDATA%`, under which the worker's stderr log is kept. `None` discards the log
     /// (tests, and any machine without the variable). The log's folder is resolved at each
     /// spawn, not here, so it always matches the folder the worker is about to use.
@@ -30,204 +29,41 @@ pub struct WorkerConfig {
 }
 
 impl WorkerConfig {
-    #[cfg_attr(not(any(test, target_os = "windows")), allow(dead_code))]
-    fn powershell(executable: PathBuf, script: &Path, log_root: Option<PathBuf>) -> Self {
-        let mut args: Vec<std::ffi::OsString> = ["-NoProfile", "-NonInteractive", "-File"].iter().map(Into::into).collect();
-        args.push(script.as_os_str().to_owned());
-        Self { program: executable, args, engine: EngineKind::Powershell, log_root }
-    }
-
-    pub fn engine(&self) -> EngineKind { self.engine }
-
     /// The Rust engine's worker: `program` started with `--worker`. The App passes its own
     /// executable; integration tests pass the test build of it (`CARGO_BIN_EXE_app`). `log_root` is
     /// the `%LOCALAPPDATA%` the worker is started with and logs under.
     pub fn rust_worker(program: PathBuf, log_root: Option<PathBuf>) -> Self {
-        Self { program, args: vec![RUST_WORKER_FLAG.into()], engine: EngineKind::Rust, log_root }
+        Self { program, args: vec![RUST_WORKER_FLAG.into()], log_root }
     }
 
     /// `local_app_data` is the runtime's own `%LOCALAPPDATA%`: the worker log goes under it and the
     /// worker is started with it, so a runtime pointed at a test folder never reaches the real one.
-    pub fn production(engine: EngineKind, local_app_data: Option<PathBuf>) -> Result<Self, Issue> {
+    pub fn production(local_app_data: Option<PathBuf>) -> Result<Self, Issue> {
         #[cfg(not(target_os = "windows"))]
         {
-            let _ = (engine, local_app_data);
-            Err(Issue::plain(
-                ErrorCode::UnsupportedPlatform,
-                "The installer engine is available only on Windows with PowerShell 7 or newer.",
-            ))
+            let _ = local_app_data;
+            Err(Issue::plain(ErrorCode::UnsupportedPlatform, "The installer engine is available only on Windows."))
         }
         #[cfg(target_os = "windows")]
         {
-            let log_root = local_app_data;
-            if engine == EngineKind::Rust {
-                // The Rust engine is this executable, started again as a JSONL worker.
-                let program = std::env::current_exe().map_err(|e| Issue::worker(format!("could not locate Aimloom.exe: {e}")))?;
-                return Ok(Self::rust_worker(program, log_root));
-            }
-            // <exe dir>\pwsh: the PowerShell 7 the release ships. Unblocked before it is tried,
-            // for the same reason as the scripts (see unblock_own_scripts).
-            let bundled = std::env::current_exe().ok()
-                .and_then(|exe| exe.parent().map(|dir| dir.join("pwsh")));
-            if let Some(dir) = &bundled {
-                unblock_bundled_pwsh(dir);
-            }
-            let executable = discover_pwsh(bundled.as_deref())?;
-            let script = production_worker_path()?;
-            // scripts\gui\kvk-gui-worker.ps1 → scripts\. See unblock_own_scripts.
-            if let Some(scripts) = script.parent().and_then(Path::parent) {
-                unblock_own_scripts(scripts);
-            }
-            Ok(Self::powershell(executable, &script, log_root))
+            // The engine is this executable, started again as a JSONL worker.
+            let program = std::env::current_exe().map_err(|e| Issue::worker(format!("could not locate Aimloom.exe: {e}")))?;
+            Ok(Self::rust_worker(program, local_app_data))
         }
     }
 
+    /// A configuration that is never started, for tests of the native session around it.
     #[cfg(test)]
-    pub fn for_test(executable: impl Into<PathBuf>, script: impl Into<PathBuf>) -> Self {
-        Self::powershell(executable.into(), &script.into(), None)
+    pub fn for_test(program: impl Into<PathBuf>) -> Self {
+        Self::rust_worker(program.into(), None)
     }
 }
-
-/// Pins a validated interpreter to a stable absolute path.
-///
-/// `canonicalize` is preferred because resolving links stops a later PATH change from
-/// swapping the interpreter out from under a running session. It fails on an MSIX app
-/// execution alias — a zero-byte reparse point whose target sits in ACL-protected
-/// WindowsApps, reported as os error 1920. Such an alias is exactly how a Store-installed
-/// PowerShell is meant to start, and the caller only reaches here after proving the
-/// candidate runs and reports version 7 or newer, so fall back to a lexically absolute
-/// path rather than rejecting a working interpreter.
-#[cfg(any(test, target_os = "windows"))]
-fn pin_interpreter(path: &Path) -> Result<PathBuf, Issue> {
-    if let Ok(resolved) = fs::canonicalize(path) {
-        return Ok(strip_extended_length_prefix(resolved));
-    }
-    std::path::absolute(path).map_err(|e| {
-        Issue::worker(format!("could not resolve the interpreter path \"{}\": {e}", path.display()))
-    })
-}
-
-/// Removes the `\\?\` extended-length prefix that `fs::canonicalize` adds on Windows.
-///
-/// PowerShell refuses a script named by a verbatim path: its AuthorizationManager cannot
-/// authorize one, so `-File \\?\C:\...` exits with `SecurityError: AuthorizationManager
-/// check failed` before running a line. That is not an execution-policy problem — the same
-/// script at an ordinary path runs — so the fix belongs here and must not touch policy.
-/// Canonicalization is still what proves the script exists and resolves links, so the
-/// prefix is stripped from its result rather than the call being dropped. A verbatim path
-/// with no ordinary spelling (a `Volume{...}` GUID, say) is returned unchanged; nothing in
-/// this tree produces one.
-#[cfg(any(test, target_os = "windows"))]
-fn strip_extended_length_prefix(path: PathBuf) -> PathBuf {
-    let Some(text) = path.to_str() else { return path };
-    if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
-        return PathBuf::from(format!(r"\\{rest}"));
-    }
-    match text.strip_prefix(r"\\?\") {
-        Some(rest)
-            if rest.as_bytes().first().is_some_and(u8::is_ascii_alphabetic)
-                && rest.as_bytes().get(1) == Some(&b':') =>
-        {
-            PathBuf::from(rest)
-        }
-        _ => path,
-    }
-}
-
-/// Shown on every section when PowerShell 7 is missing. Most players' Windows ships only
-/// Windows PowerShell 5.1, so this is the first thing a new user is likely to hit.
-#[cfg(any(test, target_os = "windows"))]
-const PWSH_MISSING: &str = "没有找到 PowerShell 7。请先安装，然后重新打开本程序：在「终端」中运行 winget install --id Microsoft.PowerShell，或访问 https://aka.ms/powershell 下载。";
-#[cfg(any(test, target_os = "windows"))]
-const PWSH_MISSING_EN: &str = "PowerShell 7 was not found. Install it, then reopen Aimloom: run winget install --id Microsoft.PowerShell in Terminal, or download it from https://aka.ms/powershell.";
 
 /// Shown when the worker stops before answering: every pending request gets this. The most
-/// likely causes are outside the app (a blocked script, a broken PowerShell install), and the
-/// log is what shows which one.
+/// likely causes are outside the app (antivirus stopping `Aimloom.exe`, a damaged install, or an
+/// engine bug), and the log is what shows which one.
 const WORKER_EXITED: &str = "后台组件意外退出，这次操作没有完成。请关闭并重新打开 Aimloom；如果仍然出现，请在「设置」里点「发送问题报告…」，或把 %LOCALAPPDATA%\\Aimloom\\logs\\worker.log 发到 feedback@aimloom.dev。";
 const WORKER_EXITED_EN: &str = "The background worker stopped unexpectedly and this operation did not finish. Close and reopen Aimloom; if it happens again, use \"Send a report…\" in Settings, or email %LOCALAPPDATA%\\Aimloom\\logs\\worker.log to feedback@aimloom.dev.";
-
-/// Unblocks the app's own scripts.
-///
-/// A ZIP downloaded in a browser and extracted with Explorer marks every file as coming from
-/// the internet (an NTFS `Zone.Identifier` stream). PowerShell's default RemoteSigned policy
-/// then refuses the unsigned worker, and every section fails. Observed on 2026-09-19 with the
-/// real 0.1.1 download. The scripts ship beside the executable the player chose to run, so the
-/// app removes that mark from its own `scripts` folder, and only there. That is what Properties →
-/// Unblock does; the execution policy is never changed.
-///
-/// Best effort: links and junctions are not followed, the walk is bounded, and any failure
-/// leaves startup as it was. Returns how many marks were removed.
-#[cfg(any(test, target_os = "windows"))]
-fn unblock_own_scripts(root: &Path) -> usize {
-    unblock_tree(root, 4, 1000)
-}
-
-/// Unblocks the PowerShell 7 that ships beside the app, in its own `pwsh` folder.
-///
-/// The same Explorer extraction marks it too, and then it starts but cannot load its own
-/// modules: `Microsoft.PowerShell.Security` refused its `Security.types.ps1xml` ("AuthorizationManager
-/// check failed"), observed on 2026-09-24 with 7.6.6 and every file marked. The official ZIP has
-/// 698 entries up to five folders deep, so this walk goes deeper and further than the scripts'.
-/// Only this folder, and only the mark; the execution policy is never changed.
-#[cfg(target_os = "windows")]
-fn unblock_bundled_pwsh(root: &Path) -> usize {
-    unblock_tree(root, 8, 5000)
-}
-
-#[cfg(any(test, target_os = "windows"))]
-fn unblock_tree(root: &Path, max_depth: usize, max_entries: usize) -> usize {
-    let mut removed = 0;
-    let mut visited = 0;
-    let mut folders = vec![(root.to_path_buf(), 0)];
-    while let Some((folder, depth)) = folders.pop() {
-        let Ok(entries) = fs::read_dir(&folder) else { continue };
-        for entry in entries.flatten() {
-            visited += 1;
-            if visited > max_entries {
-                return removed;
-            }
-            let path = entry.path();
-            let Ok(meta) = fs::symlink_metadata(&path) else { continue };
-            if is_link(&meta) {
-                continue;
-            }
-            if meta.is_dir() {
-                if depth < max_depth {
-                    folders.push((path, depth + 1));
-                }
-            } else if meta.is_file() && remove_download_mark(&path) {
-                removed += 1;
-            }
-        }
-    }
-    removed
-}
-
-#[cfg(target_os = "windows")]
-fn is_link(meta: &fs::Metadata) -> bool {
-    use std::os::windows::fs::MetadataExt;
-    const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
-    meta.file_type().is_symlink() || meta.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
-}
-#[cfg(all(test, not(target_os = "windows")))]
-fn is_link(meta: &fs::Metadata) -> bool {
-    meta.file_type().is_symlink()
-}
-
-/// Deletes the file's `Zone.Identifier` stream. The file's own bytes are untouched.
-#[cfg(target_os = "windows")]
-fn remove_download_mark(path: &Path) -> bool {
-    let mut stream = path.as_os_str().to_owned();
-    stream.push(":Zone.Identifier");
-    fs::remove_file(stream).is_ok()
-}
-/// Alternate data streams exist only on NTFS: elsewhere there is nothing to remove, and a file
-/// literally named `x:Zone.Identifier` must never be deleted.
-#[cfg(all(test, not(target_os = "windows")))]
-fn remove_download_mark(_path: &Path) -> bool {
-    false
-}
 
 /// Rotate the worker log once it passes this size, so it cannot grow without bound.
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
@@ -235,8 +71,8 @@ const MAX_LOG_BYTES: u64 = 1024 * 1024;
 /// The argument that makes `Aimloom.exe` the Rust engine's worker instead of the App.
 pub const RUST_WORKER_FLAG: &str = "--worker";
 
-pub(crate) const DATA_FOLDER: &str = "Aimloom";
-pub(crate) const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
+const DATA_FOLDER: &str = "Aimloom";
+const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
 
 /// The data folder under `%LOCALAPPDATA%`: backups, first-protection records, Profiles, locks
 /// and this log. It was `KovaaKConfigInstaller` before the product became Aimloom.
@@ -301,60 +137,6 @@ fn format_utc(moment: SystemTime) -> String {
     let month = if mp < 10 { mp + 3 } else { mp - 9 };
     let year = yoe + era * 400 + i64::from(month <= 2);
     format!("{year:04}-{month:02}-{day:02} {:02}:{:02}:{:02} UTC", time / 3_600, time % 3_600 / 60, time % 60)
-}
-
-#[cfg(target_os = "windows")]
-fn validated_pwsh(path: &Path) -> bool {
-    if !path.is_file() { return false; }
-    let output = Command::new(path)
-        .args(["-NoProfile", "-NonInteractive", "-Command", "$PSVersionTable.PSVersion.Major"])
-        .stdin(Stdio::null()).stderr(Stdio::null()).output();
-    output.ok().and_then(|o| String::from_utf8(o.stdout).ok())
-        .and_then(|s| s.trim().parse::<u32>().ok()).map(|major| major >= 7).unwrap_or(false)
-}
-
-/// Where to look for PowerShell 7, in order: the copy the release ships (`bundled`, the app's
-/// own `pwsh` folder), so every player runs the version the suites ran; then an installed one,
-/// the normal MSI location first and then each folder on `PATH`. The first that proves itself
-/// with [`validated_pwsh`] is used, so a damaged bundled copy falls back to an installed one.
-#[cfg(any(test, target_os = "windows"))]
-fn pwsh_candidates(bundled: Option<&Path>, program_files: &Path, path: Option<&std::ffi::OsStr>) -> Vec<PathBuf> {
-    let mut candidates = Vec::new();
-    if let Some(dir) = bundled {
-        candidates.push(dir.join("pwsh.exe"));
-    }
-    candidates.push(program_files.join("PowerShell").join("7").join("pwsh.exe"));
-    if let Some(path) = path {
-        candidates.extend(std::env::split_paths(path).map(|directory| directory.join("pwsh.exe")));
-    }
-    candidates
-}
-
-#[cfg(target_os = "windows")]
-fn discover_pwsh(bundled: Option<&Path>) -> Result<PathBuf, Issue> {
-    let program_files = std::env::var_os("ProgramFiles")
-        .map(PathBuf::from).unwrap_or_else(|| PathBuf::from(r"C:\Program Files"));
-    let path = std::env::var_os("PATH");
-    for candidate in pwsh_candidates(bundled, &program_files, path.as_deref()) {
-        if validated_pwsh(&candidate) {
-            return pin_interpreter(&candidate);
-        }
-    }
-    Err(Issue::new(ErrorCode::WorkerUnavailable, PWSH_MISSING, PWSH_MISSING_EN))
-}
-
-#[cfg(target_os = "windows")]
-fn production_worker_path() -> Result<PathBuf, Issue> {
-    #[cfg(debug_assertions)]
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../../scripts/installer/gui/kvk-gui-worker.ps1");
-    #[cfg(not(debug_assertions))]
-    let path = std::env::current_exe().map_err(|e| Issue::worker(e.to_string()))?
-        .parent().ok_or_else(|| Issue::worker("application executable has no parent directory"))?
-        .join("scripts").join("gui").join("kvk-gui-worker.ps1");
-    fs::canonicalize(&path)
-        .map(strip_extended_length_prefix)
-        .map_err(|e| Issue::worker(format!("worker script is missing at \"{}\": {e}", path.display())))
 }
 
 enum Pending {
@@ -679,229 +461,12 @@ mod protocol_tests {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::{Duration, Instant};
-
-    #[test]
-    fn eof_without_final_reply_marks_execute_unknown() {
-        let pwsh = PathBuf::from("/private/tmp/kvk-b2-pwsh/pwsh");
-        if !pwsh.is_file() { return; }
-        let dir = std::env::temp_dir().join(format!("kvk-worker-eof-{}", std::process::id()));
-        fs::create_dir_all(&dir).unwrap();
-        let script = dir.join("eof.ps1");
-        fs::write(&script, "$null = [Console]::In.ReadLine(); exit 0\n").unwrap();
-        let jobs = Arc::new(Mutex::new(JobManager::default()));
-        let request = ExecuteRequest {
-            operation_id: "op-eof".into(), plan_id: "plan-eof".into(),
-            confirmation: super::super::protocol::Confirmation::Install, allow_conflicts: false,
-        };
-        jobs.lock().unwrap().reserve(request.clone()).unwrap();
-        let worker = WorkerClient::spawn(WorkerConfig::for_test(pwsh, &script), jobs.clone()).unwrap();
-        worker.execute(&request).unwrap();
-        let deadline = Instant::now() + Duration::from_secs(5);
-        while Instant::now() < deadline {
-            if jobs.lock().unwrap().get("op-eof").unwrap().state == super::super::protocol::JobState::Unknown { break; }
-            thread::sleep(Duration::from_millis(20));
-        }
-        assert_eq!(jobs.lock().unwrap().get("op-eof").unwrap().state, super::super::protocol::JobState::Unknown);
-        let _ = fs::remove_dir_all(dir);
-    }
-
-    #[test]
-    fn bundled_worker_fixture_speaks_jsonl_over_real_pwsh() {
-        let pwsh = PathBuf::from("/private/tmp/kvk-b2-pwsh/pwsh");
-        if !pwsh.is_file() { return; }
-        let script = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("../../../scripts/installer/gui/kvk-gui-worker.ps1");
-        if !script.is_file() { return; }
-
-        let jobs = Arc::new(Mutex::new(JobManager::default()));
-        let worker = WorkerClient::spawn(WorkerConfig::for_test(pwsh, script), jobs).unwrap();
-        let state = worker.read("gameState", serde_json::json!({})).unwrap();
-        assert!(matches!(state.as_str(), Some("closed" | "running" | "unknown")));
-        worker.shutdown_idle();
-    }
-
-    #[test]
-    fn malformed_final_report_closes_input_so_worker_can_exit_for_reconciliation() {
-        let pwsh = PathBuf::from("/private/tmp/kvk-b2-pwsh/pwsh");
-        if !pwsh.is_file() { return; }
-        let dir = std::env::temp_dir().join(format!("kvk worker invalid final {}", std::process::id()));
-        fs::create_dir_all(&dir).unwrap();
-        let script = dir.join("invalid-final.ps1");
-        fs::write(
-            &script,
-            "$request=[Console]::In.ReadLine() | ConvertFrom-Json\n[Console]::Out.WriteLine(('{\"v\":1,\"requestId\":\"'+$request.requestId+'\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"invalid\",\"batchId\":null,\"items\":[],\"errors\":[]}}'))\n[Console]::Out.Flush()\nwhile($null -ne [Console]::In.ReadLine()){}\n",
-        ).unwrap();
-        let jobs = Arc::new(Mutex::new(JobManager::default()));
-        let request = ExecuteRequest {
-            operation_id: "op-invalid".into(), plan_id: "plan-invalid".into(),
-            confirmation: super::super::protocol::Confirmation::Install, allow_conflicts: false,
-        };
-        jobs.lock().unwrap().reserve(request.clone()).unwrap();
-        let worker = WorkerClient::spawn(WorkerConfig::for_test(pwsh, &script), jobs.clone()).unwrap();
-        worker.execute(&request).unwrap();
-
-        let deadline = Instant::now() + Duration::from_secs(5);
-        while Instant::now() < deadline {
-            if jobs.lock().unwrap().get("op-invalid").unwrap().state == super::super::protocol::JobState::Unknown
-                && worker.has_exited().unwrap() { break; }
-            thread::sleep(Duration::from_millis(20));
-        }
-        assert_eq!(jobs.lock().unwrap().get("op-invalid").unwrap().state, super::super::protocol::JobState::Unknown);
-        assert!(worker.has_exited().unwrap(), "worker remained alive waiting for stdin after malformed final report");
-        let _ = fs::remove_dir_all(dir);
-    }
-
-    #[test]
-    fn pinning_falls_back_when_a_validated_interpreter_cannot_be_canonicalized() {
-        // Stands in for an MSIX execution alias: a path that spawns but cannot be
-        // canonicalized, which on Windows surfaces as os error 1920.
-        let missing = std::env::temp_dir()
-            .join(format!("kvk-absent-{}", std::process::id()))
-            .join("pwsh.exe");
-        assert!(fs::canonicalize(&missing).is_err(), "fixture must not be canonicalizable");
-
-        let pinned = pin_interpreter(&missing).expect("an unresolvable candidate must still pin");
-        assert!(pinned.is_absolute(), "pinned interpreter path must be absolute");
-        assert!(pinned.ends_with("pwsh.exe"), "pinned path must still name the interpreter");
-    }
-
-    #[test]
-    fn pinning_prefers_the_canonical_path_when_one_is_available() {
-        let real = std::env::current_exe().expect("test binary has a path");
-        let pinned = pin_interpreter(&real).expect("an existing file must pin");
-        // Compared against the stripped canonical path, not the raw one: on Windows
-        // canonicalize returns a `\\?\` path and pinning removes that prefix, so the raw
-        // form would make this assertion fail on the only platform that ships.
-        assert_eq!(pinned, strip_extended_length_prefix(fs::canonicalize(&real).unwrap()));
-    }
-
-    #[test]
-    fn a_verbatim_drive_path_loses_the_prefix_powershell_refuses_to_authorize() {
-        let stripped = strip_extended_length_prefix(PathBuf::from(
-            r"\\?\C:\kvka1\scripts\gui\kvk-gui-worker.ps1",
-        ));
-        assert_eq!(stripped, PathBuf::from(r"C:\kvka1\scripts\gui\kvk-gui-worker.ps1"));
-        assert!(
-            !stripped.to_str().unwrap().starts_with(r"\\?\"),
-            "a path handed to pwsh -File must never carry the extended-length prefix",
-        );
-    }
-
-    #[test]
-    fn a_verbatim_unc_path_becomes_an_ordinary_unc_path() {
-        let stripped = strip_extended_length_prefix(PathBuf::from(r"\\?\UNC\host\share\worker.ps1"));
-        assert_eq!(stripped, PathBuf::from(r"\\host\share\worker.ps1"));
-    }
-
-    #[test]
-    fn paths_that_have_no_ordinary_spelling_are_left_alone() {
-        for original in [
-            r"C:\kvka1\scripts\gui\kvk-gui-worker.ps1",
-            r"\\?\Volume{3a7b0c11-0000-0000-0000-100000000000}\worker.ps1",
-            r"\\?\",
-            "/private/tmp/kvk/worker.ps1",
-        ] {
-            let path = PathBuf::from(original);
-            assert_eq!(
-                strip_extended_length_prefix(path.clone()),
-                path,
-                "{original} must be returned unchanged",
-            );
-        }
-    }
+    use std::time::Duration;
 
     fn log_dir(name: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!("kvk-worker-log-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         dir
-    }
-
-    /// A browser download extracted with Explorer: every file carries the mark.
-    #[cfg(target_os = "windows")]
-    fn mark(path: &Path) {
-        let mut stream = path.as_os_str().to_owned();
-        stream.push(":Zone.Identifier");
-        fs::write(stream, "[ZoneTransfer]\r\nZoneId=3\r\n").expect("mark written");
-    }
-    #[cfg(target_os = "windows")]
-    fn marked(path: &Path) -> bool {
-        let mut stream = path.as_os_str().to_owned();
-        stream.push(":Zone.Identifier");
-        fs::metadata(stream).is_ok()
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn unblock_clears_the_download_mark_from_every_file_in_its_own_scripts_folder_only() {
-        let root = log_dir("unblock");
-        let scripts = root.join("scripts");
-        fs::create_dir_all(scripts.join("gui")).unwrap();
-        let worker = scripts.join("gui").join("kvk-gui-worker.ps1");
-        let engine = scripts.join("kvk-engine.ps1");
-        let outside = root.join("elsewhere.ps1");
-        for (path, text) in [(&worker, "worker"), (&engine, "engine"), (&outside, "outside")] {
-            fs::write(path, text).unwrap();
-            mark(path);
-        }
-        assert_eq!(unblock_own_scripts(&scripts), 2);
-        assert!(!marked(&worker) && !marked(&engine), "the app's own scripts must be unblocked");
-        assert!(marked(&outside), "nothing outside the scripts folder may be touched");
-        assert_eq!(fs::read_to_string(&worker).unwrap(), "worker", "the file itself is unchanged");
-        let _ = fs::remove_dir_all(&root);
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn unblock_leaves_unmarked_files_alone() {
-        let scripts = log_dir("unmarked").join("scripts");
-        fs::create_dir_all(&scripts).unwrap();
-        fs::write(scripts.join("kvk-engine.ps1"), "engine").unwrap();
-        assert_eq!(unblock_own_scripts(&scripts), 0);
-        assert_eq!(fs::read_to_string(scripts.join("kvk-engine.ps1")).unwrap(), "engine");
-        let _ = fs::remove_dir_all(scripts.parent().unwrap());
-    }
-
-    #[cfg(target_os = "windows")]
-    #[test]
-    fn unblock_reaches_every_file_of_the_bundled_powershell_and_nothing_beside_it() {
-        // The official ZIP nests five folders deep; the scripts' walk stops at four.
-        let root = log_dir("unblock-pwsh");
-        let pwsh = root.join("pwsh");
-        let deep = pwsh.join("a").join("b").join("c").join("d").join("e");
-        fs::create_dir_all(&deep).unwrap();
-        let exe = pwsh.join("pwsh.exe");
-        let nested = deep.join("Security.types.ps1xml");
-        let beside = root.join("Aimloom.exe");
-        for path in [&exe, &nested, &beside] {
-            fs::write(path, "x").unwrap();
-            mark(path);
-        }
-        assert_eq!(unblock_bundled_pwsh(&pwsh), 2);
-        assert!(!marked(&exe) && !marked(&nested), "every bundled file must be unblocked");
-        assert!(marked(&beside), "nothing outside the pwsh folder may be touched");
-        let _ = fs::remove_dir_all(&root);
-    }
-
-    #[test]
-    fn the_bundled_powershell_is_tried_first_then_program_files_then_path() {
-        let bundled = PathBuf::from("app").join("pwsh");
-        let program_files = PathBuf::from("pf");
-        let path = std::env::join_paths([PathBuf::from("p1"), PathBuf::from("p2")]).unwrap();
-        let candidates = pwsh_candidates(Some(&bundled), &program_files, Some(&path));
-        assert_eq!(candidates, vec![
-            bundled.join("pwsh.exe"),
-            program_files.join("PowerShell").join("7").join("pwsh.exe"),
-            PathBuf::from("p1").join("pwsh.exe"),
-            PathBuf::from("p2").join("pwsh.exe"),
-        ]);
-        // Without a bundled copy (a development build) the installed ones are all that is left.
-        assert_eq!(pwsh_candidates(None, &program_files, None), vec![program_files.join("PowerShell").join("7").join("pwsh.exe")]);
-    }
-
-    #[test]
-    fn unblock_of_a_missing_folder_is_a_quiet_no_op() {
-        assert_eq!(unblock_own_scripts(&log_dir("missing").join("scripts")), 0);
     }
 
     #[test]
@@ -912,7 +477,7 @@ mod tests {
 
     /// Naming a log file is not help unless the message also says where to send it. Both ways
     /// out still work with the worker dead: a report is built and sent by the native layer, not
-    /// by PowerShell.
+    /// by the worker.
     #[test]
     fn a_worker_that_exits_early_names_both_ways_to_reach_us_in_both_languages() {
         for text in [WORKER_EXITED, WORKER_EXITED_EN] {
@@ -1046,18 +611,7 @@ mod tests {
     }
 
     #[test]
-    fn missing_powershell_message_is_chinese_and_says_how_to_install_it() {
-        assert!(PWSH_MISSING.starts_with("没有找到 PowerShell 7。"));
-        assert!(PWSH_MISSING.contains("winget install --id Microsoft.PowerShell"));
-        assert!(PWSH_MISSING.contains("https://aka.ms/powershell"));
-    }
-
-    #[test]
-    fn missing_powershell_message_in_english_says_how_to_install_it() {
-        assert!(PWSH_MISSING_EN.starts_with("PowerShell 7 was not found."));
-        assert!(PWSH_MISSING_EN.contains("winget install --id Microsoft.PowerShell"));
-        assert!(PWSH_MISSING_EN.contains("https://aka.ms/powershell"));
-        assert!(!super::super::protocol::has_cjk(PWSH_MISSING_EN));
+    fn the_english_exit_message_is_english_and_names_the_log() {
         assert!(!super::super::protocol::has_cjk(WORKER_EXITED_EN));
         assert!(WORKER_EXITED_EN.contains("worker.log"));
     }

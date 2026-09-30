@@ -106,9 +106,6 @@ pub struct Account {
 pub struct Facts {
     pub windows: String,
     pub display_language: String,
-    pub powershell: Option<String>,
-    /// The engine the App is using, so a report says which one wrote (or failed to write).
-    pub engine: super::engine_choice::EngineKind,
     pub version: AppVersion,
     pub log_tail: Option<String>,
     pub user: String,
@@ -141,8 +138,11 @@ struct SystemOut<'a> {
     display_language: &'a str,
     lang_choice: &'a str,
     lang: &'a str,
+    /// Always null from v0.1.6: the App no longer runs PowerShell. The site requires the key, and
+    /// a 0.1.5 report still carries a version here.
     powershell: Option<&'a str>,
-    engine: super::engine_choice::EngineKind,
+    /// The engine that wrote (or failed to write): always the Rust engine from v0.1.6.
+    engine: &'static str,
 }
 
 #[derive(Serialize)]
@@ -313,8 +313,8 @@ pub fn prepare(input: &ReportInput, env: &Facts) -> Result<Prepared, Issue> {
         display_language: &env.display_language,
         lang_choice: &input.lang_choice,
         lang: &input.lang,
-        powershell: env.powershell.as_deref(),
-        engine: env.engine,
+        powershell: None,
+        engine: "rust",
     };
     let game = GameOut { found: input.game_found };
 
@@ -561,8 +561,6 @@ mod tests {
         Facts {
             windows: "10.0.22631".into(),
             display_language: "zh-CN".into(),
-            powershell: Some("7.6.6".into()),
-            engine: super::super::engine_choice::EngineKind::Powershell,
             version: app_version(),
             log_tail: Some("=== worker session 2026-09-21 12:00:00 UTC ===\nC:\\Users\\Player1\\AppData\\Local\\Aimloom\\logs\n".into()),
             user: "Player1".into(),
@@ -610,6 +608,8 @@ mod tests {
         actual.sort();
 
         assert_eq!(actual, expected);
+        assert_eq!(produced["system"]["powershell"], serde_json::Value::Null);
+        assert_eq!(produced["system"]["engine"], serde_json::json!("rust"));
     }
 
     #[test]

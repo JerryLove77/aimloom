@@ -68,8 +68,6 @@
 .ws-settings-account-name { font-size:13px; font-weight:600; margin-right:6px }
 .ws-settings-account-tag { display:inline-flex; align-items:center; padding:2px 7px; border-radius:var(--ws-radius-pill); background:var(--ws-sidebar); color:var(--ki-secondary); font-size:11px }
 .ws-settings-error { color:var(--ki-error) }
-.ws-settings-note { margin:4px 0 0; padding:8px 10px; border-radius:var(--ws-radius-row); background:var(--ws-warning-bg); color:var(--ki-warning); font-size:12px; line-height:18px }
-.ws-settings-engine { margin:0; padding:0; border:0 }
 .ws-settings-email { user-select:text; font-size:12px; color:var(--ki-secondary) }
 .ws-settings-switch { display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer }
 .ws-settings-update { display:flex; align-items:center; gap:8px; flex-wrap:wrap }

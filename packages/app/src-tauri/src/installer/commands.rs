@@ -4,7 +4,6 @@ use serde::de::DeserializeOwned;
 use serde_json::{json, Value};
 use tauri::{AppHandle, Emitter, Manager, State};
 
-use super::engine_choice::{self, EngineKind};
 use super::jobs::JobManager;
 use super::protocol::{
     validate_read, BackupIndex, Catalog, Confirmation, Discovery, ErrorCode, ExecuteRequest,
@@ -17,11 +16,7 @@ use super::profiles::{validate_profile_request, validate_profile_response};
 pub struct InstallerRuntime {
     jobs: Arc<Mutex<JobManager>>,
     worker: Mutex<Option<Arc<WorkerClient>>>,
-    /// The engine the next worker is started with, and how. Replaced only by `switch_engine`.
-    config: Mutex<Result<WorkerConfig, Issue>>,
-    engine: Mutex<EngineKind>,
-    /// `%LOCALAPPDATA%`, where the engine choice is kept. `None` in tests and off Windows.
-    local_app_data: Option<std::path::PathBuf>,
+    config: Result<WorkerConfig, Issue>,
     // The one payload `installer_report_preview` last built. A single slot, not a map keyed by
     // some id: the Settings popover composes one report at a time, so a later preview replacing
     // an earlier one — and so invalidating its hash for `installer_report_send` — is exactly the
@@ -31,31 +26,14 @@ pub struct InstallerRuntime {
 
 impl Default for InstallerRuntime {
     fn default() -> Self {
-        let local_app_data = std::env::var_os("LOCALAPPDATA").map(std::path::PathBuf::from);
-        let engine = local_app_data.as_deref().map(engine_choice::read_choice).unwrap_or_default();
         Self {
             jobs: Arc::new(Mutex::new(JobManager::default())),
             worker: Mutex::new(None),
-            config: Mutex::new(WorkerConfig::production(engine, local_app_data.clone())),
-            engine: Mutex::new(engine),
-            local_app_data,
+            config: WorkerConfig::production(std::env::var_os("LOCALAPPDATA").map(std::path::PathBuf::from)),
             report: Mutex::new(None),
         }
     }
 }
-
-/// What Settings shows: the engine in use, and why it cannot be switched right now, if it cannot.
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct EngineStatus {
-    pub engine: EngineKind,
-    /// `busy`: an operation is running or unresolved. `unfinished`: a backup batch on disk still
-    /// needs recovery. `None`: switching is allowed.
-    pub blocked: Option<&'static str>,
-}
-
-/// How long a switch waits for the old worker to exit after its input is closed.
-const SWITCH_EXIT_WAIT: std::time::Duration = std::time::Duration::from_secs(10);
 
 impl InstallerRuntime {
     #[cfg(test)]
@@ -63,9 +41,7 @@ impl InstallerRuntime {
         Self {
             jobs: Arc::new(Mutex::new(JobManager::default())),
             worker: Mutex::new(None),
-            engine: Mutex::new(config.engine()),
-            config: Mutex::new(Ok(config)),
-            local_app_data: None,
+            config: Ok(config),
             report: Mutex::new(None),
         }
     }
@@ -81,63 +57,10 @@ impl InstallerRuntime {
             }
             slot.take();
         }
-        let config = self.config.lock().unwrap().clone()?;
+        let config = self.config.clone()?;
         let worker = WorkerClient::spawn(config, self.jobs.clone())?;
         *slot = Some(worker.clone());
         Ok(worker)
-    }
-
-    pub fn engine(&self) -> EngineKind { *self.engine.lock().unwrap() }
-
-    pub fn engine_status(&self) -> EngineStatus {
-        let blocked = if self.jobs.lock().unwrap().has_unresolved() { Some("busy") }
-            else if self.local_app_data.as_deref().is_some_and(engine_choice::unfinished_batch_on_disk) { Some("unfinished") }
-            else { None };
-        EngineStatus { engine: self.engine(), blocked }
-    }
-
-    /// Settings' engine switch (ROADMAP ENGINE-RUST step 3). Refused while an operation is
-    /// running or unresolved, or while a batch on disk needs recovery. Otherwise the choice is
-    /// saved, the old worker is stopped and waited for, every recorded plan is forgotten (a plan
-    /// belongs to the worker that made it), and the new engine is started and asked for a
-    /// discovery. If that fails the error says so and the choice stands: the App never falls
-    /// back by itself, and the player can switch back from Settings.
-    pub fn switch_engine(&self, engine: EngineKind) -> Result<EngineStatus, Issue> {
-        let status = self.engine_status();
-        if engine == status.engine { return Ok(status); }
-        match status.blocked {
-            Some("busy") => return Err(Issue::new(ErrorCode::Busy,
-                "有一次操作还没结束，处理完才能切换引擎。", "An operation has not finished. Finish it before switching engines.")),
-            Some(_) => return Err(Issue::new(ErrorCode::RecoveryRequired,
-                "有一次操作需要恢复，请先到「一键拖入」的备份恢复里处理，再切换引擎。", "An operation needs recovery. Recover it under Quick import's backups first, then switch engines.")),
-            None => {}
-        }
-        let Some(local) = self.local_app_data.as_deref() else {
-            return Err(Issue::new(ErrorCode::UnsupportedPlatform, "只能在 Windows 上切换引擎。", "Engines can be switched only on Windows."));
-        };
-        {
-            let mut slot = self.worker.lock().unwrap();
-            if let Some(old) = slot.take() {
-                old.shutdown_idle();
-                let deadline = std::time::Instant::now() + SWITCH_EXIT_WAIT;
-                while !old.has_exited().unwrap_or(false) {
-                    if std::time::Instant::now() >= deadline {
-                        *slot = Some(old);
-                        return Err(Issue::new(ErrorCode::Busy, "原来的引擎还没有退出，请稍后再试。", "The current engine has not stopped yet. Try again in a moment."));
-                    }
-                    std::thread::sleep(std::time::Duration::from_millis(50));
-                }
-            }
-            engine_choice::write_choice(local, engine).map_err(|e| Issue::new(ErrorCode::EngineError,
-                format!("没能保存引擎选择：{e}"), format!("Could not save the engine choice: {e}")))?;
-            *self.config.lock().unwrap() = WorkerConfig::production(engine, Some(local.to_path_buf()));
-            *self.engine.lock().unwrap() = engine;
-            self.jobs.lock().unwrap().forget_plans();
-        }
-        self.read_validated("discover", json!({})).map_err(|issue| Issue::new(ErrorCode::WorkerUnavailable,
-            format!("{} 引擎没有启动：{}", engine_name(engine), issue.message),
-            format!("The {} engine did not start: {}", engine_name(engine), issue.message_en)))?;
-        Ok(self.engine_status())
     }
 
     fn discard_worker(&self) {
@@ -218,22 +141,6 @@ pub(super) async fn blocking<T: Send + 'static>(what: &str, f: impl FnOnce() -> 
 
 fn round_trip<T: DeserializeOwned + serde::Serialize>(value: Value) -> Result<Value, Issue> {
     serde_json::to_value(decode::<T>(value)?).map_err(|e| Issue::worker(e.to_string()))
-}
-
-fn engine_name(engine: EngineKind) -> &'static str {
-    match engine { EngineKind::Powershell => "PowerShell 7", EngineKind::Rust => "Rust" }
-}
-
-#[tauri::command]
-pub async fn installer_engine(state: State<'_, Arc<InstallerRuntime>>) -> Result<EngineStatus, Issue> {
-    let runtime = state.inner().clone();
-    blocking("engine", move || Ok(runtime.engine_status())).await
-}
-
-#[tauri::command]
-pub async fn installer_engine_set(state: State<'_, Arc<InstallerRuntime>>, engine: EngineKind) -> Result<EngineStatus, Issue> {
-    let runtime = state.inner().clone();
-    blocking("engine", move || runtime.switch_engine(engine)).await
 }
 
 #[tauri::command]
@@ -428,8 +335,6 @@ pub fn run() {
             super::account::installer_account_resolve,
             super::update::installer_update_check,
             super::version::installer_app_info,
-            installer_engine,
-            installer_engine_set,
             super::shell::installer_open_logs,
             super::shell::installer_open_download,
             super::shell::installer_open_explore,
@@ -465,7 +370,7 @@ pub fn run() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use super::super::protocol::{has_cjk, Execution, Outcome};
+    use super::super::protocol::{Execution, Outcome};
 
     #[test]
     fn production_runtime_rejects_worker_operations_on_non_windows() {
@@ -484,73 +389,8 @@ mod tests {
 
 
 
-    fn engine_runtime(name: &str) -> (InstallerRuntime, std::path::PathBuf) {
-        let local = std::env::temp_dir().join(format!("kvk-engine-switch-{name}-{}", std::process::id()));
-        let _ = std::fs::remove_dir_all(&local);
-        std::fs::create_dir_all(&local).unwrap();
-        let mut runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1"));
-        runtime.local_app_data = Some(local.clone());
-        (runtime, local)
-    }
-
-    #[test]
-    fn switching_to_the_engine_in_use_changes_nothing() {
-        let (runtime, local) = engine_runtime("same");
-        assert_eq!(runtime.switch_engine(EngineKind::Powershell).unwrap(), EngineStatus { engine: EngineKind::Powershell, blocked: None });
-        assert!(!local.join("Aimloom").exists(), "nothing is written when nothing changes");
-        let _ = std::fs::remove_dir_all(&local);
-    }
-
-    #[test]
-    fn the_switch_is_refused_while_an_operation_is_unresolved() {
-        let (runtime, local) = engine_runtime("busy");
-        runtime.jobs.lock().unwrap().record_plan("plan-1".into(), "C:\\Game".into(), PreviewKind::Install);
-        runtime.jobs.lock().unwrap().reserve(ExecuteRequest {
-            operation_id: "op-1".into(), plan_id: "plan-1".into(), confirmation: Confirmation::Install, allow_conflicts: false,
-        }).unwrap();
-        assert_eq!(runtime.engine_status().blocked, Some("busy"));
-        let issue = runtime.switch_engine(EngineKind::Rust).unwrap_err();
-        assert_eq!(issue.code, ErrorCode::Busy);
-        assert!(!has_cjk(&issue.message_en));
-        assert_eq!(runtime.engine(), EngineKind::Powershell);
-        assert!(!local.join("Aimloom").exists());
-        let _ = std::fs::remove_dir_all(&local);
-    }
-
-    #[test]
-    fn the_switch_is_refused_while_a_batch_on_disk_needs_recovery() {
-        let (runtime, local) = engine_runtime("unfinished");
-        let batch = local.join("Aimloom").join("backups").join("0123").join("abcd");
-        std::fs::create_dir_all(&batch).unwrap();
-        std::fs::write(batch.join("manifest.json"), r#"{"Status":"recovery-required"}"#).unwrap();
-        assert_eq!(runtime.engine_status().blocked, Some("unfinished"));
-        assert_eq!(runtime.switch_engine(EngineKind::Rust).unwrap_err().code, ErrorCode::RecoveryRequired);
-        assert_eq!(engine_choice::read_choice(&local), EngineKind::Powershell);
-        let _ = std::fs::remove_dir_all(&local);
-    }
-
-    #[test]
-    fn a_new_engine_that_does_not_start_is_reported_and_the_choice_stands() {
-        // Off Windows no production worker starts, and on Windows this test binary does not
-        // answer as one: either way the probe fails, which is the case under test.
-        let (runtime, local) = engine_runtime("probe");
-        runtime.jobs.lock().unwrap().record_plan("plan-old".into(), "C:\\Game".into(), PreviewKind::Install);
-        let issue = runtime.switch_engine(EngineKind::Rust).unwrap_err();
-        assert_eq!(issue.code, ErrorCode::WorkerUnavailable);
-        assert!(issue.message.starts_with("Rust 引擎没有启动："), "{}", issue.message);
-        assert!(issue.message_en.starts_with("The Rust engine did not start: "), "{}", issue.message_en);
-        // Never a silent fallback: the choice is saved and in use, and Settings offers the way back.
-        assert_eq!(runtime.engine(), EngineKind::Rust);
-        assert_eq!(engine_choice::read_choice(&local), EngineKind::Rust);
-        // A plan belongs to the worker that made it.
-        assert!(runtime.jobs.lock().unwrap().game_root_for_plan("plan-old").is_none());
-        let _ = std::fs::remove_dir_all(&local);
-    }
-
     fn cached_runtime() -> (InstallerRuntime, ExecuteRequest) {
-        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test(
-            "/definitely/missing/pwsh", "/definitely/missing/worker.ps1",
-        ));
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
         let request = ExecuteRequest {
             operation_id: "op-cached".into(),
             plan_id: "plan-old".into(),
@@ -596,7 +436,7 @@ mod tests {
 
     #[test]
     fn a_file_add_preview_is_recorded_only_when_it_is_exactly_one_new_file() {
-        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1"));
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
         // An import must never overwrite: a worker that answers with anything but one create
         // row is refused here, before the plan could be executed.
         for rows in [json!([row("replace")]), json!([row("create"), row("create")]), json!([])] {
@@ -612,7 +452,7 @@ mod tests {
         // Applying a Profile is executed like any other plan: the gameRoot comes from this
         // record, never from the UI's execute request. If planProfileApply ever drops out of the
         // plan-op arm, the preview would still render but could not be executed.
-        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1"));
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
         let mut preview = add_preview(json!([{"key":"primary/PrimaryUserSettings.json","category":"primary",
             "source":"C:\\Local\\profile-apply-previews\\x\\PrimaryUserSettings.json",
             "target":"D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\primary\\PrimaryUserSettings.json",
@@ -686,11 +526,6 @@ mod tests {
 
         let info = super::super::version::AppInfo { label: "0.1.3".into(), channel: "stable".into() };
         assert_eq!(keys(&serde_json::to_value(&info).unwrap()), shape("installer_app_info"));
-
-        let status = EngineStatus { engine: EngineKind::Powershell, blocked: None };
-        assert_eq!(serde_json::to_value(&status).unwrap(), fixture["installer_engine"]);
-        let switched = EngineStatus { engine: EngineKind::Rust, blocked: None };
-        assert_eq!(serde_json::to_value(&switched).unwrap(), fixture["installer_engine_set"]);
     }
 
 }

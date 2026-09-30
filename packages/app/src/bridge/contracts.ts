@@ -123,13 +123,6 @@ export interface ReportPreview { text: string; sha256: string; bytes: number }
 export type Channel = 'stable' | 'beta' | 'test'
 /** What `installer_app_info` answers -- never fails; on any doubt, the compiled version and `stable`. */
 export interface AppInfo { label: string; channel: Channel }
-/** Which engine reads and writes the game's files. Mirrors Rust's `EngineKind`. */
-export type EngineKind = 'powershell' | 'rust'
-/**
- * Mirrors Rust's `EngineStatus`. `blocked` says why the engine cannot be switched right now:
- * `busy` (an operation is running or unresolved) or `unfinished` (a backup batch needs recovery).
- */
-export interface EngineStatus { engine: EngineKind; blocked: 'busy' | 'unfinished' | null }
 /**
  * `latest` is null whenever no answer could be trusted -- offline, a non-200, an unparsable body.
  * An update check never becomes an error the player has to dismiss. `channel` says which line
@@ -186,10 +179,6 @@ export interface InstallerBridge {
   launchGame(): Promise<void>
   /** The App's own label and channel, for the Settings version line. Never fails. */
   appInfo(): Promise<AppInfo>
-  /** The engine in use and whether it can be switched. Never touches the engine. */
-  engine(): Promise<EngineStatus>
-  /** Switches the engine (Settings). Refused while blocked; fails if the new engine does not start, and the choice then stands. */
-  setEngine(engine: EngineKind): Promise<EngineStatus>
 }
 
 export class InstallerFailure extends Error {

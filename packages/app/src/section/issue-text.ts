@@ -17,8 +17,10 @@ const CODED: Record<string, Msg> = {
  * error carries one. A coded refusal gets its fixed wording. Anything else leads with the
  * caller's fallback and carries the raw text as detail, so bare English never stands alone.
  *
- * WORKER_UNAVAILABLE is deliberately not in the table: Rust words that one itself (a missing
- * PowerShell 7, with the install command), and that wording must reach the page.
+ * WORKER_UNAVAILABLE is deliberately not in the table: it covers different failures (the worker
+ * could not start, stopped mid-way, or did not answer in time). The one a player is most likely
+ * to meet, a worker that stopped, is worded in Chinese by Rust itself and reaches the page as is;
+ * the others lead with the caller's fallback and keep their diagnostic detail.
  */
 export function errorMsg(error: unknown, fallback: Msg): Msg {
   // A core validation/refusal already carries both languages itself; nothing else here (the

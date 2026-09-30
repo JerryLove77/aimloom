@@ -3,7 +3,5 @@
   "installer_report_send": { "number": "AL-260921-TST1" },
   "installer_account_resolve": { "steamId": "76561198000000000", "name": "Player" },
   "installer_update_check": { "latest": "0.1.2", "newer": false, "channel": "stable" },
-  "installer_app_info": { "label": "0.1.3", "channel": "stable" },
-  "installer_engine": { "engine": "powershell", "blocked": null },
-  "installer_engine_set": { "engine": "rust", "blocked": null }
+  "installer_app_info": { "label": "0.1.3", "channel": "stable" }
 }
