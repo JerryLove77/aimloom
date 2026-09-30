@@ -76,8 +76,8 @@ const unavailableApplyBridge: ApplyBridge = {
   launchGame: async () => { throw new Error('no game bridge') },
 }
 
-export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage() }: {
-  bridge: ProfileBridge; assets: ProfileAssetBridge; isDemo?: boolean; onOpenInstaller?: (() => void) | undefined; isActive?: boolean; onSelectSection?: ((section: WorkspaceSection) => void) | undefined; onDirtyChange?: ((dirty: boolean) => void) | undefined
+export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage() }: {
+  bridge: ProfileBridge; assets: ProfileAssetBridge; isDemo?: boolean; isActive?: boolean; onSelectSection?: ((section: WorkspaceSection) => void) | undefined; onDirtyChange?: ((dirty: boolean) => void) | undefined
   /**
    * Reads what is installed in the game, so a sheet shows the same previewed choices the
    * section shows. Profile records a reference and writes nothing; the switch happens when the
@@ -253,7 +253,7 @@ export function ProfilesApp({ bridge, assets, isDemo = false, onOpenInstaller, i
       onConfirmAndLaunch={() => void applyConfirmAndLaunch()}
       onCancel={() => applyController.close()}
       onReconcile={() => void applyReconcile()} />
-    </>} active="profile" onSelect={onSelectSection ?? (() => setSheet(null))} isDemo={isDemo} locked={locked} onOpenInstaller={onOpenInstaller}
+    </>} active="profile" onSelect={onSelectSection ?? (() => setSheet(null))} isDemo={isDemo}
       eyebrow={t(state.draft ? 'profile.eyebrow.edit' : 'profile.eyebrow.library')}
       title={t(state.draft ? 'profile.title.edit' : 'profile.title.library')}
       scope={t(state.draft ? 'profile.scope.edit' : 'profile.scope.library')}

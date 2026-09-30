@@ -36,11 +36,13 @@ export function createNativeFileDropSource(): FileDropSource {
   return { subscribe: source.subscribe }
 }
 
-type Accepts = 'theme' | 'sound' | 'crosshair'
+type FileKind = 'theme' | 'sound' | 'crosshair'
+/** A section takes one kind of file; Explore takes a config pack folder, which opens Quick import. */
+type Accepts = FileKind | 'pack'
 // The enemy skin is chosen from the game's own fixed catalog, never from a dropped file.
-const ACCEPTS: Record<WorkspaceSection, Accepts | null> = { profile: null, scheme: 'theme', enemy: null, audio: 'sound', crosshair: 'crosshair' }
-const BY_EXTENSION: Record<string, Accepts> = { '.json': 'theme', '.wav': 'sound', '.ogg': 'sound', '.png': 'crosshair' }
-const WHERE: Record<Accepts, Msg> = {
+const ACCEPTS: Record<WorkspaceSection, Accepts | null> = { profile: null, scheme: 'theme', enemy: null, audio: 'sound', crosshair: 'crosshair', explore: 'pack' }
+const BY_EXTENSION: Record<string, FileKind> = { '.json': 'theme', '.wav': 'sound', '.ogg': 'sound', '.png': 'crosshair' }
+const WHERE: Record<FileKind, Msg> = {
   theme: { key: 'import.drop.whereTheme' },
   sound: { key: 'import.drop.whereSound' },
   crosshair: { key: 'import.drop.whereCrosshair' },
@@ -49,15 +51,24 @@ const READY: Record<Accepts, Msg> = {
   theme: { key: 'import.drop.readyTheme' },
   sound: { key: 'import.drop.readySound' },
   crosshair: { key: 'import.drop.readyCrosshair' },
+  pack: { key: 'import.drop.readyPack' },
 }
 
-/** Decides what the active section does with a drop. Only its own kind of file is accepted. */
+/**
+ * Decides what the active section does with a drop. Only its own kind of file is accepted.
+ * Explore cannot tell a folder from a file by its path, so it takes anything that is not a
+ * known file kind or a ZIP; Quick import's catalog check is what refuses a path that is not a
+ * config pack folder. Quick import reads folders only, so a ZIP is refused everywhere.
+ */
 export function routeDrop(section: WorkspaceSection, paths: string[]): { ok: true; path: string } | { ok: false; message: Msg } {
   if (paths.length === 0) return { ok: false, message: { key: 'import.drop.empty' } }
   if (paths.length > 1) return { ok: false, message: { key: 'import.drop.tooMany' } }
   const path = paths[0]!
   const dot = path.lastIndexOf('.')
-  const kind = dot >= 0 ? BY_EXTENSION[path.slice(dot).toLowerCase()] : undefined
+  const extension = dot >= 0 ? path.slice(dot).toLowerCase() : ''
+  if (extension === '.zip') return { ok: false, message: { key: 'import.drop.unzipFirst' } }
+  const kind = BY_EXTENSION[extension]
+  if (section === 'explore') return kind ? { ok: false, message: WHERE[kind] } : { ok: true, path }
   if (!kind) return { ok: false, message: { key: 'import.drop.unsupported' } }
   return ACCEPTS[section] === kind ? { ok: true, path } : { ok: false, message: WHERE[kind] }
 }

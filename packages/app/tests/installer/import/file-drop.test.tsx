@@ -23,6 +23,21 @@ describe('routeDrop', () => {
     expect(routeDrop('enemy', ['C:/d/Blue.json'])).toEqual({ ok: false, message: { key: 'import.drop.whereTheme' } })
   })
 
+  it('Explore takes a config pack folder and sends a single file to its section', () => {
+    expect(routeDrop('explore', ['D:/Downloads/KVK Settings 2025'])).toEqual({ ok: true, path: 'D:/Downloads/KVK Settings 2025' })
+    // A folder's name may hold a dot; the catalog check, not the path, decides whether it is a pack.
+    expect(routeDrop('explore', ['D:/Downloads/pack v1.2'])).toEqual({ ok: true, path: 'D:/Downloads/pack v1.2' })
+    expect(routeDrop('explore', ['D:/d/Blue.json'])).toEqual({ ok: false, message: { key: 'import.drop.whereTheme' } })
+    expect(routeDrop('explore', ['D:/d/hit.ogg'])).toEqual({ ok: false, message: { key: 'import.drop.whereSound' } })
+    expect(routeDrop('explore', ['D:/a', 'D:/b'])).toEqual({ ok: false, message: { key: 'import.drop.tooMany' } })
+  })
+
+  it('refuses a ZIP everywhere: Quick import reads folders only', () => {
+    for (const section of ['explore', 'scheme', 'profile'] as const) {
+      expect(routeDrop(section, ['D:/Downloads/pack.ZIP'])).toEqual({ ok: false, message: { key: 'import.drop.unzipFirst' } })
+    }
+  })
+
   it('takes one file at a time and says which types it knows', () => {
     expect(routeDrop('scheme', ['C:/a.json', 'C:/b.json'])).toEqual({ ok: false, message: { key: 'import.drop.tooMany' } })
     expect(routeDrop('scheme', ['C:/d/readme.txt'])).toEqual({ ok: false, message: { key: 'import.drop.unsupported' } })

@@ -49,14 +49,13 @@ function SourceImage({ base64, alt }: { base64: string; alt: string }) {
   return url ? <img className="cx-compare-image" src={url} alt={alt} /> : null
 }
 
-export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, onOpenInstaller, fileDrops = noFileDrops }: {
+export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
   bridge: CrosshairBridge & CrosshairExportBridge
   assets: ProfileAssetBridge
   isDemo?: boolean
   isActive?: boolean
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
-  onOpenInstaller?: (() => void) | undefined
   /** Files dragged in from outside the app. Only the active section reacts. */
   fileDrops?: FileDropSource
 }) {
@@ -139,7 +138,7 @@ export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true,
   </>
   const sheetOpen = addOpen || slot !== null || exporting
   return (
-    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo} locked={locked} onOpenInstaller={onOpenInstaller}
+    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo}
       eyebrow={t('crosshair.eyebrow')} title={t('crosshair.title')} scope={t('crosshair.scope')}>
       {state.unresolved ? <Notice tone="warning"><p>{state.error ? msg(state.error) : t('crosshair.error.unresolvedNotice')}</p>
         <p><Button variant="primary" onClick={() => void controller.reconcile()}>{t('crosshair.reconcile')}</Button></p></Notice>

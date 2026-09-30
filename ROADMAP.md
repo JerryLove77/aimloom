@@ -148,7 +148,7 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
 
 | ID | Deliverable | Status |
 |---|---|---|
-| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma first; not designed |
+| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma drawn and approved 2026-10-01; **built** on `feat/app-nav`, not yet released |
 | ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); steps 1–2 **merged** 2026-10-01 (PR #24); step 3 after APP-NAV |
 
 **APP-NAV — the shell the user described (2026-09-21):**
@@ -164,9 +164,10 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
   and a way into the website's explorer, which opens the site; browsing the catalog and
   downloading inside the App come after v0.1.6 (APP-EXPLORE, below). **Profile (组合管理) sits
   under 更改配置**, first: a Profile is also a change to the player's own game.
-- This supersedes the flat five-section navigation that CLAUDE.md and the 2026-09-15
-  repository-wide design describe. **Those say five sections today and are still correct today;**
-  update them when APP-NAV lands, not before.
+- **Decided 2026-10-01 (user):** English calls 更改配置 "Customize"; its five sections are listed
+  only while one of them is open; a config pack folder dropped on Explore opens Quick import with
+  it (Quick import reads folders only, so a ZIP is refused with "unzip it first").
+- CLAUDE.md, the interaction contract and the 2026-09-13 workspace spec describe the new shell.
 
 **ENGINE-RUST — the engine in Rust:**
 

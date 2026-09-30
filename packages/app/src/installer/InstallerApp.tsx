@@ -21,10 +21,16 @@ import '../ui/tokens.css';
 import './styles.css';
 const titles: MessageKey[] = ['installer.title.location', 'installer.title.selection', 'installer.title.review', 'installer.title.execution'];
 const descriptions: MessageKey[] = ['installer.desc.location', 'installer.desc.selection', 'installer.desc.review', 'installer.desc.execution'];
-export function InstallerApp({ bridge, isDemo = false, onBackToProfiles, onSendReport, onOpenLogs, overlays }: {
+export function InstallerApp({ bridge, isDemo = false, initialPack = null, onBack, onSendReport, onOpenLogs, overlays }: {
   bridge: InstallerBridge;
   isDemo?: boolean;
-  onBackToProfiles?: () => void;
+  /**
+   * A config pack folder dropped on Explore. It fills the pack field and is checked as soon as
+   * discovery finishes; the player still confirms each step. Read once, when Quick import opens.
+   */
+  initialPack?: string | null;
+  /** Returns to Explore, where Quick import is opened from. */
+  onBack?: () => void;
   /**
    * Help page Feedback block (spec §2.3): Quick import has no Settings button, so `Workspace`
    * hands these down directly instead of through `SettingsState`. Absent in a standalone render
@@ -44,7 +50,7 @@ export function InstallerApp({ bridge, isDemo = false, onBackToProfiles, onSendR
   const t = useT();
   const { lang } = useLang()
   const msg = useMsg();
-  const controller = useMemo(() => createInstallerController(bridge, { ...createInitialState(), isDemo }), [bridge, isDemo]);
+  const controller = useMemo(() => createInstallerController(bridge, { ...createInitialState(), isDemo, packRoot: initialPack ?? '' }), [bridge, isDemo]);
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState);
   const [conflict, setConflict] = useState(false);
   const [closeWarning, setCloseWarning] = useState(false);
@@ -55,7 +61,7 @@ export function InstallerApp({ bridge, isDemo = false, onBackToProfiles, onSendR
     lifecycle.mounts++;
     if (!lifecycle.discovered) {
       lifecycle.discovered = true;
-      void controller.discover();
+      void controller.discover().then(() => { if (initialPack) return controller.loadCatalog(); });
     }
     const removeGuard = installUnloadGuard(() => controller.getState().job);
     return () => {
@@ -107,7 +113,7 @@ export function InstallerApp({ bridge, isDemo = false, onBackToProfiles, onSendR
   const description = t(state.route === 'help' ? 'installer.desc.help' : execution ? 'installer.desc.execution' : state.route === 'restore' && state.step === 3 ? 'installer.desc.restoreReview' : state.route === 'restore' ? 'installer.desc.restore' : descriptions[state.step - 1]!);
   return <div className="kvk-installer">
     <header className="ki-topbar">
-      {onBackToProfiles ? <Button variant="ghost" disabled={locked || state.busy} onClick={onBackToProfiles}>{t('installer.backToProfile')}</Button> : null}
+      {onBack ? <Button variant="ghost" disabled={locked || state.busy} onClick={onBack}>{t('installer.backToExplore')}</Button> : null}
       <div className="ki-brand">
         <TargetMark />
         <div>

@@ -5,6 +5,10 @@ It incorporates the user's one-file-per-Profile format and five-section navigati
 Older installer-only navigation, embedded Profile settings and managed-asset proposals do
 not define new product work. Existing game-write safety and recovery requirements remain.
 
+**2026-10-01 (APP-NAV):** the five sections now sit under one top-level page, 更改配置 /
+Customize, beside 探索 / Explore, which opens Quick import and the website's explorer
+(`docs/installer-ui-interactions.md`, Navigation). What each section owns is unchanged.
+
 ## Five sections and ownership
 
 | Section | What it owns | Effect of a confirmed edit |

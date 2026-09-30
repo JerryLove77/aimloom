@@ -15,7 +15,7 @@ Scope: Profile workspace and legacy React installer utility; Chinese (`zh-CN`), 
 | Conflict | `components/ConflictDialog.tsx` | This interaction contract and UI design spec | Explicit separate permission, no remembered checkbox; unowned files never offer overwrite | `components.test.tsx` |
 | Feedback | `ui/Notice.tsx`, `installer/pages/ExecutionPage.tsx` | This interaction contract and UI design spec | Persistent inline notices with icon/text; final outcomes from execution result; no critical toast-only state | `views.test.tsx` |
 | Scrollbar | `styles.css` | This interaction contract and UI design spec | Global installer baseline; main scroll owner on desktop, bounded table scroll, natural narrow document flow | Browser desktop/narrow inspection |
-| Navigation | `ProfilesApp.tsx`, `InstallerApp.tsx`, `components/StepRail.tsx` | This interaction contract and UI design spec | Five product sections (Profile implemented); legacy utility retains three routes and four install steps; heading focus on transition; preserve choices; running/unknown locks navigation | Root flow tests and browser |
+| Navigation | `ProfilesApp.tsx`, `InstallerApp.tsx`, `components/StepRail.tsx` | This interaction contract and UI design spec | Two top-level pages: 更改配置 / Customize (the five sections) and 探索 / Explore; Quick import, opened from Explore, retains three routes and four install steps; heading focus on transition; preserve choices; running/unknown locks navigation | Root flow tests and browser |
 | Window lifecycle | `window-lifecycle.ts`, native shell | This interaction contract and UI design spec | Running/unknown block departure; browser final unload guard; native blocked-close event opens app-owned dialog; reconciliation uses bridge | `window-lifecycle.test.tsx`, native tests |
 
 ## Operations and states
@@ -46,8 +46,21 @@ Supersedes "Profile workspace — 2026-09-15". All five sections are implemented
 saved combinations, and Scheme / Audio / Crosshair / Enemy each own one part of the game's
 current configuration. **2026-09-19:** a player sees those four named Theme, Sounds, Crosshair
 and Enemy (Enemy look in English), after the game's own words; this document keeps the code
-names Scheme and Audio, which are also the folder, key and wire names. The legacy installer is reachable from the utility action; its return
-action is blocked during unresolved operations.
+names Scheme and Audio, which are also the folder, key and wire names.
+
+### Navigation — APP-NAV, 2026-10-01
+
+- The sidebar has **two top-level pages**. **更改配置 / Customize** holds the five sections,
+  Profile first and set off by a rule. While one of them is active the five are listed under the
+  heading; on Explore they collapse to one 更改配置 entry that returns to the section last used
+  and carries Profile's 未保存 marker.
+- **探索 / Explore** has two cards. 打开一键拖入 opens Quick import unchanged; its return action
+  (← 返回探索) goes back to Explore and is blocked during unresolved operations. 在官网浏览 opens
+  aimloom.dev's explorer in the browser, best effort, like the explore links under each list.
+  Browsing and downloading inside the App come later (ROADMAP APP-EXPLORE).
+- A **config pack folder dropped on Explore** opens Quick import with that folder in the pack
+  field and checks it at once; the player still confirms every step, and nothing is written
+  before the install is confirmed.
 
 ### The five kinds of state
 
@@ -92,7 +105,10 @@ Rules:
 
 - **Only the active section reacts.** A file of another section's kind is refused with a toast
   that names the section that takes it; more than one file, or an unsupported type, is refused
-  the same way. Profile and the legacy installer never take a file. While a section is applying
+  the same way. Profile and Quick import never take a file. Explore takes one config pack
+  folder: a path is not a folder for certain, so Explore takes anything that is not a theme,
+  sound or crosshair file and lets Quick import's catalog check refuse what is not a pack. A
+  `.zip` is refused everywhere with 先解压, since Quick import reads folders only. While a section is applying
   or unresolved, a drop is refused rather than queued.
 - **While the file hovers**, a decorative overlay (`.ws-drop-overlay`, `aria-hidden`, no pointer
   events, no animation under reduced motion) says whether the drop will be accepted.

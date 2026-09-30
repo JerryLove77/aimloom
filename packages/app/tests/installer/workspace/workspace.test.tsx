@@ -12,20 +12,82 @@ beforeEach(() => { localStorage.clear() })
 
 const tree = () => <Workspace bridge={createDemoBridge()} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo />
 
-describe('five-section workspace', () => {
-  it('exposes all five sections, each available', async () => {
+describe('workspace: 更改配置 and 探索', () => {
+  it('lists the five sections under 更改配置, then 探索, each available', async () => {
     render(tree())
     const nav = await screen.findByRole('navigation', { name: '主导航' })
+    expect(within(nav).getByText('更改配置')).toBeVisible()
     const buttons = within(nav).getAllByRole('button')
-    expect(buttons.map(button => button.textContent)).toEqual(['Profile', 'Theme', 'Sounds', 'Crosshair', 'Enemy'])
+    expect(buttons.map(button => button.textContent)).toEqual(['Profile', 'Theme', 'Sounds', 'Crosshair', 'Enemy', '探索'])
     for (const button of buttons) expect(button).toBeEnabled()
+    // Quick import is opened from Explore now, not from the sidebar.
+    expect(screen.queryByRole('button', { name: '一键拖入' })).toBeNull()
   })
 
-  it('groups the sidebar into 组合管理 and 当前配置', async () => {
+  it('collapses 更改配置 on Explore and returns to the section last used', async () => {
     render(tree())
-    const nav = await screen.findByRole('navigation', { name: '主导航' })
-    expect(within(nav).getByText('组合管理')).toBeVisible()
-    expect(within(nav).getByText('当前配置')).toBeVisible()
+    fireEvent.click(await screen.findByRole('button', { name: 'Sounds' }))
+    expect(await screen.findByRole('heading', { level: 1, name: '音效' })).toBeVisible()
+    fireEvent.click(screen.getByRole('button', { name: '探索' }))
+    expect(await screen.findByRole('heading', { level: 1, name: '探索' })).toBeVisible()
+    const nav = screen.getByRole('navigation', { name: '主导航' })
+    expect(within(nav).getAllByRole('button').map(button => button.textContent)).toEqual(['更改配置', '探索'])
+    expect(within(nav).getByRole('button', { name: '探索' })).toHaveAttribute('aria-current', 'page')
+    fireEvent.click(within(nav).getByRole('button', { name: '更改配置' }))
+    expect(await screen.findByRole('heading', { level: 1, name: '音效' })).toBeVisible()
+  })
+
+  it('keeps the unsaved Profile marker on the collapsed 更改配置 entry', async () => {
+    render(tree())
+    fireEvent.click(await screen.findByRole('button', { name: '新建组合' }))
+    fireEvent.change(await screen.findByLabelText('Profile 名称'), { target: { value: '探索草稿' } })
+    fireEvent.click(screen.getByRole('button', { name: '探索' }))
+    fireEvent.click(await screen.findByRole('button', { name: '更改配置（未保存）' }))
+    expect(await screen.findByLabelText('Profile 名称')).toHaveValue('探索草稿')
+  })
+
+  it('opens Quick import from Explore and returns to Explore', async () => {
+    render(tree())
+    fireEvent.click(await screen.findByRole('button', { name: '探索' }))
+    fireEvent.click(await screen.findByRole('button', { name: '打开一键拖入' }))
+    fireEvent.click(await screen.findByRole('button', { name: '← 返回探索' }))
+    expect(await screen.findByRole('heading', { level: 1, name: '探索' })).toBeVisible()
+  })
+
+  it('opens the website explorer from Explore, on the default tab in the current language', async () => {
+    const bridge = createDemoBridge()
+    const openExplore = vi.spyOn(bridge, 'openExplore')
+    render(<Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo />)
+    fireEvent.click(await screen.findByRole('button', { name: '探索' }))
+    fireEvent.click(await screen.findByRole('button', { name: '在官网浏览' }))
+    expect(openExplore).toHaveBeenCalledWith('zh', 'theme')
+  })
+
+  it('a config pack folder dropped on Explore opens Quick import with that folder checked', async () => {
+    const drops = createManualFileDropSource()
+    const bridge = createDemoBridge({ durationMs: 0 })
+    const catalog = vi.spyOn(bridge, 'catalog')
+    render(<Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo fileDrops={drops} />)
+    fireEvent.click(await screen.findByRole('button', { name: '探索' }))
+    await screen.findByRole('heading', { level: 1, name: '探索' })
+    act(() => drops.emit({ type: 'enter', paths: ['D:/Downloads/KVK Settings 2025'] }))
+    expect(document.querySelector('.ws-drop-overlay')).toHaveTextContent('松开以打开一键拖入')
+    act(() => drops.emit({ type: 'drop', paths: ['D:/Downloads/KVK Settings 2025'] }))
+    expect(await screen.findByRole('button', { name: '← 返回探索' })).toBeVisible()
+    await waitFor(() => expect(catalog).toHaveBeenCalledWith('D:/Downloads/KVK Settings 2025'))
+    expect(screen.getByDisplayValue('D:/Downloads/KVK Settings 2025')).toBeVisible()
+  })
+
+  it('refuses a ZIP or a single file dropped on Explore, saying where it goes', async () => {
+    const drops = createManualFileDropSource()
+    render(<Workspace bridge={createDemoBridge()} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo fileDrops={drops} />)
+    fireEvent.click(await screen.findByRole('button', { name: '探索' }))
+    await screen.findByRole('heading', { level: 1, name: '探索' })
+    act(() => drops.emit({ type: 'drop', paths: ['D:/Downloads/pack.zip'] }))
+    expect(await screen.findByRole('status', { name: '操作结果' })).toHaveTextContent('先解压')
+    act(() => drops.emit({ type: 'drop', paths: ['D:/Downloads/Night.json'] }))
+    expect(await screen.findByRole('status', { name: '操作结果' })).toHaveTextContent('Theme 栏目')
+    expect(screen.getByRole('heading', { level: 1, name: '探索' })).toBeVisible()
   })
 
   it('renders every page inside one light workspace root with a header and the demo note', async () => {
@@ -156,10 +218,11 @@ describe('five-section workspace', () => {
     expect(await screen.findByRole('button', { name: 'Night-arena 预览' })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('ignores dropped files while the legacy installer is open', async () => {
+  it('ignores dropped files while Quick import is open', async () => {
     const drops = createManualFileDropSource()
     render(<Workspace bridge={createDemoBridge({ durationMs: 0 })} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo fileDrops={drops} />)
-    fireEvent.click(await screen.findByRole('button', { name: '一键拖入' }))
+    fireEvent.click(await screen.findByRole('button', { name: '探索' }))
+    fireEvent.click(await screen.findByRole('button', { name: '打开一键拖入' }))
     await waitFor(() => expect(screen.queryByRole('button', { name: '编辑 日常跟枪' })).toBeNull())
     act(() => drops.emit({ type: 'enter', paths: ['/demo/downloads/Night-arena.json'] }))
     act(() => drops.emit({ type: 'drop', paths: ['/demo/downloads/Night-arena.json'] }))
