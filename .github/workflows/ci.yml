@@ -1,9 +1,10 @@
 # Continuous checks for every push and pull request. Read-only: no deploy, no release, no secrets.
 #
 # What this covers, and what it cannot: the three Vitest projects, both typechecks, the site's
-# Node and workerd suites, the Python packaging tests, the Rust suite on Linux and on Windows, and
-# the sixteen PowerShell suites on a real Windows with PowerShell 7 — the ones that could only run
-# on the tester's PC before. It does not build the Setup (built once, on the tester's PC), does not
+# Node and workerd suites, the Python packaging tests, the Rust suite on Linux and on Windows, the
+# seventeen PowerShell suites on a real Windows with the PowerShell 7 the App ships — the ones that
+# could only run on the tester's PC before — and the Rust engine against PowerShell's goldens and
+# across the two engines. It does not build the Setup (built once, on the tester's PC), does not
 # run the suites that need an extracted release ZIP, and cannot observe the game.
 name: CI
 
@@ -53,7 +54,10 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: packages/app/src-tauri
+      # A parity case without its PowerShell golden fails here (tests/engine_parity.rs).
       - run: cargo test --manifest-path "$CARGO_MANIFEST" --features installer-ui
+        env:
+          KVK_PARITY_REQUIRE: '1'
 
   privacy:
     name: Privacy scan (gitleaks + identifier denylist)
@@ -98,18 +102,37 @@ jobs:
       # suites then stop matching their own "`n" edits.
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
+      # The suites run on the PowerShell every release carries (pwsh-runtime.json), which the App
+      # tries first: the parity goldens were made with it, and the runner's own 7.x may be older.
+      - uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/pwsh.zip
+          key: pwsh-${{ hashFiles('scripts/installer/test-build/pwsh-runtime.json') }}
+      - name: The bundled PowerShell, checked against its pin
+        shell: pwsh
+        run: |
+          $pin = Get-Content scripts/installer/test-build/pwsh-runtime.json -Raw | ConvertFrom-Json
+          $zip = Join-Path $env:RUNNER_TEMP 'pwsh.zip'
+          if (-not (Test-Path $zip)) { Invoke-WebRequest -Uri $pin.url -OutFile $zip }
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ((Get-Item $zip).Length -ne $pin.bytes -or $hash -ne $pin.sha256) { throw 'The PowerShell ZIP does not match pwsh-runtime.json.' }
+          $dir = Join-Path $env:RUNNER_TEMP 'pwsh'
+          Expand-Archive $zip $dir -Force
+          $dir | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
       - name: PowerShell 7 is the worker's runtime
         shell: pwsh
         run: |
           $PSVersionTable.PSVersion
-          if ($PSVersionTable.PSVersion.Major -lt 7) { throw 'PowerShell 7 is required.' }
-      - name: The sixteen PowerShell suites
+          $pin = Get-Content scripts/installer/test-build/pwsh-runtime.json -Raw | ConvertFrom-Json
+          if ($PSVersionTable.PSVersion.ToString() -ne $pin.version) { throw "Expected the bundled PowerShell $($pin.version)." }
+      - name: The seventeen PowerShell suites
         shell: pwsh
         run: |
           # The same list as the tester's PC runs. distribution, gui-distribution and
           # windows-entrypoints need an extracted release ZIP and are not here; crosshair-pack
-          # needs the gitignored asset folders.
-          $suites = 'audio','cli','crosshair-current','data-root','enemy','engine-observer','engine','gui-protocol','gui-recovery','import','package-build','profile-apply','profile-assets','profiles','scheme','target-lookup'
+          # needs the gitignored asset folders. parity/parity regenerates every engine-parity golden
+          # and fails on any difference (scripts/installer/tests/parity/README.md).
+          $suites = 'audio','cli','crosshair-current','data-root','enemy','engine-observer','engine','gui-protocol','gui-recovery','import','package-build','profile-apply','profile-assets','profiles','scheme','target-lookup','parity/parity'
           $failed = @()
           foreach ($suite in $suites) {
             Write-Host "::group::$suite"
@@ -125,3 +148,9 @@ jobs:
           workspaces: packages/app/src-tauri
       - shell: pwsh
         run: cargo test --manifest-path "$env:CARGO_MANIFEST" --features installer-ui
+        env:
+          KVK_PARITY_REQUIRE: '1'
+      # cargo test built examples/engine_worker; the two engines now share one data folder.
+      - name: Cross-engine recovery (PowerShell and Rust)
+        shell: pwsh
+        run: '& pwsh -NoProfile -File scripts/installer/tests/parity/cross.test.ps1; if ($LASTEXITCODE -ne 0) { throw "cross.test.ps1 exit $LASTEXITCODE" }'

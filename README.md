@@ -81,7 +81,7 @@ cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installe
 npm run test:site                         # 官网：页面构建 + Worker（D1、R2、登录、上传）
 ```
 
-PowerShell 测试需要 PowerShell 7，在 Windows 上运行（CI 每次 push 都会跑全部十六个套件）：
+PowerShell 测试需要 PowerShell 7，在 Windows 上运行（CI 每次 push 都会跑全部十七个套件）：
 
 ```powershell
 pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
