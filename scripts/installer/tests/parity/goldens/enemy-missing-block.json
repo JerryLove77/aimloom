@@ -1,0 +1,23 @@
+{
+  "case": "enemy-missing-block",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"当前设置缺少 characterModelOverride.Cylindrical；请先在游戏里打开一次皮肤浏览器 (Skin Browser)。\",\"messageEn\":\"The current settings are missing characterModelOverride.\\\"Cylindrical\\\". Open the Skin Browser in the game once.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"current\":{\"cylindrical\":null,\"cuboid\":null,\"spheroid\":null},\"skins\":[{\"label\":\"None\",\"model\":\"None\",\"skin\":\"None\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Ghost\",\"model\":\"Ghost\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Mummy\",\"model\":\"Mummy\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Stylized\",\"model\":\"Stylized Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Ecto\",\"model\":\"Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Endo\",\"model\":\"Endo\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Meso\",\"model\":\"Meso\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Shinji\",\"model\":\"Meso\",\"skin\":\"Genji\",\"shapes\":[\"cylindrical\"]},{\"label\":\"McCoy\",\"model\":\"Meso\",\"skin\":\"McCree\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Rocket Flyer\",\"model\":\"Meso\",\"skin\":\"Pharah\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Racer\",\"model\":\"Meso\",\"skin\":\"Tracer\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Arya\",\"model\":\"Anime Girl\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - SWAT\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Arya\",\"model\":\"Anime Girl\",\"skin\":\"Arya - School\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - School\",\"shapes\":[\"cylindrical\"]}]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 49,
+        "sha256": "3cee366376660716490527400dfe83952efb72d0af2a16bb05dfaffce1df7a64"
+      }
+    ],
+    "local": []
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "case": "reads-catalog",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"packRoot\":\"<pack>\",\"categories\":[{\"category\":\"crosshairs\",\"count\":2},{\"category\":\"palette\",\"count\":1},{\"category\":\"primary\",\"count\":1},{\"category\":\"sounds\",\"count\":1},{\"category\":\"themes\",\"count\":1},{\"category\":\"ui\",\"count\":1}],\"skipped\":[\"<pack>/extras\",\"<pack>/readme.txt\",\"<pack>/sounds/y.txt\",\"<pack>/Themes/b.txt\",\"<pack>/Themes/nested\"]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PACK\",\"message\":\"Pack directory is missing: \\\"<pack>/missing\\\"\",\"messageEn\":\"Pack directory is missing: \\\"<pack>/missing\\\"\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

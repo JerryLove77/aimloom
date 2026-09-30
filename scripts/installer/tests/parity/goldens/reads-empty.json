@@ -1,0 +1,35 @@
+{
+  "case": "reads-empty",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes\",\"current\":null,\"themes\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/sounds\",\"sounds\":[],\"bindings\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[],\"mbsOkay\":[],\"mbsBad\":[],\"mbsChangeNow\":[]}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/crosshairs\",\"crosshairs\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Cannot validate game directory: \\\"<pack>\\\". Run the game once and exit normally first.\",\"messageEn\":\"Cannot validate game directory: \\\"<pack>\\\". Run the game once and exit normally first.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

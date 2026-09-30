@@ -42,8 +42,8 @@ profile.
 
 For each request step: the reply line and the progress lines, as the worker would write them
 (`ConvertTo-Json -Depth 32 -Compress`). After the last step: every file under the game folder and
-under the local data folder, by relative path. A `manifest.json` is recorded as its exact text; any
-other file as its size and SHA-256.
+under the local data folder, by relative path. A `manifest.json` and a Profile (`Aimloom/profiles/`) are recorded as
+their exact text, since they hold absolute paths; any other file as its size and SHA-256.
 
 ## Normalization (both harnesses, in this order, on the JSON text)
 

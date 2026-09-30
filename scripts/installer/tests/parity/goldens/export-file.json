@@ -1,0 +1,55 @@
+{
+  "case": "export-file",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"Path\":\"<pack>/copy.png\",\"Bytes\":75,\"Sha256\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\"}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"这个文件夹里已经有「copy.png」，另存不会覆盖它；请换一个文件名 (already exists)。\",\"messageEn\":\"This folder already has \\\"copy.png\\\", and saving a copy never overwrites it. Choose another file name.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不能另存到游戏目录里；要放进游戏，请用「添加到游戏」 (refusing to export inside the game directory)。\",\"messageEn\":\"A copy cannot be saved inside the game directory. Use Add to game to put a file in the game.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"另存的文件夹必须是完整路径 (absolute path required)。\",\"messageEn\":\"The folder for saving a copy must be a full path.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"另存的文件夹不存在 (directory does not exist)。\",\"messageEn\":\"The folder for saving a copy does not exist.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"另存的文件名无效 (unsafe file name): ..copy.png\",\"messageEn\":\"The file name for saving a copy is not safe: \\\"..copy.png\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"另存的文件名无效 (unsafe file name): nul.png\",\"messageEn\":\"The file name for saving a copy is not safe: \\\"nul.png\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"另存的文件名无效 (unsafe file name): a/b.png\",\"messageEn\":\"The file name for saving a copy is not safe: \\\"a/b.png\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"导出内容不是规范 base64。\",\"messageEn\":\"The export encoding is not canonical base64.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"导出内容编码无效或超出大小限制。\",\"messageEn\":\"The export encoding is invalid or over the size limit.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

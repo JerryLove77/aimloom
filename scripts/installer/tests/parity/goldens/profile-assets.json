@@ -1,0 +1,101 @@
+{
+  "case": "profile-assets",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes\",\"files\":[{\"name\":\"A.JSON\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/A.JSON\"},{\"name\":\"b.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/b.json\"}],\"errors\":[{\"fileName\":\"empty.json\",\"message\":\"资源文件必须非空且不超过 8 MiB。\",\"messageEn\":\"The asset file must not be empty and must be 8 MiB or smaller.\"},{\"fileName\":\"folder.json\",\"message\":\"资源必须是普通文件。\",\"messageEn\":\"The asset must be an ordinary file.\"}]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/sounds\",\"files\":[{\"name\":\"hit.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/hit.wav\"},{\"name\":\"k.OGG\",\"path\":\"<game>/FPSAimTrainer/sounds/k.OGG\"}],\"errors\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes\",\"files\":[],\"errors\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"资源类型无效。\",\"messageEn\":\"The asset kind is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"请选择普通文件的完整路径。\",\"messageEn\":\"Choose the full path of an ordinary file.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"请选择普通文件的完整路径。\",\"messageEn\":\"Choose the full path of an ordinary file.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"资源目录不存在。\",\"messageEn\":\"The asset folder does not exist.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"资源路径含不安全的文件名。\",\"messageEn\":\"The asset path contains an unsafe file name.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":true,\"data\":{\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/b.json\",\"mimeType\":\"application/json\",\"base64\":\"eyJ0aGVtZU5hbWUiOiJCIn0=\"}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":true,\"data\":{\"path\":\"<game>/FPSAimTrainer/sounds/k.OGG\",\"mimeType\":\"audio/ogg\",\"base64\":\"T2dnUw==\"}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"资源扩展名与类型不匹配。\",\"messageEn\":\"The asset extension does not match its kind.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 存储操作失败，请检查文件和目录权限。\",\"messageEn\":\"The Profile store could not be read or written. Check the files and folder permissions.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r13\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"资源文件必须非空且不超过 8 MiB。\",\"messageEn\":\"The asset file must not be empty and must be 8 MiB or smaller.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r14\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"资源必须是普通文件。\",\"messageEn\":\"The asset must be an ordinary file.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/A.JSON",
+        "size": 17,
+        "sha256": "67d394a9329d33a9c9b84a7763f3449dcce3ac01318e946c799558c9e4dc1c85"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/b.json",
+        "size": 17,
+        "sha256": "6e855ad16a31bde53e21a2bf3082ecabe6374a733016110741467e45158517e7"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/empty.json",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/note.txt",
+        "size": 1,
+        "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 4,
+        "sha256": "a40ff3d5900fb7698b8c865041347cb49eccedc8f93945f89629ad104aaecce4"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/k.OGG",
+        "size": 4,
+        "sha256": "68d9ed2adb24458ff173db06b41b9d1b6e228764c457030d63fad11b02bfae1e"
+      }
+    ],
+    "local": []
+  }
+}

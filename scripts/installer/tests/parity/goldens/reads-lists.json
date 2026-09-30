@@ -1,0 +1,160 @@
+{
+  "case": "reads-lists",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes\",\"current\":\"Dark /\\\"Night/\\\"\",\"themes\":[{\"name\":\"Upper\",\"file\":\"A-upper.JSON\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/A-upper.JSON\",\"readable\":true,\"duplicateName\":false},{\"name\":null,\"file\":\"array.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/array.json\",\"readable\":false,\"duplicateName\":false},{\"name\":\"Light\",\"file\":\"b-light.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/b-light.json\",\"readable\":true,\"duplicateName\":false},{\"name\":null,\"file\":\"broken.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/broken.json\",\"readable\":false,\"duplicateName\":false},{\"name\":\"Dark \\\"Night\\\"\",\"file\":\"Dark.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Dark.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"<time>\",\"file\":\"date.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/date.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Same\",\"file\":\"dup1.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/dup1.json\",\"readable\":true,\"duplicateName\":true},{\"name\":\"same\",\"file\":\"Dup2.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Dup2.json\",\"readable\":true,\"duplicateName\":true},{\"name\":\"Lenient\",\"file\":\"lenient.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/lenient.json\",\"readable\":true,\"duplicateName\":false},{\"name\":null,\"file\":\"noname.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/noname.json\",\"readable\":false,\"duplicateName\":false},{\"name\":\"Unicode 主题\",\"file\":\"utf16.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/utf16.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Under\",\"file\":\"_under.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/_under.json\",\"readable\":true,\"duplicateName\":false}]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/sounds\",\"sounds\":[{\"name\":\"a.b\",\"file\":\"a.b.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/a.b.wav\",\"ambiguous\":false},{\"name\":\"Hit\",\"file\":\"Hit.OGG\",\"path\":\"<game>/FPSAimTrainer/sounds/Hit.OGG\",\"ambiguous\":true},{\"name\":\"kill\",\"file\":\"kill.ogg\",\"path\":\"<game>/FPSAimTrainer/sounds/kill.ogg\",\"ambiguous\":false},{\"name\":\"Zeta\",\"file\":\"Zeta.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\",\"ambiguous\":false},{\"name\":\"_under\",\"file\":\"_under.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/_under.wav\",\"ambiguous\":false},{\"name\":\"é sound\",\"file\":\"é sound.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/é sound.wav\",\"ambiguous\":false}],\"bindings\":{\"kill\":[\"hit\",\"kill\",\"\",\"missing\"],\"spawn\":[],\"mbsGood\":[\"Zeta\"],\"mbsOkay\":[],\"mbsBad\":[],\"mbsChangeNow\":[]}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/crosshairs\",\"crosshairs\":[{\"name\":\"a\",\"file\":\"a.png\",\"path\":\"<game>/FPSAimTrainer/crosshairs/a.png\"},{\"name\":\"B\",\"file\":\"B.PNG\",\"path\":\"<game>/FPSAimTrainer/crosshairs/B.PNG\"}]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 277,
+        "sha256": "b3f49bef64bdc08f64a3395f04a26421f24b07f233af1b16a370aaddf53d3bb0"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/A-upper.JSON",
+        "size": 46,
+        "sha256": "ea5d0410f5ad6df4ae3d16c5cb9bb00bc0ba717deaa2db875048b3944b794d1b"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Dark.json",
+        "size": 55,
+        "sha256": "e65c921bfd4c80fc78f7dfaaa4a34cabee1b48c4e69597709b7f8d4ed5bf5e01"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Dup2.json",
+        "size": 45,
+        "sha256": "449ed4c80bca1f79487db25b8c9862f8b7d6b60c527fee42e51aede2d4905cdc"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/_under.json",
+        "size": 46,
+        "sha256": "e1c75bc5e1c19d0b0028dcf692cb3a3a3738a7acc36c39c81f785d8fb7438927"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/array.json",
+        "size": 3,
+        "sha256": "080a9ed428559ef602668b4c00f114f1a11c3f6b02a435f0bdc154578e4d7f22"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/b-light.json",
+        "size": 46,
+        "sha256": "42e0b1dc9c8850d603f408361bd309cbc1d27bf49b94ef72ce99512712ee02c4"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/broken.json",
+        "size": 13,
+        "sha256": "2c788658de4682e4db84cebd16c14e9024283e893c3ad654eb441fefe22877ef"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/date.json",
+        "size": 61,
+        "sha256": "d5f971f9b1ff0687658a3547ff42958802a67db4798b235a3ad7ded6bee6e90d"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/dup1.json",
+        "size": 45,
+        "sha256": "cac352355c5844a1e0c78b1131538bb4caab9e98e873348b79775defa3369d67"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/lenient.json",
+        "size": 50,
+        "sha256": "aa262d79498bb8f3a2c3cb71e37f80fd17ee8d7ef216c07cb7de612e654f0a6b"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/noname.json",
+        "size": 23,
+        "sha256": "ab653c826ae5982b463235ee9a60dc34abea8c811e5838a6983cfda21975850f"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/readme.txt",
+        "size": 11,
+        "sha256": "1edae7bdcb792ac68d273bfb49cc3d598d3ff9432b9207231275e0e842ba56a0"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/utf16.json",
+        "size": 54,
+        "sha256": "aa78c4179893a08fac3dffae6f6710e30da5a183a88b282b4ef5d71f22d66d87"
+      },
+      {
+        "path": "FPSAimTrainer/crosshairs/B.PNG",
+        "size": 3,
+        "sha256": "8f8cbb7dcf46e0bc7d53265749a6c17d116093a6ba95e442764060c76fd4a86c"
+      },
+      {
+        "path": "FPSAimTrainer/crosshairs/a.png",
+        "size": 3,
+        "sha256": "8f8cbb7dcf46e0bc7d53265749a6c17d116093a6ba95e442764060c76fd4a86c"
+      },
+      {
+        "path": "FPSAimTrainer/crosshairs/c.jpg",
+        "size": 3,
+        "sha256": "f8146b6cb4961f87a1519047b8c83402754ed108ade55457d43166e564b7b4fe"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/.wav",
+        "size": 4,
+        "sha256": "4b125ec99a74470517f9f51ac1a70eafa3dbd1ddd4bae409fe59a98ed720a3a4"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Hit.OGG",
+        "size": 3,
+        "sha256": "90308fe99871113bf5490ec73a8813b667adc60fe01530102a6c7bfb73c66481"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Zeta.wav",
+        "size": 4,
+        "sha256": "4b125ec99a74470517f9f51ac1a70eafa3dbd1ddd4bae409fe59a98ed720a3a4"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/_under.wav",
+        "size": 4,
+        "sha256": "4b125ec99a74470517f9f51ac1a70eafa3dbd1ddd4bae409fe59a98ed720a3a4"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/a.b.wav",
+        "size": 4,
+        "sha256": "4b125ec99a74470517f9f51ac1a70eafa3dbd1ddd4bae409fe59a98ed720a3a4"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 4,
+        "sha256": "4b125ec99a74470517f9f51ac1a70eafa3dbd1ddd4bae409fe59a98ed720a3a4"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/kill.ogg",
+        "size": 3,
+        "sha256": "90308fe99871113bf5490ec73a8813b667adc60fe01530102a6c7bfb73c66481"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/notes.txt",
+        "size": 4,
+        "sha256": "982d9e3eb996f559e633f4d194def3761d909f5a3b647d1a851fead67c32c9d1"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/é sound.wav",
+        "size": 4,
+        "sha256": "4b125ec99a74470517f9f51ac1a70eafa3dbd1ddd4bae409fe59a98ed720a3a4"
+      }
+    ],
+    "local": []
+  }
+}

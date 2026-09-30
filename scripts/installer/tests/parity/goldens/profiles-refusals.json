@@ -1,0 +1,119 @@
+{
+  "case": "profiles-refusals",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：audio\",\"messageEn\":\"The Profile is missing the field: audio.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 含未知字段：extra\",\"messageEn\":\"The Profile has an unknown field: extra.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 名称 文本无效。\",\"messageEn\":\"The Profile name text is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 名称 文本无效。\",\"messageEn\":\"The Profile name text is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 名称 文本无效。\",\"messageEn\":\"The Profile name text is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 文件引用格式或扩展名无效。\",\"messageEn\":\"A Profile file reference has an invalid format or extension.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 文件引用不允许设备命名空间。\",\"messageEn\":\"A Profile file reference may not use the device namespace.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r13\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 文件引用格式或扩展名无效。\",\"messageEn\":\"A Profile file reference has an invalid format or extension.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r14\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：path\",\"messageEn\":\"The Profile is missing the field: path.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r15\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 音效必须是最多 64 项的数组。\",\"messageEn\":\"Profile sounds must be an array of at most 64 entries.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r16\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 音效必须是最多 64 项的数组。\",\"messageEn\":\"Profile sounds must be an array of at most 64 entries.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r17\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 含未知字段：boom\",\"messageEn\":\"The Profile has an unknown field: boom.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r18\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 文件引用格式或扩展名无效。\",\"messageEn\":\"A Profile file reference has an invalid format or extension.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r19\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 字段必须是 JSON 对象。\",\"messageEn\":\"A Profile field must be a JSON object.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r20\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r21\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r22\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"Profile 标识无效。\",\"messageEn\":\"The Profile id is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r23\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"args contains an unknown field: extra\",\"messageEn\":\"args contains an unknown field: extra.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":null,\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Invalid JSON request: Profile JSON 含重复字段。\",\"messageEn\":\"The engine reported an error. Details are in worker.log; send a report from Settings, or write to feedback@aimloom.dev.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"case\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"args contains an unknown field: ID\",\"messageEn\":\"args contains an unknown field: ID.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r26\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[],\"errors\":[]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

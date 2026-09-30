@@ -1,0 +1,76 @@
+{
+  "case": "profiles-crud",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[],\"errors\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"daily\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"daily\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/legacy.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/legacy.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/dbl.json\",\"profile\":{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/nulls.json\",\"profile\":{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":1,\"id\":\"daily\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}],\"errors\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":true,\"data\":{\"deleted\":true}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":true,\"data\":{\"filePath\":\"<local>/Aimloom/profiles/daily.json\",\"profile\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":true,\"data\":{\"deleted\":false}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}},{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}],\"errors\":[]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/profiles/dbl.json",
+        "text": "{\"schemaVersion\":1.0,\"id\":\"dbl\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}"
+      },
+      {
+        "path": "Aimloom/profiles/legacy.json",
+        "text": "{\"schemaVersion\":1,\"id\":\"legacy\",\"name\":\"Daily 日常\",\"scheme\":{\"name\":\"Dark\",\"path\":\"C:/Themes/Dark.json\"},\"audio\":{\"kill\":[{\"name\":\"hit\",\"path\":\"C:/sounds/hit.wav\"},{\"name\":\"k\",\"path\":\"D:/s/k.OGG\"}],\"spawn\":[]}}"
+      },
+      {
+        "path": "Aimloom/profiles/nulls.json",
+        "text": "{\"schemaVersion\":1,\"id\":\"nulls\",\"name\":\"Daily 日常\",\"scheme\":null,\"audio\":null}"
+      }
+    ]
+  }
+}

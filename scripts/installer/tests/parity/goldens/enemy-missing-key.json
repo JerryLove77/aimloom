@@ -1,0 +1,19 @@
+{
+  "case": "enemy-missing-key",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"当前设置里 characterModelOverride.Cylindrical 缺少必要的键；请先在游戏里打开一次皮肤浏览器 (Skin Browser)。\",\"messageEn\":\"characterModelOverride.\\\"Cylindrical\\\" is missing a required key. Open the Skin Browser in the game once.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 69,
+        "sha256": "58ba19b0443e4fa3afc6ba37380afb347c3041a7be5b01ac76dd01b14a5a9eb1"
+      }
+    ],
+    "local": []
+  }
+}

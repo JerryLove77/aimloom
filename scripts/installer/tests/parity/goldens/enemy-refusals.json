@@ -1,0 +1,55 @@
+{
+  "case": "enemy-refusals",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"未知的敌人外观分类 (unknown shape): humanoid\",\"messageEn\":\"Unknown enemy shape: \\\"humanoid\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"「Does Not Exist / Default」不是这个分类的皮肤目录条目 (not a catalog skin for this shape)。\",\"messageEn\":\"\\\"Does Not Exist / Default\\\" is not a catalog skin for this shape.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"「Stylized Ecto / Default」不是这个分类的皮肤目录条目 (not a catalog skin for this shape)。\",\"messageEn\":\"\\\"Stylized Ecto / Default\\\" is not a catalog skin for this shape.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"「Meso / Genji」不是这个分类的皮肤目录条目 (not a catalog skin for this shape)。\",\"messageEn\":\"\\\"Meso / Genji\\\" is not a catalog skin for this shape.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"「Stylized Ecto / Default」已经是当前装备的皮肤 (already equipped)。\",\"messageEn\":\"\\\"Stylized Ecto / Default\\\" is already the equipped skin.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"revision must be a non-negative integer.\",\"messageEn\":\"revision must be a non-negative integer.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"args contains an unknown field: extra\",\"messageEn\":\"args contains an unknown field: extra.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"shape must be a non-empty string.\",\"messageEn\":\"shape must be a non-empty string.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Unknown operation: removeEverything\",\"messageEn\":\"Unknown operation: removeEverything.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":true,\"data\":\"closed\"}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

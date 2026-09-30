@@ -98,7 +98,8 @@ fn files(root: &Path) -> Vec<(String, Recorded)> {
             if path.is_dir() { walk(root, &path, out); continue; }
             let relative = path.strip_prefix(root).unwrap().to_string_lossy().replace('\\', "/");
             let bytes = std::fs::read(&path).unwrap();
-            let recorded = if path.file_name().is_some_and(|n| n == "manifest.json") {
+            // Manifests and Profiles are recorded as text: they hold absolute paths, which normalize.
+            let recorded = if path.file_name().is_some_and(|n| n == "manifest.json") || relative.starts_with("Aimloom/profiles/") {
                 Recorded::Text(String::from_utf8_lossy(bytes.strip_prefix(&[0xEF, 0xBB, 0xBF][..]).unwrap_or(&bytes)).into_owned())
             } else {
                 Recorded::File { size: bytes.len(), sha256: paths::sha256_hex(&bytes) }

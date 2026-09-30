@@ -1,0 +1,152 @@
+{
+  "case": "file-add",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/import-previews/<guid#2>\",\"categories\":[\"themes\"],\"sourceId\":null,\"rows\":[{\"key\":\"themes/imported.json\",\"category\":\"themes\",\"source\":\"<local>/Aimloom/import-previews/<guid#2>/Themes/imported.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/imported.json\",\"action\":\"create\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"themes/imported.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"themes/imported.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#3>\",\"items\":[{\"key\":\"themes/imported.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/imported.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes\",\"current\":null,\"themes\":[{\"name\":\"Taken\",\"file\":\"Existing.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Existing.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Imported\",\"file\":\"imported.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/imported.json\",\"readable\":true,\"duplicateName\":false}]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#4>\",\"revision\":2,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/import-previews/<guid#5>\",\"categories\":[\"sounds\"],\"sourceId\":null,\"rows\":[{\"key\":\"sounds/boom.ogg\",\"category\":\"sounds\",\"source\":\"<local>/Aimloom/import-previews/<guid#5>/sounds/boom.ogg\",\"target\":\"<game>/FPSAimTrainer/sounds/boom.ogg\",\"action\":\"create\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"sounds/boom.ogg\",\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"sounds/boom.ogg\",\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#6>\",\"items\":[{\"key\":\"sounds/boom.ogg\",\"target\":\"<game>/FPSAimTrainer/sounds/boom.ogg\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/sounds\",\"sounds\":[{\"name\":\"boom\",\"file\":\"boom.ogg\",\"path\":\"<game>/FPSAimTrainer/sounds/boom.ogg\",\"ambiguous\":false},{\"name\":\"hit\",\"file\":\"hit.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"ambiguous\":false}],\"bindings\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[],\"mbsOkay\":[],\"mbsBad\":[],\"mbsChangeNow\":[]}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"这个主题的内部名称是「taken」，而游戏里的「Existing.json」已经叫这个名字。游戏按内部名称识别主题，再添加一个会让两者都无法应用；没有添加。\",\"messageEn\":\"This theme's internal name is \\\"taken\\\", and \\\"Existing.json\\\" in the game already uses that name. The game identifies themes by their internal name, so adding another would leave neither one applicable. Nothing was added.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Themes 文件夹里已经有「Existing.json」，添加不会覆盖它；请换一个文件名。\",\"messageEn\":\"The Themes folder already has \\\"Existing.json\\\", and adding never overwrites it. Choose another file name.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"sounds 文件夹里已经有同名音效「hit.wav」。游戏按不含扩展名的名字绑定音效，再添加一个会让两者都无法绑定；请换一个文件名。\",\"messageEn\":\"The sounds folder already has a sound named \\\"hit.wav\\\". The game binds sounds by the name without its extension, so adding another would leave neither one bindable. Choose another file name.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"PLAN_STALE\",\"message\":\"来源文件在预览之后发生了变化，请重新选择这个文件。\",\"messageEn\":\"The source file changed after the preview. Choose the file again.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"导入类型无效：只能是主题或音效。\",\"messageEn\":\"The kind must be theme or sound.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"文件名无效：必须以 .wav 或 .ogg 结尾，不能包含 / / : * ? \\\" < > | ; 或连续的点，不能以点或空格开头结尾，总长不超过 128 个字符: bad;name.ogg\",\"messageEn\":\"The file name is not valid: it must end with .wav or .ogg, cannot contain / / : * ? < > | ; a double quote, or consecutive dots, cannot start or end with a dot or a space, and must be at most 128 characters: \\\"bad;name.ogg\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r13\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"文件名无效：必须以 .wav 或 .ogg 结尾，不能包含 / / : * ? \\\" < > | ; 或连续的点，不能以点或空格开头结尾，总长不超过 128 个字符: boom2.mp3\",\"messageEn\":\"The file name is not valid: it must end with .wav or .ogg, cannot contain / / : * ? < > | ; a double quote, or consecutive dots, cannot start or end with a dot or a space, and must be at most 128 characters: \\\"boom2.mp3\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r14\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"来源文件的校验值无效。\",\"messageEn\":\"The source file's checksum is not valid.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r15\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"找不到来源文件，它可能已被移动或删除: <pack>/missing.ogg\",\"messageEn\":\"The source file was not found; it may have been moved or deleted: \\\"<pack>/missing.ogg\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r16\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PATH\",\"message\":\"请选择普通文件的完整路径。\",\"messageEn\":\"Choose the full path of an ordinary file.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r17\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"主题文件不是有效的 JSON: broken.json\",\"messageEn\":\"The theme file is not valid JSON: \\\"broken.json\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r18\",\"type\":\"reply\",\"ok\":true,\"data\":{\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"records\":[{\"id\":\"<guid#6>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"completed\",\"categories\":[\"sounds\"],\"fileCount\":1},{\"id\":\"<guid#3>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"completed\",\"categories\":[\"themes\"],\"fileCount\":1}],\"hasPristine\":true}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Existing.json",
+        "size": 22,
+        "sha256": "0c79a9084c266769b9fecbfdcb1fe1f861d6c4014897064f5b92ba433687689f"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/imported.json",
+        "size": 25,
+        "sha256": "5a30e3df83ca200118afba74b2536d5974ba0535b3a3f8dfd5056855cda506a9"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/boom.ogg",
+        "size": 8,
+        "sha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 3,
+        "sha256": "cba06b5736faf67e54b07b561eae94395e774c517a7d910a54369e1263ccfbd4"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#3>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/import-previews/<guid#2>\",\"Categories\":[\"themes\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"themes/imported.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/imported.json\",\"BeforeHash\":null,\"AfterHash\":\"5a30e3df83ca200118afba74b2536d5974ba0535b3a3f8dfd5056855cda506a9\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/imported.json.kvk-<guid#3>-<guid#7>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/source/d262602ce0e7955e0eee5b69a2a25a248b6a8c4be58fa7dec49bf36e35654d52.bin",
+        "size": 25,
+        "sha256": "5a30e3df83ca200118afba74b2536d5974ba0535b3a3f8dfd5056855cda506a9"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#6>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/import-previews/<guid#5>\",\"Categories\":[\"sounds\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"sounds/boom.ogg\",\"Target\":\"<game>/FPSAimTrainer/sounds/boom.ogg\",\"BeforeHash\":null,\"AfterHash\":\"ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/sounds/boom.ogg.kvk-<guid#6>-<guid#8>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/source/0ceb55ba5e7132faf234796b0c70cf04c4a180adb94880051839eec31b9df4ba.bin",
+        "size": 8,
+        "sha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"themes/imported.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/imported.json\",\"BeforeHash\":null,\"AfterHash\":\"5a30e3df83ca200118afba74b2536d5974ba0535b3a3f8dfd5056855cda506a9\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"sounds/boom.ogg\",\"Target\":\"<game>/FPSAimTrainer/sounds/boom.ogg\",\"BeforeHash\":null,\"AfterHash\":\"ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/locks/<gamehash>.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/locks/palette.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  }
+}
