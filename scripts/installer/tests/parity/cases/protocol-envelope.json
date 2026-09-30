@@ -1,0 +1,68 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "raw": [
+        "not-an-object"
+      ]
+    },
+    {
+      "raw": {
+        "v": 1,
+        "requestId": "x",
+        "op": "gameState"
+      }
+    },
+    {
+      "raw": {
+        "v": 2,
+        "requestId": "x",
+        "op": "gameState",
+        "args": {}
+      }
+    },
+    {
+      "raw": {
+        "v": 1,
+        "requestId": "",
+        "op": "gameState",
+        "args": {}
+      }
+    },
+    {
+      "raw": {
+        "v": 1,
+        "requestId": "x",
+        "op": "gameState",
+        "args": {
+          "extra": true
+        }
+      }
+    },
+    {
+      "raw": {
+        "v": 1.0,
+        "requestId": "x",
+        "op": "gameState",
+        "args": {}
+      }
+    },
+    {
+      "raw": {
+        "v": 1,
+        "requestId": "x",
+        "op": "gameState",
+        "args": {},
+        "more": 1
+      }
+    },
+    {
+      "raw": {
+        "v": 1,
+        "requestId": "x",
+        "op": "gameState",
+        "args": {}
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+﻿{
+	"floatSettings":
+	{
+		"EFloatSettingId::XSens": 0.91
+	},
+	"characterModelOverride":
+	{
+		"Cylindrical":
+		{
+			"characterModel": "Stylized Ecto",
+			"characterSkin": "Default"
+		},
+		"Cuboid":
+		{
+			"characterModel": "Ghost",
+			"characterSkin": "Default"
+		},
+		"Spheroid":
+		{
+			"characterModel": "Mummy",
+			"characterSkin": "Default"
+		}
+	},
+	"currentlySelectedBoundingBoxType": "Cuboid",
+	"large": 9007199254740993,
+	"stringSettings":
+	{
+		"unchangedDate": "2026-09-15T00:00:00Z"
+	}
+}

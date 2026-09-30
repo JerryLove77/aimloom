@@ -1,0 +1,25 @@
+{
+	"floatSettings":
+	{
+		"EFloatSettingId::XSens": 0.91
+	},
+	"characterModelOverride":
+	{
+		"Cylindrical":
+		{
+			"characterModel": "Stylized Ecto",
+			"characterSkin": "Default"
+		},
+		"Cuboid":
+		{
+			"characterModel": "Ghost",
+			"characterSkin": "Default"
+		},
+		"Spheroid":
+		{
+			"characterModel": "Mummy",
+			"characterSkin": "Default"
+		}
+	},
+	"currentlySelectedBoundingBoxType": "Cuboid"
+}

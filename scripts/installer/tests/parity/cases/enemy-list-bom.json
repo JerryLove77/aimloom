@@ -1,0 +1,11 @@
+{
+  "fixture": "enemy-bom.json",
+  "steps": [
+    {
+      "request": "enemyList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

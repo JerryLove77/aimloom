@@ -1,0 +1,21 @@
+{
+  "fixture": "enemy-no-block.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "enemyList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

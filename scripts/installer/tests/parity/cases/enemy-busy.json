@@ -1,0 +1,37 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "holdLock": true
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-1",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      },
+      "compare": "code"
+    },
+    {
+      "releaseLock": true
+    },
+    {
+      "request": "backups",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

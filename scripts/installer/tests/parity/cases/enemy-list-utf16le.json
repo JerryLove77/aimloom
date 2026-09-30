@@ -1,0 +1,11 @@
+{
+  "fixture": "enemy-utf16le.json",
+  "steps": [
+    {
+      "request": "enemyList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

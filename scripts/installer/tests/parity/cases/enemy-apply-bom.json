@@ -1,0 +1,30 @@
+{
+  "fixture": "enemy-bom.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cuboid",
+        "model": "Mummy",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-1",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "enemyList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

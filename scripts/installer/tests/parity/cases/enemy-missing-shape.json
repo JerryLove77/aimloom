@@ -1,0 +1,15 @@
+{
+  "fixture": "enemy-no-shape.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1
+      }
+    }
+  ]
+}
