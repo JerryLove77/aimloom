@@ -257,9 +257,10 @@ fn resolve_reference<'a, T>(path: &str, entries: &'a [T], entry_path: impl Fn(&T
     entries.iter().find(|e| eq_ignore_case(entry_path(e), &target))
 }
 
-/// `New-KvkProfileApplyPlan`: the Profile's Theme and Sounds as one settings write. An empty or
-/// absent event keeps the current binding; a reference to a file the game no longer has refuses
-/// the whole apply before anything is staged.
+/// `New-KvkProfileApplyPlan`: the Profile's Theme and all six sound events as one settings write
+/// (format v2, a complete snapshot). An empty kill or spawn list writes the empty string, which is
+/// no sound; a reference to a file the game no longer has refuses the whole apply before anything
+/// is staged.
 pub fn profile_apply_plan(engine: &Engine, context: &Context, id: &str) -> EngineResult<ProfileApply> {
     engine.assert_context(context)?;
     let read = super::profiles::read(engine, &context.local_data_root, Some(&Json::str(id)))?;
@@ -267,40 +268,32 @@ pub fn profile_apply_plan(engine: &Engine, context: &Context, id: &str) -> Engin
     if profile.is_null() { return Err(EngineError::coded("ENGINE_ERROR", format!("找不到这个 Profile：「{id}」"), format!("The Profile was not found: \"{id}\"."))); }
     let profile_path = read.get("filePath").and_then(Json::as_str).unwrap_or_default().to_string();
     let profile_hash = store::hash(&profile_path)?.unwrap_or_default();
-    let mut scheme = None;
-    if let Some(reference) = profile.get("scheme").filter(|s| !s.is_null()) {
-        let saved = reference.get("path").and_then(Json::as_str).unwrap_or_default();
-        let installed = lists::installed_themes(engine, context)?;
-        let Some(entry) = resolve_reference(saved, &installed.themes, |t| &t.path) else {
-            return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的背景文件不在游戏中：「{saved}」"), format!("The Theme file the Profile refers to is not in the game: \"{saved}\".")));
-        };
-        scheme = Some(scheme_source(engine, context, &entry.file.clone())?);
-    }
+    let saved = profile.get("theme").and_then(|r| r.get("path")).and_then(Json::as_str).unwrap_or_default();
+    let installed = lists::installed_themes(engine, context)?;
+    let Some(entry) = resolve_reference(saved, &installed.themes, |t| &t.path) else {
+        return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的背景文件不在游戏中：「{saved}」"), format!("The Theme file the Profile refers to is not in the game: \"{saved}\".")));
+    };
+    let scheme = scheme_source(engine, context, &entry.file.clone())?;
     let (mut audio_edits, mut sources) = (Vec::new(), Vec::new());
-    if let Some(audio) = profile.get("audio").filter(|a| !a.is_null()) {
-        let (_, sounds) = lists::installed_sounds(engine, context)?;
-        for (event, _, _) in AUDIO_EVENTS {
-            let records = audio.get(event).and_then(Json::as_array).cloned().unwrap_or_default();
-            if records.is_empty() { continue; }
-            let mut names = Vec::new();
-            for record in &records {
-                let saved = record.get("path").and_then(Json::as_str).unwrap_or_default();
-                let Some(entry) = resolve_reference(saved, &sounds, |s| &s.path) else {
-                    return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的音效文件不在游戏中：「{saved}」"), format!("The Sound file the Profile refers to is not in the game: \"{saved}\".")));
-                };
-                names.push(entry.name.clone());
-                sources.push((entry.path.clone(), store::hash(&entry.path)?.unwrap_or_default()));
-            }
-            audio_edits.push(audio_edit(engine, context, event, &names)?);
+    let audio = profile.get("audio").cloned().unwrap_or(Json::Null);
+    let (_, sounds) = lists::installed_sounds(engine, context)?;
+    for (event, _, _) in AUDIO_EVENTS {
+        let records = audio.get(event).and_then(Json::as_array).cloned().unwrap_or_default();
+        let mut names = Vec::new();
+        for record in &records {
+            let saved = record.get("path").and_then(Json::as_str).unwrap_or_default();
+            let Some(entry) = resolve_reference(saved, &sounds, |s| &s.path) else {
+                return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的音效文件不在游戏中：「{saved}」"), format!("The Sound file the Profile refers to is not in the game: \"{saved}\".")));
+            };
+            names.push(entry.name.clone());
+            sources.push((entry.path.clone(), store::hash(&entry.path)?.unwrap_or_default()));
         }
+        audio_edits.push(audio_edit(engine, context, event, &names)?);
     }
-    if scheme.is_none() && audio_edits.is_empty() { return Err(EngineError::coded("ENGINE_ERROR", "这个 Profile 没有可应用的内容。", "This Profile has nothing to apply.")); }
-    let mut edits = Vec::new();
-    if let Some(source) = &scheme { edits.extend(source.edits.iter().cloned()); }
+    let mut edits: Vec<_> = scheme.edits.iter().cloned().collect();
     edits.extend(audio_edits);
     let plan = settings_plan(engine, context, &edits, "profile-apply-previews", "Profile apply staging must be outside the game directory.", ("准备预览期间 Profile 应用的来源发生了变化。", "A Profile apply source changed during preview preparation."))?;
-    let mut all_sources = Vec::new();
-    if let Some(source) = scheme { all_sources.push((source.theme_path, source.theme_hash)); }
+    let mut all_sources = vec![(scheme.theme_path, scheme.theme_hash)];
     all_sources.extend(sources);
     Ok(ProfileApply { profile_path, profile_hash, sources: all_sources, plan })
 }

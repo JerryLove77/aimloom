@@ -150,7 +150,7 @@ Test-Case 'a recovery-required batch left by Rust is refused and recovered by Po
 
 Test-Case 'a Profile saved by either engine is read by the other' {
     param($f)
-    $profile=[ordered]@{schemaVersion=1;id='shared';name='Shared 共享';scheme=[ordered]@{name='Dark';path='C:\Themes\Dark.json'};audio=[ordered]@{kill=@([ordered]@{name='hit';path='C:\sounds\hit.wav'})}}
+    $profile=[ordered]@{schemaVersion=2;id='shared';name='Shared 共享';theme=[ordered]@{name='Dark';path='C:\Themes\Dark.json'};audio=[ordered]@{kill=@([ordered]@{name='hit';path='C:\sounds\hit.wav'});spawn=@();mbsGood=@([ordered]@{name='g';path='C:\sounds\g.wav'});mbsOkay=@([ordered]@{name='g';path='C:\sounds\g.wav'});mbsBad=@([ordered]@{name='g';path='C:\sounds\g.wav'});mbsChangeNow=@([ordered]@{name='g';path='C:\sounds\g.wav'})}}
     $saved=Get-Ok (Send-Ps $f.Ps 'profileSave' ([ordered]@{profile=$profile})) 'PowerShell profileSave'
     $read=Get-Ok (Send-Rust $f.Rust 'profileRead' ([ordered]@{id='shared'})) 'Rust profileRead'
     Assert ((ConvertTo-Json $read['profile'] -Depth 10 -Compress) -ceq (ConvertTo-Json $saved['profile'] -Depth 10 -Compress)) 'Rust read a different Profile'

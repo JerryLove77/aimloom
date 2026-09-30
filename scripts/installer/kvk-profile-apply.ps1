@@ -6,10 +6,9 @@
 # stage one file, and build one plan with one Item -- one batch, one backup, one rollback.
 # Dot-source; importing performs no writes.
 #
-# A Profile no longer manages the enemy (2026-09-21): `enemy` is ACCEPTED when a Profile is read
-# (a v0.1.2/early v0.1.3 file may still carry it) but is never looked at here, so a legacy
-# reference -- even one pointing at a file the game no longer has -- can never refuse an apply or
-# change anything. `kvk-enemy.ps1` is deliberately not dot-sourced by this file any more.
+# A Profile (format v2) is a complete snapshot: the Theme and all six sound events are always
+# written. An empty kill or spawn list writes the empty string, which is "no sound". A Profile
+# has no enemy or crosshair slot, so neither is touched here.
 . (Join-Path $PSScriptRoot 'kvk-scheme.ps1')
 . (Join-Path $PSScriptRoot 'kvk-audio.ps1')
 
@@ -35,59 +34,32 @@ function New-KvkProfileApplyPlan($Context,[string]$ProfileId) {
     # A reference that does not resolve refuses the whole application before anything is built:
     # nothing is staged and no batch is created for a Profile that names a file the game no
     # longer has.
-    $schemeSource=$null
-    if ($null -ne $profile.scheme) {
-        $installedThemes=Get-KvkInstalledThemes $Context
-        $entry=Resolve-KvkProfileReference $profile.scheme.path $installedThemes.Themes
-        if ($null -eq $entry) { Throw-KvkFailure 'ENGINE_ERROR' "Profile 引用的背景文件不在游戏中：「$($profile.scheme.path)」" "The Theme file the Profile refers to is not in the game: `"$($profile.scheme.path)`"." }
-        $schemeSource=Get-KvkSchemeSource $Context $entry.File
-    }
+    $installedThemes=Get-KvkInstalledThemes $Context
+    $entry=Resolve-KvkProfileReference $profile.theme.path $installedThemes.Themes
+    if ($null -eq $entry) { Throw-KvkFailure 'ENGINE_ERROR' "Profile 引用的背景文件不在游戏中：「$($profile.theme.path)」" "The Theme file the Profile refers to is not in the game: `"$($profile.theme.path)`"." }
+    $schemeSource=Get-KvkSchemeSource $Context $entry.File
 
-    # An empty list, and an event the Profile never recorded, both mean "keep the current
-    # binding": the Profile sheet writes [] for every event the player did not touch, and native
-    # empty-list behaviour has not been verified, so neither can safely clear a binding here.
+    # Every one of the six events is written. kill and spawn get exactly the recorded list (an
+    # empty list clears the binding); an MBS event gets its one sound (Get-KvkAudioEdit refuses
+    # anything else).
     $audioEdits=@()
     $audioSources=@()
-    if ($null -ne $profile.audio) {
-        $installedSounds=Get-KvkInstalledSounds $Context
-        foreach ($audioEventName in $script:KvkAudioEvents.Keys) {
-            # `@($null)` is a one-element array, and an `if` expression that yields `@()` hands
-            # back $null, not an empty array (the pipeline unrolls it). So the whole expression is
-            # wrapped: an absent event (no output) and a saved `[]` both give zero records.
-            # A Profile omits events it never recorded, and under StrictMode 3.0 dot access on a
-            # missing key or property throws, so the event is looked up without assuming a type.
-            $audioMap=$profile.audio
-            $raw=$null
-            if ($audioMap -is [Collections.IDictionary]) { if ($audioMap.Keys -contains $audioEventName) { $raw=$audioMap[$audioEventName] } }
-            elseif ($null -ne $audioMap.PSObject.Properties[$audioEventName]) { $raw=$audioMap.PSObject.Properties[$audioEventName].Value }
-            $records=@(if ($null -ne $raw) { $raw })
-            if ($records.Count -eq 0) { continue }
-            $names=@()
-            foreach ($record in $records) {
-                $entry=Resolve-KvkProfileReference $record.path $installedSounds.Sounds
-                if ($null -eq $entry) { Throw-KvkFailure 'ENGINE_ERROR' "Profile 引用的音效文件不在游戏中：「$($record.path)」" "The Sound file the Profile refers to is not in the game: `"$($record.path)`"." }
-                $names+=$entry.Name
-                $audioSources+=[pscustomobject]@{Path=$entry.Path;Hash=(Get-KvkHash $entry.Path)}
-            }
-            # A single-value event with more than one resolved name is refused here, by the
-            # same check New-KvkAudioPlan uses for a direct edit.
-            $audioEdits+=(Get-KvkAudioEdit $Context $audioEventName ([string[]]$names))
+    $installedSounds=Get-KvkInstalledSounds $Context
+    foreach ($audioEventName in $script:KvkAudioEvents.Keys) {
+        $records=@($profile.audio[$audioEventName])
+        $names=@()
+        foreach ($record in $records) {
+            $entry=Resolve-KvkProfileReference $record.path $installedSounds.Sounds
+            if ($null -eq $entry) { Throw-KvkFailure 'ENGINE_ERROR' "Profile 引用的音效文件不在游戏中：「$($record.path)」" "The Sound file the Profile refers to is not in the game: `"$($record.path)`"." }
+            $names+=$entry.Name
+            $audioSources+=[pscustomobject]@{Path=$entry.Path;Hash=(Get-KvkHash $entry.Path)}
         }
-    }
-
-    # `profile.enemy` is read past on purpose: a Profile no longer manages the enemy (2026-09-21),
-    # so even a legacy reference -- one a v0.1.2/early v0.1.3 file may still carry, possibly to a
-    # file the game no longer has -- contributes nothing here and can never refuse this apply.
-
-    if ($null -eq $schemeSource -and $audioEdits.Count -eq 0) {
-        Throw-KvkFailure 'ENGINE_ERROR' '这个 Profile 没有可应用的内容。' 'This Profile has nothing to apply.'
+        $audioEdits+=(Get-KvkAudioEdit $Context $audioEventName ([string[]]$names))
     }
 
     # Merge order: scheme -> audio (in the audio adapter's own event order). The two writers' key
     # sets do not overlap, so there is exactly one edit list and exactly one Item.
-    $edits=@()
-    if ($null -ne $schemeSource) { $edits+=@($schemeSource.Edits) }
-    $edits+=@($audioEdits)
+    $edits=@($schemeSource.Edits)+@($audioEdits)
 
     $target=Get-KvkTarget $Context 'primary/PrimaryUserSettings.json'
     if (-not [IO.File]::Exists($target)) { Throw-KvkFailure 'ENGINE_ERROR' '找不到 PrimaryUserSettings.json；请先启动一次游戏并正常退出。' 'PrimaryUserSettings.json was not found. Run the game once and exit normally first.' }
@@ -111,9 +83,7 @@ function New-KvkProfileApplyPlan($Context,[string]$ProfileId) {
     if ($null -eq $staged) { Throw-KvkFailure 'PLAN_STALE' '准备预览期间 Profile 应用的来源发生了变化。' 'A Profile apply source changed during preview preparation.' }
     $stage=$staged.Stage;$plan=$staged.Plan
 
-    $sources=@()
-    if ($null -ne $schemeSource) { $sources+=[pscustomobject]@{Path=$schemeSource.ThemePath;Hash=$schemeSource.ThemeHash} }
-    $sources+=@($audioSources)
+    $sources=@([pscustomobject]@{Path=$schemeSource.ThemePath;Hash=$schemeSource.ThemeHash})+@($audioSources)
 
     return [pscustomobject]@{ProfileId=$ProfileId;ProfilePath=$profilePath;ProfileHash=$profileHash;Sources=@($sources);
         SettingsHash=$settingsHash;Changes=@($changes);InstallerPlan=$plan}

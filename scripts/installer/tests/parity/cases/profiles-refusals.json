@@ -5,10 +5,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "Daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -23,7 +23,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -32,10 +56,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "con",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -50,7 +74,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -59,10 +107,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -77,50 +125,32 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
-          }
-        }
-      }
-    },
-    {
-      "request": "profileSave",
-      "args": {
-        "profile": {
-          "schemaVersion": 1,
-          "id": "daily",
-          "name": "Daily 日常",
-          "scheme": {
-            "name": "Dark",
-            "path": "C:\\Themes\\Dark.json"
-          }
-        }
-      }
-    },
-    {
-      "request": "profileSave",
-      "args": {
-        "profile": {
-          "schemaVersion": 1,
-          "id": "daily",
-          "name": "Daily 日常",
-          "scheme": {
-            "name": "Dark",
-            "path": "C:\\Themes\\Dark.json"
-          },
-          "audio": {
-            "kill": [
+            "spawn": [],
+            "mbsGood": [
               {
-                "name": "hit",
-                "path": "C:\\sounds\\hit.wav"
-              },
-              {
-                "name": "k",
-                "path": "D:/s/k.OGG"
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
               }
             ],
-            "spawn": []
-          },
-          "extra": 1
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
         }
       }
     },
@@ -131,22 +161,9 @@
           "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
-          },
-          "audio": {
-            "kill": [
-              {
-                "name": "hit",
-                "path": "C:\\sounds\\hit.wav"
-              },
-              {
-                "name": "k",
-                "path": "D:/s/k.OGG"
-              }
-            ],
-            "spawn": []
           }
         }
       }
@@ -155,10 +172,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": "1",
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -173,8 +190,33 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
-          }
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          },
+          "extra": 1
         }
       }
     },
@@ -183,9 +225,111 @@
       "args": {
         "profile": {
           "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": "2",
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
           "id": "daily",
           "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -200,7 +344,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -209,10 +377,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "line\nbreak",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -227,7 +395,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -236,10 +428,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "  ",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -254,7 +446,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -263,10 +479,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "http://x/Dark.json"
           },
@@ -281,7 +497,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -290,10 +530,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "\\\\?\\C:\\Dark.json"
           },
@@ -308,7 +548,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -317,10 +581,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Dark.txt"
           },
@@ -335,7 +599,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -344,10 +632,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark"
           },
           "audio": {
@@ -361,7 +649,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -370,10 +682,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -381,7 +693,32 @@
             "kill": {
               "name": "hit",
               "path": "C:\\hit.wav"
-            }
+            },
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -390,10 +727,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -659,6 +996,31 @@
                 "name": "hit",
                 "path": "C:\\hit.wav"
               }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
             ]
           }
         }
@@ -668,14 +1030,40 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
           "audio": {
+            "kill": [],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
             "boom": []
           }
         }
@@ -685,10 +1073,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "daily",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -697,6 +1085,31 @@
               {
                 "name": "hit",
                 "path": "C:\\hit.mp3"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
               }
             ]
           }
@@ -734,10 +1147,1150 @@
       }
     },
     {
-      "line": "{\"v\":1,\"requestId\":\"dup\",\"op\":\"profileSave\",\"args\":{\"profile\":{\"schemaVersion\":1,\"id\":\"d\",\"id\":\"e\",\"name\":\"N\",\"scheme\":null,\"audio\":null}}}"
+      "line": "{\"v\":1,\"requestId\":\"dup\",\"op\":\"profileSave\",\"args\":{\"profile\":{\"schemaVersion\":2,\"id\":\"d\",\"id\":\"e\",\"name\":\"N\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:\\\\Themes\\\\Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}]}}}}"
     },
     {
       "line": "{\"v\":1,\"requestId\":\"case\",\"op\":\"profileRead\",\"args\":{\"id\":\"daily\",\"ID\":\"x\"}}"
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          },
+          "crosshair": {
+            "name": "x",
+            "path": "C:\\c\\x.png"
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          },
+          "enemy": null
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          },
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "crosshair": null,
+          "enemy": null
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 3,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          },
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": null,
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": null
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": null,
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              },
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              },
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              },
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              },
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "theme": {
+            "name": "x",
+            "path": "C:\\x.wav"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "request": "profileList",

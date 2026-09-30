@@ -907,36 +907,28 @@ function Assert-KvkProfileReference($Value,[string[]]$Extensions) {
     Assert-KvkProfileText $Value.name 4096 '名称' 'name'
     Assert-KvkProfileFile $Value.path $Extensions
 }
-# v0.1.3 removed the crosshair slot from a Profile: a crosshair cannot be switched from outside the
-# game, so recording one promised something the App could not keep. 2026-09-21 removed the enemy
-# slot the same way: a Profile no longer manages the enemy. Neither key is written any more, but a
-# Profile saved before either removal still carries the key and must keep opening. So `crosshair`
-# and `enemy` are both OPTIONAL, neither value is looked at, and Remove-KvkProfileLegacy takes both
-# off every Profile this engine returns or writes -- an unvalidated value can therefore never reach
-# the disk. The same rule lives in profiles/model.ts and in Rust's profiles.rs; the fixtures in
-# tests/installer/profiles/ hold all three layers to it.
-function Remove-KvkProfileLegacy($Profile) {
-    # Remove is safe on a missing key for both a Hashtable and a generic Dictionary; `Contains` is not
-    # callable on the latter from PowerShell (it is an explicit interface member).
-    foreach($legacyKey in @('crosshair','enemy')){
-        if($Profile -is [Collections.IDictionary]){ $null=$Profile.Remove($legacyKey) }
-        elseif($null -ne $Profile -and $null -ne $Profile.PSObject.Properties[$legacyKey]){ $Profile.PSObject.Properties.Remove($legacyKey) }
-    }
-}
+# Profile format v2 (2026-09-30): a Profile is a complete snapshot. `theme` and `audio` are both
+# required and never null, all six audio events are required, and no other key is accepted -- the
+# legacy `crosshair` and `enemy` slots of v1 are refused like any unknown field. A Profile of any
+# other schemaVersion (v1 included) is not supported and is not migrated. The same rule lives in
+# profiles/model.ts and in Rust's profiles.rs.
 function Assert-KvkProfile($Profile) {
-    Assert-KvkProfileObject $Profile @('schemaVersion','id','name','scheme','audio') @('crosshair','enemy')
-    if(-not (Test-KvkProfileNumber $Profile.schemaVersion) -or $Profile.schemaVersion -ne 1){Throw-KvkFailure 'ENGINE_ERROR' '不支持此 Profile 版本。' 'This Profile version is not supported.'}
+    # The version is judged first, so a v1 file (which also carries crosshair/enemy) is reported as
+    # an unsupported version, not as an unknown field.
+    if($Profile -is [Collections.IDictionary] -and @($Profile.Keys) -ccontains 'schemaVersion'){
+        if(-not (Test-KvkProfileNumber $Profile['schemaVersion']) -or $Profile['schemaVersion'] -ne 2){Throw-KvkFailure 'ENGINE_ERROR' '不支持此 Profile 版本。' 'This Profile version is not supported.'}
+    }
+    Assert-KvkProfileObject $Profile @('schemaVersion','id','name','theme','audio')
+    if(-not (Test-KvkProfileNumber $Profile.schemaVersion) -or $Profile.schemaVersion -ne 2){Throw-KvkFailure 'ENGINE_ERROR' '不支持此 Profile 版本。' 'This Profile version is not supported.'}
     Assert-KvkProfileId $Profile.id
     Assert-KvkProfileText $Profile.name 128 '名称' 'name'
-    if($null -ne $Profile.scheme){Assert-KvkProfileReference $Profile.scheme @('.json')}
-    if($null -ne $Profile.audio){
-        Assert-KvkProfileObject $Profile.audio @() @('kill','spawn','mbsGood','mbsOkay','mbsBad','mbsChangeNow')
-        $keys=if($Profile.audio -is [Collections.IDictionary]){@($Profile.audio.Keys)}else{@($Profile.audio.PSObject.Properties.Name)}
-        foreach($key in $keys){
-            $files=$Profile.audio.$key
-            if($files -isnot [array] -or $files.Count -gt 64){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 音效必须是最多 64 项的数组。' 'Profile sounds must be an array of at most 64 entries.'}
-            foreach($file in $files){Assert-KvkProfileReference $file @('.wav','.ogg')}
-        }
+    Assert-KvkProfileReference $Profile.theme @('.json')
+    Assert-KvkProfileObject $Profile.audio @('kill','spawn','mbsGood','mbsOkay','mbsBad','mbsChangeNow')
+    foreach($key in @('kill','spawn','mbsGood','mbsOkay','mbsBad','mbsChangeNow')){
+        $files=$Profile.audio.$key
+        if($files -isnot [array] -or $files.Count -gt 64){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 音效必须是最多 64 项的数组。' 'Profile sounds must be an array of at most 64 entries.'}
+        if($key -like 'mbs*' -and $files.Count -ne 1){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 的 MBS 音效必须恰好一项。' 'A Profile MBS sound must have exactly one entry.'}
+        foreach($file in $files){Assert-KvkProfileReference $file @('.wav','.ogg')}
     }
     $json=ConvertTo-Json -InputObject $Profile -Depth 10 -Compress -ErrorAction Stop
     if([Text.Encoding]::UTF8.GetByteCount($json) -gt 262144){Throw-KvkFailure 'ENGINE_ERROR' 'Profile JSON 超过 256 KiB。' 'The Profile JSON is larger than 256 KiB.'}
@@ -978,7 +970,6 @@ function Read-KvkProfileFile([string]$Path,[string]$Id) {
         $document=[Text.Json.JsonDocument]::Parse($json)
         $profile=ConvertFrom-KvkProfileElement $document.RootElement
         Assert-KvkProfile $profile
-        Remove-KvkProfileLegacy $profile
         if($profile.id -cne $Id){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 标识与文件名不一致。' 'The Profile id does not match its file name.'}
         return $profile
     }catch{
@@ -1032,7 +1023,6 @@ function Move-KvkProfileAtomic([string]$TemporaryPath,[string]$Path) {
 }
 function Save-KvkProfile([string]$LocalDataRoot,$Profile) {
     Assert-KvkProfile $Profile
-    Remove-KvkProfileLegacy $Profile
     $path=Get-KvkProfilePath $LocalDataRoot $Profile.id
     # An existing malformed document must be explicitly deleted, never silently replaced.
     $null=Get-KvkProfile $LocalDataRoot $Profile.id

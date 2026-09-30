@@ -5,34 +5,37 @@
       "text": "{\"schemaVersion\":1,"
     },
     "Aimloom/profiles/Upper.json": {
-      "text": "{\"schemaVersion\": 1, \"id\": \"upper\", \"name\": \"N upper\", \"scheme\": null, \"audio\": null}"
+      "text": "{\"schemaVersion\": 2, \"id\": \"upper\", \"name\": \"N upper\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:\\\\Themes\\\\Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}]}}"
     },
     "Aimloom/profiles/a.b.json": {
-      "text": "{\"schemaVersion\": 1, \"id\": \"a\", \"name\": \"N a\", \"scheme\": null, \"audio\": null}"
+      "text": "{\"schemaVersion\": 2, \"id\": \"a\", \"name\": \"N a\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:\\\\Themes\\\\Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}]}}"
     },
     "Aimloom/profiles/dir.json": {
       "dir": true
     },
     "Aimloom/profiles/mismatch.json": {
-      "text": "{\"schemaVersion\": 1, \"id\": \"other\", \"name\": \"N other\", \"scheme\": null, \"audio\": null}"
+      "text": "{\"schemaVersion\": 2, \"id\": \"other\", \"name\": \"N other\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:\\\\Themes\\\\Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}]}}"
     },
     "Aimloom/profiles/bom.json": {
-      "text": "﻿{\"schemaVersion\": 1, \"id\": \"bom\", \"name\": \"N\", \"scheme\": null, \"audio\": null}"
+      "text": "﻿{\"schemaVersion\": 2, \"id\": \"bom\", \"name\": \"N\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:\\\\Themes\\\\Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}]}}"
     },
     "Aimloom/profiles/dup.json": {
-      "text": "{\"schemaVersion\":1,\"id\":\"dup\",\"id\":\"dup\",\"name\":\"N\",\"scheme\":null,\"audio\":null}"
+      "text": "{\"schemaVersion\":2,\"id\":\"dup\",\"id\":\"dup\",\"name\":\"N\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:\\\\Themes\\\\Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}]}}"
     },
     "Aimloom/profiles/legacy.json": {
       "text": "{\"schemaVersion\": 1, \"id\": \"legacy\", \"name\": \"Old\", \"scheme\": null, \"audio\": null, \"crosshair\": {\"x\": 1}, \"enemy\": null}"
     },
     "Aimloom/profiles/ok.json": {
-      "text": "{\"schemaVersion\": 1, \"id\": \"ok\", \"name\": \"N ok\", \"scheme\": null, \"audio\": null}"
+      "text": "{\"schemaVersion\": 2, \"id\": \"ok\", \"name\": \"N ok\", \"theme\": {\"name\": \"Dark\", \"path\": \"C:\\\\Themes\\\\Dark.json\"}, \"audio\": {\"kill\": [], \"spawn\": [], \"mbsGood\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsOkay\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsBad\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}], \"mbsChangeNow\": [{\"name\": \"g\", \"path\": \"C:\\\\sounds\\\\g.wav\"}]}}"
     },
     "Aimloom/profiles/readme.txt": {
       "text": "x"
     },
     "Aimloom/profiles/trailing.json": {
-      "text": "{\"schemaVersion\":1,\"id\":\"trailing\",\"name\":\"N\",\"scheme\":null,\"audio\":null,}"
+      "text": "{\"schemaVersion\":2,\"id\":\"trailing\",\"name\":\"N\",\"theme\":{\"name\":\"Dark\",\"path\":\"C:\\\\Themes\\\\Dark.json\"},\"audio\":{\"kill\":[],\"spawn\":[],\"mbsGood\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsOkay\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsBad\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}],\"mbsChangeNow\":[{\"name\":\"g\",\"path\":\"C:\\\\sounds\\\\g.wav\"}]},}"
+    },
+    "Aimloom/profiles/v1-plain.json": {
+      "text": "{\"schemaVersion\": 1, \"id\": \"v1-plain\", \"name\": \"Old\", \"scheme\": null, \"audio\": null}"
     }
   },
   "steps": [
@@ -50,10 +53,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "broken",
           "name": "Daily 日常",
-          "scheme": {
+          "theme": {
             "name": "Dark",
             "path": "C:\\Themes\\Dark.json"
           },
@@ -68,7 +71,31 @@
                 "path": "D:/s/k.OGG"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "g",
+                "path": "C:\\sounds\\g.wav"
+              }
+            ]
           }
         }
       }
@@ -77,6 +104,12 @@
       "request": "profileRead",
       "args": {
         "id": "legacy"
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "v1-plain"
       }
     }
   ]
