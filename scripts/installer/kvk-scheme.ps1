@@ -10,7 +10,10 @@ function Get-KvkThemeDirectory($Context) {
 
 function Read-KvkThemeFile([string]$Path) {
     $file=Get-KvkTextFile $Path
-    try { $theme=$file.Text | ConvertFrom-Json -AsHashtable -Depth 32 -ErrorAction Stop } catch { Throw-KvkFailure 'ENGINE_ERROR' "主题文件不是有效的 JSON: $([IO.Path]::GetFileName($Path))" "The theme file is not valid JSON: `"$([IO.Path]::GetFileName($Path))`"." }
+    # ConvertFrom-Json otherwise turns a themeName that looks like a date into a DateTime, and the
+    # theme was then refused as having no themeName.
+    $strings=$script:KvkJsonStrings
+    try { $theme=$file.Text | ConvertFrom-Json -AsHashtable -Depth 32 @strings -ErrorAction Stop } catch { Throw-KvkFailure 'ENGINE_ERROR' "主题文件不是有效的 JSON: $([IO.Path]::GetFileName($Path))" "The theme file is not valid JSON: `"$([IO.Path]::GetFileName($Path))`"." }
     if ($theme -isnot [Collections.IDictionary]) { Throw-KvkFailure 'ENGINE_ERROR' "主题文件必须是一个 JSON 对象: $([IO.Path]::GetFileName($Path))" "The theme file must be a JSON object: `"$([IO.Path]::GetFileName($Path))`"." }
     $name=$theme['themeName']
     if ($name -isnot [string] -or [string]::IsNullOrWhiteSpace($name)) { Throw-KvkFailure 'ENGINE_ERROR' "主题文件缺少 themeName: $([IO.Path]::GetFileName($Path))" "The theme file has no themeName: `"$([IO.Path]::GetFileName($Path))`"." }

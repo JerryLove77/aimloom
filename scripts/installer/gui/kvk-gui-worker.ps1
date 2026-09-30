@@ -49,7 +49,10 @@ while ($true) {
     if ($null -eq $line) { break }
     if ([Text.Encoding]::UTF8.GetByteCount($line) -gt 16777216) { Write-KvkGuiParseFailure 'Request exceeds the 16 MiB limit.';continue }
     try {
-        $request=ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32 -NoEnumerate -ErrorAction Stop
+        # A request string that looks like a date (a folder or file name) stays a string instead
+        # of failing the service's string checks as a DateTime (see $KvkJsonStrings).
+        $strings=$script:KvkJsonStrings
+        $request=ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32 -NoEnumerate @strings -ErrorAction Stop
         # Profile strings are literal editor data; ConvertFrom-Json may promote
         # date-looking strings. Keep the established parser for game operations.
         if ((Test-KvkGuiMap $request) -and 'op' -cin @(Get-KvkGuiKeys $request) -and (Get-KvkGuiValue $request 'op') -cin @('profileList','profileRead','profileSave','profileDelete','profileAssetList','profileAssetRead')) {

@@ -109,7 +109,8 @@ function Invoke-ParityCase([string]$Name,$Case) {
                 else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $lastPlan)} }
                 # The request travels as a JSON line and is parsed exactly as the worker parses it.
                 $line=ConvertTo-Json -InputObject $value -Depth 32 -Compress
-                $request=ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32 -NoEnumerate
+                $strings=$script:KvkJsonStrings
+                $request=ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32 -NoEnumerate @strings
                 $progress=[Collections.Generic.List[string]]::new()
                 $requestId=$null; $operationId=$null
                 if (Test-KvkGuiMap $request) {
