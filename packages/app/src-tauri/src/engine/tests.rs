@@ -375,3 +375,20 @@ fn the_release_runtime_root_finds_a_sample_pack_beside_the_exe() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
+/// An engine bug in one request answers that request with a bilingual ENGINE_ERROR; the worker
+/// keeps running, as the PowerShell worker did.
+#[test]
+fn a_panicking_request_is_answered_and_the_next_one_still_runs() {
+    let (reply, panicked) = crate::engine::session::guard_request_for_test(Json::str("r1"), || panic!("an engine bug"));
+    assert!(panicked);
+    assert_eq!(reply.get("requestId").and_then(Json::as_str), Some("r1"));
+    assert_eq!(reply.get("ok"), Some(&Json::Bool(false)));
+    let error = reply.get("error").unwrap();
+    assert_eq!(error.get("code").and_then(Json::as_str), Some("ENGINE_ERROR"));
+    assert!(error.get("message").and_then(Json::as_str).unwrap().contains("引擎内部出错"));
+    assert!(crate::installer::protocol::is_english(error.get("messageEn").and_then(Json::as_str).unwrap()));
+    let (fine, panicked) = crate::engine::session::guard_request_for_test(Json::str("r2"), || Json::str("ok"));
+    assert!(!panicked);
+    assert_eq!(fine, Json::str("ok"));
+}
+
