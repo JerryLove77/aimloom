@@ -13,8 +13,8 @@ import type { TrainingProfile } from '../../../src/profiles/model'
  * 当前使用 when the game holds exactly what it records, and a Profile with nothing to apply says so.
  */
 const themes = [
-  { name: 'clover', file: 'clover bubbles.json', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\clover bubbles.json', readable: true },
-  { name: 'Clean Dark', file: 'Clean Dark.json', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\Clean Dark.json', readable: true },
+  { name: 'clover', file: 'clover bubbles.json', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\clover bubbles.json', readable: true, duplicateName: false },
+  { name: 'Clean Dark', file: 'Clean Dark.json', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\Clean Dark.json', readable: true, duplicateName: false },
 ]
 const sounds = [
   { name: 'Bubble pop 4', file: 'Bubble pop 4.ogg', path: 'D:\\Game\\FPSAimTrainer\\sounds\\Bubble pop 4.ogg', ambiguous: false },
