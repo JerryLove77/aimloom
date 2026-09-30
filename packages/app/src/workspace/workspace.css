@@ -20,7 +20,8 @@
 .ws-brand svg { width:22px; height:22px }
 .ws-sidebar nav { display:flex; flex-direction:column; gap:2px }
 .ws-sidebar nav .ws-nav-top { margin:0; height:34px; padding:0 10px; display:flex; align-items:center; font:600 14px var(--ki-body-font); color:var(--ki-text) }
-.ws-nav-children { display:flex; flex-direction:column; gap:2px; margin-bottom:10px }
+.ws-nav-children { display:flex; flex-direction:column; gap:2px }
+.ws-sidebar nav > .ws-nav-top:first-child { margin-bottom:6px }
 .ws-sidebar nav .ws-nav-children button { padding-left:24px }
 .ws-nav-divider { margin:3px 10px 3px 24px; border:0; border-top:1px solid var(--ki-line) }
 .ws-sidebar nav button { display:flex; align-items:center; gap:8px; height:30px; padding:0 10px; border:0; border-radius:var(--ws-radius-row); background:transparent; color:var(--ki-text); font:13px var(--ki-body-font); text-align:left; cursor:pointer; transition:background var(--ki-motion) }
