@@ -360,3 +360,18 @@ fn a_saved_copy_replies_with_the_names_the_app_decodes() {
     let decoded: crate::installer::protocol::ExportedFile = serde_json::from_str(&data.to_compact()).unwrap();
     assert_eq!(decoded.bytes, 3);
 }
+
+/// A release's runtime root is `<exe dir>\scripts`, which is not shipped: `discover` still looks
+/// for the sample pack beside `Aimloom.exe`, through the root's parent.
+#[test]
+fn the_release_runtime_root_finds_a_sample_pack_beside_the_exe() {
+    let dir = crate::engine::paths::temp_dir_without_links().join(format!("kvk-runtime-root-{}", std::process::id()));
+    let _ = std::fs::remove_dir_all(&dir);
+    std::fs::create_dir_all(dir.join("KVK Settings 2025")).unwrap();
+    let root = crate::engine::runtime_root(&dir);
+    assert!(!root.exists(), "the scripts folder is never created");
+    let found = crate::engine::discover::default_pack(&root.to_string_lossy()).expect("the pack beside the exe");
+    assert!(found.replace('\\', "/").ends_with("KVK Settings 2025"), "{found}");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+

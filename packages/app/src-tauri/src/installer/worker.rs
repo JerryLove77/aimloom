@@ -39,6 +39,13 @@ impl WorkerConfig {
 
     pub fn engine(&self) -> EngineKind { self.engine }
 
+    /// The Rust engine's worker: `program` started with `--worker`. The App passes its own
+    /// executable; integration tests pass the test build of it (`CARGO_BIN_EXE_app`). `log_root` is
+    /// the `%LOCALAPPDATA%` the worker is started with and logs under.
+    pub fn rust_worker(program: PathBuf, log_root: Option<PathBuf>) -> Self {
+        Self { program, args: vec![RUST_WORKER_FLAG.into()], engine: EngineKind::Rust, log_root }
+    }
+
     /// `local_app_data` is the runtime's own `%LOCALAPPDATA%`: the worker log goes under it and the
     /// worker is started with it, so a runtime pointed at a test folder never reaches the real one.
     pub fn production(engine: EngineKind, local_app_data: Option<PathBuf>) -> Result<Self, Issue> {
@@ -56,7 +63,7 @@ impl WorkerConfig {
             if engine == EngineKind::Rust {
                 // The Rust engine is this executable, started again as a JSONL worker.
                 let program = std::env::current_exe().map_err(|e| Issue::worker(format!("could not locate Aimloom.exe: {e}")))?;
-                return Ok(Self { program, args: vec![RUST_WORKER_FLAG.into()], engine, log_root });
+                return Ok(Self::rust_worker(program, log_root));
             }
             // <exe dir>\pwsh: the PowerShell 7 the release ships. Unblocked before it is tried,
             // for the same reason as the scripts (see unblock_own_scripts).
@@ -407,7 +414,8 @@ impl WorkerClient {
             };
         });
         let process = client.process.clone();
-        thread::spawn(move || read_stdout(stdout, pending, jobs, protocol_ended, process));
+        let close_input = move || { process.lock().unwrap().stdin.take(); };
+        thread::spawn(move || read_stdout(stdout, pending, jobs, protocol_ended, close_input));
         Ok(client)
     }
 
@@ -501,7 +509,9 @@ fn read_stdout(
     pending: Arc<Mutex<HashMap<String, Pending>>>,
     jobs: Arc<Mutex<JobManager>>,
     protocol_ended: Arc<AtomicBool>,
-    process: Arc<Mutex<ProcessState>>,
+    // Closes the worker's stdin, asking it to exit after its current request. A closure so the
+    // protocol handling can be tested without a process.
+    close_input: impl Fn(),
 ) {
     let mut reader = BufReader::new(stdout);
     let result = (|| -> Result<(), Issue> {
@@ -522,7 +532,7 @@ fn read_stdout(
                                     // The worker completed its current request, but the final report is
                                     // unusable. Close only stdin so it exits naturally and reconciliation
                                     // can verify that exit before starting a replacement worker.
-                                    process.lock().unwrap().stdin.take();
+                                    close_input();
                                 }
                             },
                             Err(issue) => {
@@ -537,7 +547,7 @@ fn read_stdout(
                                     jobs.lock().unwrap().mark_unknown(&operation_id, issue);
                                     // Finish the current call and let the persistent worker exit on stdin EOF.
                                     // This makes later reconciliation possible without killing a process that may write.
-                                    process.lock().unwrap().stdin.take();
+                                    close_input();
                                 }
                             }
                         },
@@ -558,13 +568,110 @@ fn read_stdout(
     })();
 
     protocol_ended.store(true, Ordering::Release);
-    process.lock().unwrap().stdin.take();
+    close_input();
     let issue = result.err().unwrap_or_else(|| Issue::worker("worker protocol ended"));
     let remaining = std::mem::take(&mut *pending.lock().unwrap());
     for (_, request) in remaining {
         match request {
             Pending::Read(tx) => { let _ = tx.send(Err(issue.clone())); }
             Pending::Execute { operation_id } => jobs.lock().unwrap().mark_unknown(&operation_id, issue.clone()),
+        }
+    }
+}
+
+#[cfg(test)]
+mod protocol_tests {
+    //! What the App does with each kind of worker output, driven through `read_stdout` without a
+    //! process. These replaced tests that needed a real PowerShell at a fixed path and so were
+    //! skipped on every machine.
+    use super::*;
+    use crate::installer::protocol::{Confirmation, JobState};
+    use std::sync::atomic::AtomicUsize;
+
+    struct Run { jobs: Arc<Mutex<JobManager>>, closes: usize, ended: bool, read: Option<Result<Value, Issue>> }
+
+    /// One execute (`r1`, operation `op-1`) and one read (`r2`) are pending; `lines` is everything
+    /// the worker writes before it exits.
+    fn run(lines: &[&str]) -> Run {
+        let jobs = Arc::new(Mutex::new(JobManager::default()));
+        {
+            let mut guard = jobs.lock().unwrap();
+            guard.record_plan("plan-1".into(), "C:\\Game".into(), crate::installer::protocol::PreviewKind::Install);
+            guard.reserve(ExecuteRequest { operation_id: "op-1".into(), plan_id: "plan-1".into(), confirmation: Confirmation::Install, allow_conflicts: false }).unwrap();
+        }
+        let (tx, rx) = mpsc::channel();
+        let pending = Arc::new(Mutex::new(HashMap::from([
+            ("r1".to_string(), Pending::Execute { operation_id: "op-1".into() }),
+            ("r2".to_string(), Pending::Read(tx)),
+        ])));
+        let ended = Arc::new(AtomicBool::new(false));
+        let closes = Arc::new(AtomicUsize::new(0));
+        let counter = closes.clone();
+        let output = lines.iter().map(|line| format!("{line}\n")).collect::<String>();
+        read_stdout(std::io::Cursor::new(output.into_bytes()), pending, jobs.clone(), ended.clone(), move || { counter.fetch_add(1, Ordering::SeqCst); });
+        let read = rx.try_recv().ok();
+        Run { jobs, closes: closes.load(Ordering::SeqCst), ended: ended.load(Ordering::SeqCst), read }
+    }
+    fn state(run: &Run) -> JobState { run.jobs.lock().unwrap().get("op-1").unwrap().state }
+    const FINAL: &str = r#"{"v":1,"requestId":"r1","type":"reply","ok":true,"data":{"status":"completed","batchId":"b1","items":[],"errors":[],"errorsEn":[]}}"#;
+    const READ: &str = r#"{"v":1,"requestId":"r2","type":"reply","ok":true,"data":"closed"}"#;
+
+    #[test]
+    fn a_valid_final_report_finishes_the_job_and_input_closes_only_at_exit() {
+        let run = run(&[FINAL, READ]);
+        assert_eq!(state(&run), JobState::Finished);
+        assert_eq!(run.read.unwrap().unwrap(), Value::from("closed"));
+        assert_eq!(run.closes, 1, "only the end of output closes the input");
+        assert!(run.ended);
+    }
+
+    #[test]
+    fn a_worker_that_exits_with_an_execute_pending_leaves_it_unknown() {
+        let run = run(&[READ]);
+        assert_eq!(state(&run), JobState::Unknown);
+        let error = run.jobs.lock().unwrap().get("op-1").unwrap().error.unwrap();
+        assert_eq!(error.code, ErrorCode::WorkerUnavailable);
+        assert_eq!(error.message, WORKER_EXITED);
+        assert!(run.ended);
+    }
+
+    #[test]
+    fn a_pending_read_gets_the_exit_issue() {
+        let run = run(&[FINAL]);
+        assert_eq!(run.read.unwrap().unwrap_err().code, ErrorCode::WorkerUnavailable);
+    }
+
+    #[test]
+    fn a_malformed_final_report_is_unknown_and_closes_the_input_at_once() {
+        let run = run(&[r#"{"v":1,"requestId":"r1","type":"reply","ok":true,"data":{"status":"invalid"}}"#, READ]);
+        assert_eq!(state(&run), JobState::Unknown);
+        assert_eq!(run.closes, 2, "closed after the bad report, and again at exit");
+    }
+
+    #[test]
+    fn a_safely_rejected_execute_fails_without_closing_the_input() {
+        let run = run(&[r#"{"v":1,"requestId":"r1","type":"reply","ok":false,"error":{"code":"GAME_RUNNING","message":"游戏正在运行","messageEn":"The game is running.","path":null}}"#, READ]);
+        assert_eq!(state(&run), JobState::Failed);
+        assert_eq!(run.closes, 1);
+    }
+
+    #[test]
+    fn an_engine_error_on_execute_is_unknown_and_closes_the_input() {
+        let run = run(&[r#"{"v":1,"requestId":"r1","type":"reply","ok":false,"error":{"code":"ENGINE_ERROR","message":"出错了","messageEn":"Something failed.","path":null}}"#, READ]);
+        assert_eq!(state(&run), JobState::Unknown);
+        assert_eq!(run.closes, 2);
+    }
+
+    #[test]
+    fn a_reply_to_an_unknown_request_or_stray_progress_ends_the_protocol() {
+        // The progress line names the execute's operation but arrives on the read's request id.
+        for line in [
+            r#"{"v":1,"requestId":"nobody","type":"reply","ok":true,"data":null}"#,
+            r#"{"v":1,"requestId":"r2","type":"progress","operationId":"op-1","data":{"phase":"installing","completed":1,"total":1,"currentFile":null,"batchId":null}}"#,
+        ] {
+            let run = run(&[line, FINAL]);
+            assert!(run.ended);
+            assert_eq!(state(&run), JobState::Unknown, "{line}");
         }
     }
 }
