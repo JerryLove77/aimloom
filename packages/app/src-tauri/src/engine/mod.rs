@@ -14,6 +14,7 @@ pub mod lists;
 pub mod manifest;
 pub mod paths;
 pub mod platform;
+pub mod profiles;
 pub mod session;
 pub mod settings;
 pub mod store;

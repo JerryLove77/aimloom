@@ -110,6 +110,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
     [IO.File]::WriteAllBytes($primary,[IO.File]::ReadAllBytes((Join-Path $fixtures $Case['fixture'])))
     if ($Case.Contains('gameFiles')) { Write-ParityFiles $game $Case['gameFiles'] $fixtures }
     if ($Case.Contains('packFiles')) { $null=[IO.Directory]::CreateDirectory($pack); Write-ParityFiles $pack $Case['packFiles'] $fixtures }
+    if ($Case.Contains('localFiles')) { Write-ParityFiles $local $Case['localFiles'] $fixtures }
     Clear-KvkDataRootMemo
     $session=New-KvkGuiSession -RuntimeRoot $installerRoot -LocalDataRoot $local
     $script:ProcessListings=0; $script:RunningFrom=$null
@@ -117,14 +118,25 @@ function Invoke-ParityCase([string]$Name,$Case) {
     $lock=$null; $lastPlan='<plan>'; $lastBatch='<batch>'; $number=0
     try {
         foreach ($step in $Case['steps']) {
-            if ($step.Contains('request') -or $step.Contains('raw')) {
+            if ($step.Contains('request') -or $step.Contains('raw') -or $step.Contains('line')) {
                 $number++
-                if ($step.Contains('raw')) { $value=$step['raw'] }
-                else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $pack $lastPlan $lastBatch)} }
-                # The request travels as a JSON line and is parsed exactly as the worker parses it.
-                $line=ConvertTo-Json -InputObject $value -Depth 32 -Compress
-                $strings=$script:KvkJsonStrings
-                $request=ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32 -NoEnumerate @strings
+                if ($step.Contains('line')) { $line=[string]$step['line'] }
+                else {
+                    if ($step.Contains('raw')) { $value=$step['raw'] }
+                    else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $pack $lastPlan $lastBatch)} }
+                    $line=ConvertTo-Json -InputObject $value -Depth 32 -Compress
+                }
+                # Parsed exactly as the worker parses a line (kvk-gui-worker.ps1).
+                $request=$null; $parseFailure=$null
+                try {
+                    $strings=$script:KvkJsonStrings
+                    $request=ConvertFrom-Json -InputObject $line -AsHashtable -Depth 32 -NoEnumerate @strings -ErrorAction Stop
+                    if ((Test-KvkGuiMap $request) -and 'op' -cin @(Get-KvkGuiKeys $request) -and (Get-KvkGuiValue $request 'op') -cin @('profileList','profileRead','profileSave','profileDelete','profileAssetList','profileAssetRead')) {
+                        $options=[Text.Json.JsonDocumentOptions]::new();$options.MaxDepth=32
+                        $document=[Text.Json.JsonDocument]::Parse($line,$options)
+                        try { $request=ConvertFrom-KvkProfileElement $document.RootElement } finally { $document.Dispose() }
+                    }
+                } catch { $parseFailure="Invalid JSON request: $($_.Exception.Message)" }
                 $progress=[Collections.Generic.List[string]]::new()
                 $requestId=$null; $operationId=$null
                 if (Test-KvkGuiMap $request) {
@@ -140,7 +152,8 @@ function Invoke-ParityCase([string]$Name,$Case) {
                     $data=[pscustomobject]@{phase=$event.Phase;completed=$event.Completed;total=$event.Total;currentFile=$event.CurrentFile;batchId=$event.BatchId}
                     $progress.Add((ConvertTo-Json -InputObject ([pscustomobject]@{v=1;requestId=$requestId;type='progress';operationId=$operationId;data=$data}) -Depth 32 -Compress))
                 }.GetNewClosure()
-                $reply=Invoke-KvkGuiRequest -Session $session -Request $request -Observer $observer
+                if ($null -ne $parseFailure) { $reply=[pscustomobject]@{v=1;requestId=$null;type='reply';ok=$false;error=(New-KvkGuiIssue 'ENGINE_ERROR' $parseFailure $parseFailure $null)} }
+                else { $reply=Invoke-KvkGuiRequest -Session $session -Request $request -Observer $observer }
                 if ($step.Contains('compare') -and $step['compare'] -ceq 'code') {
                     $code=$null; if (-not $reply.ok) { $code=$reply.error.code }
                     $text=ConvertTo-Json -InputObject ([ordered]@{ok=$reply.ok;code=$code}) -Compress

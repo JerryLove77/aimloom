@@ -1,0 +1,147 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "profileList",
+      "args": {}
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "daily"
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "legacy",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          },
+          "crosshair": {
+            "name": "x",
+            "path": "C:\\c\\x.png"
+          },
+          "enemy": {
+            "model": "Ghost"
+          }
+        }
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "legacy"
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1.0,
+          "id": "dbl",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "nulls",
+          "name": "Daily 日常",
+          "scheme": null,
+          "audio": null
+        }
+      }
+    },
+    {
+      "request": "profileList",
+      "args": {}
+    },
+    {
+      "request": "profileDelete",
+      "args": {
+        "id": "daily"
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "daily"
+      }
+    },
+    {
+      "request": "profileDelete",
+      "args": {
+        "id": "daily"
+      }
+    },
+    {
+      "request": "profileList",
+      "args": {}
+    }
+  ]
+}
