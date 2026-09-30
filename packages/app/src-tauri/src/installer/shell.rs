@@ -15,7 +15,26 @@ use serde_json::json;
 use super::protocol::{ErrorCode, Issue};
 use super::worker::worker_log_path;
 
-/// Opens `target` with explorer.exe; `failure` starts the message when Windows refuses.
+/// Opens a web or `steam://` address with the player's default handler (ShellExecute "open"),
+/// never through explorer.exe: explorer mistook `https://aimloom.dev/zh/explore/?kind=theme`
+/// (the `?`) for something else and opened the Documents folder instead (test PC, 0.1.6-test.6).
+#[cfg(target_os = "windows")]
+fn open_url(url: &str, code: ErrorCode, failure: &str) -> Result<(), Issue> {
+    use windows_sys::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE};
+    use windows_sys::Win32::UI::Shell::ShellExecuteW;
+    use windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+    let wide = |text: &str| text.encode_utf16().chain(std::iter::once(0)).collect::<Vec<u16>>();
+    let (verb, file) = (wide("open"), wide(url));
+    // ShellExecute may hand the address to a COM handler; this blocking thread initialises COM
+    // for itself, as the documentation asks. A second initialisation on a reused thread is fine.
+    unsafe { CoInitializeEx(std::ptr::null(), (COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE) as u32) };
+    let result = unsafe { ShellExecuteW(std::ptr::null_mut(), verb.as_ptr(), file.as_ptr(), std::ptr::null(), std::ptr::null(), SW_SHOWNORMAL) };
+    // Values above 32 mean success.
+    let code_value = result as isize;
+    if code_value > 32 { Ok(()) } else { Err(Issue::plain(code, format!("{failure}: ShellExecute returned {code_value}"))) }
+}
+
+/// Opens a folder with explorer.exe; `failure` starts the message when Windows refuses.
 #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
 fn open_with_explorer(target: impl AsRef<std::ffi::OsStr>, code: ErrorCode, failure: &str) -> Result<(), Issue> {
     use std::process::{Command, Stdio};
@@ -122,7 +141,7 @@ fn installer_open_download_blocking(lang: String, channel: String) -> Result<(),
     }
     #[cfg(target_os = "windows")]
     {
-        open_with_explorer(&url, ErrorCode::EngineError, "could not open the download page")
+        open_url(&url, ErrorCode::EngineError, "could not open the download page")
     }
 }
 
@@ -152,7 +171,7 @@ fn installer_open_explore_blocking(lang: String, kind: String) -> Result<(), Iss
     }
     #[cfg(target_os = "windows")]
     {
-        open_with_explorer(&url, ErrorCode::EngineError, "could not open the explorer")
+        open_url(&url, ErrorCode::EngineError, "could not open the explorer")
     }
 }
 
@@ -164,10 +183,10 @@ pub async fn installer_open_explore(lang: String, kind: String) -> Result<(), Is
 /// The Steam run URL for KovaaK (appid 824270), built here and nowhere else -- the front end
 /// sends no target at all, so there is nothing for the UI to override. Mirrors `download_url`'s
 /// role for `installer_open_download`: a fixed, validated address is what ever reaches
-/// `explorer.exe`, never a string carried in from a command argument.
+/// the shell, never a string carried in from a command argument.
 const STEAM_LAUNCH_URL: &str = "steam://rungameid/824270";
 
-/// Best effort, deliberately: this answers `Ok(())` once `explorer.exe` accepted the Steam URL,
+/// Best effort, deliberately: this answers `Ok(())` once the shell accepted the Steam URL,
 /// never once KovaaK has actually started -- that is unknowable from here, and a failed launch
 /// must never be read as a failed apply. The caller applies the Profile first and only calls this
 /// after that apply finished successfully.
@@ -178,7 +197,7 @@ fn installer_launch_game_blocking() -> Result<(), Issue> {
     }
     #[cfg(target_os = "windows")]
     {
-        open_with_explorer(STEAM_LAUNCH_URL, ErrorCode::EngineError, "could not start the game")
+        open_url(STEAM_LAUNCH_URL, ErrorCode::EngineError, "could not start the game")
     }
 }
 
