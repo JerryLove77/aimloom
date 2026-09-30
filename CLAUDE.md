@@ -23,12 +23,13 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
   and Profile JSON fields say `scheme` / `audio`, while the player sees Theme / Sounds. The Chinese
   page titles 「背景」 and 「音效」 and the sentences about what a page changes (应用背景 / "Apply
   background") keep their wording. Code, routes and file names for Quick import say `installer`.
-- **Profile** owns saved combinations (a Theme and Sounds) and its draft. The other sections own the
-  game's current configuration. Each Profile JSON stores {name, path} records, and audio keeps
-  ordered records per event. Profile Save writes JSON only; 应用 applies the saved JSON as one
-  batch. Profile Cancel discards only its draft and never reverses another section's confirmed
-  change. Current-page edits never rewrite Profile JSON. A legacy `crosshair` or `enemy` field in
-  a Profile is read and dropped, never written, and ignored by Apply, in all three layers.
+- **Profile** owns saved combinations and its draft. The other sections own the game's current
+  configuration. A Profile is a **complete snapshot** (format v2, 2026-09-30): `theme` and all six
+  sound events as {name, path} records, kill and spawn possibly empty (no sound), each MBS event
+  exactly one; a new one starts as the game is. There is no "keep current", and version 1 is
+  refused in every layer (no data migration). Profile Save writes JSON only; 应用 applies all
+  seven parts as one batch. Profile Cancel discards only its draft and never reverses another
+  section's confirmed change. Current-page edits never rewrite Profile JSON.
 - **Enemy** changes only what the game's own Skin Browser changes:
   `characterModelOverride.{Cylindrical,Cuboid,Spheroid}` in `PrimaryUserSettings.json`, two strings
   per shape, from the game's 15 built-in skins (`docs/research/kovaak-skin-browser.md`).
