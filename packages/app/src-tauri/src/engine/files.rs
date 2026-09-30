@@ -363,6 +363,6 @@ pub fn export(directory: &str, file: &str, bytes: &[u8], game_root: &str) -> Eng
     std::io::Write::write_all(&mut handle, bytes).and_then(|_| handle.sync_all()).map_err(|e| EngineError::io(&e))?;
     drop(handle);
     let Some(sha) = store::hash(&full)? else { return Err(fail("另存后读回校验失败 (read-back failed)。", "Reading the saved copy back for verification failed.")) };
-    // The reply's field names are the engine's own casing (see the parity README's fix list).
-    Ok(Json::object(vec![("Path", Json::str(full)), ("Bytes", Json::int(bytes.len() as i64)), ("Sha256", Json::str(sha))]))
+    // The wire names (contracts.ts ExportedFile), which the App decodes exactly.
+    Ok(Json::object(vec![("path", Json::str(full)), ("bytes", Json::int(bytes.len() as i64)), ("sha256", Json::str(sha))]))
 }

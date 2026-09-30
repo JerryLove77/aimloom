@@ -3,7 +3,7 @@
   "steps": [
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"Path\":\"<pack>/copy.png\",\"Bytes\":75,\"Sha256\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\"}}"
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"path\":\"<pack>/copy.png\",\"bytes\":75,\"sha256\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\"}}"
     },
     {
       "progress": [],

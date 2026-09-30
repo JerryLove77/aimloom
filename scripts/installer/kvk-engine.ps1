@@ -402,7 +402,8 @@ function Export-KvkFile([string]$Directory,[string]$FileName,[byte[]]$Bytes,[str
     try { $stream.Write($Bytes,0,$Bytes.Length); $stream.Flush($true) } finally { $stream.Dispose() }
     $sha=Get-KvkHash $full
     if ($null -eq $sha) { Throw-KvkFailure 'ENGINE_ERROR' '另存后读回校验失败 (read-back failed)。' 'Reading the saved copy back for verification failed.' }
-    return [pscustomobject]@{Path=$full;Bytes=$Bytes.Length;Sha256=$sha}
+    # The wire names (contracts.ts ExportedFile): the App decodes them exactly, so case matters.
+    return [pscustomobject]@{path=$full;bytes=$Bytes.Length;sha256=$sha}
 }
 
 function Assert-KvkJsonObject([string]$Path) {
