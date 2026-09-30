@@ -4,11 +4,13 @@
 Turns the packaged Aimloom folder into Aimloom-Setup-v<label>.exe with Tauri's NSIS bundler.
 
 .DESCRIPTION
-Run after package-test-build.ps1, on the machine that ran the Tauri build. The installer's
-payload is that folder's own scripts\**, pwsh\** (the bundled PowerShell 7) and VERSION.txt, so
-the Setup and the ZIP carry the same bytes. The EXE comes from the build (target\<triple>\release\Aimloom.exe); the bundler marks its
-copy as an NSIS install (__TAURI_BUNDLE_TYPE_VAR_UNK becomes ..._NSS), which is the only
-difference from the ZIP's EXE. -ConfigOnly writes the generated bundle config and stops.
+Run after package-test-build.ps1, on the machine that ran the Tauri build. The App carries its
+own engine, so the installer's payload is that folder's VERSION.txt alone; the files the ZIP
+holds besides it (the readmes) are for the ZIP. The EXE comes from the build
+(target\<triple>\release\Aimloom.exe); the bundler marks its copy as an NSIS install
+(__TAURI_BUNDLE_TYPE_VAR_UNK becomes ..._NSS), which is the only difference from the ZIP's EXE.
+A folder in the old layout (one that still has scripts\ or pwsh\) is refused. -ConfigOnly writes
+the generated bundle config and stops.
 
 .EXAMPLE
 pwsh -NoProfile -File scripts\installer\test-build\package-setup.ps1 `
@@ -29,18 +31,19 @@ Set-StrictMode -Version 3.0
 $name = Split-Path $Folder -Leaf
 if ($name -notmatch '^Aimloom-v(.+)$') { throw "$Folder is not a packaged Aimloom-v<label> folder." }
 $label = $Matches[1]
-foreach ($required in 'Aimloom.exe', 'VERSION.txt', 'scripts\gui\kvk-gui-worker.ps1', 'pwsh\pwsh.exe') {
+foreach ($required in 'Aimloom.exe', 'VERSION.txt') {
     if (-not (Test-Path -LiteralPath (Join-Path $Folder $required) -PathType Leaf)) { throw "$Folder lacks $required; run package-test-build.ps1 first." }
 }
-
-# Every payload file keeps its place relative to the folder: scripts\..., pwsh\... and VERSION.txt.
-$resources = [ordered]@{}
-$payload = @(Get-Item -LiteralPath (Join-Path $Folder 'VERSION.txt')) +
-    @(Get-ChildItem -LiteralPath (Join-Path $Folder 'scripts') -Recurse -File | Sort-Object FullName) +
-    @(Get-ChildItem -LiteralPath (Join-Path $Folder 'pwsh') -Recurse -File | Sort-Object FullName)
-foreach ($file in $payload) {
-    $resources[($file.FullName -replace '\\', '/')] = [IO.Path]::GetRelativePath($Folder, $file.FullName) -replace '\\', '/'
+foreach ($old in 'scripts', 'pwsh') {
+    if (Test-Path -LiteralPath (Join-Path $Folder $old)) {
+        throw "$Folder still has a $old folder: it was packaged by an older layout. Since 0.1.6 the App carries its own engine; run package-test-build.ps1 again."
+    }
 }
+
+# The payload is VERSION.txt, at its place relative to the folder.
+$resources = [ordered]@{}
+$version = Get-Item -LiteralPath (Join-Path $Folder 'VERSION.txt')
+$resources[($version.FullName -replace '\\', '/')] = 'VERSION.txt'
 $config = Join-Path $OutRoot "setup-bundle-$label.conf.json"
 @{ bundle = @{ resources = $resources } } | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $config -Encoding utf8NoBOM
 if ($ConfigOnly) { return [pscustomobject]@{ Config = $config; Resources = $resources } }

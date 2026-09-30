@@ -5,20 +5,21 @@ a beta build, opted into from Settings; it can be rough, so please report anythi
 
 [Before you start]
 - Windows 10 or 11 (64-bit)
-- PowerShell 7: included in the pwsh folder beside it; nothing to install
 - WebView2: built into Windows 11; on Windows 10, if the window does not open,
   install the Microsoft Edge WebView2 Runtime
 
 [How to open]
-1. Put this whole folder anywhere, not inside the game folder. Do not take Aimloom.exe
-   out on its own: it needs the scripts and pwsh folders beside it.
+1. Put this whole folder anywhere, not inside the game folder. Keep Aimloom.exe
+   together with VERSION.txt, which you need when you report a problem.
 2. Double-click Aimloom.exe.
 3. If a blue "Windows protected your PC" screen appears: choose More info, then Run anyway.
    Aimloom has no code-signing certificate, so Windows does not recognize it.
 
 [Before you use it]
+- The Profile format changed: Profiles saved by 0.1.5 (the old format) are not read by this
+  version, so recreate them; Profiles made in this beta cannot be opened by 0.1.5.
 - Close KovaaK before writing to the game files.
-- Every write is backed up first; Quick import at the bottom left undoes it.
+- Every write is backed up first; open Quick import from the Explore page ("Open Quick import") to undo it.
 - Backups and Profiles are kept in %LOCALAPPDATA%\Aimloom, shared with the stable App.
 - Which crosshair you use is chosen in the game.
 - The language follows Windows; change it in Settings at the bottom left.
