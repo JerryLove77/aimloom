@@ -163,8 +163,10 @@ pub fn scheme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
 
 pub struct SchemePlan { pub theme_path: String, pub theme_hash: String, pub plan: Plan }
 
-/// `Get-KvkSchemeSource` + `New-KvkSchemePlan`.
-pub fn scheme_plan(engine: &Engine, context: &Context, file: &str) -> EngineResult<SchemePlan> {
+/// `Get-KvkSchemeSource`: the installed theme file by name, and every settings edit it makes.
+pub struct SchemeSource { pub theme_path: String, pub theme_hash: String, pub edits: Vec<(String, Value)> }
+
+pub fn scheme_source(engine: &Engine, context: &Context, file: &str) -> EngineResult<SchemeSource> {
     engine.assert_context(context)?;
     paths::assert_file_name(file)?;
     if !file.to_ascii_lowercase().ends_with(".json") {
@@ -184,12 +186,24 @@ pub fn scheme_plan(engine: &Engine, context: &Context, file: &str) -> EngineResu
     let name = parsed.get("themeName").and_then(Json::as_str).unwrap_or_default().to_string();
     let mut edits = vec![("EStringSettingId::CurrentThemeName".to_string(), Value::One(Scalar::Str(name)))];
     edits.extend(scheme_edits(&parsed)?);
+    Ok(SchemeSource { theme_path, theme_hash, edits })
+}
+
+/// Applies the edits to the settings file's text, stages the result and plans it as the one
+/// settings replacement (`New-KvkSettingsPreviewPlan`).
+pub fn settings_plan(engine: &Engine, context: &Context, edits: &[(String, Value)], folder: &str, outside: &str, stale: (&str, &str)) -> EngineResult<Plan> {
     let (target, settings_hash, settings) = read_settings(engine, context)?;
-    let updated = apply_edits(&settings.text, &edits)?;
+    let updated = apply_edits(&settings.text, edits)?;
     let bytes = settings.encoding.encode(&updated);
-    let staged = txn::settings_preview_plan(engine, context, &target, &settings_hash, &bytes, "scheme-previews", "Scheme staging must be outside the game directory.")?;
-    let Some(plan) = staged else { return Err(EngineError::coded("PLAN_STALE", "准备预览期间背景来源发生了变化。", "Scheme source changed during preview preparation.")) };
-    Ok(SchemePlan { theme_path, theme_hash, plan })
+    let staged = txn::settings_preview_plan(engine, context, &target, &settings_hash, &bytes, folder, outside)?;
+    staged.ok_or_else(|| EngineError::coded("PLAN_STALE", stale.0, stale.1))
+}
+
+/// `New-KvkSchemePlan`.
+pub fn scheme_plan(engine: &Engine, context: &Context, file: &str) -> EngineResult<SchemePlan> {
+    let source = scheme_source(engine, context, file)?;
+    let plan = settings_plan(engine, context, &source.edits, "scheme-previews", "Scheme staging must be outside the game directory.", ("准备预览期间背景来源发生了变化。", "Scheme source changed during preview preparation."))?;
+    Ok(SchemePlan { theme_path: source.theme_path, theme_hash: source.theme_hash, plan })
 }
 
 /// `Invoke-KvkSchemeReplacement`.
@@ -202,8 +216,8 @@ pub fn scheme_execute(engine: &Engine, context: &Context, scheme: &SchemePlan, o
 
 // ---- Sounds (audio) ------------------------------------------------------------------------
 
-/// `Get-KvkAudioEdit` + `New-KvkAudioPlan`: binds the named sounds to one event.
-pub fn audio_plan(engine: &Engine, context: &Context, event: &str, names: &[String]) -> EngineResult<Plan> {
+/// `Get-KvkAudioEdit`: the one setting that binds the named sounds to an event.
+pub fn audio_edit(engine: &Engine, context: &Context, event: &str, names: &[String]) -> EngineResult<(String, Value)> {
     engine.assert_context(context)?;
     let Some((_, key, list)) = AUDIO_EVENTS.iter().find(|(e, _, _)| eq_ignore_case(e, event)) else {
         return Err(EngineError::coded("ENGINE_ERROR", format!("不支持的音效事件 (unknown audio event): {event}"), format!("Unknown audio event: {event}.")));
@@ -222,10 +236,82 @@ pub fn audio_plan(engine: &Engine, context: &Context, event: &str, names: &[Stri
     if !list && names.len() != 1 {
         return Err(EngineError::coded("ENGINE_ERROR", format!("{event} 只能绑定一个音效 (this event takes exactly one sound)"), format!("{event} takes exactly one sound.")));
     }
-    let (target, settings_hash, settings) = read_settings(engine, context)?;
-    if find_value(&settings.text, key)?.is_none() { return Err(missing_key(key)); }
-    let updated = set_setting(&settings.text, key, &Value::One(Scalar::Str(names.join(";"))))?;
-    let bytes = settings.encoding.encode(&updated);
-    let staged = txn::settings_preview_plan(engine, context, &target, &settings_hash, &bytes, "audio-previews", "Audio staging must be outside the game directory.")?;
-    staged.ok_or_else(|| EngineError::coded("PLAN_STALE", "准备预览期间音效来源发生了变化。", "Audio source changed during preview preparation."))
+    Ok((key.to_string(), Value::One(Scalar::Str(names.join(";")))))
+}
+
+/// `New-KvkAudioPlan`.
+pub fn audio_plan(engine: &Engine, context: &Context, event: &str, names: &[String]) -> EngineResult<Plan> {
+    let edit = audio_edit(engine, context, event, names)?;
+    settings_plan(engine, context, &[edit], "audio-previews", "Audio staging must be outside the game directory.", ("准备预览期间音效来源发生了变化。", "Audio source changed during preview preparation."))
+}
+
+// ---- Profile apply -------------------------------------------------------------------------
+
+/// What executing a Profile apply checks again: the Profile file and every source file.
+pub struct ProfileApply { pub profile_path: String, pub profile_hash: String, pub sources: Vec<(String, String)>, pub plan: Plan }
+
+/// `Resolve-KvkProfileReference`: the installed file a Profile's saved path names, compared as
+/// full paths ignoring case, or `None`.
+fn resolve_reference<'a, T>(path: &str, entries: &'a [T], entry_path: impl Fn(&T) -> &str) -> Option<&'a T> {
+    let target = paths::full_path(path).ok()?;
+    entries.iter().find(|e| eq_ignore_case(entry_path(e), &target))
+}
+
+/// `New-KvkProfileApplyPlan`: the Profile's Theme and Sounds as one settings write. An empty or
+/// absent event keeps the current binding; a reference to a file the game no longer has refuses
+/// the whole apply before anything is staged.
+pub fn profile_apply_plan(engine: &Engine, context: &Context, id: &str) -> EngineResult<ProfileApply> {
+    engine.assert_context(context)?;
+    let read = super::profiles::read(engine, &context.local_data_root, Some(&Json::str(id)))?;
+    let profile = read.get("profile").cloned().unwrap_or(Json::Null);
+    if profile.is_null() { return Err(EngineError::coded("ENGINE_ERROR", format!("找不到这个 Profile：「{id}」"), format!("The Profile was not found: \"{id}\"."))); }
+    let profile_path = read.get("filePath").and_then(Json::as_str).unwrap_or_default().to_string();
+    let profile_hash = store::hash(&profile_path)?.unwrap_or_default();
+    let mut scheme = None;
+    if let Some(reference) = profile.get("scheme").filter(|s| !s.is_null()) {
+        let saved = reference.get("path").and_then(Json::as_str).unwrap_or_default();
+        let installed = lists::installed_themes(engine, context)?;
+        let Some(entry) = resolve_reference(saved, &installed.themes, |t| &t.path) else {
+            return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的背景文件不在游戏中：「{saved}」"), format!("The Theme file the Profile refers to is not in the game: \"{saved}\".")));
+        };
+        scheme = Some(scheme_source(engine, context, &entry.file.clone())?);
+    }
+    let (mut audio_edits, mut sources) = (Vec::new(), Vec::new());
+    if let Some(audio) = profile.get("audio").filter(|a| !a.is_null()) {
+        let (_, sounds) = lists::installed_sounds(engine, context)?;
+        for (event, _, _) in AUDIO_EVENTS {
+            let records = audio.get(event).and_then(Json::as_array).cloned().unwrap_or_default();
+            if records.is_empty() { continue; }
+            let mut names = Vec::new();
+            for record in &records {
+                let saved = record.get("path").and_then(Json::as_str).unwrap_or_default();
+                let Some(entry) = resolve_reference(saved, &sounds, |s| &s.path) else {
+                    return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的音效文件不在游戏中：「{saved}」"), format!("The Sound file the Profile refers to is not in the game: \"{saved}\".")));
+                };
+                names.push(entry.name.clone());
+                sources.push((entry.path.clone(), store::hash(&entry.path)?.unwrap_or_default()));
+            }
+            audio_edits.push(audio_edit(engine, context, event, &names)?);
+        }
+    }
+    if scheme.is_none() && audio_edits.is_empty() { return Err(EngineError::coded("ENGINE_ERROR", "这个 Profile 没有可应用的内容。", "This Profile has nothing to apply.")); }
+    let mut edits = Vec::new();
+    if let Some(source) = &scheme { edits.extend(source.edits.iter().cloned()); }
+    edits.extend(audio_edits);
+    let plan = settings_plan(engine, context, &edits, "profile-apply-previews", "Profile apply staging must be outside the game directory.", ("准备预览期间 Profile 应用的来源发生了变化。", "A Profile apply source changed during preview preparation."))?;
+    let mut all_sources = Vec::new();
+    if let Some(source) = scheme { all_sources.push((source.theme_path, source.theme_hash)); }
+    all_sources.extend(sources);
+    Ok(ProfileApply { profile_path, profile_hash, sources: all_sources, plan })
+}
+
+/// `Invoke-KvkProfileApply`.
+pub fn profile_apply_execute(engine: &Engine, context: &Context, apply: &ProfileApply, observer: txn::Observer) -> EngineResult<txn::Report> {
+    if store::hash(&apply.profile_path)?.as_deref() != Some(apply.profile_hash.as_str()) {
+        return Err(EngineError::coded("PLAN_STALE", "预览之后 Profile 发生了变化，请重新核对。", "The Profile changed after preview; review it again."));
+    }
+    for (path, hash) in &apply.sources {
+        if store::hash(path)?.as_deref() != Some(hash.as_str()) { return Err(EngineError::coded("PLAN_STALE", "预览之后来源文件发生了变化，请重新核对。", "A source file changed after preview; review it again.")); }
+    }
+    txn::install(engine, context, &apply.plan, false, observer)
 }
