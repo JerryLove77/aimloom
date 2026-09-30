@@ -23,7 +23,7 @@
 Get the Setup from [aimloom.dev](https://aimloom.dev/en/download/), which lists its SHA-256. The
 Setup and the portable ZIP are both attached to the
 [GitHub release](https://github.com/JerryLove77/aimloom/releases/latest). The current release is
-**v0.1.4**.
+**v0.1.5**.
 
 ## Features
 
@@ -69,11 +69,12 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 
 ## Status
 
-- **In progress:** v0.1.5 — the website's Explore page is live, with Steam sign-in, uploads and
-  review (the maintainer has signed in and uploaded on the live site). The App's "Find more on
-  aimloom.dev" link is in [v0.1.5-beta.1](https://github.com/JerryLove77/aimloom/releases/tag/v0.1.5-beta.1),
-  a GitHub pre-release only for now; the App's update check does not offer it yet.
-- **Released:** v0.1.4 (2026-09-22) — fine-tuning a pasted CS2 / VALORANT crosshair code, "Apply
+- **Released:** v0.1.5 (2026-09-30) — PowerShell 7 comes with Aimloom, so nothing else needs
+  installing (the installer is about 81 MB, the portable ZIP about 114 MB); Theme, Sounds and
+  Crosshair open the website's Explore page; a linked Steam account's display name can be changed.
+  The Explore page (Steam sign-in, uploads, review) and feedback tickets go live on the site with
+  it. The installer was installed and opened on a clean Windows (Windows Sandbox).
+- **Earlier:** v0.1.4 (2026-09-22) — fine-tuning a pasted CS2 / VALORANT crosshair code, "Apply
   and start the game" for a Profile, search and add-from-computer when choosing a Profile's
   background and sounds, search on the Theme page, and a "Join the beta" switch in Settings.
   v0.1.3 brought in-App problem reports, an optional Steam account, a launch update check,
