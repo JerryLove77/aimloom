@@ -19,16 +19,18 @@ PR as: the PowerShell change, the regenerated goldens, and the Rust change.
 
 `cases/<name>.json` holds the settings file the game folder starts with (`fixture`, a file in
 `fixtures/`, copied byte for byte), optionally more files for the game folder (`gameFiles`), for a
-pack folder (`packFiles`) and for the local data folder (`localFiles`), each a map from a relative path to `{"text": …}` (written as
+pack folder (`packFiles`), for the local data folder (`localFiles`) and for the case's root folder
+(`rootFiles`, where `<root>` in a file's text is that folder), each a map from a relative path to `{"text": …}` (written as
 UTF-8), `{"fixture": …}` or `{"dir": true}`, and the steps, run in order in one worker session:
 
 | Step | Meaning |
 |---|---|
-| `{"request": op, "args": {…}}` | One request, sent as a JSON line the way the App sends it. A string starting with `<game>` or `<pack>` starts with that folder instead; `<plan>` and `<batch>` are the `planId` and `batchId` of the last reply that carried one. `"compare": "code"` keeps only `ok` and the error code (the message is the operating system's). |
+| `{"request": op, "args": {…}}` | One request, sent as a JSON line the way the App sends it. A string starting with `<game>`, `<pack>` or `<root>` starts with that folder instead; `<plan>` and `<batch>` are the `planId` and `batchId` of the last reply that carried one. `"compare": "code"` keeps only `ok` and the error code (the message is the operating system's). |
 | `{"raw": value}` | A request line that is exactly `value` (malformed envelopes). |
 | `{"line": text}` | A request line that is exactly `text`, for what JSON values cannot express (a repeated key). |
 | `{"setPrimary": file}` / `{"appendPrimary": text}` | Replace the settings file with a fixture, or append text to it. |
 | `{"gameRunningFrom": n}` | The game appears in the process list from the n-th listing on (1 is the next one); `null` ends it. Every game check and every `gameState` is one listing. |
+| `"machine"` (case field) | What discovery reads from the machine: `steamRoots` (Steam's registry entries), `drives` (file system drive roots) and `env` (`ProgramFiles`, `ProgramFiles(x86)`, unset unless given). |
 | `{"fault": name}` / `{"clearFaults": true}` | Make a named step throw `Injected failure at <name>` (`file-change`: `Invoke-KvkFileChange`; `snapshot`: `Copy-KvkSnapshot`). |
 | `{"holdLock": true}` / `{"releaseLock": true}` | Hold `locks/palette.lock` open exclusively, as another instance would. |
 
@@ -45,8 +47,9 @@ other file as its size and SHA-256.
 
 ## Normalization (both harnesses, in this order, on the JSON text)
 
-1. The game, local data and pack folders, as they appear in JSON text (backslashes doubled),
-   become `<game>`, `<local>` and `<pack>`.
+1. The game, local data, pack and case folders and the repository, as they appear in JSON text
+   (backslashes doubled) and as they are, become `<game>`, `<local>`, `<pack>`, `<root>` and
+   `<repo>`.
 2. The SHA-256 of the lowercased game folder (the backup and lock folder name) becomes `<gamehash>`.
 3. An escaped backslash (`\\` in JSON text) becomes `/`.
 4. The 64-hex name of each first-protection backup (`pristine/files/<hex>.bin`, a hash of a random

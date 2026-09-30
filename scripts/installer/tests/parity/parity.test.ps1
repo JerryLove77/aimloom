@@ -8,6 +8,7 @@ $ErrorActionPreference='Stop'
 Set-StrictMode -Version 3.0
 
 $installerRoot=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
+$script:RepoRoot=[IO.Path]::GetFullPath((Join-Path $installerRoot '../..'))
 # The worker's load order.
 . (Join-Path $installerRoot 'kvk-engine.ps1')
 . (Join-Path $installerRoot 'kvk-scheme.ps1')
@@ -29,6 +30,12 @@ function Get-Process {
     return [pscustomobject]@{ProcessName='explorer'}
 }
 
+# The machine discovery reads, from the case's "machine": Steam's registry roots, the file system
+# drives and two environment variables. The Rust harness's host returns the same values.
+$script:MachineSteamRoots=@(); $script:MachineDrives=@()
+function Get-KvkSteamRoots { return @($script:MachineSteamRoots) }
+function Get-PSDrive { [CmdletBinding()] param([string]$PSProvider) return @($script:MachineDrives | ForEach-Object { [pscustomobject]@{Root=$_} }) }
+
 # A fault replaces the named engine function with one that throws at its entry.
 $script:FaultTargets=[ordered]@{'file-change'='Invoke-KvkFileChange';'snapshot'='Copy-KvkSnapshot'}
 $script:Originals=@{}
@@ -40,29 +47,30 @@ function Get-ParitySha([byte[]]$Bytes) {
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
 }
 
-function Resolve-ParityValue($Value,[string]$Game,[string]$Pack,[string]$Plan,[string]$Batch) {
+function Resolve-ParityValue($Value,$Roots,[string]$Plan,[string]$Batch) {
     if ($Value -is [string]) {
         if ($Value -ceq '<plan>') { return $Plan }
         if ($Value -ceq '<batch>') { return $Batch }
-        if ($Value.StartsWith('<game>',[StringComparison]::Ordinal)) { return $Game+$Value.Substring(6) }
-        if ($Value.StartsWith('<pack>',[StringComparison]::Ordinal)) { return $Pack+$Value.Substring(6) }
+        if ($Value.StartsWith('<game>',[StringComparison]::Ordinal)) { return $Roots.Game+$Value.Substring(6) }
+        if ($Value.StartsWith('<pack>',[StringComparison]::Ordinal)) { return $Roots.Pack+$Value.Substring(6) }
+        if ($Value.StartsWith('<root>',[StringComparison]::Ordinal)) { return $Roots.Root+$Value.Substring(6) }
         return $Value
     }
     if ($Value -is [Collections.IDictionary]) {
         $copy=[ordered]@{}
-        foreach ($key in $Value.Keys) { $copy[$key]=Resolve-ParityValue $Value[$key] $Game $Pack $Plan $Batch }
+        foreach ($key in $Value.Keys) { $copy[$key]=Resolve-ParityValue $Value[$key] $Roots $Plan $Batch }
         return $copy
     }
-    if ($Value -is [Array]) { return ,@($Value | ForEach-Object { Resolve-ParityValue $_ $Game $Pack $Plan $Batch }) }
+    if ($Value -is [Array]) { return ,@($Value | ForEach-Object { Resolve-ParityValue $_ $Roots $Plan $Batch }) }
     return $Value
 }
-function Write-ParityFiles([string]$Root,$Files,[string]$Fixtures) {
+function Write-ParityFiles([string]$Root,$Files,[string]$Fixtures,[string]$CaseRoot) {
     foreach ($relative in $Files.Keys) {
         $spec=$Files[$relative]; $path=Join-Path $Root $relative
         if ($spec.Contains('dir')) { $null=[IO.Directory]::CreateDirectory($path); continue }
         $null=[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
         if ($spec.Contains('fixture')) { [IO.File]::WriteAllBytes($path,[IO.File]::ReadAllBytes((Join-Path $Fixtures $spec['fixture']))) }
-        else { [IO.File]::WriteAllBytes($path,[Text.UTF8Encoding]::new($false).GetBytes([string]$spec['text'])) }
+        else { [IO.File]::WriteAllBytes($path,[Text.UTF8Encoding]::new($false).GetBytes(([string]$spec['text']).Replace('<root>',$CaseRoot))) }
     }
 }
 
@@ -102,15 +110,31 @@ function Invoke-ParityCase([string]$Name,$Case) {
     $game=[IO.Path]::GetFullPath((Join-Path $root '游戏 with spaces'))
     $local=[IO.Path]::GetFullPath((Join-Path $root 'Local Data'))
     $pack=[IO.Path]::GetFullPath((Join-Path $root '配置 pack'))
+    $caseRoot=[IO.Path]::GetFullPath($root)
+    $roots=[pscustomobject]@{Root=$caseRoot;Game=$game;Pack=$pack}
     $primary=Join-Path $game 'FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json'
     $fixtures=Join-Path $PSScriptRoot 'fixtures'
     $null=[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($primary))
     $null=[IO.Directory]::CreateDirectory((Join-Path $game 'FPSAimTrainer/sounds'))
     $null=[IO.Directory]::CreateDirectory($local)
     [IO.File]::WriteAllBytes($primary,[IO.File]::ReadAllBytes((Join-Path $fixtures $Case['fixture'])))
-    if ($Case.Contains('gameFiles')) { Write-ParityFiles $game $Case['gameFiles'] $fixtures }
-    if ($Case.Contains('packFiles')) { $null=[IO.Directory]::CreateDirectory($pack); Write-ParityFiles $pack $Case['packFiles'] $fixtures }
-    if ($Case.Contains('localFiles')) { Write-ParityFiles $local $Case['localFiles'] $fixtures }
+    if ($Case.Contains('gameFiles')) { Write-ParityFiles $game $Case['gameFiles'] $fixtures $caseRoot }
+    if ($Case.Contains('packFiles')) { $null=[IO.Directory]::CreateDirectory($pack); Write-ParityFiles $pack $Case['packFiles'] $fixtures $caseRoot }
+    if ($Case.Contains('localFiles')) { Write-ParityFiles $local $Case['localFiles'] $fixtures $caseRoot }
+    if ($Case.Contains('rootFiles')) { Write-ParityFiles $caseRoot $Case['rootFiles'] $fixtures $caseRoot }
+    $script:MachineSteamRoots=@(); $script:MachineDrives=@(); $savedEnv=@{}
+    if ($Case.Contains('machine')) {
+        $machine=$Case['machine']
+        if ($machine.Contains('steamRoots')) { $script:MachineSteamRoots=@($machine['steamRoots'] | ForEach-Object { Resolve-ParityValue $_ $roots '' '' }) }
+        if ($machine.Contains('drives')) { $script:MachineDrives=@($machine['drives'] | ForEach-Object { Resolve-ParityValue $_ $roots '' '' }) }
+    }
+    # ProgramFiles and ProgramFiles(x86) are read from the process; set them for the case only.
+    foreach ($name in @('ProgramFiles','ProgramFiles(x86)')) {
+        $savedEnv[$name]=[Environment]::GetEnvironmentVariable($name)
+        $value=$null
+        if ($Case.Contains('machine') -and $Case['machine'].Contains('env') -and $Case['machine']['env'].Contains($name)) { $value=Resolve-ParityValue $Case['machine']['env'][$name] $roots '' '' }
+        [Environment]::SetEnvironmentVariable($name,$value)
+    }
     Clear-KvkDataRootMemo
     $session=New-KvkGuiSession -RuntimeRoot $installerRoot -LocalDataRoot $local
     $script:ProcessListings=0; $script:RunningFrom=$null
@@ -123,7 +147,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
                 if ($step.Contains('line')) { $line=[string]$step['line'] }
                 else {
                     if ($step.Contains('raw')) { $value=$step['raw'] }
-                    else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $pack $lastPlan $lastBatch)} }
+                    else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $roots $lastPlan $lastBatch)} }
                     $line=ConvertTo-Json -InputObject $value -Depth 32 -Compress
                 }
                 # Parsed exactly as the worker parses a line (kvk-gui-worker.ps1).
@@ -181,6 +205,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
             } else { throw "Unknown step in case $Name" }
         }
     } finally {
+        foreach ($name in $savedEnv.Keys) { [Environment]::SetEnvironmentVariable($name,$savedEnv[$name]) }
         if ($null -ne $lock) { $lock.Dispose() }
         Clear-ParityFaults
         Clear-KvkDataRootMemo
@@ -191,7 +216,8 @@ function Invoke-ParityCase([string]$Name,$Case) {
 
     $jsonRoot={ param($path) $path.Replace('\','\\').Replace('"','\"') }
     $context=[pscustomobject]@{
-        Roots=@(@((& $jsonRoot $game),'<game>'),@((& $jsonRoot $local),'<local>'),@((& $jsonRoot $pack),'<pack>'),@($game,'<game>'),@($local,'<local>'),@($pack,'<pack>'))
+        Roots=@(@((& $jsonRoot $game),'<game>'),@((& $jsonRoot $local),'<local>'),@((& $jsonRoot $pack),'<pack>'),@((& $jsonRoot $caseRoot),'<root>'),@((& $jsonRoot $script:RepoRoot),'<repo>'),
+            @($game,'<game>'),@($local,'<local>'),@($pack,'<pack>'),@($caseRoot,'<root>'),@($script:RepoRoot,'<repo>'))
         GameHash=(Get-KvkTextHash $game.ToLowerInvariant())
         Pristine=[ordered]@{}
         Guids=[ordered]@{}

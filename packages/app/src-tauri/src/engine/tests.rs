@@ -52,7 +52,7 @@ impl Fixture {
         let local = root.join("Local Data");
         std::fs::create_dir_all(&local).unwrap();
         let host = Rc::new(HostState::default());
-        let session = Session::new(Box::new(TestHost(host.clone())), &local.to_string_lossy()).unwrap();
+        let session = Session::new(Box::new(TestHost(host.clone())), &local.to_string_lossy(), &root.to_string_lossy()).unwrap();
         Fixture { game: game.to_string_lossy().into_owned(), local: local.to_string_lossy().into_owned(), root, target, host, session, next: 0 }
     }
 

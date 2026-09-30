@@ -36,7 +36,7 @@ enum Adapter {
 struct CachedPlan { id: String, kind: &'static str, context: Context, adapter: Adapter }
 
 /// `New-KvkGuiSession`: one engine, one data folder, at most one executable plan.
-pub struct Session { engine: Engine, local_data_root: String, plan: Option<CachedPlan> }
+pub struct Session { engine: Engine, local_data_root: String, runtime_root: String, plan: Option<CachedPlan> }
 
 fn field_error(message: String) -> EngineError { EngineError::coded("ENGINE_ERROR", message.clone(), format!("{message}.")) }
 
@@ -76,8 +76,10 @@ fn revision_arg(args: &Json) -> EngineResult<i64> {
 }
 
 impl Session {
-    pub fn new(host: Box<dyn Host>, local_data_root: &str) -> EngineResult<Self> {
-        Ok(Self { engine: Engine::new(host), local_data_root: paths::get_full_path(local_data_root)?, plan: None })
+    /// `runtime_root` is the folder holding the scripts (`<install>\scripts`), beside which the
+    /// sample pack is looked for.
+    pub fn new(host: Box<dyn Host>, local_data_root: &str, runtime_root: &str) -> EngineResult<Self> {
+        Ok(Self { engine: Engine::new(host), local_data_root: paths::get_full_path(local_data_root)?, runtime_root: paths::get_full_path(runtime_root)?, plan: None })
     }
 
     pub fn engine(&self) -> &Engine { &self.engine }
@@ -139,6 +141,10 @@ impl Session {
             "gameState" => {
                 assert_fields(args, &[], "args")?;
                 Ok(Json::str(self.engine.game_state()))
+            }
+            "discover" => {
+                assert_fields(args, &[], "args")?;
+                Ok(super::discover::discovery_json(&self.engine, &self.local_data_root, &self.runtime_root))
             }
             "profileList" => { assert_fields(args, &[], "args")?; super::profiles::list(&self.engine, &self.local_data_root) }
             "profileRead" => { assert_fields(args, &["id"], "args")?; super::profiles::read(&self.engine, &self.local_data_root, args.get("id")) }

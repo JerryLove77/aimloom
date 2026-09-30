@@ -144,3 +144,38 @@ fn wide(path: &Path) -> Vec<u16> {
     use std::os::windows::ffi::OsStrExt;
     path.as_os_str().encode_wide().chain(std::iter::once(0)).collect()
 }
+
+/// A registry hive `Get-ItemProperty` reads from.
+#[cfg(windows)]
+#[derive(Clone, Copy)]
+pub enum Hive { CurrentUser, LocalMachine }
+
+/// A string value (`REG_SZ` or expanded `REG_EXPAND_SZ`), as `Get-ItemProperty` returns it, or
+/// `None` when the key or value is missing or is not a string.
+#[cfg(windows)]
+pub fn registry_string(hive: Hive, key: &str, name: &str) -> Option<String> {
+    use windows_sys::Win32::System::Registry::{RegGetValueW, HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE, RRF_RT_REG_EXPAND_SZ, RRF_RT_REG_SZ};
+    let root = match hive { Hive::CurrentUser => HKEY_CURRENT_USER, Hive::LocalMachine => HKEY_LOCAL_MACHINE };
+    let key_w: Vec<u16> = key.encode_utf16().chain(std::iter::once(0)).collect();
+    let name_w: Vec<u16> = name.encode_utf16().chain(std::iter::once(0)).collect();
+    let mut size: u32 = 0;
+    let flags = RRF_RT_REG_SZ | RRF_RT_REG_EXPAND_SZ;
+    if unsafe { RegGetValueW(root, key_w.as_ptr(), name_w.as_ptr(), flags, std::ptr::null_mut(), std::ptr::null_mut(), &mut size) } != 0 { return None; }
+    let mut buffer = vec![0u16; (size as usize).div_ceil(2) + 1];
+    let mut size = (buffer.len() * 2) as u32;
+    if unsafe { RegGetValueW(root, key_w.as_ptr(), name_w.as_ptr(), flags, std::ptr::null_mut(), buffer.as_mut_ptr().cast(), &mut size) } != 0 { return None; }
+    let len = buffer.iter().position(|&c| c == 0).unwrap_or(buffer.len());
+    Some(String::from_utf16_lossy(&buffer[..len]))
+}
+
+/// The file system drives PowerShell lists (`Get-PSDrive -PSProvider FileSystem`): every drive
+/// letter, and PowerShell's own `Temp:` drive, in name order.
+#[cfg(windows)]
+pub fn drive_roots() -> Vec<String> {
+    use windows_sys::Win32::Storage::FileSystem::GetLogicalDrives;
+    let mask = unsafe { GetLogicalDrives() };
+    let mut drives: Vec<(String, String)> = (0..26u8).filter(|i| mask & (1 << i) != 0).map(|i| { let letter = (b'A' + i) as char; (letter.to_string(), format!("{letter}:\\")) }).collect();
+    drives.push(("Temp".to_string(), std::env::temp_dir().to_string_lossy().into_owned()));
+    drives.sort_by(|a, b| a.0.to_ascii_uppercase().cmp(&b.0.to_ascii_uppercase()));
+    drives.into_iter().map(|(_, root)| root).collect()
+}
