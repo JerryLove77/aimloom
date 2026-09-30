@@ -360,38 +360,8 @@
           "schemaVersion": 2,
           "id": "nulls",
           "name": "P",
-          "theme": {
-            "name": "Default",
-            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
-          },
-          "audio": {
-            "kill": [],
-            "spawn": [],
-            "mbsGood": [
-              {
-                "name": "Zeta",
-                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
-              }
-            ],
-            "mbsOkay": [
-              {
-                "name": "Zeta",
-                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
-              }
-            ],
-            "mbsBad": [
-              {
-                "name": "Zeta",
-                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
-              }
-            ],
-            "mbsChangeNow": [
-              {
-                "name": "Zeta",
-                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
-              }
-            ]
-          }
+          "theme": null,
+          "audio": null
         }
       }
     },
