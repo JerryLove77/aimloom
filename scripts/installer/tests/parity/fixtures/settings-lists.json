@@ -1,0 +1,10 @@
+{
+	"stringSettings":
+	{
+		"EStringSettingId::CurrentThemeName": "Dark \"Night\"",
+		"EStringSettingId::KillConfirmedSound": "hit;kill;;missing",
+		"EStringSettingId::SpawnSound": "",
+		"EStringSettingId::MBSGoodSound": "Zeta",
+		"EStringSettingId::MBSBadSound": 7
+	}
+}

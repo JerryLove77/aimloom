@@ -1,0 +1,115 @@
+{
+  "fixture": "settings-lists.json",
+  "gameFiles": {
+    "FPSAimTrainer/Saved/SaveGames/Themes/Dark.json": {
+      "text": "{\"themeName\": \"Dark \\\"Night\\\"\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/b-light.json": {
+      "text": "{\"themeName\": \"Light\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/A-upper.JSON": {
+      "text": "{\"themeName\": \"Upper\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/broken.json": {
+      "text": "{\"themeName\":"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/noname.json": {
+      "text": "{\"wallMaterial\":\"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/array.json": {
+      "text": "[1]"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/dup1.json": {
+      "text": "{\"themeName\": \"Same\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/Dup2.json": {
+      "text": "{\"themeName\": \"same\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/date.json": {
+      "text": "{\"themeName\": \"2026-09-30T08:09:10Z\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/lenient.json": {
+      "text": "{ /* comment */ 'themeName': 'Lenient', wall: 1, }"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/utf16.json": {
+      "fixture": "theme-utf16.json"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/_under.json": {
+      "text": "{\"themeName\": \"Under\", \"wallMaterial\": \"Grid\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/folder.json": {
+      "dir": true
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/readme.txt": {
+      "text": "not a theme"
+    },
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "wave"
+    },
+    "FPSAimTrainer/sounds/Hit.OGG": {
+      "text": "ogg"
+    },
+    "FPSAimTrainer/sounds/kill.ogg": {
+      "text": "ogg"
+    },
+    "FPSAimTrainer/sounds/_under.wav": {
+      "text": "wave"
+    },
+    "FPSAimTrainer/sounds/Zeta.wav": {
+      "text": "wave"
+    },
+    "FPSAimTrainer/sounds/é sound.wav": {
+      "text": "wave"
+    },
+    "FPSAimTrainer/sounds/a.b.wav": {
+      "text": "wave"
+    },
+    "FPSAimTrainer/sounds/notes.txt": {
+      "text": "text"
+    },
+    "FPSAimTrainer/sounds/.wav": {
+      "text": "wave"
+    },
+    "FPSAimTrainer/crosshairs/a.png": {
+      "text": "png"
+    },
+    "FPSAimTrainer/crosshairs/B.PNG": {
+      "text": "png"
+    },
+    "FPSAimTrainer/crosshairs/c.jpg": {
+      "text": "jpg"
+    }
+  },
+  "steps": [
+    {
+      "request": "schemeList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "crosshairList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "locate",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "locate",
+      "args": {
+        "gameRoot": "<game>/FPSAimTrainer"
+      }
+    }
+  ]
+}

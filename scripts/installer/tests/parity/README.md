@@ -18,11 +18,13 @@ PR as: the PowerShell change, the regenerated goldens, and the Rust change.
 ## A case
 
 `cases/<name>.json` holds the settings file the game folder starts with (`fixture`, a file in
-`fixtures/`, copied byte for byte) and the steps, run in order in one worker session:
+`fixtures/`, copied byte for byte), optionally more files for the game folder (`gameFiles`) and
+for a pack folder (`packFiles`), each a map from a relative path to `{"text": …}` (written as
+UTF-8), `{"fixture": …}` or `{"dir": true}`, and the steps, run in order in one worker session:
 
 | Step | Meaning |
 |---|---|
-| `{"request": op, "args": {…}}` | One request, sent as a JSON line the way the App sends it. `<game>` is the game folder, `<plan>` the last `planId` a reply returned. `"compare": "code"` keeps only `ok` and the error code (the message is the operating system's). |
+| `{"request": op, "args": {…}}` | One request, sent as a JSON line the way the App sends it. A string starting with `<game>` or `<pack>` starts with that folder instead; `<plan>` is the last `planId` a reply returned. `"compare": "code"` keeps only `ok` and the error code (the message is the operating system's). |
 | `{"raw": value}` | A request line that is exactly `value` (malformed envelopes). |
 | `{"setPrimary": file}` / `{"appendPrimary": text}` | Replace the settings file with a fixture, or append text to it. |
 | `{"gameRunningFrom": n}` | The game appears in the process list from the n-th listing on (1 is the next one); `null` ends it. Every game check and every `gameState` is one listing. |
@@ -42,8 +44,8 @@ other file as its size and SHA-256.
 
 ## Normalization (both harnesses, in this order, on the JSON text)
 
-1. The game folder and the local data folder, as they appear in JSON text (backslashes doubled),
-   become `<game>` and `<local>`.
+1. The game, local data and pack folders, as they appear in JSON text (backslashes doubled),
+   become `<game>`, `<local>` and `<pack>`.
 2. The SHA-256 of the lowercased game folder (the backup and lock folder name) becomes `<gamehash>`.
 3. An escaped backslash (`\\` in JSON text) becomes `/`.
 4. The 64-hex name of each first-protection backup (`pristine/files/<hex>.bin`, a hash of a random
