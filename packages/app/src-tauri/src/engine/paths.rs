@@ -74,7 +74,9 @@ pub fn extension(name: &str) -> String {
 pub fn assert_safe_path(path: &str) -> EngineResult<()> {
     let mut current = full_path(path)?;
     loop {
-        if let Ok(Some(true)) = platform::is_reparse_point(Path::new(&current)) {
+        // Only a missing entry passes unchecked; any other failure to read it stops here, as
+        // GetAttributes' other exceptions do in Assert-KvkSafePath.
+        if platform::is_reparse_point(Path::new(&current)).map_err(|e| EngineError::io(&e))? == Some(true) {
             return Err(EngineError::plain(format!("Links and junctions are not allowed: \"{current}\"")));
         }
         match directory_name(&current) {

@@ -210,7 +210,8 @@ fn add_pristine(engine: &Engine, context: &Context, install: &Json, install_dir:
     let install_items = install.get("Items").and_then(Json::as_array).cloned().unwrap_or_default();
     for x in &install_items {
         let key = text(x, "Key").unwrap_or_default();
-        if keys.contains(&key) { continue; }
+        // `@{}` in Add-KvkPristine ignores case: `sounds/HIT.wav` is the file `sounds/Hit.wav` protects.
+        if keys.iter().any(|k| eq_ignore_case(k, &key)) { continue; }
         let before = text(x, "BeforeHash");
         let mut record = manifest::new_record(&key, &text(x, "Target").unwrap_or_default(), before.as_deref(), text(x, "AfterHash").as_deref());
         record.set("State", Json::str("protected"));
