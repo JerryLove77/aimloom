@@ -28,10 +28,10 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "full",
           "name": "P",
-          "scheme": {
+          "theme": {
             "name": "Default",
             "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
           },
@@ -52,7 +52,25 @@
                 "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
               }
             ],
-            "spawn": []
+            "spawn": [],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
           }
         }
       }
@@ -115,14 +133,41 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "gone-theme",
           "name": "P",
-          "scheme": {
+          "theme": {
             "name": "X",
             "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Missing.json"
           },
-          "audio": null
+          "audio": {
+            "kill": [],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
+          }
         }
       }
     },
@@ -138,15 +183,43 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "gone-sound",
           "name": "P",
-          "scheme": null,
+          "theme": {
+            "name": "Default",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
+          },
           "audio": {
             "kill": [
               {
                 "name": "x",
                 "path": "<game>/FPSAimTrainer/sounds/missing.wav"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
               }
             ]
           }
@@ -165,16 +238,39 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "two-for-one",
           "name": "P",
-          "scheme": null,
+          "theme": {
+            "name": "Default",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
+          },
           "audio": {
             "mbsBad": [
               {
                 "name": "hit",
                 "path": "<game>/FPSAimTrainer/sounds/hit.wav"
               },
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "kill": [],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
               {
                 "name": "Zeta",
                 "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
@@ -196,13 +292,40 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "empty",
           "name": "P",
-          "scheme": null,
+          "theme": {
+            "name": "Default",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
+          },
           "audio": {
             "kill": [],
-            "spawn": []
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
           }
         }
       }
@@ -216,14 +339,59 @@
       }
     },
     {
+      "request": "execute",
+      "args": {
+        "operationId": "clear",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "nulls",
           "name": "P",
-          "scheme": null,
-          "audio": null
+          "theme": {
+            "name": "Default",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
+          },
+          "audio": {
+            "kill": [],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
+          }
         }
       }
     },
@@ -239,15 +407,43 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "ambiguous",
           "name": "P",
-          "scheme": null,
+          "theme": {
+            "name": "Default",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
+          },
           "audio": {
             "kill": [
               {
                 "name": "dup",
                 "path": "<game>/FPSAimTrainer/sounds/dup.wav"
+              }
+            ],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
               }
             ]
           }
@@ -266,14 +462,41 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "legacy-only",
           "name": "P",
-          "scheme": {
+          "theme": {
             "name": "Legacy Sample",
             "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json"
           },
-          "audio": null
+          "audio": {
+            "kill": [],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
+          }
         }
       }
     },
@@ -289,14 +512,41 @@
       "request": "profileSave",
       "args": {
         "profile": {
-          "schemaVersion": 1,
+          "schemaVersion": 2,
           "id": "legacy-only",
           "name": "Renamed",
-          "scheme": {
+          "theme": {
             "name": "Legacy Sample",
             "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json"
           },
-          "audio": null
+          "audio": {
+            "kill": [],
+            "spawn": [],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsOkay": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsBad": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "mbsChangeNow": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
+          }
         }
       }
     },

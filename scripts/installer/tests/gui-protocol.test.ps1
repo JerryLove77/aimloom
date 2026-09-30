@@ -563,9 +563,9 @@ Invoke-WithKvkGuiFixture {
     $original = [IO.File]::ReadAllText($primary)
 
     $profile = @{
-        schemaVersion=1;id='pf-apply';name='Combo Profile'
-        scheme=@{name='Combo';path=(Join-Path $themes 'Combo.json')}
-        audio=@{mbsGood=@(@{name='Good';path=(Join-Path $sounds 'Good.wav')})}
+        schemaVersion=2;id='pf-apply';name='Combo Profile'
+        theme=@{name='Combo';path=(Join-Path $themes 'Combo.json')}
+        audio=@{kill=@();spawn=@();mbsGood=@(@{name='Good';path=(Join-Path $sounds 'Good.wav')});mbsOkay=@(@{name='Good';path=(Join-Path $sounds 'Good.wav')});mbsBad=@(@{name='Good';path=(Join-Path $sounds 'Good.wav')});mbsChangeNow=@(@{name='Good';path=(Join-Path $sounds 'Good.wav')})}
     }
     $saved = Invoke-KvkGuiRequest -Session $f.Session -Request @{v=1;requestId='save';op='profileSave';args=@{profile=$profile}}
     Assert ($saved.ok) "profileSave failed: $(Get-ReplyError $saved)"
@@ -599,7 +599,7 @@ Invoke-WithKvkGuiFixture {
     $after = ConvertFrom-Json ([IO.File]::ReadAllText($primary)) -AsHashtable
     Assert ($after.stringSettings['EStringSettingId::CurrentThemeName'] -ceq 'Combo') 'The scheme half of the Profile was not applied.'
     Assert ($after.stringSettings['EStringSettingId::MBSGoodSound'] -ceq 'Good') 'The audio half of the Profile was not applied.'
-    Assert ($after.stringSettings['EStringSettingId::MBSOkaySound'] -ceq 'OldOkay') 'An event the Profile left untouched must keep its current binding.'
+    Assert ($after.stringSettings['EStringSettingId::MBSOkaySound'] -ceq 'Good' -and $after.stringSettings['EStringSettingId::KillConfirmedSound'] -ceq '') 'A complete snapshot writes every event, and an empty kill list clears the binding.'
     Assert ($after.vectorSettings['EVectorSettingId::EnemyBodyColor'].x -eq 0.5) 'A Profile no longer manages the enemy; applying it must not touch EnemyBodyColor.'
     Assert ($after.floatSettings['EFloatSettingId::XSens'] -eq 0.91) 'A Profile apply touched an unrelated setting.'
     $undo = Invoke-KvkGuiRequest -Session $f.Session -Request @{v=1;requestId='ufa';op='planRestore';args=@{gameRoot=$f.GameRoot;sourceId=$run.data.batchId;revision=1}}

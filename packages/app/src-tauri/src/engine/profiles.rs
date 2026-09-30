@@ -117,31 +117,32 @@ fn assert_reference(value: Option<&Json>, extensions: &[&str]) -> EngineResult<(
     assert_file(value.get("path"), extensions)
 }
 
-/// `Assert-KvkProfile`.
+/// `Assert-KvkProfile` (format v2, a complete snapshot): `theme` and `audio` are required, all
+/// six events are required, the MBS events hold exactly one sound, and no other key is accepted.
 pub fn assert_profile(profile: &Json) -> EngineResult<()> {
-    assert_object(Some(profile), &["schemaVersion", "id", "name", "scheme", "audio"], &["crosshair", "enemy"])?;
-    let version_one = is_number(profile.get("schemaVersion")) && profile.get("schemaVersion").and_then(Json::number).is_some_and(|n| match n {
-        json::Number::Int(i) => i == 1, json::Number::Double(d) => d == 1.0, json::Number::Big => false,
+    // The version is judged first, so a v1 file (which also carries crosshair/enemy) is reported
+    // as an unsupported version, not as an unknown field.
+    let version_two = || is_number(profile.get("schemaVersion")) && profile.get("schemaVersion").and_then(Json::number).is_some_and(|n| match n {
+        json::Number::Int(i) => i == 2, json::Number::Double(d) => d == 2.0, json::Number::Big => false,
     });
-    if !version_one { return Err(fail("不支持此 Profile 版本。", "This Profile version is not supported.")); }
+    let unsupported = || fail("不支持此 Profile 版本。", "This Profile version is not supported.");
+    if profile.get("schemaVersion").is_some() && !version_two() { return Err(unsupported()); }
+    assert_object(Some(profile), &["schemaVersion", "id", "name", "theme", "audio"], &[])?;
+    if !version_two() { return Err(unsupported()); }
     assert_id(profile.get("id"))?;
     assert_text(profile.get("name"), 128, "名称", "name")?;
-    if !profile.get("scheme").is_some_and(Json::is_null) { assert_reference(profile.get("scheme"), &[".json"])?; }
-    if let Some(audio) = profile.get("audio").filter(|a| !a.is_null()) {
-        assert_object(Some(audio), &[], &AUDIO_EVENTS)?;
-        for key in keys(audio) {
-            let Some(Json::Array(files)) = audio.get(&key) else { return Err(fail("Profile 音效必须是最多 64 项的数组。", "Profile sounds must be an array of at most 64 entries.")) };
-            if files.len() > 64 { return Err(fail("Profile 音效必须是最多 64 项的数组。", "Profile sounds must be an array of at most 64 entries.")); }
-            for file in files { assert_reference(Some(file), &[".wav", ".ogg"])?; }
-        }
+    assert_reference(profile.get("theme"), &[".json"])?;
+    let audio = profile.get("audio");
+    assert_object(audio, &AUDIO_EVENTS, &[])?;
+    let audio = audio.unwrap_or(&Json::Null);
+    for key in AUDIO_EVENTS {
+        let Some(Json::Array(files)) = audio.get(key) else { return Err(fail("Profile 音效必须是最多 64 项的数组。", "Profile sounds must be an array of at most 64 entries.")) };
+        if files.len() > 64 { return Err(fail("Profile 音效必须是最多 64 项的数组。", "Profile sounds must be an array of at most 64 entries.")); }
+        if key.starts_with("mbs") && files.len() != 1 { return Err(fail("Profile 的 MBS 音效必须恰好一项。", "A Profile MBS sound must have exactly one entry.")); }
+        for file in files { assert_reference(Some(file), &[".wav", ".ogg"])?; }
     }
     if profile.to_compact().len() > MAX_PROFILE_BYTES { return Err(fail("Profile JSON 超过 256 KiB。", "The Profile JSON is larger than 256 KiB.")); }
     Ok(())
-}
-
-/// `Remove-KvkProfileLegacy`: the crosshair and enemy slots are read and dropped, never written.
-pub fn remove_legacy(profile: &mut Json) {
-    if let Json::Object(fields) = profile { fields.retain(|(k, _)| k != "crosshair" && k != "enemy"); }
 }
 
 fn assert_safe(path: &str) -> EngineResult<()> {
@@ -157,9 +158,8 @@ pub fn read_file(path: &str, id: &str) -> EngineResult<Json> {
     // A strict UTF-8 reader: invalid bytes are an I/O failure, not a damaged document.
     let text = String::from_utf8(bytes).map_err(|_| EngineError::plain("Unable to translate bytes to Unicode."))?;
     let damaged = || fail("Profile JSON 已损坏或无法读取。", "The Profile JSON is damaged or could not be read.");
-    let mut profile = match parse_strict(&text, 64) { Ok(p) => p, Err(Some(coded)) => return Err(coded), Err(None) => return Err(damaged()) };
+    let profile = match parse_strict(&text, 64) { Ok(p) => p, Err(Some(coded)) => return Err(coded), Err(None) => return Err(damaged()) };
     assert_profile(&profile)?;
-    remove_legacy(&mut profile);
     if profile.get("id").and_then(Json::as_str) != Some(id) { return Err(fail("Profile 标识与文件名不一致。", "The Profile id does not match its file name.")); }
     Ok(profile)
 }
@@ -220,9 +220,8 @@ pub fn read(engine: &Engine, local_data_root: &str, id: Option<&Json>) -> Engine
 /// `Save-KvkProfile`: validated, written to a temporary file, read back, then moved into place.
 /// An existing damaged Profile is never replaced silently.
 pub fn save(engine: &Engine, local_data_root: &str, profile: Option<&Json>) -> EngineResult<Json> {
-    let mut profile = profile.cloned().unwrap_or(Json::Null);
+    let profile = profile.cloned().unwrap_or(Json::Null);
     assert_profile(&profile)?;
-    remove_legacy(&mut profile);
     let id = profile.get("id").and_then(Json::as_str).unwrap_or_default().to_string();
     let path = profile_path(engine, local_data_root, profile.get("id"))?;
     read(engine, local_data_root, profile.get("id"))?;
