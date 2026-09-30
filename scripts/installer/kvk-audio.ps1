@@ -25,9 +25,9 @@ function Get-KvkSoundsDirectory($Context) {
 
 function Get-KvkInstalledSounds($Context) {
     $directory=Get-KvkSoundsDirectory $Context
-    $byName=[ordered]@{}
+    $byName=[Collections.Specialized.OrderedDictionary]::new([StringComparer]::OrdinalIgnoreCase)
     if ([IO.Directory]::Exists($directory)) {
-        $paths=@([IO.Directory]::EnumerateFiles($directory,'*',[IO.SearchOption]::TopDirectoryOnly)) | Sort-Object
+        $paths=@(Sort-KvkByName @([IO.Directory]::EnumerateFiles($directory,'*',[IO.SearchOption]::TopDirectoryOnly)))
         foreach ($path in $paths) {
             $extension=[IO.Path]::GetExtension($path)
             if ($extension -inotin @('.ogg','.wav')) { continue }
@@ -37,7 +37,7 @@ function Get-KvkInstalledSounds($Context) {
             else { $byName[$name].Ambiguous=$true }
         }
     }
-    $sounds=@($byName.Values | Sort-Object Name)
+    $sounds=@(Sort-KvkByName @($byName.Values) 'Name')
     return [pscustomobject]@{Directory=$directory;Sounds=@($sounds)}
 }
 
@@ -66,7 +66,7 @@ function Get-KvkAudioEdit($Context,[string]$Event,[string[]]$Names) {
     $definition=Get-KvkAudioEvent $Event
     $selected=@($Names)
     $installed=Get-KvkInstalledSounds $Context
-    $byName=@{}
+    $byName=New-KvkNameMap
     foreach ($sound in $installed.Sounds) { $byName[$sound.Name]=$sound }
     foreach ($name in $selected) {
         if ($name -isnot [string] -or [string]::IsNullOrWhiteSpace($name) -or $name.Contains(';') -or $name -match '[\\/:*?"<>|]' -or $name -match '[\x00-\x1f]') { Throw-KvkFailure 'ENGINE_ERROR' "音效名称无效 (invalid sound name): $name" "The sound name is not valid: `"$name`"." }

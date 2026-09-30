@@ -80,7 +80,7 @@ function Get-KvkInstalledCrosshairs($Context) {
     $directory=Get-KvkCrosshairsDirectory $Context
     $crosshairs=@()
     if ([IO.Directory]::Exists($directory)) {
-        $paths=@([IO.Directory]::EnumerateFiles($directory,'*.png',[IO.SearchOption]::TopDirectoryOnly)) | Sort-Object
+        $paths=@(Sort-KvkByName @([IO.Directory]::EnumerateFiles($directory,'*.png',[IO.SearchOption]::TopDirectoryOnly)))
         foreach ($path in $paths) {
             $crosshairs += [pscustomobject]@{Name=[IO.Path]::GetFileNameWithoutExtension($path);File=[IO.Path]::GetFileName($path);Path=$path}
         }

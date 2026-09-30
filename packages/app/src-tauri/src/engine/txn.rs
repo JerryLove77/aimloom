@@ -19,10 +19,13 @@ pub struct PackItem { pub category: String, pub key: String, pub source: String 
 
 pub struct PackFiles { pub root: String, pub items: Vec<PackItem>, pub skipped: Vec<String> }
 
-/// The name order `Sort-Object Name` gives once the culture fix is in: ordinal, ignoring case.
+/// `Sort-KvkByName`: ordinal ignoring case (UTF-16 code units, simple upper-case mapping), then
+/// exact ordinal order to break ties, so a list never depends on the Windows display language.
 pub fn name_order(a: &str, b: &str) -> std::cmp::Ordering {
-    let upper = |s: &str| -> Vec<u16> { s.encode_utf16().map(|u| char::from_u32(u32::from(u)).map(|c| { let mut m = c.to_uppercase(); if m.len() == 1 { m.next().unwrap_or(c) } else { c } }).map_or(u, |c| c as u16)).collect() };
-    upper(a).cmp(&upper(b))
+    let upper = |s: &str| -> Vec<u16> {
+        s.encode_utf16().map(|u| char::from_u32(u32::from(u)).map(|c| { let mut m = c.to_uppercase(); if m.len() == 1 { m.next().unwrap_or(c) } else { c } }).map_or(u, |c| u16::try_from(u32::from(c)).unwrap_or(u))).collect()
+    };
+    upper(a).cmp(&upper(b)).then_with(|| a.encode_utf16().cmp(b.encode_utf16()))
 }
 
 fn sorted_entries(dir: &str) -> EngineResult<Vec<(String, bool)>> {
