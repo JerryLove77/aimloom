@@ -375,10 +375,10 @@ fn the_release_runtime_root_finds_a_sample_pack_beside_the_exe() {
     let _ = std::fs::remove_dir_all(&dir);
 }
 
-/// An engine bug in one request answers that request with a bilingual ENGINE_ERROR; the worker
-/// keeps running, as the PowerShell worker did.
+/// An engine bug in one request answers that request with a bilingual ENGINE_ERROR instead of
+/// unwinding out of the worker loop, as the PowerShell worker caught each request's errors.
 #[test]
-fn a_panicking_request_is_answered_and_the_next_one_still_runs() {
+fn a_panicking_request_gets_an_engine_error_reply_and_a_normal_one_passes_through() {
     let (reply, panicked) = crate::engine::session::guard_request_for_test(Json::str("r1"), || panic!("an engine bug"));
     assert!(panicked);
     assert_eq!(reply.get("requestId").and_then(Json::as_str), Some("r1"));

@@ -13,8 +13,8 @@ export interface AssetPreviewProps {
   profilePath: string
   assets: ProfileAssetBridge
   onStatus?: (status: Status) => void
-  /** What a reference-less preview says. Defaults to the bare 「保持当前」 tag word; a Profile
-   * card passes the fuller sentence naming what stays unrecorded. */
+  /** What a reference-less preview says. Defaults to 「未选择」; a Profile card passes the fuller
+   * sentence naming what is not chosen yet. */
   emptyLabel?: string
 }
 interface Preview { token: object; url: string; status: Status; message?: Msg | undefined }

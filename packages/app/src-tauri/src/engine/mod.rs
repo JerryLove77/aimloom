@@ -1,8 +1,8 @@
 //! The engine in Rust (ENGINE-RUST, ROADMAP). It is a second implementation of
 //! `scripts/installer/kvk-engine.ps1` and its section adapters, speaking the same v=1 worker
 //! protocol, and it is held to the PowerShell engine by goldens that PowerShell regenerates
-//! (`scripts/installer/tests/parity/`). The App starts it as `Aimloom.exe --worker` when the
-//! player chooses it in Settings (`installer/engine_choice.rs`); PowerShell stays the default.
+//! (`scripts/installer/tests/parity/`). From v0.1.6 it is the only engine the App runs, as
+//! `Aimloom.exe --worker`; the PowerShell engine stays in the repository as the reference.
 //!
 //! Every file write in this module goes through the same plan, backup and verification steps
 //! as the PowerShell engine, and reads and writes the same data folder, so either engine can
