@@ -1,0 +1,215 @@
+{
+  "fixture": "enemy-crlf.json",
+  "gameFiles": {
+    "FPSAimTrainer/Saved/SaveGames/Themes/Existing.json": {
+      "text": "{\"themeName\": \"Taken\"}"
+    },
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "old"
+    }
+  },
+  "packFiles": {
+    "imported.json": {
+      "text": "{\"themeName\": \"Imported\"}"
+    },
+    "same-name.json": {
+      "text": "{\"themeName\": \"taken\"}"
+    },
+    "boom.ogg": {
+      "text": "RIFF-new"
+    },
+    "broken.json": {
+      "text": "{\"themeName\":"
+    },
+    "hit.ogg": {
+      "text": "x"
+    }
+  },
+  "steps": [
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "theme",
+        "sourcePath": "<pack>/imported.json",
+        "sourceSha256": "5a30e3df83ca200118afba74b2536d5974ba0535b3a3f8dfd5056855cda506a9",
+        "file": "imported.json",
+        "revision": 1
+      }
+    },
+    {
+      "gameRunningFrom": 1
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "a",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "gameRunningFrom": null
+    },
+    {
+      "request": "schemeList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/boom.ogg",
+        "sourceSha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903",
+        "file": "boom.ogg",
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "b",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "theme",
+        "sourcePath": "<pack>/same-name.json",
+        "sourceSha256": "7c0925e3cb44f0597b1aa092b9365ed6097f55df5bac457f992c3b109cae3391",
+        "file": "other.json",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "theme",
+        "sourcePath": "<pack>/imported.json",
+        "sourceSha256": "5a30e3df83ca200118afba74b2536d5974ba0535b3a3f8dfd5056855cda506a9",
+        "file": "EXISTING.json",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/hit.ogg",
+        "sourceSha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881",
+        "file": "hit.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/boom.ogg",
+        "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "file": "boom2.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "model",
+        "sourcePath": "<pack>/boom.ogg",
+        "sourceSha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903",
+        "file": "boom2.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/boom.ogg",
+        "sourceSha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903",
+        "file": "bad;name.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/boom.ogg",
+        "sourceSha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903",
+        "file": "boom2.mp3",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/boom.ogg",
+        "sourceSha256": "NOTAHASH",
+        "file": "boom2.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "<pack>/missing.ogg",
+        "sourceSha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903",
+        "file": "boom2.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "sound",
+        "sourcePath": "relative/boom.ogg",
+        "sourceSha256": "ad35dbcfd5401b361d9da55d9c96957ec5ac5c86abf62beeae4dbfc246810903",
+        "file": "boom2.ogg",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planFileAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "kind": "theme",
+        "sourcePath": "<pack>/broken.json",
+        "sourceSha256": "2c788658de4682e4db84cebd16c14e9024283e893c3ad654eb441fefe22877ef",
+        "file": "broken.json",
+        "revision": 3
+      }
+    },
+    {
+      "request": "backups",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

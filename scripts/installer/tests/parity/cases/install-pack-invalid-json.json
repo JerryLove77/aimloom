@@ -1,0 +1,36 @@
+{
+  "fixture": "enemy-crlf.json",
+  "packFiles": {
+    "Themes/broken.json": {
+      "text": "{\"themeName\":"
+    },
+    "UI.json": {
+      "text": "[1]"
+    }
+  },
+  "steps": [
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "themes"
+        ],
+        "revision": 1
+      },
+      "compare": "code"
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "ui"
+        ],
+        "revision": 1
+      }
+    }
+  ]
+}

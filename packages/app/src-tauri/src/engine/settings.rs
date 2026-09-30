@@ -197,7 +197,7 @@ pub fn scheme_execute(engine: &Engine, context: &Context, scheme: &SchemePlan, o
     if store::hash(&scheme.theme_path)?.as_deref() != Some(scheme.theme_hash.as_str()) {
         return Err(EngineError::coded("PLAN_STALE", "预览之后主题文件发生了变化，请重新核对。", "The theme file changed after preview; review it again."));
     }
-    txn::install(engine, context, &scheme.plan, observer)
+    txn::install(engine, context, &scheme.plan, false, observer)
 }
 
 // ---- Sounds (audio) ------------------------------------------------------------------------
