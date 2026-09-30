@@ -125,10 +125,13 @@ python3 -m unittest discover -s scripts/installer/tests -p 'test_*.py'
 
 pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
 pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1 -CaseFilter '<substring>'   # single case
+pwsh -NoProfile -File scripts/installer/tests/parity/parity.test.ps1 [-Write]   # the Rust engine's goldens
+pwsh -NoProfile -File scripts/installer/tests/parity/cross.test.ps1   # both engines, one data folder
 ```
 
-CI (`.github/workflows/ci.yml`) runs all of the above, plus the sixteen PowerShell
-suites on Windows. `distribution`, `windows-entrypoints` and `gui-distribution` need an extracted
+CI (`.github/workflows/ci.yml`) runs all of the above, plus the seventeen PowerShell
+suites on Windows (the sixteen and `parity`) on the pinned bundled PowerShell, and
+`cross.test.ps1` after `cargo test` has built `examples/engine_worker`. `distribution`, `windows-entrypoints` and `gui-distribution` need an extracted
 release ZIP and are not in CI. If `cargo` is missing from a non-interactive shell,
 `export PATH="$HOME/.cargo/bin:$PATH"`.
 
@@ -159,12 +162,23 @@ an outside file, failure text), `workspace/` (the shell: window, sidebar, Settin
 `installer/` (Quick import only), `profiles/`, `scheme/`, `audio/`, `enemy/`, `crosshair/` (one
 folder per section) and `i18n/` (dictionaries only).
 
+**A second engine in Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST) implements
+the same 26 operations over the same JSONL, and reads and writes the same data folder, so either
+engine picks up what the other left. The App does not start it yet: `WorkerConfig` runs the
+PowerShell worker. It is held to PowerShell by the goldens in `scripts/installer/tests/parity/`
+(regenerated on Windows with `parity.test.ps1 -Write`) and by `cross.test.ps1`; accepted
+differences are in that folder's `DIVERGENCES.md`. **An engine change is one PR: the PowerShell
+change, the regenerated goldens, and the Rust change.**
+
 `kvk-config.ps1` (the console wizard behind `安装配置.cmd` / `恢复配置.cmd`) drives the *same*
 engine. The GUI adds no write rules of its own; fix write behaviour in the engine, not in a shell.
 
 **The wire contract is mirrored in four places and must change in lockstep:** `bridge/contracts.ts` (TS)
 → `protocol.rs` (serde + `validate_read`) → `gui/protocol.schema.json` (request schema) →
 `gui/kvk-gui-service.ps1` (producer). camelCase on the wire; Rust renames. `PROTOCOL_VERSION = 1`.
+The Rust engine (`src/engine/session.rs`) is a second producer and answers the same; a reply's
+field names are exact, since the App decodes with `deny_unknown_fields`, while PowerShell reads
+properties ignoring case (an `exportFile` reply in the wrong case went unnoticed that way).
 
 **Both languages travel on the wire.** An `Issue` carries `messageEn` beside `message`, an
 execution report carries `errorsEn` beside `errors`, and a Profile list error row carries its own

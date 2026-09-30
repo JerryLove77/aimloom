@@ -114,7 +114,7 @@ cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installe
 npm run test:site                         # the website: page build + the Worker (D1, R2, sign-in, uploads)
 ```
 
-The PowerShell suites need PowerShell 7 and run on Windows (CI runs all sixteen on every push):
+The PowerShell suites need PowerShell 7 and run on Windows (CI runs all seventeen on every push):
 
 ```powershell
 pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
