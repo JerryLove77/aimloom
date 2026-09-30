@@ -24,7 +24,7 @@ UTF-8), `{"fixture": …}` or `{"dir": true}`, and the steps, run in order in on
 
 | Step | Meaning |
 |---|---|
-| `{"request": op, "args": {…}}` | One request, sent as a JSON line the way the App sends it. A string starting with `<game>` or `<pack>` starts with that folder instead; `<plan>` is the `planId` of the last reply that carried one. `"compare": "code"` keeps only `ok` and the error code (the message is the operating system's). |
+| `{"request": op, "args": {…}}` | One request, sent as a JSON line the way the App sends it. A string starting with `<game>` or `<pack>` starts with that folder instead; `<plan>` and `<batch>` are the `planId` and `batchId` of the last reply that carried one. `"compare": "code"` keeps only `ok` and the error code (the message is the operating system's). |
 | `{"raw": value}` | A request line that is exactly `value` (malformed envelopes). |
 | `{"setPrimary": file}` / `{"appendPrimary": text}` | Replace the settings file with a fixture, or append text to it. |
 | `{"gameRunningFrom": n}` | The game appears in the process list from the n-th listing on (1 is the next one); `null` ends it. Every game check and every `gameState` is one listing. |

@@ -19,7 +19,7 @@ const OPERATIONS: [&str; 26] = [
     "profileAssetList", "profileAssetRead",
 ];
 
-enum Adapter { Enemy(enemy::EnemyPlan), Scheme(super::settings::SchemePlan), Audio(super::txn::Plan) }
+enum Adapter { Enemy(enemy::EnemyPlan), Scheme(super::settings::SchemePlan), Audio(super::txn::Plan), Restore(super::txn::RestorePlan) }
 
 struct CachedPlan { id: String, kind: &'static str, context: Context, adapter: Adapter }
 
@@ -188,6 +188,24 @@ impl Session {
                 let planned = super::settings::audio_plan(&self.engine, &context, event, &names)?;
                 Ok(self.record_plan(context, &planned.clone(), revision, Adapter::Audio(planned)))
             }
+            "planRestore" => {
+                assert_fields(args, &["gameRoot", "sourceId", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, source_id) = (string_arg(args, "gameRoot")?, string_arg(args, "sourceId")?);
+                let revision = revision_arg(args)?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                let pending: Vec<String> = manifest::all(&self.engine, &context)?.iter()
+                    .filter(|m| m.get("Status").and_then(Json::as_str).is_some_and(|s| manifest::UNFINISHED.contains(&s)))
+                    .filter_map(|m| m.get("Id").and_then(Json::as_str).map(str::to_string)).collect();
+                if !pending.is_empty() && !pending.iter().any(|p| p == source_id) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先处理未完成的恢复批次，才能再次恢复。", "The pending recovery batch must be handled before another restore."));
+                }
+                let plan = super::txn::restore_plan(&self.engine, &context, source_id)?;
+                let id = super::store::new_guid();
+                let preview = self.restore_preview(&context, &plan, revision, &id);
+                self.plan = Some(CachedPlan { id, kind: "restore", context, adapter: Adapter::Restore(plan) });
+                Ok(preview)
+            }
             "enemyList" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
@@ -215,7 +233,7 @@ impl Session {
                 let mut records: Vec<&Json> = all.iter().filter(|m| m.get("Kind").and_then(Json::as_str) != Some("pristine")).collect();
                 let unfinished = |m: &Json| m.get("Status").and_then(Json::as_str).is_some_and(|s| manifest::UNFINISHED.contains(&s));
                 // Sort-Object is stable: unfinished batches first, then newest first.
-                records.sort_by(|a, b| unfinished(b).cmp(&unfinished(a)).then_with(|| created_key(b).cmp(&created_key(a))));
+                records.sort_by(|a, b| unfinished(b).cmp(&unfinished(a)).then_with(|| super::txn::created_key(b).cmp(&super::txn::created_key(a))));
                 let rows = records.iter().map(|m| Json::object(vec![
                     ("id", m.get("Id").cloned().unwrap_or(Json::Null)),
                     ("createdAt", m.get("CreatedAt").cloned().unwrap_or(Json::Null)),
@@ -243,11 +261,17 @@ impl Session {
                     }
                 };
                 if confirmation != cached.kind { return Err(EngineError::coded("PLAN_STALE", "确认内容与缓存的清单不一致。", "Confirmation does not match the cached plan.")); }
+                if let Adapter::Restore(plan) = &cached.adapter {
+                    if plan.items.iter().any(|i| i.unowned) { return Err(EngineError::coded("UNOWNED_FILE", "无法确认文件由本工具创建，不能删除。", "Cannot delete a file without proof that this installer created it.")); }
+                    if plan.items.iter().any(|i| i.conflict) && !*allow { return Err(EngineError::coded("CONFLICT", "恢复冲突需要明确确认。", "Restore conflicts require explicit confirmation.")); }
+                    return Ok(execution(&super::txn::restore(&self.engine, &cached.context, plan, *allow, observer)?));
+                }
                 if *allow { return Err(EngineError::coded("CONFLICT", "安装清单不接受冲突覆盖许可。", "Install plans do not accept conflict permission.")); }
                 let report = match &cached.adapter {
                     Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Scheme(plan) => super::settings::scheme_execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Audio(plan) => super::txn::install(&self.engine, &cached.context, plan, observer)?,
+                    Adapter::Restore(_) => unreachable_restore(),
                 };
                 Ok(execution(&report))
             }
@@ -261,6 +285,24 @@ impl Session {
         let preview = self.install_preview(&context, plan, revision, &id);
         self.plan = Some(CachedPlan { id, kind: "install", context, adapter });
         preview
+    }
+
+    /// `ConvertTo-KvkGuiRestorePreview`.
+    fn restore_preview(&self, context: &Context, plan: &super::txn::RestorePlan, revision: i64, id: &str) -> Json {
+        let mut categories: Vec<String> = Vec::new();
+        let rows = plan.items.iter().map(|i| {
+            let category = i.key.split('/').next().unwrap_or_default().to_string();
+            if !categories.contains(&category) { categories.push(category.clone()); }
+            Json::object(vec![
+                ("key", Json::str(&i.key)), ("category", Json::str(category)), ("source", Json::Null), ("target", Json::str(&i.target)),
+                ("action", Json::str(&i.action)), ("conflict", Json::Bool(i.conflict)), ("unowned", Json::Bool(i.unowned)),
+            ])
+        }).collect();
+        Json::object(vec![
+            ("planId", Json::str(id)), ("revision", Json::int(revision)), ("kind", Json::str("restore")), ("location", self.location(context)),
+            ("packRoot", Json::Null), ("categories", Json::Array(categories.into_iter().map(Json::str).collect())),
+            ("sourceId", Json::str(&plan.id)), ("rows", Json::Array(rows)), ("skipped", Json::Array(Vec::new())),
+        ])
     }
 
     /// `ConvertTo-KvkGuiInstallPreview`.
@@ -293,14 +335,8 @@ fn powershell_string(value: &Json) -> String {
     }
 }
 
-/// `[datetime]$_.CreatedAt` as a sortable key: the seconds part, then the fraction padded to
-/// seven digits.
-fn created_key(manifest: &Json) -> (String, String) {
-    let text = manifest.get("CreatedAt").and_then(Json::as_str).unwrap_or_default();
-    let (head, tail) = text.split_at(text.len().min(19));
-    let fraction: String = tail.strip_prefix('.').unwrap_or("").chars().take_while(char::is_ascii_digit).collect();
-    (head.to_string(), format!("{fraction:0<7}"))
-}
+#[allow(clippy::panic)]
+fn unreachable_restore() -> ! { panic!("a restore plan returns before the install dispatch") }
 
 /// `ConvertTo-KvkGuiExecution`.
 fn execution(report: &Report) -> Json {

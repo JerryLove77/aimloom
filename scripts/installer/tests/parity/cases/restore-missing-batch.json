@@ -1,0 +1,29 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "planRestore",
+      "args": {
+        "gameRoot": "<game>",
+        "sourceId": "0123456789abcdef0123456789abcdef",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planRestore",
+      "args": {
+        "gameRoot": "<game>",
+        "sourceId": "../x",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planRestore",
+      "args": {
+        "gameRoot": "<game>",
+        "sourceId": "pristine",
+        "revision": 1
+      }
+    }
+  ]
+}
