@@ -3,11 +3,10 @@ use app_lib::installer::protocol::{validate_read, ErrorCode};
 use serde_json::{json, Value};
 
 fn profile() -> Value {
-    json!({"schemaVersion":1,"id":"tracking","name":"跟踪练习",
-      "scheme":{"name":"idk3.json","path":"assets/idk3.json"},
-      "audio":{"kill":[{"name":"a.ogg","path":"../sounds/a.ogg"},{"name":"a.ogg","path":"../sounds/a.ogg"}],"spawn":[],"mbsGood":[{"name":"good.wav","path":"good.wav"}],"mbsOkay":[],"mbsBad":[],"mbsChangeNow":[]},
-      "crosshair":{"name":"dot.png","path":"C:/Assets/dot.png"},
-      "enemy":{"name":"blue.json","path":"enemy/blue.json"}})
+    json!({"schemaVersion":2,"id":"tracking","name":"跟踪练习",
+      "theme":{"name":"idk3.json","path":"assets/idk3.json"},
+      "audio":{"kill":[{"name":"a.ogg","path":"../sounds/a.ogg"},{"name":"a.ogg","path":"../sounds/a.ogg"}],"spawn":[],"mbsGood":[{"name":"good.wav","path":"good.wav"}],
+        "mbsOkay":[{"name":"none.ogg","path":"none.ogg"}],"mbsBad":[{"name":"none.ogg","path":"none.ogg"}],"mbsChangeNow":[{"name":"none.ogg","path":"none.ogg"}]}})
 }
 
 #[test]
@@ -24,35 +23,34 @@ fn profile_crud_requests_preserve_choices_and_use_a_separate_channel() {
     assert!(validate_profile_request("execute",json!({})).is_err());
 }
 
+/// Profile v2 (2026-09-30) is a complete snapshot: the theme and all six events are required,
+/// never null, and nothing else is accepted -- not the v1 `scheme` key, nor the old crosshair or
+/// enemy records (no data migration).
 #[test]
-fn profile_components_must_be_present_even_when_null() {
-    let mut p=profile();
-    for key in ["scheme","audio","crosshair","enemy"] {p[key]=Value::Null;}
-    assert!(validate_profile_request("profileSave",json!({"profile":p.clone()})).is_ok());
-    for key in ["scheme","audio"] {
-        let mut missing=p.clone();missing.as_object_mut().unwrap().remove(key);
-        assert!(validate_profile_request("profileSave",json!({"profile":missing})).is_err(),"{key}");
+fn every_component_is_required_and_nothing_else_is_accepted() {
+    for key in ["theme","audio"] {
+        let mut null=profile();null[key]=Value::Null;
+        assert!(validate_profile_request("profileSave",json!({"profile":null})).is_err(),"null {key}");
+        let mut missing=profile();missing.as_object_mut().unwrap().remove(key);
+        assert!(validate_profile_request("profileSave",json!({"profile":missing})).is_err(),"missing {key}");
     }
-    // `crosshair` and `enemy` are both exceptions: the App no longer writes either key, so their
-    // ABSENCE is the normal case, and their presence is only a Profile saved before each was
-    // removed (crosshair in v0.1.3, enemy on 2026-09-21).
-    let mut current=p.clone();
-    current.as_object_mut().unwrap().remove("crosshair");
-    current.as_object_mut().unwrap().remove("enemy");
-    assert!(validate_profile_request("profileSave",json!({"profile":current})).is_ok(),"a Profile without crosshair or enemy is what the App saves");
+    for event in ["kill","spawn","mbsGood","mbsOkay","mbsBad","mbsChangeNow"] {
+        let mut missing=profile();missing["audio"].as_object_mut().unwrap().remove(event);
+        assert!(validate_profile_request("profileSave",json!({"profile":missing})).is_err(),"missing {event}");
+    }
+    for key in ["scheme","crosshair","enemy"] {
+        let mut extra=profile();extra[key]=json!({"name":"a.json","path":"C:/a.json"});
+        assert!(validate_profile_request("profileSave",json!({"profile":extra})).is_err(),"{key}");
+    }
 }
 
-/// The crosshair and enemy records are both read past, never validated: neither can reach
-/// anything any more, so a stale or malformed one must not be the reason an otherwise good
-/// Profile refuses to load. The engine strips both on read and on save, so nothing unvalidated
-/// reaches the disk.
 #[test]
-fn a_leftover_crosshair_or_enemy_record_is_ignored_whatever_it_holds() {
-    for junk in [json!({"file":"image.svg"}), json!("not an object"), json!(42), json!({"name":"x","path":"C:/a.txt"})] {
-        for key in ["crosshair","enemy"] {
-            let mut p=profile();p[key]=junk.clone();
-            assert!(validate_profile_request("profileSave",json!({"profile":p})).is_ok(),"{key}: {junk}");
-        }
+fn kill_and_spawn_may_be_silent_and_each_mbs_event_holds_one_sound() {
+    let mut silent=profile();silent["audio"]["kill"]=json!([]);
+    assert!(validate_profile_request("profileSave",json!({"profile":silent})).is_ok());
+    for count in [0usize,2] {
+        let mut p=profile();p["audio"]["mbsBad"]=json!(vec![json!({"name":"a.ogg","path":"a.ogg"}); count]);
+        assert!(validate_profile_request("profileSave",json!({"profile":p})).is_err(),"{count}");
     }
 }
 
@@ -68,10 +66,10 @@ fn unsafe_profile_ids_and_extra_request_fields_are_rejected() {
 #[test]
 fn malformed_component_values_and_versions_are_rejected() {
     let mut bad=Vec::new();
-    let mut p=profile();p["schemaVersion"]=json!(2);bad.push(p);
+    let mut p=profile();p["schemaVersion"]=json!(1);bad.push(p);
     let mut p=profile();p["schemaVersion"]=json!(true);bad.push(p);
     let mut p=profile();p["name"]=json!("\n");bad.push(p);
-    let mut p=profile();p["scheme"]=json!({"file":"https://example.test/a.json"});bad.push(p);
+    let mut p=profile();p["theme"]=json!({"file":"https://example.test/a.json"});bad.push(p);
     let mut p=profile();p["audio"]=json!({"kill":"a.ogg"});bad.push(p);
     let mut p=profile();p["audio"]=json!({"shoot":["a.wav"]});bad.push(p);
     let mut p=profile();p["extra"]=json!(null);bad.push(p);
