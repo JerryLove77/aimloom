@@ -5,6 +5,9 @@ import { readAccount, writeAccount, looksLikeSteamUrl, type Account } from './ac
 import { readUpdatesEnabled, writeUpdatesEnabled } from './updates'
 import { updateAvailableKey } from './update-text'
 import { SettingsState } from './WorkspaceShell'
+import type { EngineKind, EngineStatus } from '../bridge/contracts'
+
+const ENGINES: EngineKind[] = ['powershell', 'rust']
 
 /** feedback@aimloom.dev, unwrapped: plain selectable text, never a button or a mailto link. Shared with ReportSheet's failure view. */
 export const FEEDBACK_EMAIL = 'feedback@aimloom.dev'
@@ -32,7 +35,9 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
   // ever renders one `SettingsPopover` while `settings.anchor` is set, and unmounts it the
   // instant that closes -- a still-pending `accountResolve` promise outlives that unmount.
   const mountedRef = useRef(true)
-  useEffect(() => () => { mountedRef.current = false }, [])
+  // Set again on every mount: StrictMode mounts twice, and a flag left false by the first
+  // unmount would drop every later answer.
+  useEffect(() => { mountedRef.current = true; return () => { mountedRef.current = false } }, [])
 
   // Account: the player's own name for their Steam account, or the connect form. After a link
   // resolves, the name starts as the Steam name and the player may change it before saving
@@ -76,6 +81,31 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
     settings.openLogs().catch((error: unknown) => {
       if (!mountedRef.current) return
       setLogsError(errorMsg(error, { key: 'settings.feedback.openLogsFailed' }))
+    })
+  }
+
+  // Engine (ROADMAP ENGINE-RUST step 3). Native code decides whether a switch is allowed and
+  // refuses it again if the UI is stale; a successful switch reloads the window so every page
+  // reads again through the new engine. A failed start keeps the new choice (never a silent
+  // fallback) and offers the way back.
+  const [engine, setEngineStatus] = useState<EngineStatus | null>(null)
+  const [switching, setSwitching] = useState(false)
+  const [engineError, setEngineError] = useState<{ message: Msg; back: EngineKind | null } | null>(null)
+  // Asked once per opening: the context value is rebuilt on every Workspace render.
+  useEffect(() => {
+    settings.engineStatus().then(status => { if (mountedRef.current) setEngineStatus(status) }).catch(() => {})
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const switchEngine = (to: EngineKind) => {
+    const from = engine?.engine ?? null
+    setSwitching(true); setEngineError(null)
+    settings.setEngine(to).then(() => settings.reloadWindow()).catch((error: unknown) => {
+      if (!mountedRef.current) return
+      setSwitching(false)
+      settings.engineStatus().then(status => {
+        if (!mountedRef.current) return
+        setEngineStatus(status)
+        setEngineError({ message: errorMsg(error, { key: 'settings.engine.failed' }), back: status.engine === to && from !== null && from !== to ? from : null })
+      }).catch(() => { if (mountedRef.current) setEngineError({ message: errorMsg(error, { key: 'settings.engine.failed' }), back: null }) })
     })
   }
 
@@ -139,6 +169,24 @@ export function SettingsPopover({ anchor, onClose }: { anchor: HTMLElement; onCl
             <button type="button" className="ki-button ki-button-secondary" onClick={() => { void settings.openDownload(lang, update.channel) }}>{t('settings.updates.download')}</button>
           </p>
         : <p className="ws-settings-update">{t('settings.updates.current')}</p>) : null}
+    </section>
+
+    <section className="ws-settings-section">
+      <h3 id="ws-engine-heading">{t('settings.engine')}</h3>
+      {engine ? <fieldset className="ws-settings-engine" aria-labelledby="ws-engine-heading" aria-describedby="ws-engine-note" disabled={engine.blocked !== null || switching}>
+        {ENGINES.map(kind => <label key={kind}>
+          <input type="radio" name="aimloom-engine" value={kind} checked={engine.engine === kind} onChange={() => switchEngine(kind)} />
+          <span>{t(`settings.engine.${kind}`)}</span>
+        </label>)}
+      </fieldset> : null}
+      {engine?.blocked ? <p id="ws-engine-note" className="ws-settings-note">{t(`settings.engine.blocked.${engine.blocked}`)}</p>
+        : <p id="ws-engine-note" className="ws-muted">{switching ? t('settings.engine.switching') : t('settings.engine.hint')}</p>}
+      {engineError ? <>
+        <p className="ws-settings-error" role="alert">{msg(engineError.message)}</p>
+        {engineError.back ? <button type="button" className="ki-button ki-button-secondary" disabled={switching} onClick={() => switchEngine(engineError.back!)}>
+          {t('settings.engine.back', { name: t(`settings.engine.name.${engineError.back}`) })}
+        </button> : null}
+      </> : null}
     </section>
 
     <p className="ws-settings-version">

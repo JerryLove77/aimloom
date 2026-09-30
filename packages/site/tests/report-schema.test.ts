@@ -27,6 +27,13 @@ describe('parseReport', () => {
     expect(field({ ...valid(), constructor: 1 })).toBe('constructor')
     expect(field({ ...valid(), account: { ...valid().account, toString: 'x' } })).toBe('account.toString')
   })
+  it('takes the engine when an App sends it, and a report from an App before v0.1.6 without it', () => {
+    expect(parseReport({ ...valid(), system: { ...valid().system, engine: 'rust' } }).ok).toBe(true)
+    const older = valid(); delete older.system.engine
+    expect(parseReport(older).ok).toBe(true)
+    expect(field({ ...valid(), system: { ...valid().system, engine: 'python' } })).toBe('system.engine')
+    expect(field({ ...valid(), system: { ...valid().system, engine: null } })).toBe('system.engine')
+  })
   it('refuses a missing key', () => { const v = valid(); delete v.game; expect(field(v)).toBe('game') })
   it('holds the limits of the spec', () => {
     expect(field({ ...valid(), description: 'x'.repeat(2001) })).toBe('description')

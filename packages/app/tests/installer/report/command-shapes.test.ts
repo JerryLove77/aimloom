@@ -27,8 +27,11 @@ describe('what each native command answers has one shape, on both sides', () => 
   it('installer_update_check', async () => expect(keys(await bridge.updateCheck(false))).toEqual(keys(fixture.installer_update_check)))
   it('installer_app_info', async () => expect(keys(await bridge.appInfo())).toEqual(keys(fixture.installer_app_info)))
 
-  it('the fixture names exactly the five commands that answer with data', () => {
-    expect(keys(fixture)).toEqual(['installer_account_resolve', 'installer_app_info', 'installer_report_preview', 'installer_report_send', 'installer_update_check'])
+  it('installer_engine', async () => expect(await bridge.engine()).toEqual(fixture.installer_engine))
+  it('installer_engine_set', async () => expect(await createDemoBridge().setEngine('rust')).toEqual(fixture.installer_engine_set))
+
+  it('the fixture names exactly the seven commands that answer with data', () => {
+    expect(keys(fixture)).toEqual(['installer_account_resolve', 'installer_app_info', 'installer_engine', 'installer_engine_set', 'installer_report_preview', 'installer_report_send', 'installer_update_check'])
   })
 
   // installer_launch_game answers `Ok(())`/undefined on both sides, like installer_open_logs and

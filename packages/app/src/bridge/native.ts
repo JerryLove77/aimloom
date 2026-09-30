@@ -33,5 +33,7 @@ export function createNativeBridge():InstallerBridge {
     openLogs:()=>call('installer_open_logs'),openDownload:(lang,channel)=>call('installer_open_download',{lang,channel}),openExplore:(lang,kind)=>call('installer_open_explore',{lang,kind}),
     launchGame:()=>call('installer_launch_game'),
     appInfo:()=>call('installer_app_info'),
+    engine:()=>call('installer_engine'),
+    setEngine:engine=>call('installer_engine_set',{engine}),
   }
 }

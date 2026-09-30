@@ -24,7 +24,7 @@ pub async fn installer_report_preview(
 }
 
 fn installer_report_preview_blocking(state: &InstallerRuntime, input: ReportInput) -> Result<Prepared, Issue> {
-    let facts = gather_facts(input.attach_log)?;
+    let facts = gather_facts(input.attach_log, state.engine())?;
     let prepared = super::report::prepare(&input, &facts)?;
     *state.report.lock().unwrap() = Some(prepared.clone());
     Ok(prepared)
@@ -73,7 +73,7 @@ fn installer_report_send_blocking(state: &InstallerRuntime, sha256: String) -> R
 /// which runs on macOS. `attach_log` is threaded through so a report that will not carry the log
 /// never pays for reading `worker.log`.
 #[cfg(target_os = "windows")]
-fn gather_facts(attach_log: bool) -> Result<super::report::Facts, Issue> {
+fn gather_facts(attach_log: bool, engine: super::engine_choice::EngineKind) -> Result<super::report::Facts, Issue> {
     let local_app_data = std::env::var("LOCALAPPDATA")
         .map_err(|_| Issue::new(ErrorCode::EngineError, "找不到 LOCALAPPDATA 环境变量。", "The LOCALAPPDATA environment variable is not set."))?;
     let local_app_data = Path::new(&local_app_data);
@@ -87,6 +87,7 @@ fn gather_facts(attach_log: bool) -> Result<super::report::Facts, Issue> {
         windows: windows_version(),
         display_language: windows_display_language(),
         powershell: windows_powershell_version(),
+        engine,
         version,
         log_tail,
         user: std::env::var("USERNAME").unwrap_or_default(),
@@ -94,7 +95,7 @@ fn gather_facts(attach_log: bool) -> Result<super::report::Facts, Issue> {
     })
 }
 #[cfg(not(target_os = "windows"))]
-fn gather_facts(_attach_log: bool) -> Result<super::report::Facts, Issue> {
+fn gather_facts(_attach_log: bool, _engine: super::engine_choice::EngineKind) -> Result<super::report::Facts, Issue> {
     Err(Issue::new(ErrorCode::UnsupportedPlatform, "报告只能在 Windows 上生成。", "The report can only be prepared on Windows."))
 }
 

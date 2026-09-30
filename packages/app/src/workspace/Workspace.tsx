@@ -21,12 +21,14 @@ import type { ProfileBridge } from '../bridge/profiles'
 import type { ProfileAssetBridge } from '../bridge/assets'
 
 /** The workspace: 更改配置's five sections and Explore. Every page stays mounted so drafts and pending choices survive switching. */
-export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrops = noFileDrops, storage = browserStorage() }: {
+export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrops = noFileDrops, storage = browserStorage(), reloadWindow = () => window.location.reload() }: {
   bridge: InstallerBridge; profileBridge: ProfileBridge; assetBridge: ProfileAssetBridge; isDemo: boolean
   /** Files dragged in from outside. Every page gets the one source; only the active page reacts (Explore takes a config pack folder), and Quick import takes none. */
   fileDrops?: FileDropSource
   /** The Settings popover's storage for the remembered account and the updates switch. Injectable for tests, browserStorage() otherwise. */
   storage?: SettingsStorage
+  /** What an engine switch does once it succeeds. Injectable for tests. */
+  reloadWindow?: () => void
 }) {
   // Quick import, open or not; `pack` is the config pack folder dropped on Explore, if any.
   const [installer, setInstaller] = useState<{ pack: string | null } | null>(null)
@@ -115,6 +117,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
       anchor, open: (a: HTMLElement) => { setAnchor(a); setEverOpened(true) }, close: () => { const a = anchor; setAnchor(null); a?.focus() },
       storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge), openExplore: bridge.openExplore.bind(bridge),
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
+      engineStatus: bridge.engine.bind(bridge), setEngine: bridge.setEngine.bind(bridge), reloadWindow,
     }}>
       <ProfilesApp bridge={profileBridge} assets={assetBridge} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
       <SchemePage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'scheme'} section={section} onSelect={setSection} fileDrops={fileDrops} />

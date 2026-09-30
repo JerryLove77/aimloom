@@ -6,7 +6,7 @@ import { SettingsPopover } from './SettingsPopover'
 import { updateAvailableKey } from './update-text'
 import { useT, type Lang, type MessageKey } from '../i18n'
 import type { FileDropHint } from './file-drop'
-import type { AppInfo, ExploreKind, SteamAccount, UpdateCheck } from '../bridge/contracts'
+import type { AppInfo, EngineKind, EngineStatus, ExploreKind, SteamAccount, UpdateCheck } from '../bridge/contracts'
 import './workspace.css'
 
 /** The five sections under 更改配置 / Customize, then the Explore page. */
@@ -51,6 +51,11 @@ export const SettingsState = createContext<{
   betaOn: boolean
   setBetaOn(on: boolean): void
   openReport(): void
+  /** The engine in use and whether it can be switched, asked each time Settings opens. */
+  engineStatus(): Promise<EngineStatus>
+  setEngine(engine: EngineKind): Promise<EngineStatus>
+  /** After a switch every page must read again through the new engine: the real App reloads. */
+  reloadWindow(): void
   /**
    * The report sheet, built and owned by `Workspace`. Every page mounts its own `WorkspaceShell`
    * and only the active one is ever mounted, so the workspace root cannot pass this as an
@@ -71,6 +76,9 @@ export const SettingsState = createContext<{
   betaOn: false,
   setBetaOn: () => {},
   openReport: () => {},
+  engineStatus: () => Promise.resolve({ engine: 'powershell', blocked: null }),
+  setEngine: engine => Promise.resolve({ engine, blocked: null }),
+  reloadWindow: () => {},
   rootOverlay: null,
 })
 

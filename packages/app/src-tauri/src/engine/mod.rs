@@ -1,8 +1,8 @@
 //! The engine in Rust (ENGINE-RUST, ROADMAP). It is a second implementation of
 //! `scripts/installer/kvk-engine.ps1` and its section adapters, speaking the same v=1 worker
 //! protocol, and it is held to the PowerShell engine by goldens that PowerShell regenerates
-//! (`scripts/installer/tests/parity/`). The App does not start it yet: `WorkerConfig` still
-//! runs the PowerShell worker.
+//! (`scripts/installer/tests/parity/`). The App starts it as `Aimloom.exe --worker` when the
+//! player chooses it in Settings (`installer/engine_choice.rs`); PowerShell stays the default.
 //!
 //! Every file write in this module goes through the same plan, backup and verification steps
 //! as the PowerShell engine, and reads and writes the same data folder, so either engine can
@@ -86,3 +86,31 @@ pub fn english_text(message: &str, english: Option<&str>) -> String {
 
 #[cfg(test)]
 mod tests;
+
+/// `Aimloom.exe --worker`: the Rust engine as the App's JSONL worker, the counterpart of
+/// `kvk-gui-worker.ps1`. The runtime root is the folder that script treats as its own (the
+/// release's `scripts`, or `scripts/installer` in a development build), so both engines offer
+/// the same sample pack. Returns the process exit code.
+pub fn run_worker() -> i32 {
+    use std::io::{self, BufReader};
+    let Some(local) = std::env::var_os("LOCALAPPDATA") else {
+        eprintln!("LOCALAPPDATA is not set");
+        return 2;
+    };
+    #[cfg(debug_assertions)]
+    let runtime = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../scripts/installer");
+    #[cfg(not(debug_assertions))]
+    let runtime = match std::env::current_exe().ok().and_then(|exe| exe.parent().map(|dir| dir.join("scripts"))) {
+        Some(dir) => dir,
+        None => { eprintln!("could not locate the application folder"); return 2; }
+    };
+    let mut session = match session::Session::new(Box::new(store::SystemHost), &local.to_string_lossy(), &runtime.to_string_lossy()) {
+        Ok(session) => session,
+        Err(error) => { eprintln!("{}", error.message); return 2; }
+    };
+    let stdin = io::stdin();
+    match session::run_jsonl(&mut session, BufReader::new(stdin.lock()), io::stdout().lock()) {
+        Ok(()) => 0,
+        Err(error) => { eprintln!("{error}"); 1 }
+    }
+}

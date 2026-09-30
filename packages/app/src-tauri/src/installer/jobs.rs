@@ -64,6 +64,9 @@ impl JobManager {
             .ok_or_else(|| Issue::plain(ErrorCode::PlanMissing, "operationId is not known in this app session"))
     }
 
+    /// Every recorded plan becomes unexecutable: used when the engine is switched.
+    pub fn forget_plans(&mut self) { self.plans.clear(); }
+
     pub fn record_plan(&mut self, plan_id: String, game_root: String, kind: PreviewKind) {
         self.plans.clear();
         self.plans.insert(plan_id, PlanContext { game_root, kind });
