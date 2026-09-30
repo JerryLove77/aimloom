@@ -41,87 +41,18 @@ describe('the NSIS template', () => {
   })
 })
 
-describe('the PowerShell 7 hook', () => {
+describe('the hooks file', () => {
   const hooks = read('windows/hooks.nsh')
-  const macro = /^!macro NSIS_HOOK_POSTINSTALL$([\s\S]*?)^!macroend$/m.exec(hooks)?.[1] ?? ''
+  const code = hooks.replace(/^\s*;.*$/gm, '')
 
-  it('runs after the files are in place', () => expect(macro).not.toBe(''))
-
-  it('looks where the App looks: the bundled copy, then 64-bit Program Files, then PATH, and needs a major version of 7+', () => {
-    const find = /^Function AimloomFindPwsh$([\s\S]*?)^FunctionEnd$/m.exec(hooks)?.[1] ?? ''
-    const bundled = find.indexOf('Push "$INSTDIR\\pwsh\\pwsh.exe"')
-    const programFiles = find.indexOf('Push "$PROGRAMFILES64\\PowerShell\\7\\pwsh.exe"')
-    const path = find.indexOf('SearchPath $R0 "pwsh.exe"')
-    expect(bundled).toBeGreaterThan(-1)
-    expect(programFiles).toBeGreaterThan(bundled)
-    expect(path).toBeGreaterThan(programFiles)
-    expect(hooks).toContain('"$PROGRAMFILES64\\PowerShell\\7\\pwsh.exe"')
-    expect(hooks).not.toMatch(/\$PROGRAMFILES\\PowerShell/)
-    expect(hooks).toMatch(/SearchPath \$R0 "pwsh\.exe"/)
-    expect(hooks).toMatch(/nsExec::ExecToStack \/OEM '"\$R0" -NoProfile -NonInteractive -Command/)
-    expect(hooks).toContain('-NoProfile -NonInteractive -Command "$$PSVersionTable.PSVersion.Major"')
-    expect(hooks).toMatch(/\$\{If\} \$R2 >= 7/)
+  it('defines only the pre-install hook; the template guards each hook with !ifmacrodef', () => {
+    expect(code.match(/^!macro NSIS_HOOK_\w+/gm)).toEqual(['!macro NSIS_HOOK_PREINSTALL'])
+    expect(read('windows/installer.nsi')).toContain('!ifmacrodef NSIS_HOOK_POSTINSTALL')
   })
 
-  it('reads the child process as OEM bytes, not UTF-16, in every nsExec call', () => {
-    const calls = [...hooks.matchAll(/nsExec::Exec\S*\s+(?!\/OEM\b).*/g)].map(m => m[0])
-    expect(calls).toEqual([])
-  })
-
-  it('never asks, downloads or raises UAC in a silent or passive install', () => {
-    expect(macro.indexOf('${Silent}')).toBeGreaterThan(-1)
-    expect(macro.indexOf('$PassiveMode = 1')).toBeGreaterThan(-1)
-    expect(macro.indexOf('Call AimloomOfferPwsh')).toBeGreaterThan(macro.indexOf('$PassiveMode = 1'))
-    expect(hooks).toMatch(/MessageBox MB_YESNO\|MB_ICONQUESTION "\$R1" \/SD IDNO IDYES/)
-  })
-
-  it('asks in the installer\'s language: Chinese for 2052, English otherwise', () => {
-    expect(hooks).toContain('!define AIMLOOM_PWSH_ASK_ZH "Aimloom 需要 PowerShell 7。现在用 winget 安装吗？需要联网下载约 120 MB，网速慢时可能要几分钟。下载进度显示在弹出的窗口里，关掉那个窗口即可取消。Windows 可能会请求管理员权限。"')
-    expect(hooks).toContain('!define AIMLOOM_PWSH_ASK_EN "Aimloom needs PowerShell 7. Install it now with winget? It downloads about 120 MB, which can take several minutes on a slow connection. A separate window shows the progress; close it to cancel. Windows may ask for administrator permission."')
-    expect(hooks).toMatch(/\$\{If\} \$LANGUAGE == 2052/)
-    const english = [...hooks.matchAll(/!define AIMLOOM_\w+_EN "([^"]+)"/g)].map(m => m[1])
-    expect(english.length).toBeGreaterThanOrEqual(4)
-    for (const text of english) expect(text).not.toMatch(/[　-〿㐀-鿿＀-￯“”‘’]/)
-  })
-
-  it('installs with exactly the approved winget commands', () => {
-    expect(hooks).toContain('!define AIMLOOM_WINGET_STORE_ARGS "install --id 9MZ1SNWT0N5D --exact --source msstore --accept-package-agreements --accept-source-agreements"')
-    expect(hooks).toContain('!define AIMLOOM_WINGET_ARGS "install --id Microsoft.PowerShell --exact --source winget --accept-package-agreements --accept-source-agreements"')
-  })
-
-  it('runs each install in a window the player can see and close, never hidden behind a pipe', () => {
-    // winget writes no progress into a pipe, so a hidden install on a slow connection looked
-    // like a frozen Setup. ExecWait gives the console app its own window with winget's
-    // progress bar; closing that window is the way to cancel.
-    const install = /^!macro AIMLOOM_WINGET_INSTALL ARGS$([\s\S]*?)^!macroend$/m.exec(hooks)?.[1] ?? ''
-    expect(install).toContain(`ExecWait '"$R0" \${ARGS}' $R3`)
-    expect(install).toContain('Call AimloomFindPwsh')
-    expect(hooks).not.toMatch(/nsExec::\S+.*(\$\{ARGS\}|AIMLOOM_WINGET)/)
-  })
-
-  it('tries the Store, then the winget source, then offers the browser, each only while PowerShell 7 is still missing', () => {
-    // The winget source downloads from GitHub through Delivery Optimization, which does not use
-    // the player's proxy; the Store's CDN needs none, and the browser uses the proxy.
-    const offer = /^Function AimloomOfferPwsh$([\s\S]*?)^FunctionEnd$/m.exec(hooks)?.[1] ?? ''
-    const store = offer.indexOf('AIMLOOM_WINGET_INSTALL "${AIMLOOM_WINGET_STORE_ARGS}"')
-    const source = offer.indexOf('AIMLOOM_WINGET_INSTALL "${AIMLOOM_WINGET_ARGS}"')
-    const page = offer.indexOf('ExecShell "open" "${AIMLOOM_PWSH_PAGE_URL}"')
-    expect(store).toBeGreaterThan(-1)
-    expect(source).toBeGreaterThan(store)
-    expect(page).toBeGreaterThan(source)
-    expect(offer.slice(store, source)).toContain('${If} $AimloomPwsh != "1"')
-    expect(offer.slice(source, page)).toContain('${If} $AimloomPwsh != "1"')
-    expect(offer).toMatch(/MessageBox MB_YESNO\|MB_ICONEXCLAMATION "\$R1\$\\n\$\\n\$R2" \/SD IDNO IDYES/)
-    expect(hooks).toContain('!define AIMLOOM_PWSH_PAGE_URL "https://learn.microsoft.com/powershell/scripting/install/install-powershell-on-windows"')
-  })
-
-  it('tells a player still without PowerShell 7 exactly what the App tells them, in both languages', () => {
-    const rust = readFileSync(tauri + 'src/installer/worker.rs', 'utf8')
-    for (const [constant, define] of [['PWSH_MISSING', 'AIMLOOM_PWSH_MISSING_ZH'], ['PWSH_MISSING_EN', 'AIMLOOM_PWSH_MISSING_EN']] as const) {
-      const app = new RegExp(`const ${constant}: &str = "([^"]+)";`).exec(rust)?.[1]
-      const nsis = new RegExp(`!define ${define} "([^"]+)"`).exec(hooks)?.[1]
-      expect(app, constant).toBeTruthy()
-      expect(nsis, define).toBe(app)
+  it('looks for, runs and offers no other program', () => {
+    for (const word of ['pwsh', 'PowerShell', 'winget', 'nsExec', 'ExecWait', 'ExecShell', 'SearchPath']) {
+      expect(code, word).not.toContain(word)
     }
   })
 
@@ -129,27 +60,11 @@ describe('the PowerShell 7 hook', () => {
     expect(hooks).not.toMatch(/RequestExecutionLevel|ExecutionPolicy|runas|UAC_/i)
   })
 
-  it('hands $R9 back to the template, as the pre-install hook does', () => {
-    expect(macro).toContain('Push $R9')
-    expect(macro).toContain('Pop $R9')
-  })
-
-  it('proves winget runs before offering it, instead of trusting the alias stub', () => {
-    const offer = /^Function AimloomOfferPwsh$([\s\S]*?)^FunctionEnd$/m.exec(hooks)?.[1] ?? ''
-    // Every App Execution Alias exists as a zero-byte reparse point, so FileExists alone is
-    // true on a machine without App Installer. The version probe must come first, its exit
-    // code must be the gate, and the install must sit behind that gate.
-    const probe = offer.indexOf('--version')
-    const gate = offer.indexOf('$R2 == "0"')
-    const install = offer.indexOf('${AIMLOOM_WINGET_ARGS}')
-    expect(probe).toBeGreaterThan(-1)
-    expect(gate).toBeGreaterThan(probe)
-    expect(install).toBeGreaterThan(gate)
-    // Registers borrowed for the probe go back too.
-    for (const r of ['$R0', '$R1', '$R2', '$R3']) {
-      expect(offer, r).toContain(`Push ${r}`)
-      expect(offer, r).toContain(`Pop ${r}`)
-    }
+  it('speaks in the installer\'s language: Chinese for 2052, English otherwise', () => {
+    expect(hooks).toMatch(/\$\{If\} \$LANGUAGE == 2052/)
+    const english = [...hooks.matchAll(/!define AIMLOOM_\w+_EN "([^"]+)"/g)].map(m => m[1] ?? '')
+    expect(english.length).toBeGreaterThanOrEqual(1)
+    for (const text of english) expect(text).not.toMatch(/[　-〿㐀-鿿＀-￯“”‘’]/)
   })
 })
 
