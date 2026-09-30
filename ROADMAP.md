@@ -140,20 +140,24 @@ user on 2026-09-22 and written down in
 | **Releases over 25 MiB on R2**; the site offers **only the Setup**, the portable ZIP stays on GitHub (user, 2026-09-24) | **Built** 2026-09-24 (`release:upload`, the deploy's live check, the Download page) |
 | **Feedback tickets on the site**: a side panel from a fixed button and the footer; the changelog moves to the footer (user, 2026-09-24) | **Built** 2026-09-24: `/api/tickets`, migration 0004, workerd tests, checked in a browser with Turnstile's test key. Ships with 0.1.5. Not designed in Figma |
 
-## After v0.1.5
+## Next: v0.1.6 — APP-NAV and the engine in Rust (first steps)
+
+Set by the user on 2026-09-30 (「v016就先做app-nav和rust。瘦身，一键拖入和later都后面再说」): v0.1.6 is the
+new App shell and Rust's first release. Rust arrives beside PowerShell 7 and does not replace it
+yet; the code slim-down's second step, the Quick import redesign and everything under Later wait.
 
 | ID | Deliverable | Status |
 |---|---|---|
-| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; ordered after the website explorer on 2026-09-22 (user: 「app探索页放在0.1.5后面」); not designed |
-| INSTALL-REDESIGN | **Quick import redesigned**, landing with APP-NAV — see the notes after this table | Decided by the user 2026-09-21; not designed |
+| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma first; not designed |
+| ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); the spike's plan is approved; not started |
 
 **APP-NAV — the shell the user described (2026-09-21):**
 - The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
   a player changes about their own game) and **探索 / Explore** (what a player gets from
   elsewhere).
 - **Quick import moves onto the Explore page.** It belongs with getting content from outside, not
-  beside the editors — which is also why its own redesign (below) comes with this move, not
-  before it.
+  beside the editors. In v0.1.6 it moves as it is; its redesign (INSTALL-REDESIGN) comes after
+  v0.1.6 (user, 2026-09-30).
 - **The website's explorer ships first.** The App's Explore page follows its design, so the
   catalog and its shape are settled on the web before the App renders them.
 - Open, to decide when this is designed: whether the App's Explore reads the same catalog as the
@@ -162,6 +166,52 @@ user on 2026-09-22 and written down in
 - This supersedes the flat five-section navigation that CLAUDE.md and the 2026-09-15
   repository-wide design describe. **Those say five sections today and are still correct today;**
   update them when APP-NAV lands, not before.
+
+**ENGINE-RUST — the engine in Rust:**
+
+Added to the near-term plan by the user on 2026-09-29
+(「把rust改版加到最近的计划里，可以平缓过度，比如安装包里有两个选项，powershell 7和rust」), ordered
+after the bundled-PowerShell release (v0.1.5). The goal is a release of a few MB
+without PowerShell. The transition is gradual: every release carries both engines (the Rust one
+lives inside `Aimloom.exe`), the Setup picks the first one, and Settings can change it later.
+
+- **The Setup picks the first engine**: PowerShell by default, Rust marked as a test. Re-running it
+  preselects the current choice; a silent install keeps PowerShell. The portable ZIP starts on
+  PowerShell.
+- **Settings can switch engines, only when it is safe** (user, 2026-09-29: first 「设置切换容易出问题，
+  而且报错处理也会麻烦」, then 「如果能处理报错，也可以选择吧rust/powershell加到设置里」). The rules:
+  - The switch is disabled, with the reason shown, while an operation is running or unresolved, or
+    while an unfinished batch is on disk. Native code enforces this, not only the UI.
+  - Switching waits for the old worker to exit, discards the current preview, and reloads the
+    window, so every page reads again through the new engine.
+  - If the chosen engine does not start, the App says so and offers switching back. It never falls
+    back by itself, and never in the middle of a write.
+  - Settings and every report name the engine in use.
+- **One engine does everything.** An install never sends some operations to Rust and others to
+  PowerShell: both write the same backups, manifests, batch status and locks.
+- **Either engine reads what the other wrote.** Backups, first-protection records, Profiles, and an
+  unfinished (`recovery-required`) batch left by the other engine are recovered, both ways. This is
+  tested before the choice is offered.
+- **The download does not shrink until the end.** `pwsh\` stays installed during the transition, so
+  a player can always switch back to PowerShell.
+- **New engine behaviour lands in both engines** (or waits) until PowerShell is removed; the parity
+  goldens enforce it.
+
+| Step | Deliverable | Status |
+|---|---|---|
+| 1 | **Spike**: the write core plus Enemy in Rust, compared with PowerShell goldens, and cross-restores in both directions; a go/no-go report with measured numbers | Planned; starts after the bundled-PowerShell release |
+| 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | Not started |
+| 3 | **Choosing the engine**: the Setup's choice (PowerShell default, Rust marked as a test) and the Settings switch under the rules above; one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | Not started; the Setup page needs a change to the pinned `installer.nsi` template (or a hooks-only fallback); where the choice is stored is open |
+| 4 | **Rust becomes the default**; PowerShell stays an option | Not started |
+| 5 | **PowerShell removed**: a small Setup and a Rust ZIP; decide the console wizard's future (`安装配置.cmd` / `恢复配置.cmd`); CLAUDE.md, both READMEs and the site copy updated | Not started |
+
+## After v0.1.6
+
+| ID | Deliverable | Status |
+|---|---|---|
+| INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; moved after v0.1.6 (user, 2026-09-30); not designed |
+| ENGINE-RUST 4–5 | Rust becomes the default, then PowerShell is removed (the small download) | After steps 1–3 have shipped and been used |
+| SLIM-2 | **The code slim-down, step 2: features and interaction** — fewer and simpler pages, buttons and flows; the behaviour differences step 1 recorded (for example, a job still running after 60 s locks the file-add flow but not a section apply); and **Profile apply speed** (user, 2026-09-29: 「profile 应用速度有点慢」), measured phase by phase on the tester's PC before anything changes, without weakening a safety check | Step 1 (code only, no behaviour change) shipped in v0.1.5; step 2 after v0.1.6 (user, 2026-09-30) |
 
 **INSTALL-REDESIGN — Quick import gets redesigned (user, 2026-09-21):**
 - The user's direction, verbatim: 「安装与恢复要改个名，叫一键加载之类的，而且不要让用户选择很多就是
