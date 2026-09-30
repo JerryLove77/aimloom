@@ -281,7 +281,7 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $encoded=Get-KvkGuiValue $RequestArgs 'pngBase64';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $file 'file';Assert-KvkGuiString $encoded 'pngBase64'
             Assert-KvkGuiRevision $revision
-            if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}$') { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效或超出大小限制。' 'The crosshair PNG encoding is invalid or over the size limit.' }
+            if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}\z') { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效或超出大小限制。' 'The crosshair PNG encoding is invalid or over the size limit.' }
             try { $png=[Convert]::FromBase64String($encoded) } catch { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效。' 'The crosshair PNG encoding is invalid.' }
             if ([Convert]::ToBase64String($png) -cne $encoded) { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码不是规范 base64。' 'The crosshair PNG encoding is not canonical base64.' }
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
@@ -296,7 +296,7 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $encoded=Get-KvkGuiValue $RequestArgs 'pngBase64';$revision=Get-KvkGuiValue $RequestArgs 'revision'
             Assert-KvkGuiString $gameRoot 'gameRoot';Assert-KvkGuiString $file 'file';Assert-KvkGuiString $encoded 'pngBase64'
             Assert-KvkGuiRevision $revision
-            if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}$') { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效或超出大小限制。' 'The crosshair PNG encoding is invalid or over the size limit.' }
+            if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}\z') { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效或超出大小限制。' 'The crosshair PNG encoding is invalid or over the size limit.' }
             try { $png=[Convert]::FromBase64String($encoded) } catch { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码无效。' 'The crosshair PNG encoding is invalid.' }
             if ([Convert]::ToBase64String($png) -cne $encoded) { Throw-KvkGuiIssue 'ENGINE_ERROR' '准星 PNG 编码不是规范 base64。' 'The crosshair PNG encoding is not canonical base64.' }
             $ctx=New-KvkContext $gameRoot $Session.LocalDataRoot
@@ -372,7 +372,7 @@ function Invoke-KvkGuiOperation($Session,[string]$Op,$RequestArgs,[scriptblock]$
             $directory=Get-KvkGuiValue $RequestArgs 'directory';$fileName=Get-KvkGuiValue $RequestArgs 'fileName'
             $encoded=Get-KvkGuiValue $RequestArgs 'base64';$gameRoot=Get-KvkGuiValue $RequestArgs 'gameRoot'
             Assert-KvkGuiString $directory 'directory';Assert-KvkGuiString $fileName 'fileName';Assert-KvkGuiString $encoded 'base64';Assert-KvkGuiString $gameRoot 'gameRoot'
-            if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}$') { Throw-KvkGuiIssue 'ENGINE_ERROR' '导出内容编码无效或超出大小限制。' 'The export encoding is invalid or over the size limit.' }
+            if ($encoded.Length -gt 4 * [Math]::Ceiling(2MB / 3) -or $encoded.Length % 4 -ne 0 -or $encoded -cnotmatch '^[A-Za-z0-9+/]*={0,2}\z') { Throw-KvkGuiIssue 'ENGINE_ERROR' '导出内容编码无效或超出大小限制。' 'The export encoding is invalid or over the size limit.' }
             try { $bytes=[Convert]::FromBase64String($encoded) } catch { Throw-KvkGuiIssue 'ENGINE_ERROR' '导出内容编码无效。' 'The export encoding is invalid.' }
             if ([Convert]::ToBase64String($bytes) -cne $encoded) { Throw-KvkGuiIssue 'ENGINE_ERROR' '导出内容不是规范 base64。' 'The export encoding is not canonical base64.' }
             return (Export-KvkFile $directory $fileName $bytes $gameRoot)

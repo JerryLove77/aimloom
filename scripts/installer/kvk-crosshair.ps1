@@ -4,7 +4,7 @@
 
 function Assert-KvkCrosshairTargetName([string]$Name) {
     if ([string]::IsNullOrWhiteSpace($Name) -or $Name.Length -gt 128 -or
-        $Name -notmatch '^[^\\/:*?"<>|\x00-\x1f]+\.png$' -or $Name -match '^[. ]|[. ]$' -or $Name.Contains('..') -or
+        $Name -notmatch '^[^\\/:*?"<>|\x00-\x1f]+\.png\z' -or $Name -match '^[. ]|[. ]$' -or $Name.Contains('..') -or
         $Name.Split('.')[0] -match '^(con|prn|aux|nul|com[1-9]|lpt[1-9])$') { Throw-KvkFailure 'ENGINE_ERROR' "准星文件名无效：不能包含 \ / : * ? `" < > | 或连续的点，不能以点或空格开头结尾，连同 .png 不超过 128 个字符 (invalid file name): $Name" "The crosshair file name is not valid: it cannot contain \ / : * ? < > | a double quote, or consecutive dots, cannot start or end with a dot or a space, and must be at most 128 characters including .png: `"$Name`"." }
 }
 function Read-KvkCrosshairReplacement([string]$PackRoot) {
@@ -15,7 +15,7 @@ function Read-KvkCrosshairReplacement([string]$PackRoot) {
     $strings=$script:KvkJsonStrings; $m=ConvertFrom-Json -InputObject ([IO.File]::ReadAllText($path)) @strings -ErrorAction Stop
     if ($m.schemaVersion -ne 1 -or $m.kind -cne 'crosshair-replacement' -or $m.requiresConfirmation -ne $true -or $m.gameSelectionChanged -ne $false) { throw 'Invalid crosshair replacement metadata.' }
     Assert-KvkCrosshairTargetName $m.targetFileName
-    if ($m.png.file -cne ('crosshairs/'+$m.targetFileName) -or $m.png.sha256 -cnotmatch '^[a-f0-9]{64}$') { throw 'Invalid crosshair asset identity.' }
+    if ($m.png.file -cne ('crosshairs/'+$m.targetFileName) -or $m.png.sha256 -cnotmatch '^[a-f0-9]{64}\z') { throw 'Invalid crosshair asset identity.' }
     $catalog=Get-KvkPackFiles $root
     if ($catalog.Items.Count -ne 1 -or $catalog.Items[0].Category -cne 'crosshairs' -or $catalog.Items[0].Key -cne $m.png.file) { throw 'Replacement pack must contain exactly the declared crosshair asset.' }
     $png=$catalog.Items[0].Source;Assert-KvkSafePath $png

@@ -37,7 +37,7 @@ function Remove-KvkImportStage($Context,[string]$Stage) {
         if ([string]::IsNullOrWhiteSpace($Stage)) { return }
         $base=Get-KvkFullPath (Get-KvkImportStageBase $Context)
         $full=Get-KvkFullPath $Stage
-        if ([IO.Path]::GetDirectoryName($full) -ine $base -or [IO.Path]::GetFileName($full) -notmatch '^[0-9a-f]{32}$') { return }
+        if ([IO.Path]::GetDirectoryName($full) -ine $base -or [IO.Path]::GetFileName($full) -notmatch '^[0-9a-f]{32}\z') { return }
         if ([IO.Directory]::Exists($full)) { [IO.Directory]::Delete($full,$true) }
     } catch { }  # best effort: a leftover staging copy is harmless and outside the game
 }
@@ -46,7 +46,7 @@ function New-KvkFileAddPlan($Context,[string]$Kind,[string]$SourcePath,[string]$
     Assert-KvkContext $Context
     Assert-KvkImportKind $Kind
     Assert-KvkImportFileName $Kind $FileName
-    if ($SourceSha256 -cnotmatch '^[0-9a-f]{64}$') { Throw-KvkFailure 'ENGINE_ERROR' '来源文件的校验值无效。' "The source file's checksum is not valid." }
+    if ($SourceSha256 -cnotmatch '^[0-9a-f]{64}\z') { Throw-KvkFailure 'ENGINE_ERROR' '来源文件的校验值无效。' "The source file's checksum is not valid." }
     $isTheme=$Kind -ceq 'theme'
     $assetKind=if ($isTheme) { 'scheme' } else { 'audio' }
 

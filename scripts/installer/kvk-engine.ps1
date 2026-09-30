@@ -483,10 +483,10 @@ function Copy-KvkSnapshot([string]$Source, [string]$Destination, [string]$Expect
     New-KvkDirectory ([IO.Path]::GetDirectoryName($Destination)); Write-KvkDurableFile $Destination $bytes
     if ((Get-KvkHash $Destination) -ne $ExpectedHash -or (Get-KvkHash $Source) -ne $ExpectedHash) { throw "Backup verification failed: `"$Source`"" }
 }
-function Assert-KvkHashValue($Hash) { if ($null -ne $Hash -and ($Hash -isnot [string] -or $Hash -cnotmatch '^[a-f0-9]{64}$')) { throw 'Invalid persisted hash.' } }
+function Assert-KvkHashValue($Hash) { if ($null -ne $Hash -and ($Hash -isnot [string] -or $Hash -cnotmatch '^[a-f0-9]{64}\z')) { throw 'Invalid persisted hash.' } }
 function Assert-KvkFields($Object, [string[]]$Names) { foreach ($n in $Names) { if ($null -eq $Object -or $null -eq $Object.PSObject.Properties[$n]) { throw "Incomplete manifest: missing $n" } } }
 function Get-KvkManifestPath($Context,[string]$Id) {
-    if ($Id -cne 'pristine' -and $Id -cnotmatch '^[a-f0-9]{32}$') { throw 'Invalid backup identifier.' }
+    if ($Id -cne 'pristine' -and $Id -cnotmatch '^[a-f0-9]{32}\z') { throw 'Invalid backup identifier.' }
     return (Join-Path (Join-Path $Context.BackupRoot $Id) 'manifest.json')
 }
 function Read-KvkManifest($Context,[string]$Id) {
@@ -522,13 +522,13 @@ function Read-KvkManifest($Context,[string]$Id) {
             $name=$pair[0];$hashName=$pair[1];$rel=$item.$name
             if ($name -eq 'DesiredBackup' -and $m.Kind -ne 'restore') { if ($null -ne $rel) {throw 'Unexpected desired backup.'}; continue }
             if ($null -eq $item.$hashName) { if ($null -ne $rel) {throw 'Unexpected snapshot path.'}; continue }
-            if ($rel -isnot [string] -or $rel -cnotmatch '^(files|desired)/[a-f0-9]{64}\.bin$') { throw 'Unsafe snapshot path.' }
+            if ($rel -isnot [string] -or $rel -cnotmatch '^(files|desired)/[a-f0-9]{64}\.bin\z') { throw 'Unsafe snapshot path.' }
             $file=Join-Path $directory $rel
             if ((Get-KvkHash $file) -ne $item.$hashName) { throw "Missing or corrupt backup: `"$file`"" }
         }
         if ($null -ne $item.TempPath) {
             $expectedPrefix=$item.Target+'.kvk-'+$Id+'-'
-            if (-not $item.TempPath.StartsWith($expectedPrefix,[StringComparison]::Ordinal) -or $item.TempPath.Substring($expectedPrefix.Length) -cnotmatch '^[a-f0-9]{32}\.tmp$') { throw 'Unsafe operation temporary path.' }
+            if (-not $item.TempPath.StartsWith($expectedPrefix,[StringComparison]::Ordinal) -or $item.TempPath.Substring($expectedPrefix.Length) -cnotmatch '^[a-f0-9]{32}\.tmp\z') { throw 'Unsafe operation temporary path.' }
             Assert-KvkSafePath $item.TempPath
         }
         if ($item.State -eq 'writing' -and $null -ne $item.AfterHash -and $null -eq $item.TempPath) { throw 'Missing write intent.' }
@@ -541,7 +541,7 @@ function Get-KvkManifests($Context) {
     if (-not [IO.Directory]::Exists($Context.BackupRoot)) { return }
     foreach ($dir in @(Get-ChildItem -LiteralPath $Context.BackupRoot -Force -ErrorAction Stop)) {
         Assert-KvkSafePath $dir.FullName
-        if ($dir.Name -match '^\.stage-[a-f0-9]{32}$') { continue } # No game writes are possible until this directory is published.
+        if ($dir.Name -match '^\.stage-[a-f0-9]{32}\z') { continue } # No game writes are possible until this directory is published.
         if (-not $dir.PSIsContainer) { throw "Unexpected backup entry: `"$($dir.FullName)`"" }
         Read-KvkManifest $Context $dir.Name
     }
