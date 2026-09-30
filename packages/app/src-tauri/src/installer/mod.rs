@@ -1,7 +1,6 @@
 pub mod account;
 pub mod commands;
 pub mod dialogs;
-pub mod engine_choice;
 pub mod jobs;
 pub mod net;
 pub mod protocol;

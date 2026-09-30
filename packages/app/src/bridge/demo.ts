@@ -1,5 +1,5 @@
 import demoData from './demo-data.json'
-import { InstallerFailure, localIssue, type Backup, type Category, type EngineKind, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme } from './contracts'
+import { InstallerFailure, localIssue, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme } from './contracts'
 const gameRoot='D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'
 const packRoot='C:\\Users\\Player\\Downloads\\KVK Settings 2025'
 const categories:Category[]=['themes','sounds','crosshairs','ui','palette','primary']
@@ -28,7 +28,6 @@ const enemySkinCatalog:EnemySkin[]=[
 const error=(code:ConstructorParameters<typeof InstallerFailure>[0]['code'],key:Parameters<typeof localIssue>[1],params?:Parameters<typeof localIssue>[2])=>new InstallerFailure(localIssue(code,key,params))
 export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridge {
   let currentPlan:Preview|null=null
-  let demoEngine:EngineKind='powershell'
   let sequence=0
   const records:Backup[]=[]
   const original=new Map<string,FileRow>()
@@ -218,9 +217,6 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
     // really start KovaaK through Steam.
     async launchGame(){console.info('[demo] launchGame: steam://rungameid/824270')},
     async appInfo(){return {label:__APP_VERSION__,channel:'stable' as const}},
-    // The demo has no worker: the choice lives for this page only.
-    async engine(){return {engine:demoEngine,blocked:null}},
-    async setEngine(engine){demoEngine=engine;return {engine,blocked:null}},
   }
   return bridge
 }

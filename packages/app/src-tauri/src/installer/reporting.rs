@@ -24,7 +24,7 @@ pub async fn installer_report_preview(
 }
 
 fn installer_report_preview_blocking(state: &InstallerRuntime, input: ReportInput) -> Result<Prepared, Issue> {
-    let facts = gather_facts(input.attach_log, state.engine())?;
+    let facts = gather_facts(input.attach_log)?;
     let prepared = super::report::prepare(&input, &facts)?;
     *state.report.lock().unwrap() = Some(prepared.clone());
     Ok(prepared)
@@ -73,7 +73,7 @@ fn installer_report_send_blocking(state: &InstallerRuntime, sha256: String) -> R
 /// which runs on macOS. `attach_log` is threaded through so a report that will not carry the log
 /// never pays for reading `worker.log`.
 #[cfg(target_os = "windows")]
-fn gather_facts(attach_log: bool, engine: super::engine_choice::EngineKind) -> Result<super::report::Facts, Issue> {
+fn gather_facts(attach_log: bool) -> Result<super::report::Facts, Issue> {
     let local_app_data = std::env::var("LOCALAPPDATA")
         .map_err(|_| Issue::new(ErrorCode::EngineError, "找不到 LOCALAPPDATA 环境变量。", "The LOCALAPPDATA environment variable is not set."))?;
     let local_app_data = Path::new(&local_app_data);
@@ -86,8 +86,6 @@ fn gather_facts(attach_log: bool, engine: super::engine_choice::EngineKind) -> R
     Ok(super::report::Facts {
         windows: windows_version(),
         display_language: windows_display_language(),
-        powershell: windows_powershell_version(),
-        engine,
         version,
         log_tail,
         user: std::env::var("USERNAME").unwrap_or_default(),
@@ -95,7 +93,7 @@ fn gather_facts(attach_log: bool, engine: super::engine_choice::EngineKind) -> R
     })
 }
 #[cfg(not(target_os = "windows"))]
-fn gather_facts(_attach_log: bool, _engine: super::engine_choice::EngineKind) -> Result<super::report::Facts, Issue> {
+fn gather_facts(_attach_log: bool) -> Result<super::report::Facts, Issue> {
     Err(Issue::new(ErrorCode::UnsupportedPlatform, "报告只能在 Windows 上生成。", "The report can only be prepared on Windows."))
 }
 
@@ -139,14 +137,6 @@ fn windows_display_language() -> String {
         .unwrap_or_else(|| "unknown".to_string())
 }
 
-#[cfg(target_os = "windows")]
-fn windows_powershell_version() -> Option<String> {
-    Command::new("pwsh").args(["-NoLogo", "-NoProfile", "-Command", "$PSVersionTable.PSVersion.ToString()"]).output().ok()
-        .filter(|o| o.status.success())
-        .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
-        .filter(|s| !s.is_empty())
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,14 +148,14 @@ mod tests {
 
     #[test]
     fn report_send_refuses_when_nothing_is_held() {
-        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1"));
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
         let issue = installer_report_send_blocking(&runtime, "any-hash".into()).unwrap_err();
         assert_eq!(issue.code, ErrorCode::PlanStale);
     }
 
     #[test]
     fn report_send_refuses_when_the_ui_hash_does_not_match_what_the_session_holds() {
-        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1"));
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
         *runtime.report.lock().unwrap() = Some(some_prepared("held-hash"));
         let issue = installer_report_send_blocking(&runtime, "a-different-hash".into()).unwrap_err();
         assert_eq!(issue.code, ErrorCode::PlanStale);
@@ -173,7 +163,7 @@ mod tests {
 
     #[test]
     fn a_later_preview_invalidates_the_earlier_hash() {
-        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1"));
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
         *runtime.report.lock().unwrap() = Some(some_prepared("first-hash"));
         // A second preview (an edit, then "see what will be sent" again) replaces the slot.
         *runtime.report.lock().unwrap() = Some(some_prepared("second-hash"));
@@ -211,7 +201,7 @@ mod tests {
     /// because the check and the take now happen under one lock acquisition.
     #[test]
     fn only_one_concurrent_caller_can_take_the_same_held_report() {
-        let runtime = Arc::new(InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1")));
+        let runtime = Arc::new(InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app")));
         *runtime.report.lock().unwrap() = Some(some_prepared("shared-hash"));
         let barrier = Arc::new(std::sync::Barrier::new(2));
         let handles: Vec<_> = (0..2)
@@ -237,7 +227,7 @@ mod tests {
         #[cfg(not(target_os = "windows"))]
         {
             let issue = installer_report_preview_blocking(
-                &InstallerRuntime::for_test(WorkerConfig::for_test("/missing/pwsh", "/missing/worker.ps1")),
+                &InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app")),
                 super::super::report::ReportInput {
                     description: None, contact: None, attach_log: false, account: None,
                     lang_choice: "system".into(), lang: "en".into(), game_found: false,
