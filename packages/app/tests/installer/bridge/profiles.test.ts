@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { invoke } from '@tauri-apps/api/core'
 import { createNativeProfileBridge } from '../../../src/bridge/profiles'
-import { createTrainingProfile } from '../../../src/profiles/model'
+import { v2Parsed } from '../profiles/v2'
 import { InstallerFailure } from '../../../src/bridge/contracts'
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
@@ -10,7 +10,7 @@ beforeEach(() => native.mockReset())
 describe('ProfileBridge', () => {
   it('uses dedicated exact routes and returns validated envelopes', async () => {
     const bridge = createNativeProfileBridge()
-    const profile = createTrainingProfile('a', 'A')
+    const profile = v2Parsed('a', 'A')
     native.mockResolvedValueOnce({ directory: 'C:\\profiles', profiles: [profile], errors: [{ fileName: 'bad.json', message: '损坏', messageEn: 'Damaged' }] })
     const listed = await bridge.list()
     expect(listed.profiles).toEqual([profile])
@@ -31,7 +31,9 @@ describe('ProfileBridge', () => {
     const bridge = createNativeProfileBridge()
     await expect(bridge.read('../bad')).rejects.toBeInstanceOf(InstallerFailure)
     await expect(bridge.delete('CON')).rejects.toBeInstanceOf(InstallerFailure)
-    await expect(bridge.save({ ...createTrainingProfile('a', 'A'), schemaVersion: 2 } as never)).rejects.toBeInstanceOf(InstallerFailure)
+    await expect(bridge.save({ ...v2Parsed('a', 'A'), schemaVersion: 1 } as never)).rejects.toBeInstanceOf(InstallerFailure)
+    // A v1 Profile or a draft with no theme never reaches the native side.
+    await expect(bridge.save({ ...v2Parsed('a', 'A'), theme: null } as never)).rejects.toBeInstanceOf(InstallerFailure)
     expect(native).not.toHaveBeenCalled()
   })
   it.each([
@@ -46,10 +48,18 @@ describe('ProfileBridge', () => {
     await expect(bridge.list()).rejects.toBeInstanceOf(InstallerFailure)
     native.mockResolvedValueOnce({ directory: 'x', profiles: [], errors: [{ fileName: 'a', message: '坏了' }] })
     await expect(bridge.list()).rejects.toBeInstanceOf(InstallerFailure)
-    native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\a.json', profile: createTrainingProfile('b', 'B') })
+    native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\a.json', profile: v2Parsed('b', 'B') })
     await expect(bridge.read('a')).rejects.toBeInstanceOf(InstallerFailure)
     native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\a.json', profile: null })
-    await expect(bridge.save(createTrainingProfile('a', 'A'))).rejects.toBeInstanceOf(InstallerFailure)
+    await expect(bridge.save(v2Parsed('a', 'A'))).rejects.toBeInstanceOf(InstallerFailure)
+  })
+  it('rejects a v1 Profile in a list or a read, so an old file never becomes a card', async () => {
+    const bridge = createNativeProfileBridge()
+    const v1 = { schemaVersion: 1, id: 'a', name: 'A', scheme: null, audio: null }
+    native.mockResolvedValueOnce({ directory: 'x', profiles: [v1], errors: [] })
+    await expect(bridge.list()).rejects.toBeInstanceOf(InstallerFailure)
+    native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\a.json', profile: v1 })
+    await expect(bridge.read('a')).rejects.toBeInstanceOf(InstallerFailure)
   })
   it('surfaces native Issue errors and normalizes plain failures', async () => {
     const bridge = createNativeProfileBridge()
@@ -70,7 +80,7 @@ describe('ProfileBridge', () => {
     const bridge = createNativeProfileBridge()
     native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\b.json', profile: null })
     await expect(bridge.read('a')).rejects.toBeInstanceOf(InstallerFailure)
-    native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\b.json', profile: createTrainingProfile('a', 'A') })
-    await expect(bridge.save(createTrainingProfile('a', 'A'))).rejects.toBeInstanceOf(InstallerFailure)
+    native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\b.json', profile: v2Parsed('a', 'A') })
+    await expect(bridge.save(v2Parsed('a', 'A'))).rejects.toBeInstanceOf(InstallerFailure)
   })
 })

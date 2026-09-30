@@ -4,7 +4,8 @@ import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
 import { Workspace } from '../../../src/workspace/Workspace'
 import { createDemoBridge } from '../../../src/bridge/demo'
 import { createDemoProfileBridge, createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
-import { createTrainingProfile } from '../../../src/profiles/model'
+import type { TrainingProfile } from '../../../src/profiles/model'
+import { completeAudio, ref, v2 } from './v2'
 import type { ProfileBridge } from '../../../src/bridge/profiles'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 import type { Job } from '../../../src/bridge/contracts'
@@ -21,7 +22,8 @@ function renderProfiles(options: { onSave?: (profile: unknown) => void } = {}) {
   profileBridge.save = async profile => { options.onSave?.(profile); return save(profile) }
   return render(<Workspace bridge={createDemoBridge()} profileBridge={profileBridge} assetBridge={createDemoAssetBridge()} isDemo />)
 }
-const original = () => createTrainingProfile('profile1', '每日训练')
+const OLD_THEME = ref('/assets/Old.json')
+const original = (): TrainingProfile => v2('profile1', '每日训练', { theme: OLD_THEME })
 function fixtures(failSave = false, initial = original()) {
   let stored = initial
   const save = vi.fn(async (profile: ReturnType<typeof original>) => {
@@ -61,7 +63,7 @@ describe('Profile page', () => {
     expect(screen.getByLabelText('Profile 名称')).toHaveValue('保留输入')
   })
   it('opens the drive root when the existing reference sits at a root-level path', async () => {
-    const profile = { ...original(), scheme: { name: 'Root', path: 'C:/root.json' } }
+    const profile = { ...original(), theme: { name: 'Root', path: 'C:/root.json' } }
     const f = fixtures(false, profile); const list = vi.spyOn(f.assets, 'list')
     render(<ProfilesApp bridge={f.bridge} assets={f.assets} />)
     fireEvent.click(await screen.findByRole('button', { name: '编辑 每日训练' }))
@@ -85,8 +87,9 @@ describe('Profile page', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(f.save).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: /^Theme 背景/ })).toHaveTextContent('Blue.json')
+    expect(screen.getByRole('button', { name: '保存组合' })).toBeEnabled()
     fireEvent.click(screen.getByRole('button', { name: '取消编辑' }))
-    expect(f.stored().scheme).toBeNull()
+    expect(f.stored().theme).toEqual(OLD_THEME)
   })
 
   it('disables 保存组合 until the draft changes', async () => {
@@ -109,7 +112,9 @@ describe('Profile page', () => {
     slot.focus(); fireEvent.click(slot)
     const sheet = await screen.findByRole('dialog', { name: '为 日常跟枪 精准 选择背景' })
     expect(sheet).toHaveClass('ki-sheet')
-    fireEvent.click(within(sheet).getByRole('radio', { name: /不记录背景/ }))
+    // The demo game lists its installed themes as tiles; stage one, then cancel.
+    fireEvent.click(await within(sheet).findByRole('button', { name: 'Clean Dark 预览' }))
+    expect(within(sheet).queryByRole('radio', { name: /不记录背景|保持当前/ })).toBeNull()
     fireEvent.click(within(sheet).getByRole('button', { name: '取消' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     // The draft edit survives; only the sheet's own temporary choice is gone.
@@ -125,22 +130,45 @@ describe('Profile page', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^Sounds 音效/ }))
     const sheet = await screen.findByRole('dialog', { name: '为 日常跟枪 选择音效' })
     fireEvent.change(within(sheet).getByLabelText('音效事件'), { target: { value: 'spawn' } })
-    fireEvent.click(within(sheet).getByRole('radio', { name: /不使用音效/ }))
+    fireEvent.click(within(sheet).getByRole('button', { name: '浏览演示素材' }))
+    fireEvent.click(await within(sheet).findByRole('button', { name: '添加 Clear-hit.wav' }))
     fireEvent.click(within(sheet).getByRole('button', { name: '用于此组合' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(saves).toEqual([])
+    expect(screen.getByRole('button', { name: /^Sounds 音效/ })).toHaveTextContent('生成 Clear-hit.wav')
     expect(screen.getByRole('button', { name: '保存组合' })).toBeEnabled()
   })
 
-  it('audio sheet cancel leaves the audio component unchanged', async () => {
+  it('audio sheet: kill can be set to 不使用音效, and the choice is staged until 用于此组合', async () => {
     renderProfiles()
     fireEvent.click(await screen.findByRole('button', { name: '编辑 日常跟枪' }))
     fireEvent.click(await screen.findByRole('button', { name: /^Sounds 音效/ }))
     const sheet = await screen.findByRole('dialog')
-    fireEvent.click(within(sheet).getByRole('radio', { name: /保持当前/ }))
-    fireEvent.click(within(sheet).getByRole('button', { name: '取消' }))
+    expect(within(sheet).queryByRole('radio', { name: /保持当前/ })).toBeNull()
+    fireEvent.click(within(sheet).getByRole('radio', { name: /不使用音效/ }))
+    fireEvent.click(within(sheet).getByRole('button', { name: '用于此组合' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    expect(screen.getByRole('button', { name: '保存组合' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: /^Sounds 音效/ })).toHaveTextContent('全部无音效')
+    expect(screen.getByRole('button', { name: '保存组合' })).toBeEnabled()
+  })
+
+  it('audio sheet: an MBS event holds exactly one sound, replaced by 选用 and never removed or moved', async () => {
+    renderProfiles()
+    fireEvent.click(await screen.findByRole('button', { name: '编辑 日常跟枪' }))
+    fireEvent.click(await screen.findByRole('button', { name: /^Sounds 音效/ }))
+    const sheet = await screen.findByRole('dialog')
+    fireEvent.change(within(sheet).getByLabelText('音效事件'), { target: { value: 'mbsGood' } })
+    expect(within(sheet).getByText(/这个事件只用一个音效/)).toBeVisible()
+    expect(within(sheet).queryByRole('radio')).toBeNull()
+    expect(within(sheet).queryByRole('button', { name: /移除|删除|上移|下移/ })).toBeNull()
+    fireEvent.click(within(sheet).getByRole('button', { name: '浏览演示素材' }))
+    fireEvent.click(await within(sheet).findByRole('button', { name: '选用 Clear-hit.wav' }))
+    // The current sound is now the one chosen, and it is the only one: its own 选用 is disabled.
+    expect(within(sheet).getByRole('button', { name: '选用 Clear-hit.wav' })).toBeDisabled()
+    expect(within(sheet).getByRole('button', { name: '选用 Soft-hit.wav' })).toBeEnabled()
+    fireEvent.click(within(sheet).getByRole('button', { name: '用于此组合' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByRole('button', { name: /^Sounds 音效/ })).toHaveTextContent('MBS · Good Clear-hit.wav')
   })
 
   it('用于此组合 writes the choice into the draft only', async () => {
@@ -149,10 +177,15 @@ describe('Profile page', () => {
     fireEvent.click(await screen.findByRole('button', { name: '编辑 日常跟枪' }))
     fireEvent.click(await screen.findByRole('button', { name: /^Theme 背景/ }))
     const sheet = await screen.findByRole('dialog')
-    fireEvent.click(within(sheet).getByRole('radio', { name: /不记录背景/ }))
+    // There is no "keep current" choice any more; a file is chosen, and its preview must decode.
+    expect(within(sheet).queryByRole('radio', { name: /不记录背景|保持当前/ })).toBeNull()
+    // Nothing is staged yet, so there is nothing to confirm.
+    expect(within(sheet).getByRole('button', { name: '用于此组合' })).toBeDisabled()
+    fireEvent.click(await within(sheet).findByRole('button', { name: 'Clean Dark 预览' }))
+    expect(within(sheet).getByRole('button', { name: '用于此组合' })).toBeEnabled()
     fireEvent.click(within(sheet).getByRole('button', { name: '用于此组合' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
-    expect(screen.getByRole('button', { name: /^Theme 背景/ })).toHaveTextContent('保持当前')
+    expect(screen.getByRole('button', { name: /^Theme 背景/ })).toHaveTextContent('Clean Dark')
     expect(saves).toEqual([])
     expect(screen.getByRole('button', { name: '保存组合' })).toBeEnabled()
   })
@@ -199,7 +232,7 @@ describe('a resource sheet shows what the game already has', () => {
     const dialog = await screen.findByRole('dialog')
     await within(dialog).findByRole('button', { name: /Blue Room/ })
     await within(dialog).findByRole('button', { name: /Night/ })
-    // The page also reads the game's current theme for 「保持当前」; every read is of this game.
+    // The page also reads the game's current theme and sounds (for 新建组合 and 当前使用); every read is of this game.
     expect(new Set(game.seen)).toEqual(new Set(['schemeList:D:/Game']))
     // The folder prompt that started all this is gone from this sheet.
     expect(dialog.textContent).not.toMatch(/\u5148\u9009\u62e9\u5b58\u653e\u6587\u4ef6\u7684\u6587\u4ef6\u5939/)
@@ -216,6 +249,7 @@ describe('a resource sheet shows what the game already has', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     // Nothing was saved and nothing was applied: only the draft moved.
     expect(f.save).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: /^Theme \u80cc\u666f/ })).toHaveTextContent('Night.json')
   })
 
   it('falls back to browsing a folder when the game\'s list cannot be read', async () => {
@@ -391,5 +425,66 @@ describe('adding a file to a Profile sheet from my computer', () => {
     expect(await within(sheet).findByText('\u65e0\u6cd5\u6838\u5bf9\uff0c\u8bf7\u7a0d\u540e\u91cd\u8bd5')).toBeVisible()
     expect(within(sheet).getByRole('button', { name: '\u6838\u5bf9\u7ed3\u679c' })).toBeEnabled()
     expect(within(sheet).getByRole('button', { name: '\u7528\u4e8e\u6b64\u7ec4\u5408' })).toBeDisabled()
+  })
+})
+
+// Profile v2 (2026-09-30): a new Profile is what the game has now; parts the game cannot name
+// stay unchosen, and an incomplete draft cannot be saved.
+describe('a new Profile starts from the game, and cannot be saved incomplete', () => {
+  const THEMES = 'D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/'
+  const SOUNDS = 'D:/Game/FPSAimTrainer/sounds/'
+  const themes = [{ name: 'Night', file: 'Night.json', path: `${THEMES}Night.json`, readable: true, duplicateName: false }]
+  const sounds = ['Bell5.wav', 'none.ogg'].map(file => ({ name: file.replace(/\.\w+$/, ''), file, path: `${SOUNDS}${file}`, ambiguous: false }))
+  const bindings = { kill: ['Bell5'], spawn: [], mbsGood: ['None'], mbsOkay: ['None'], mbsBad: ['None'], mbsChangeNow: ['None'] }
+  let reads = 0
+  function game(readable: boolean) {
+    reads = 0
+    const refuse = async (): Promise<never> => { throw new Error('not used by these tests') }
+    return {
+      discover: async () => ({ candidates: ['D:/Game'] }), locate: async (gameRoot: string) => ({ gameRoot }),
+      schemeList: async () => { reads++; if (!readable) throw new Error('unreadable'); return { directory: '', current: 'Night', themes } },
+      audioList: async () => { reads++; if (!readable) throw new Error('unreadable'); return { directory: '', sounds, bindings } },
+      pickFolder: async () => null, planProfileApply: refuse, execute: refuse, job: refuse, reconcile: refuse, planFileAdd: refuse, pickFile: async () => null, launchGame: refuse,
+    }
+  }
+  async function startNew(readable: boolean) {
+    const saved: TrainingProfile[] = []
+    const bridge: ProfileBridge = {
+      list: async () => ({ directory: '/profiles', profiles: [], errors: [] }), read: async () => ({ filePath: '', profile: null }),
+      save: async profile => { saved.push(profile); return { filePath: `/profiles/${profile.id}.json`, profile } }, delete: async () => ({ deleted: true }),
+    }
+    const assets: ProfileAssetBridge = { chooseDirectory: async () => null, list: async () => ({ directory: '', files: [], errors: [] }), read: async () => new Uint8Array() }
+    render(<ProfilesApp bridge={bridge} assets={assets} locate={game(readable)} />)
+    await screen.findByRole('button', { name: '新建组合' })
+    // The new Profile copies what the page has read of the game, so wait until both reads are in.
+    await waitFor(() => expect(reads).toBe(2))
+    await new Promise(resolve => setTimeout(resolve, 20))
+    fireEvent.click(screen.getByRole('button', { name: '新建组合' }))
+    return saved
+  }
+
+  it('takes the current theme and sounds, and saves a complete v2 Profile', async () => {
+    const saved = await startNew(true)
+    const themeSlot = await screen.findByRole('button', { name: /^Theme 背景/ })
+    await waitFor(() => expect(themeSlot).toHaveTextContent('Night.json'))
+    expect(screen.getByRole('button', { name: /^Sounds 音效/ })).toHaveTextContent('击杀 Bell5.wav')
+    expect(document.body.textContent).not.toContain('未选择')
+    fireEvent.click(screen.getByRole('button', { name: '保存组合' }))
+    await waitFor(() => expect(saved).toHaveLength(1))
+    expect(saved[0]).toMatchObject({ schemaVersion: 2, theme: { name: 'Night.json', path: `${THEMES}Night.json` } })
+    expect(Object.keys(saved[0]!.audio).sort()).toEqual(['kill', 'mbsBad', 'mbsChangeNow', 'mbsGood', 'mbsOkay', 'spawn'])
+    expect(saved[0]!.audio.spawn).toEqual([])
+  })
+
+  it('leaves every part unchosen when the game cannot be read, and refuses to save it', async () => {
+    const saved = await startNew(false)
+    const themeSlot = await screen.findByRole('button', { name: /^Theme 背景/ })
+    expect(themeSlot).toHaveTextContent('未选择')
+    expect(screen.getByRole('button', { name: /^Sounds 音效/ })).toHaveTextContent('6 项未选择')
+    fireEvent.click(screen.getByRole('button', { name: '保存组合' }))
+    expect(await screen.findByText(/背景和 6 个音效事件都要选好才能保存/)).toBeVisible()
+    expect(saved).toEqual([])
+    // The draft is still open for the player to finish.
+    expect(screen.getByLabelText('Profile 名称')).toBeVisible()
   })
 })

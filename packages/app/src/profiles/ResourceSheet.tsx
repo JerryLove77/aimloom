@@ -18,7 +18,8 @@ import { useSheetImport } from './sheet-import'
 type SingleKind = 'scheme'
 // The lowercase noun, not the section's title: it stands mid-sentence ("does not change the current theme").
 const NOUN_KEY: Record<SingleKind, 'scheme.noun'> = { scheme: 'scheme.noun' }
-const KEEP = '__keep__'
+/** No file staged yet: only a new draft whose theme the game could not name starts here. */
+const NONE = ''
 const GENERIC: Msg = { key: 'profile.sheet.error.generic' }
 /** A row in the listing is one asset file, so a failure there is about that file — not the Profile. */
 const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
@@ -60,7 +61,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   onUnresolvedChange?: ((unresolved: boolean) => void) | undefined
   /** Called after a successful add, so the caller can refresh what the game has installed. */
   onAdded?: () => void
-  onConfirm: (value: ProfileFileReference | null) => void
+  onConfirm: (value: ProfileFileReference) => void
   onCancel: () => void
 }) {
   const t = useT()
@@ -72,7 +73,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Msg | null>(null)
   const [search, setSearch] = useState('')
-  const [choice, setChoice] = useState<string>(value?.path ?? KEEP)
+  const [choice, setChoice] = useState<string>(value?.path ?? NONE)
   const [ready, setReady] = useState(false)
   const [page, setPage] = useState(0)
   const request = useRef(0)
@@ -83,7 +84,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
     afterReconcile: () => onAdded?.(),
   })
   const { importPath, importing, importError, unresolved, reconciling } = importer
-  useEffect(() => { if (open) { setChoice(value?.path ?? KEEP); setSearch(''); setError(null); importer.reset() } }, [open, value])
+  useEffect(() => { if (open) { setChoice(value?.path ?? NONE); setSearch(''); setError(null); importer.reset() } }, [open, value])
   async function load(path: string) {
     const own = ++request.current
     setLoading(true); setError(null); setFiles([]); setFileErrors([])
@@ -119,13 +120,13 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   // The same rule as the Theme page: trimmed, case-insensitive, on the display name or the file.
   const needle = search.trim().toLocaleLowerCase()
   const listed = [...byPath.values()].filter(file => file.name.toLocaleLowerCase().includes(needle))
-  const chosen = choice === KEEP ? null : byPath.get(choice) ?? null
-  const unchanged = choice === (value?.path ?? KEEP)
+  const chosen = byPath.get(choice) ?? null
+  const unchanged = choice === (value?.path ?? NONE)
   // Browsing a folder, the preview is the only evidence the file is usable, so confirming waits
   // for it. A tile from the game's own list needs no such wait: the engine already reported it
   // readable, and a preview that fails to render is not a reason to refuse the choice.
-  const fromGame = choice !== KEEP && (installed ?? []).some(item => item.path === choice)
-  const confirmable = !unchanged && (choice === KEEP || ready || fromGame)
+  const fromGame = (installed ?? []).some(item => item.path === choice)
+  const confirmable = !unchanged && chosen !== null && (ready || fromGame)
   const noun = t(NOUN_KEY[kind])
   // The grid's own shape: the sheet only adds which tile is staged right now.
   // Filtering narrows the grid only; the staged choice survives a search that hides its tile.
@@ -136,7 +137,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
     <p className="ws-note">{t('profile.sheet.note', { name: profileName, noun })}</p>
     <div className="pr-sheet-preview">{chosen
       ? <AssetPreview key={chosen.path} kind={kind} reference={chosen} profilePath={profilePath} assets={assets} onStatus={status => setReady(status === 'ready')} />
-      : <div className="ws-preview-large">{t('profile.resource.keepHint', { noun })}</div>}</div>
+      : <div className="ws-preview-large">{t('profile.resource.chooseHint', { noun })}</div>}</div>
     {installed ? null : <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.resource.dirPlaceholder')}</span><Button variant="ghost" disabled={loading || unresolved} onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button></div>}
     {onPickFile ? <div className="cx-picker-source"><Button variant="ghost" disabled={loading || importing || unresolved} onClick={() => void importer.pick(lang)}>{t('scheme.addTheme')}</Button></div> : null}
     {importPath ? <ImportSheet key={importPath} kind="theme" sourcePath={importPath} directory={directory || defaultDirectory || t('profile.resource.dirPlaceholder')}
@@ -151,7 +152,6 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
     {error ? <Notice tone="error"><p>{msg(error)}</p></Notice> : null}
     {fileErrors.length ? <Notice tone="warning"><details><summary>{t(plural(fileErrors.length, 'profile.resource.fileErrorsSummary'), { count: fileErrors.length })}</summary>{fileErrors.map((item, index) => <p key={index}>{t('profile.listErrors.item', { file: item.fileName, message: msg(item.message) })}</p>)}</details></Notice> : null}
     <div className="pr-sheet-list" role="radiogroup" aria-label={t('profile.resource.filesAria', { noun })}>
-      <label className="pr-sheet-row"><input type="radio" name={`sheet-${kind}`} checked={choice === KEEP} disabled={unresolved} onChange={() => setChoice(KEEP)} /><span><strong>{t('profile.resource.keepTitle', { noun })}</strong><small>{t('profile.resource.keepHint', { noun })}</small></span>{value === null ? <Tag kind="saved">{t('profile.resource.currentRefTag')}</Tag> : null}{choice === KEEP && value !== null ? <Tag kind="temporary" /> : null}</label>
       {installed ? null : listed.map(file => <label className="pr-sheet-row" key={file.path}><input type="radio" name={`sheet-${kind}`} checked={choice === file.path} disabled={unresolved} onChange={() => { setReady(false); setChoice(file.path) }} />
         <span><strong>{file.name}</strong><small>{file.path}</small></span>
         {value?.path === file.path ? <Tag kind="saved">{t('profile.resource.currentRefTag')}</Tag> : null}{choice === file.path && value?.path !== file.path ? <Tag kind="temporary" /> : null}</label>)}
@@ -160,11 +160,11 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
       ariaLabel={item => t('scheme.tile.previewLabel', { label: item.label })}
       thumb={item => <AssetPreview key={item.path} kind={kind} reference={{ name: item.label, path: item.path }} profilePath={profilePath} assets={assets} />}
       onPage={setPage}
-      onChoose={item => { setReady(true); setChoice(choice === item.path ? KEEP : item.path) }} /> : null}
+      onChoose={item => { setReady(true); setChoice(item.path) }} /> : null}
     {installed?.length && needle && !tiles.length ? <p className="ws-note">{t('scheme.search.noMatch', { query: search.trim() })}</p> : null}
     </>}
-    <div className="ki-dialog-actions"><span className="ws-note">{unchanged ? t('profile.sheet.unchanged') : chosen ? t('profile.resource.tempChosen', { name: chosen.name }) : t('profile.resource.tempKeep', { noun })}</span>
+    <div className="ki-dialog-actions"><span className="ws-note">{unchanged ? t('profile.sheet.unchanged') : chosen ? t('profile.resource.tempChosen', { name: chosen.name }) : t('profile.resource.chooseHint', { noun })}</span>
       <Button data-safe-focus disabled={unresolved} onClick={onCancel}>{t('import.cancel')}</Button>
-      <Button variant="primary" disabled={!confirmable || unresolved} onClick={() => onConfirm(chosen)}>{t('profile.sheet.confirm')}</Button></div>
+      <Button variant="primary" disabled={!confirmable || unresolved} onClick={() => { if (chosen) onConfirm(chosen) }}>{t('profile.sheet.confirm')}</Button></div>
   </Dialog>
 }

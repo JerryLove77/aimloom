@@ -1,6 +1,6 @@
 import type { ProfileBridge } from './profiles'
 import type { AssetKind, ProfileAssetBridge } from './assets'
-import { createTrainingProfile, parseTrainingProfile, type TrainingProfile } from '../profiles/model'
+import { parseTrainingProfile, type ProfileAudio, type TrainingProfile } from '../profiles/model'
 import { referenceFromPath } from '../profiles/file-reference'
 import { InstallerFailure } from './contracts'
 import { t, type MessageKey } from '../i18n'
@@ -11,10 +11,16 @@ import data from './demo-data.json'
 const failure = (key: MessageKey) => new InstallerFailure({ code: 'ENGINE_ERROR', message: t('zh', key), messageEn: t('en', key), path: null })
 
 const DIRECTORY = '/demo/profiles'
-const KEY = 'aimloom.profile-page-demo.v1'
+// v2: Profiles are complete snapshots now; a v1 demo store is simply started over.
+const KEY = 'aimloom.profile-page-demo.v2'
 const ref = (kind: AssetKind, name: string) => referenceFromPath(`/demo/${kind}/${name}`, kind === 'crosshair' ? ['.png'] : kind === 'audio' ? ['.wav'] : ['.json'])
 function presets(): TrainingProfile[] {
-  return [{ ...createTrainingProfile('daily', data.profiles.daily), scheme: ref('scheme', 'Blue-room.json'), audio: { kill: [ref('audio', 'Soft-hit.wav')] } }, { ...createTrainingProfile('focus', data.profiles.focus), scheme: ref('scheme', 'Warm-room.json') }]
+  const none = [ref('audio', 'none.wav')]
+  const audio = (kill: string[], spawn: string[]): ProfileAudio => ({ kill: kill.map(name => ref('audio', name)), spawn: spawn.map(name => ref('audio', name)), mbsGood: none, mbsOkay: none, mbsBad: none, mbsChangeNow: none })
+  return [
+    parseTrainingProfile({ schemaVersion: 2, id: 'daily', name: data.profiles.daily, theme: ref('scheme', 'Blue-room.json'), audio: audio(['Soft-hit.wav'], []) }),
+    parseTrainingProfile({ schemaVersion: 2, id: 'focus', name: data.profiles.focus, theme: ref('scheme', 'Warm-room.json'), audio: audio([], ['Bell5.wav']) }),
+  ]
 }
 /** Explicit browser demo; this store never reads or changes the game's current settings. */
 export function createDemoProfileBridge(storage: Pick<Storage, 'getItem' | 'setItem'> = localStorage): ProfileBridge {

@@ -1,5 +1,5 @@
-import type { AudioBindings, AudioEvent } from '../bridge/contracts'
-import type { TrainingProfile } from './model'
+import { AUDIO_EVENTS, type AudioBindings } from '../bridge/contracts'
+import type { ProfileAudio, ProfileFileReference, TrainingProfile } from './model'
 
 /**
  * What the game is set to right now, so that 「保持当前」 can say what it keeps. Each part is
@@ -18,7 +18,7 @@ export interface CurrentGame {
   installedSounds?: InstalledEntry[] | null
 }
 
-interface InstalledEntry { name: string | null; path: string }
+interface InstalledEntry { name: string | null; path: string; file?: string; duplicateName?: boolean; ambiguous?: boolean }
 
 export interface CurrentGameBridge {
   schemeList(gameRoot: string): Promise<{ current: string | null; themes?: InstalledEntry[] }>
@@ -38,32 +38,55 @@ export async function readCurrentGame(bridge: CurrentGameBridge, gameRoot: strin
 const samePath = (a: string, b: string) => a.replace(/\//g, '\\').toLowerCase() === b.replace(/\//g, '\\').toLowerCase()
 const sameName = (a: string | null | undefined, b: string | null | undefined) => a != null && b != null && a.toLowerCase() === b.toLowerCase()
 
+/** The file name at the end of a path, for a Profile reference's `name`. */
+const fileName = (path: string) => path.split(/[\\/]/).pop() ?? path
+
+/** The one installed entry with this name, or null when there is none or more than one. */
+function unique(entries: InstalledEntry[] | null | undefined, name: string): InstalledEntry | null {
+  const found = (entries ?? []).filter(entry => sameName(entry.name, name))
+  const only = found.length === 1 ? found[0]! : null
+  return only && !only.duplicateName && !only.ambiguous ? only : null
+}
+const reference = (entry: InstalledEntry): ProfileFileReference => ({ name: entry.file ?? fileName(entry.path), path: entry.path })
+
+/**
+ * A new Profile starts as the game is now (user, 2026-09-30: 「创建 profile 时候默认是当前的设置」).
+ * Each part the game names is resolved to the one installed file with that name; a part that
+ * cannot be resolved (nothing read, no such file, or two files with the name) is left unchosen,
+ * and the player picks it before saving. An empty kill or spawn list is kept: it is "no sound".
+ */
+export function snapshotFromGame(current: CurrentGame | null): { theme: ProfileFileReference | null; audio: ProfileAudio } {
+  const audio: ProfileAudio = {}
+  if (!current) return { theme: null, audio }
+  const theme = current.theme ? unique(current.installedThemes, current.theme) : null
+  for (const event of AUDIO_EVENTS) {
+    const bound = current.sounds?.[event]
+    if (!bound) continue
+    const files = bound.map(name => unique(current.installedSounds, name))
+    if (files.every(entry => entry !== null)) audio[event] = files.map(entry => reference(entry!))
+  }
+  return { theme: theme ? reference(theme) : null, audio }
+}
+
 /**
  * Whether the game is set to exactly what this Profile records, so its row says 「当前使用」.
  * The same resolution `planProfileApply` performs (`kvk-profile-apply.ps1`): each recorded path
  * is matched to an installed file by full path, case-insensitive, and that file's name is what
- * the game would hold. A kept part (no theme, an empty or absent event) is not compared, so a
- * Profile that keeps everything is never "in use" -- it has nothing to apply. Unknown parts of
- * the game (a list that could not be read, a path no longer installed) mean "not in use".
+ * the game would hold. Every part is compared, the theme and all six events, an empty list
+ * included. Unknown parts of the game (a list that could not be read, a path no longer
+ * installed) mean "not in use".
  */
 export function profileInUse(profile: TrainingProfile, current: CurrentGame | null): boolean {
-  if (!current) return false
-  let compared = false
-  if (profile.scheme) {
-    const entry = current.installedThemes?.find(theme => samePath(theme.path, profile.scheme!.path))
-    if (!entry || !sameName(entry.name, current.theme)) return false
-    compared = true
-  }
-  for (const event of Object.keys(profile.audio ?? {}) as AudioEvent[]) {
-    const records = profile.audio?.[event]
-    if (!records || records.length === 0) continue
+  if (!current || !profile.theme) return false
+  const theme = current.installedThemes?.find(entry => samePath(entry.path, profile.theme!.path))
+  if (!theme || !sameName(theme.name, current.theme)) return false
+  return AUDIO_EVENTS.every(event => {
+    const records = profile.audio[event]
     const bound = current.sounds?.[event]
-    if (!bound || bound.length !== records.length) return false
-    for (const [index, record] of records.entries()) {
+    if (!records || !bound || bound.length !== records.length) return false
+    return records.every((record, index) => {
       const entry = current.installedSounds?.find(sound => samePath(sound.path, record.path))
-      if (!entry || !sameName(entry.name, bound[index])) return false
-    }
-    compared = true
-  }
-  return compared
+      return !!entry && sameName(entry.name, bound[index])
+    })
+  })
 }

@@ -11,15 +11,15 @@ const GAME_ROOT = 'D:\\Game'
 const scheme = { name: 'Blue Room', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\Blue Room.json' }
 const killSound = { name: 'Bell5.wav', path: 'D:\\Game\\FPSAimTrainer\\sounds\\Bell5.wav' }
 
+const noSound = { name: 'none.ogg', path: 'D:\\Game\\FPSAimTrainer\\sounds\\none.ogg' }
+const silentMbs = { mbsGood: [noSound], mbsOkay: [noSound], mbsBad: [noSound], mbsChangeNow: [noSound] }
+
+// Profile v2 is a complete snapshot: a theme and all six events.
 function fullProfile(overrides: Partial<TrainingProfile> = {}): TrainingProfile {
-  return { schemaVersion: 1, id: 'profile1', name: '每日训练', scheme, audio: { kill: [killSound], spawn: [] }, ...overrides }
+  return { schemaVersion: 2, id: 'profile1', name: '每日训练', theme: scheme, audio: { kill: [killSound], spawn: [], ...silentMbs }, ...overrides }
 }
-function emptyProfile(): TrainingProfile {
-  return { schemaVersion: 1, id: 'profile2', name: '空组合', scheme: null, audio: null }
-}
-function keepAudioProfile(): TrainingProfile {
-  // Every list empty means "keep every event" -- still nothing to apply.
-  return { schemaVersion: 1, id: 'profile3', name: '仅保持音效', scheme: null, audio: { kill: [], spawn: [] } }
+function silentProfile(): TrainingProfile {
+  return { schemaVersion: 2, id: 'profile2', name: '全静音', theme: scheme, audio: { kill: [], spawn: [], ...silentMbs } }
 }
 
 const finishedJob = (status: 'completed' | 'no-change'): Job => ({
@@ -81,16 +81,15 @@ function localStorageFake() {
 }
 
 describe('applying a saved Profile', () => {
-  it('shows 应用 beside 复制 and 删除, and no 应用 but a note when there is nothing to apply', async () => {
-    const f = fixtures([fullProfile(), emptyProfile(), keepAudioProfile()])
+  it('shows 应用 beside 复制 and 删除 on every saved Profile, however silent it is', async () => {
+    const f = fixtures([fullProfile(), silentProfile()])
     render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
-    const applyFull = await screen.findByRole('button', { name: '应用 每日训练' })
-    expect(applyFull).toBeEnabled()
-    // Grey means "in use" only (the user, 0.1.6-test.1), so a Profile that would change nothing
-    // has no 应用 button, only the note.
-    expect(screen.queryByRole('button', { name: '应用 空组合' })).toBeNull()
-    expect(screen.queryByRole('button', { name: '应用 仅保持音效' })).toBeNull()
-    expect(screen.getAllByText('没有要应用的内容')).toHaveLength(2)
+    expect(await screen.findByRole('button', { name: '应用 每日训练' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '应用 全静音' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '复制 每日训练' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '删除 每日训练' })).toBeEnabled()
+    // There is no "nothing to apply" state any more: a Profile is always a full snapshot.
+    expect(screen.queryByText('没有要应用的内容')).toBeNull()
   })
 
   it('resolves the game folder and calls planProfileApply with the saved id, even after an unsaved draft edit', async () => {
@@ -118,12 +117,15 @@ describe('applying a saved Profile', () => {
     expect(within(dialog).getByText(/先备份/)).toBeVisible()
   })
 
-  it('shows 保持当前 for a component the Profile keeps', async () => {
-    const f = fixtures([fullProfile({ scheme: null })])
+  it('says 无音效 for every silent event and never offers 保持当前', async () => {
+    const f = fixtures([silentProfile()])
     render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
-    fireEvent.click(await screen.findByRole('button', { name: '应用 每日训练' }))
+    fireEvent.click(await screen.findByRole('button', { name: '应用 全静音' }))
     const dialog = await screen.findByRole('dialog')
-    await within(dialog).findByText('Theme · 保持当前')
+    await within(dialog).findByText('Theme · Blue Room')
+    expect(within(dialog).getByText('击杀 无音效')).toBeVisible()
+    expect(within(dialog).getByText('生成 无音效')).toBeVisible()
+    expect(within(dialog).queryByText(/保持当前/)).toBeNull()
   })
 
   it('取消 closes the dialog and writes nothing', async () => {

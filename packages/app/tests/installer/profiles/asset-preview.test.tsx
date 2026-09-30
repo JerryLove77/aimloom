@@ -13,9 +13,9 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => {})
 })
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
-it('keeps null references without reading', () => {
+it('shows 「未选择」 for a null reference without reading', () => {
   render(<AssetPreview kind="crosshair" reference={null} profilePath="/profiles/p.json" assets={assets} />)
-  expect(screen.getByText('保持当前')).toBeTruthy()
+  expect(screen.getByText('未选择')).toBeTruthy()
   expect(assets.read).not.toHaveBeenCalled()
 })
 it('waits for valid dimensions, avoids callback-driven refetch and releases its URL', async () => {
@@ -48,7 +48,7 @@ it('ignores a previous slow response', async () => {
   const view = render(<AssetPreview kind="crosshair" reference={reference} profilePath="/p.json" assets={assets} />)
   view.rerender(<AssetPreview kind="crosshair" reference={null} profilePath="/p.json" assets={assets} />)
   await act(async () => resolve(bytes))
-  expect(screen.getByText('保持当前')).toBeTruthy()
+  expect(screen.getByText('未选择')).toBeTruthy()
   expect(URL.createObjectURL).not.toHaveBeenCalled()
 })
 it('audio uses manual controls, waits for decoding, and stops on unmount', async () => {
