@@ -5,7 +5,7 @@ import { profileInUse, snapshotFromGame, type CurrentGame } from '../../../src/p
 import type { ProfileBridge } from '../../../src/bridge/profiles'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 import type { AudioBindings } from '../../../src/bridge/contracts'
-import type { ProfileAudio, ProfileFileReference, TrainingProfile } from '../../../src/profiles/model'
+import { createProfileDraft, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from '../../../src/profiles/model'
 
 /**
  * The user on test.200 (2026-09-30): after applying "tracking", its 应用 stayed bright, which read
@@ -69,6 +69,12 @@ describe('snapshotFromGame: a new Profile starts as the game is', () => {
     expect(start.audio.kill).toBeUndefined()
     expect(start.audio.mbsChangeNow).toBeUndefined()
     expect(start.audio.spawn).toEqual([])
+  })
+  it('leaves an MBS event unchosen when the game holds no sound for it, and still makes a draft', () => {
+    const empty: AudioBindings = { kill: [], spawn: [], mbsGood: [], mbsOkay: [], mbsBad: [], mbsChangeNow: [] }
+    const start = snapshotFromGame({ ...game, theme: null, sounds: empty })
+    expect(start.audio).toEqual({ kill: [], spawn: [] })
+    expect(() => createProfileDraft('a', 'A', start)).not.toThrow()
   })
   it('starts empty when the game could not be read', () => {
     expect(snapshotFromGame(null)).toEqual({ theme: null, audio: {} })
