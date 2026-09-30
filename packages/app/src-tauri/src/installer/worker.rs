@@ -83,7 +83,7 @@ const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
 /// volume, so atomic); if that rename fails, the old folder is used as it is. The app opens
 /// its log before the worker starts, so without this rule it would create `Aimloom` first and
 /// the engine would then never adopt the old folder.
-pub(crate) fn data_root(local_app_data: &Path) -> PathBuf {
+fn data_root(local_app_data: &Path) -> PathBuf {
     let current = local_app_data.join(DATA_FOLDER);
     let legacy = local_app_data.join(LEGACY_DATA_FOLDER);
     if current.is_dir() {

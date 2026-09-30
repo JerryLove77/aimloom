@@ -16,7 +16,7 @@
 .pr-slots { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px }
 /* The card: a corner chip, a preview that fills the body, and the name on a bottom line. An
    orange outline (pr-slot-recorded) marks a card the Profile records, never by colour alone --
-   the bottom line's own text and the `keep`/`missing` tags carry the same distinction in words. */
+   the bottom line's own text and the 未选择/`missing` tags carry the same distinction in words. */
 .pr-slot { display:flex; flex-direction:column; gap:10px; min-height:260px; padding:12px; text-align:left; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-tile); color:var(--ki-text); font:13px var(--ki-body-font); cursor:pointer; transition:background var(--ki-motion), border-color var(--ki-motion), box-shadow var(--ki-motion) }
 .pr-slot:hover { background:var(--ws-hover) }
 .pr-slot-recorded { border-color:var(--ki-accent); box-shadow:inset 0 0 0 1px var(--ki-accent) }
@@ -50,6 +50,6 @@
 .pr-sheet-files .au-draft-row > span { flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .pr-sheet-files .au-draft-row .ki-button { min-width:0; padding:2px 8px }
 
-/* What 「保持当前」 keeps: one line per sound event. */
+/* The Sounds card: one line per sound event. */
 .profiles-app .pr-apply-events { margin: 0 0 8px; padding-left: 18px; }
 .profiles-app .pr-apply-events li { margin: 2px 0; overflow-wrap: anywhere; }

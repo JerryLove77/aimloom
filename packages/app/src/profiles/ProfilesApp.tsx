@@ -116,9 +116,8 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
   // sheet falls back to browsing a folder, which is what it always did.
   const [installed, setInstalled] = useState<{ kind: 'scheme'; choices: InstalledChoice[] } | null>(null)
   const [installedError, setInstalledError] = useState(false)
-  // What 「保持当前」 keeps, read from the game each time the page is shown and after an apply,
-  // since the other four pages change it. Best effort: when it cannot be read the page shows the
-  // bare 「保持当前」 it always did.
+  // What the game has now, read each time the page is shown and after an apply, since the other
+  // four pages change it: a new Profile starts from it and 当前使用 compares against it.
   const [currentGame, setCurrentGame] = useState<CurrentGame | null>(null)
   const [currentStamp, setCurrentStamp] = useState(0)
   useEffect(() => {

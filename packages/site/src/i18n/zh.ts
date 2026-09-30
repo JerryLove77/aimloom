@@ -112,7 +112,7 @@ export const zh = {
   'privacy.when.account': '你在「设置」里粘贴 Steam 个人资料链接时：链接发给 aimloom.dev，由它读取这个资料页公开的 SteamID 和昵称。',
   'privacy.when.update': '每次启动时检查一次有没有新版本，可以在「设置」里关闭。这一步只下载一个公开的小文件，不发送任何关于你的信息，也不会下载或安装新版本。',
   'privacy.sent.title': '一份反馈里有什么',
-  'privacy.sent.body': 'Aimloom 的版本、Windows 版本和语言、PowerShell 版本、Aimloom 用的是哪个引擎（PowerShell 7 或 Rust）、是否找到了游戏（不含路径）、你填写的描述和联系方式、你添加的 Steam 账户，以及日志的最后一部分。日志里的 Windows 用户名和电脑名会先被替换掉；文件夹路径（比如游戏装在哪）会保留，因为排查问题需要它。你填写的内容原样发送。发送前可以看到将要发送的全部内容。',
+  'privacy.sent.body': 'Aimloom 的版本、Windows 版本和语言、Aimloom 用的引擎（0.1.5 及更早的版本发送 PowerShell 版本，0.1.6 起发送「Rust」）、是否找到了游戏（不含路径）、你填写的描述和联系方式、你添加的 Steam 账户，以及日志的最后一部分。日志里的 Windows 用户名和电脑名会先被替换掉；文件夹路径（比如游戏装在哪）会保留，因为排查问题需要它。你填写的内容原样发送。发送前可以看到将要发送的全部内容。',
   'privacy.never.title': '从不发送的内容',
   'privacy.never.body': 'Aimloom 从不上传游戏文件、设置、Profile 或备份。',
   'privacy.kept.title': '保存在哪里、保存多久',

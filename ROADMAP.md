@@ -207,7 +207,18 @@ switch); on 2026-09-30 the user chose a takeover instead:
   uninstall step). They are unused and harmless; the Setup keeps its rule of never deleting
   anything (user, 2026-09-30), and the beta's known issues say so.
 - **Before the beta:** every real write done once through Rust on the test PC and seen in the game
-  (a checklist the user clicks through while Claude checks each step remotely).
+  (a checklist the user clicks through while Claude checks each step remotely). **Deploy the site
+  first:** the live Worker refuses unknown report keys, so a 0.1.6 report (it carries
+  `system.engine`) is refused until the site from this branch is deployed; 0.1.5 reports keep
+  working either way.
+- **Before stable:** a Profile saved by 0.1.5 or earlier (format v1) must not stay an unexplained
+  "couldn't be read" row: the message says it was made by an older Aimloom and must be created
+  again, the row offers 删除, and the release readme and notes say so (both engines, with
+  regenerated goldens). Also re-check every writer's refusal when the game's settings file lacks
+  one of the six sound keys (a Profile now writes all six).
+- **The Setup now stops the engine too.** Its running-app check ends every `Aimloom.exe`, the
+  worker included, so running the Setup while a write is in progress leaves that batch for
+  recovery (the engine's recovery path handles it; it is on the test checklist).
 
 | Step | Deliverable | Status |
 |---|---|---|

@@ -488,8 +488,6 @@ pub fn parse_request(line: &str) -> Result<Json, String> {
     Ok(request)
 }
 
-/// `Start-KvkGuiWorker`: one JSON request per line in, progress lines then one reply out.
-/// Ends at end of input.
 /// Runs one request. A panic (an engine bug, such as an index out of range) becomes a bilingual
 /// `ENGINE_ERROR` reply to that request instead of ending the worker, as the PowerShell worker
 /// caught each request's errors: a failed read then fails alone, and an execute still becomes
@@ -514,6 +512,8 @@ fn guard_request(request_id: Json, handle: impl FnOnce() -> Json) -> (Json, bool
 #[cfg(test)]
 pub(crate) fn guard_request_for_test(request_id: Json, handle: impl FnOnce() -> Json) -> (Json, bool) { guard_request(request_id, handle) }
 
+/// `Start-KvkGuiWorker`: one JSON request per line in, progress lines then one reply out.
+/// Ends at end of input.
 pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
     for line in input.lines() {
         let line = line?;
