@@ -42,13 +42,14 @@ fn literal(text: &str) -> Json {
     json::parse(text, json::ReadOptions { strings: json::Strings::Literal, keys: json::Keys::KeepCaseVariants, max_depth: 64 }).unwrap()
 }
 
-fn resolve(value: &Json, game: &str, pack: &str, plan: &str) -> Json {
+fn resolve(value: &Json, game: &str, pack: &str, plan: &str, batch: &str) -> Json {
     match value {
         Json::String(s) if s == "<plan>" => Json::str(plan),
+        Json::String(s) if s == "<batch>" => Json::str(batch),
         Json::String(s) if s.starts_with("<game>") => Json::str(format!("{game}{}", &s[6..])),
         Json::String(s) if s.starts_with("<pack>") => Json::str(format!("{pack}{}", &s[6..])),
-        Json::Object(fields) => Json::Object(fields.iter().map(|(k, v)| (k.clone(), resolve(v, game, pack, plan))).collect()),
-        Json::Array(items) => Json::Array(items.iter().map(|v| resolve(v, game, pack, plan)).collect()),
+        Json::Object(fields) => Json::Object(fields.iter().map(|(k, v)| (k.clone(), resolve(v, game, pack, plan, batch))).collect()),
+        Json::Array(items) => Json::Array(items.iter().map(|v| resolve(v, game, pack, plan, batch)).collect()),
         other => other.clone(),
     }
 }
@@ -188,7 +189,7 @@ fn run_case(name: &str, case: &Json) -> Json {
     let host = Rc::new(HostState::default());
     let mut session = Session::new(Box::new(ParityHost(host.clone())), &local).unwrap();
     let mut steps: Vec<(Vec<String>, String)> = Vec::new();
-    let (mut lock, mut last_plan, mut number) = (None, "<plan>".to_string(), 0);
+    let (mut lock, mut last_plan, mut last_batch, mut number) = (None, "<plan>".to_string(), "<batch>".to_string(), 0);
     for step in case.get("steps").and_then(Json::as_array).unwrap() {
         if step.get("request").is_some() || step.get("raw").is_some() {
             number += 1;
@@ -196,7 +197,7 @@ fn run_case(name: &str, case: &Json) -> Json {
                 Some(raw) => raw.clone(),
                 None => Json::object(vec![
                     ("v", Json::int(1)), ("requestId", Json::str(format!("r{number}"))),
-                    ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &game, &pack, &last_plan)),
+                    ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &game, &pack, &last_plan, &last_batch)),
                 ]),
             };
             let request = json::parse(&value.to_compact(), REQUEST_OPTIONS).unwrap();
@@ -208,6 +209,7 @@ fn run_case(name: &str, case: &Json) -> Json {
                 Json::object(vec![("ok", Json::Bool(ok)), ("code", code)]).to_compact()
             } else { reply.to_compact() };
             if let Some(plan) = reply.get("data").and_then(|d| d.get("planId")).and_then(Json::as_str).filter(|_| ok) { last_plan = plan.to_string(); }
+            if let Some(batch) = reply.get("data").and_then(|d| d.get("batchId")).and_then(Json::as_str).filter(|_| ok) { last_batch = batch.to_string(); }
             steps.push((progress, text));
         } else if let Some(file) = step.get("setPrimary").and_then(Json::as_str) {
             std::fs::copy(fixtures.join(file), &primary).unwrap();

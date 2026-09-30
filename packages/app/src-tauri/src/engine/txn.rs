@@ -426,3 +426,213 @@ fn undo_failed_install(engine: &Engine, context: &Context, m: &mut Json, observe
     manifest::save(context, m)?;
     Ok(Report::new("rolled-back", Some(&id), items_mut(m).clone(), Vec::new(), None))
 }
+
+// ---- Restore -------------------------------------------------------------------------------
+
+/// One row of `New-KvkRestorePlan`.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RestoreItem {
+    pub key: String,
+    pub target: String,
+    pub action: String,
+    pub current: Option<String>,
+    pub desired: Option<String>,
+    pub desired_backup: Option<String>,
+    pub source_id: String,
+    pub conflict: bool,
+    pub unowned: bool,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RestorePlan { pub id: String, pub kind: String, pub game_root: String, pub local_data_root: String, pub items: Vec<RestoreItem>, pub conflicts: Vec<String> }
+
+impl RestoreItem {
+    fn row(&self) -> Json {
+        Json::object(vec![
+            ("Key", Json::str(&self.key)), ("Target", Json::str(&self.target)), ("Action", Json::str(&self.action)),
+            ("CurrentHash", Json::opt_str(self.current.clone())), ("DesiredHash", Json::opt_str(self.desired.clone())),
+            ("DesiredBackup", Json::opt_str(self.desired_backup.clone())), ("SourceId", Json::str(&self.source_id)),
+            ("Conflict", Json::Bool(self.conflict)), ("Unowned", Json::Bool(self.unowned)),
+        ])
+    }
+}
+
+/// `[datetime]` order of a manifest's `CreatedAt`.
+pub fn created_key(manifest: &Json) -> (String, String) {
+    let text = manifest.get("CreatedAt").and_then(Json::as_str).unwrap_or_default();
+    let (head, tail) = text.split_at(text.len().min(19));
+    let fraction: String = tail.strip_prefix('.').unwrap_or("").chars().take_while(char::is_ascii_digit).collect();
+    (head.to_string(), format!("{fraction:0<7}"))
+}
+
+/// `New-KvkRestorePlan`: what restoring a batch (or the first protection) would do to each
+/// file, and whether each write is provably this installer's to undo.
+pub fn restore_plan(engine: &Engine, context: &Context, id: &str) -> EngineResult<RestorePlan> {
+    engine.assert_context(context)?;
+    let all = manifest::all(engine, context)?;
+    let m = manifest::read(engine, context, id)?;
+    let kind = text(&m, "Kind").unwrap_or_default();
+    let mut history: Vec<&Json> = all.iter().filter(|h| h.get("Kind").and_then(Json::as_str) != Some("pristine")).collect();
+    history.sort_by_key(|h| created_key(h));
+    let (mut items, mut conflicts) = (Vec::new(), Vec::new());
+    for x in m.get("Items").and_then(Json::as_array).cloned().unwrap_or_default() {
+        let key = text(&x, "Key").unwrap_or_default();
+        let target = text(&x, "Target").unwrap_or_default();
+        let current = hash(&target)?;
+        let (mut desired, mut backup, mut expected, mut owned) = (text(&x, "BeforeHash"), text(&x, "Backup"), text(&x, "AfterHash"), manifest::is_owned(&x));
+        if kind == "restore" { desired = text(&x, "AfterHash"); backup = text(&x, "DesiredBackup"); expected = text(&x, "BeforeHash"); owned = true; }
+        if kind == "pristine" {
+            owned = false;
+            expected = text(&x, "BeforeHash");
+            for h in &history {
+                for hx in h.get("Items").and_then(Json::as_array).into_iter().flatten().filter(|hx| text(hx, "Key").is_some_and(|k| eq_ignore_case(&k, &key))) {
+                    if text(hx, "State").as_deref() == Some("restored") { expected = text(hx, "BeforeHash"); owned = true; }
+                    else if manifest::is_owned(hx) { expected = text(hx, "AfterHash"); owned = true; }
+                }
+            }
+        }
+        let action = if current == desired { "skip" } else if desired.is_none() { "delete" } else { "restore" };
+        let conflict = action != "skip" && (current != expected || !owned);
+        let unowned = action != "skip" && desired.is_none() && !owned;
+        if conflict { conflicts.push(target.clone()); }
+        items.push(RestoreItem { key, target, action: action.to_string(), current, desired, desired_backup: backup, source_id: id.to_string(), conflict, unowned });
+    }
+    Ok(RestorePlan { id: id.to_string(), kind, game_root: context.game_root.clone(), local_data_root: context.local_data_root.clone(), items, conflicts })
+}
+
+fn settle(manifest: &mut Json) {
+    manifest.set("Status", Json::str("rolled-back"));
+    for item in items_mut(manifest).iter_mut() { item.set("State", Json::str("restored")); }
+}
+
+/// `Complete-KvkRestore`: the restore is done, and the batch it undid is marked rolled back (a
+/// first-protection restore settles every unfinished install instead).
+fn complete_restore(engine: &Engine, context: &Context, m: &mut Json) -> EngineResult<()> {
+    m.set("Status", Json::str("completed"));
+    manifest::save(context, m)?;
+    let source_id = text(m, "SourceId").unwrap_or_default();
+    if !eq_ignore_case(&source_id, "pristine") {
+        let mut source = manifest::read(engine, context, &source_id)?;
+        if text(&source, "Kind").as_deref() == Some("install") { settle(&mut source); manifest::save(context, &source)?; }
+    } else {
+        for mut source in manifest::all(engine, context)? {
+            let unfinished = text(&source, "Status").is_some_and(|s| manifest::UNFINISHED.contains(&s.as_str()));
+            if text(&source, "Kind").as_deref() == Some("install") && unfinished { settle(&mut source); manifest::save(context, &source)?; }
+        }
+    }
+    Ok(())
+}
+
+/// `Invoke-KvkRestore`.
+pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_conflicts: bool, observer: Observer) -> EngineResult<Report> {
+    let _locks = engine.enter_lock(context)?;
+    engine.assert_game_closed()?;
+    let fresh = restore_plan(engine, context, &plan.id)?;
+    if !eq_ignore_case(&fresh.game_root, &plan.game_root) || !eq_ignore_case(&fresh.local_data_root, &plan.local_data_root) || fresh.items.len() != plan.items.len() {
+        return Err(EngineError::coded("PLAN_STALE", "恢复预览已改变。", "Restore preview changed."));
+    }
+    if fresh.items != plan.items {
+        return Err(EngineError::coded("PLAN_STALE", "恢复预览之后目标文件或备份发生了变化。", "Target or backup changed after restore preview."));
+    }
+    if fresh.items.iter().any(|i| i.unowned) {
+        return Err(EngineError::coded("UNOWNED_FILE", "没有证据证明这个文件是本程序写入的，因此不会删除它。", "Cannot delete a file without proof that this installer created it."));
+    }
+    if !fresh.conflicts.is_empty() && !allow_conflicts {
+        return Err(EngineError::plain(format!("Restore conflicts require explicit confirmation: {}", fresh.conflicts.join(", "))));
+    }
+    let source = manifest::read(engine, context, &plan.id)?;
+    let source_unfinished = text(&source, "Status").is_some_and(|s| manifest::UNFINISHED.contains(&s.as_str()));
+    let mut m;
+    if text(&source, "Kind").as_deref() == Some("restore") && source_unfinished {
+        // Retrying an interrupted restore: files changed since are preserved before their
+        // previewed state is accepted.
+        m = source;
+        m.set("Status", Json::str("applying"));
+        let id = text(&m, "Id").unwrap_or_default();
+        for index in 0..items_mut(&mut m).len() {
+            let x = items_mut(&mut m)[index].clone();
+            let key = text(&x, "Key").unwrap_or_default();
+            let Some(p) = fresh.items.iter().find(|p| p.key == key) else { continue };
+            if p.action == "skip" { items_mut(&mut m)[index].set("State", Json::str("applied")); continue; }
+            if text(&x, "BeforeHash") != p.current {
+                match &p.current {
+                    Some(current) => {
+                        let rel = format!("files/{}.bin", paths::text_hash(&format!("{key}/{}", store::new_guid())));
+                        copy_snapshot(engine, &text(&x, "Target").unwrap_or_default(), &join(&join(&context.backup_root, &id), &rel), current)?;
+                        items_mut(&mut m)[index].set("Backup", Json::str(rel));
+                    }
+                    None => items_mut(&mut m)[index].set("Backup", Json::Null),
+                }
+                items_mut(&mut m)[index].set("BeforeHash", Json::opt_str(p.current.clone()));
+            }
+            items_mut(&mut m)[index].set("State", Json::str("pending"));
+            items_mut(&mut m)[index].set("TempPath", Json::Null);
+        }
+        manifest::save(context, &m)?;
+    } else {
+        let todo: Vec<&RestoreItem> = fresh.items.iter().filter(|p| p.action != "skip").collect();
+        if todo.is_empty() {
+            let mut source = source;
+            if text(&source, "Kind").as_deref() == Some("install") && source_unfinished { settle(&mut source); manifest::save(context, &source)?; }
+            let report = Report::new("restored", Some(&plan.id), fresh.items.iter().map(RestoreItem::row).collect(), Vec::new(), None);
+            observer(&Observation { name: "report", phase: "restoring", completed: Some(0), total: 0, current_file: None, batch_id: Some(plan.id.clone()) });
+            return Ok(report);
+        }
+        let id = store::new_guid();
+        let stage = join(&context.backup_root, &format!(".stage-{id}"));
+        store::new_directory(&stage)?;
+        let mut records = Vec::new();
+        for (staged, p) in todo.iter().enumerate() {
+            observer(&Observation { name: "restore-preparing", phase: "preparing", completed: Some(staged as u64), total: todo.len() as u64, current_file: Some(p.key.clone()), batch_id: Some(id.clone()) });
+            let mut record = manifest::new_record(&p.key, &p.target, p.current.as_deref(), p.desired.as_deref());
+            let key_hash = paths::text_hash(&lower_invariant(&p.key));
+            if let Some(current) = &p.current {
+                let rel = format!("files/{key_hash}.bin");
+                copy_snapshot(engine, &p.target, &join(&stage, &rel), current)?;
+                record.set("Backup", Json::str(rel));
+            }
+            if let Some(desired) = &p.desired {
+                let rel = format!("desired/{key_hash}.bin");
+                let from = join(&join(&context.backup_root, &p.source_id), p.desired_backup.as_deref().unwrap_or_default());
+                copy_snapshot(engine, &from, &join(&stage, &rel), desired)?;
+                record.set("DesiredBackup", Json::str(rel));
+            }
+            records.push(record);
+        }
+        let staged_manifest = manifest::new(context, "restore", &id, records, "", &[], Some(&plan.id));
+        store::write_atomic_json(&join(&stage, "manifest.json"), &staged_manifest)?;
+        super::platform::move_directory(Path::new(&stage), Path::new(&join(&context.backup_root, &id))).map_err(|e| EngineError::io(&e))?;
+        m = manifest::read(engine, context, &id)?;
+    }
+    let id = text(&m, "Id").unwrap_or_default();
+    let total = items_mut(&mut m).len() as u64;
+    let attempt = (|| -> EngineResult<Report> {
+        m.set("Status", Json::str("applying"));
+        manifest::save(context, &m)?;
+        observer(&Observation { name: "restoring", phase: "restoring", completed: Some(0), total, current_file: None, batch_id: Some(id.clone()) });
+        let mut completed = 0u64;
+        for index in 0..total as usize {
+            let x = items_mut(&mut m)[index].clone();
+            if text(&x, "State").as_deref() == Some("applied") { completed += 1; continue; }
+            let desired_path = text(&x, "DesiredBackup").map(|rel| join(&join(&context.backup_root, &id), &rel)).unwrap_or_default();
+            file_change(engine, context, &mut m, index, &desired_path)?;
+            completed += 1;
+            observer(&Observation { name: "file-verified", phase: "verifying", completed: Some(completed), total, current_file: text(&x, "Key"), batch_id: Some(id.clone()) });
+        }
+        complete_restore(engine, context, &mut m)?;
+        let report = Report::new("restored", Some(&id), items_mut(&mut m).clone(), Vec::new(), None);
+        observer(&Observation { name: "report", phase: "verifying", completed: Some(total), total, current_file: None, batch_id: Some(id.clone()) });
+        Ok(report)
+    })();
+    match attempt {
+        Ok(report) => Ok(report),
+        Err(error) => {
+            let (mut errors, mut errors_en) = (vec![error.message.clone()], vec![error.english()]);
+            m.set("Status", Json::str("recovery-required"));
+            if let Err(save_error) = manifest::save(context, &m) { errors.push(save_error.message.clone()); errors_en.push(save_error.english()); }
+            let report = Report::new("recovery-required", Some(&id), items_mut(&mut m).clone(), errors, Some(errors_en));
+            observer(&Observation { name: "report", phase: "restoring", completed: None, total, current_file: None, batch_id: Some(id.clone()) });
+            Ok(report)
+        }
+    }
+}

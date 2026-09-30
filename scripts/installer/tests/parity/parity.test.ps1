@@ -40,19 +40,20 @@ function Get-ParitySha([byte[]]$Bytes) {
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
 }
 
-function Resolve-ParityValue($Value,[string]$Game,[string]$Pack,[string]$Plan) {
+function Resolve-ParityValue($Value,[string]$Game,[string]$Pack,[string]$Plan,[string]$Batch) {
     if ($Value -is [string]) {
         if ($Value -ceq '<plan>') { return $Plan }
+        if ($Value -ceq '<batch>') { return $Batch }
         if ($Value.StartsWith('<game>',[StringComparison]::Ordinal)) { return $Game+$Value.Substring(6) }
         if ($Value.StartsWith('<pack>',[StringComparison]::Ordinal)) { return $Pack+$Value.Substring(6) }
         return $Value
     }
     if ($Value -is [Collections.IDictionary]) {
         $copy=[ordered]@{}
-        foreach ($key in $Value.Keys) { $copy[$key]=Resolve-ParityValue $Value[$key] $Game $Pack $Plan }
+        foreach ($key in $Value.Keys) { $copy[$key]=Resolve-ParityValue $Value[$key] $Game $Pack $Plan $Batch }
         return $copy
     }
-    if ($Value -is [Array]) { return ,@($Value | ForEach-Object { Resolve-ParityValue $_ $Game $Pack $Plan }) }
+    if ($Value -is [Array]) { return ,@($Value | ForEach-Object { Resolve-ParityValue $_ $Game $Pack $Plan $Batch }) }
     return $Value
 }
 function Write-ParityFiles([string]$Root,$Files,[string]$Fixtures) {
@@ -113,13 +114,13 @@ function Invoke-ParityCase([string]$Name,$Case) {
     $session=New-KvkGuiSession -RuntimeRoot $installerRoot -LocalDataRoot $local
     $script:ProcessListings=0; $script:RunningFrom=$null
     $steps=[Collections.Generic.List[object]]::new()
-    $lock=$null; $lastPlan='<plan>'; $number=0
+    $lock=$null; $lastPlan='<plan>'; $lastBatch='<batch>'; $number=0
     try {
         foreach ($step in $Case['steps']) {
             if ($step.Contains('request') -or $step.Contains('raw')) {
                 $number++
                 if ($step.Contains('raw')) { $value=$step['raw'] }
-                else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $pack $lastPlan)} }
+                else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $pack $lastPlan $lastBatch)} }
                 # The request travels as a JSON line and is parsed exactly as the worker parses it.
                 $line=ConvertTo-Json -InputObject $value -Depth 32 -Compress
                 $strings=$script:KvkJsonStrings
@@ -145,6 +146,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
                     $text=ConvertTo-Json -InputObject ([ordered]@{ok=$reply.ok;code=$code}) -Compress
                 } else { $text=ConvertTo-Json -InputObject $reply -Depth 32 -Compress }
                 if ($reply.ok -and $reply.data -is [pscustomobject] -and $null -ne $reply.data.PSObject.Properties['planId']) { $lastPlan=$reply.data.planId }
+                if ($reply.ok -and $reply.data -is [pscustomobject] -and $null -ne $reply.data.PSObject.Properties['batchId'] -and $null -ne $reply.data.batchId) { $lastBatch=$reply.data.batchId }
                 $steps.Add([ordered]@{progress=@($progress);reply=$text})
             } elseif ($step.Contains('setPrimary')) {
                 [IO.File]::WriteAllBytes($primary,[IO.File]::ReadAllBytes((Join-Path $fixtures $step['setPrimary'])))

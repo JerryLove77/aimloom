@@ -1,0 +1,58 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "a",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planRestore",
+      "args": {
+        "gameRoot": "<game>",
+        "sourceId": "<batch>",
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "b",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planRestore",
+      "args": {
+        "gameRoot": "<game>",
+        "sourceId": "<batch>",
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "c",
+        "planId": "<plan>",
+        "confirmation": "restore",
+        "allowConflicts": false
+      }
+    }
+  ]
+}
