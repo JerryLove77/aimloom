@@ -672,7 +672,9 @@ export const en: Record<keyof typeof zh, string> = {
 
   'profile.apply.button': 'Apply',
   'profile.apply.aria': 'Apply {name}',
-  'profile.apply.disabledTitle': 'This combination has nothing to apply',
+  'profile.apply.inUse': 'In use',
+  'profile.apply.inUseAria': '"{name}" is in use',
+  'profile.apply.nothing': 'Nothing to apply',
   'profile.apply.title': 'Apply "{name}"',
   'profile.apply.note.closeGame': 'Quit KovaaK first: if the game is open, it overwrites the change when it exits. The change takes effect the next time the game starts.',
   'profile.apply.note.backup': 'The current settings file is backed up first.',

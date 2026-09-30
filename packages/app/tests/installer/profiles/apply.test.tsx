@@ -88,7 +88,8 @@ describe('applying a saved Profile', () => {
     expect(applyFull).toBeEnabled()
     const applyEmpty = screen.getByRole('button', { name: '应用 空组合' })
     expect(applyEmpty).toBeDisabled()
-    expect(applyEmpty).toHaveAttribute('title', '这套组合没有可应用的内容')
+    // The reason is on the row, not only in a hover title: a bare grey 应用 was read as "in use".
+    expect(applyEmpty.closest('.pr-row-actions')).toHaveTextContent('没有要应用的内容')
     const applyKeep = screen.getByRole('button', { name: '应用 仅保持音效' })
     expect(applyKeep).toBeDisabled()
   })
