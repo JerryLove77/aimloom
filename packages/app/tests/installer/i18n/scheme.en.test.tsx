@@ -22,7 +22,7 @@ describe('the Theme (Scheme) page in English', () => {
     )
     const heading = await screen.findByRole('heading', { name: 'Theme', level: 1 })
     const main = heading.closest('main') ?? heading.parentElement!.parentElement!
-    expect(within(main).getByText('THEME · CURRENT SETUP')).toBeVisible()
+    expect(within(main).getByText('THEME · CUSTOMIZE')).toBeVisible()
     await screen.findByRole('button', { name: 'Apply background' })
     // The demo bridge's theme names ("Clean Dark", "snowi clarity", "clover-alternate",
     // "Broken.json") are all Latin, so nothing here needs stripping before the CJK check.

@@ -16,7 +16,7 @@ describe('the Enemy skin page in English', () => {
     )
     const heading = await screen.findByRole('heading', { name: 'Enemy skin', level: 1 })
     const main = heading.closest('main') ?? heading.parentElement!.parentElement!
-    expect(within(main).getByText('ENEMY · CURRENT SETUP')).toBeVisible()
+    expect(within(main).getByText('ENEMY · CUSTOMIZE')).toBeVisible()
     await screen.findByRole('button', { name: 'Apply skin' })
     // The catalog's own labels ("Ghost", "Stylized", …) are all Latin, so nothing here needs
     // stripping before the CJK check.
