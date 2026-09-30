@@ -1,0 +1,143 @@
+{
+  "fixture": "sample-primary.json",
+  "gameFiles": {
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/kill.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/Zeta.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/dup.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/Dup.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/1.wav": {
+      "text": "w"
+    }
+  },
+  "steps": [
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "boom",
+        "names": [
+          "hit"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          "a;b"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          ""
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          "x/y"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          "missing"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          "dup"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "mbsBad",
+        "names": [
+          "hit",
+          "Zeta"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "mbsBad",
+        "names": [],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          1
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          true
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": "hit",
+        "revision": 1
+      }
+    }
+  ]
+}

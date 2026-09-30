@@ -19,7 +19,7 @@ const OPERATIONS: [&str; 26] = [
     "profileAssetList", "profileAssetRead",
 ];
 
-enum Adapter { Enemy(enemy::EnemyPlan) }
+enum Adapter { Enemy(enemy::EnemyPlan), Scheme(super::settings::SchemePlan), Audio(super::txn::Plan) }
 
 struct CachedPlan { id: String, kind: &'static str, context: Context, adapter: Adapter }
 
@@ -158,6 +158,36 @@ impl Session {
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
                 super::lists::crosshair_list_json(&self.engine, &context)
             }
+            "planScheme" => {
+                assert_fields(args, &["gameRoot", "file", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, file) = (string_arg(args, "gameRoot")?, string_arg(args, "file")?);
+                let revision = revision_arg(args)?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                self.engine.assert_game_closed()?;
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能更换背景。", "An unfinished operation must be recovered before changing the scheme."));
+                }
+                let planned = super::settings::scheme_plan(&self.engine, &context, file)?;
+                Ok(self.record_plan(context, &planned.plan.clone(), revision, Adapter::Scheme(planned)))
+            }
+            "planAudio" => {
+                assert_fields(args, &["gameRoot", "event", "names", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, event) = (string_arg(args, "gameRoot")?, string_arg(args, "event")?);
+                let Some(Json::Array(names)) = args.get("names") else {
+                    return Err(EngineError::coded("ENGINE_ERROR", "names must be an array.", "names must be an array."));
+                };
+                let names: Vec<String> = names.iter().map(powershell_string).collect();
+                let revision = revision_arg(args)?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                self.engine.assert_game_closed()?;
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能更换音效。", "An unfinished operation must be recovered before changing sounds."));
+                }
+                let planned = super::settings::audio_plan(&self.engine, &context, event, &names)?;
+                Ok(self.record_plan(context, &planned.clone(), revision, Adapter::Audio(planned)))
+            }
             "enemyList" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
@@ -176,10 +206,7 @@ impl Session {
                     return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能更换敌人皮肤。", "An unfinished operation must be recovered before changing the enemy skin."));
                 }
                 let planned = enemy::plan(&self.engine, &context, shape, model, skin)?;
-                let id = super::store::new_guid();
-                let preview = self.install_preview(&context, &planned.plan, revision, &id);
-                self.plan = Some(CachedPlan { id, kind: "install", context, adapter: Adapter::Enemy(planned) });
-                Ok(preview)
+                Ok(self.record_plan(context, &planned.plan.clone(), revision, Adapter::Enemy(planned)))
             }
             "backups" => {
                 assert_fields(args, &["gameRoot"], "args")?;
@@ -217,11 +244,23 @@ impl Session {
                 };
                 if confirmation != cached.kind { return Err(EngineError::coded("PLAN_STALE", "确认内容与缓存的清单不一致。", "Confirmation does not match the cached plan.")); }
                 if *allow { return Err(EngineError::coded("CONFLICT", "安装清单不接受冲突覆盖许可。", "Install plans do not accept conflict permission.")); }
-                let report = match &cached.adapter { Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)? };
+                let report = match &cached.adapter {
+                    Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
+                    Adapter::Scheme(plan) => super::settings::scheme_execute(&self.engine, &cached.context, plan, observer)?,
+                    Adapter::Audio(plan) => super::txn::install(&self.engine, &cached.context, plan, observer)?,
+                };
                 Ok(execution(&report))
             }
             other => Err(EngineError::plain(format!("The Rust engine does not implement {other} yet."))),
         }
+    }
+
+    /// `Set-KvkGuiPlan`: records the one plan this session may execute and returns its preview.
+    fn record_plan(&mut self, context: Context, plan: &super::txn::Plan, revision: i64, adapter: Adapter) -> Json {
+        let id = super::store::new_guid();
+        let preview = self.install_preview(&context, plan, revision, &id);
+        self.plan = Some(CachedPlan { id, kind: "install", context, adapter });
+        preview
     }
 
     /// `ConvertTo-KvkGuiInstallPreview`.
@@ -235,6 +274,22 @@ impl Session {
             ("packRoot", Json::str(&plan.pack_root)), ("categories", Json::Array(plan.categories.iter().map(Json::str).collect())),
             ("sourceId", Json::Null), ("rows", Json::Array(rows)), ("skipped", Json::Array(plan.skipped.iter().map(Json::str).collect())),
         ])
+    }
+}
+
+/// A request value cast with `[string]`, as `[string[]]$names` does in the service.
+fn powershell_string(value: &Json) -> String {
+    match value {
+        Json::String(s) => s.clone(),
+        Json::Null => String::new(),
+        Json::Bool(b) => (if *b { "True" } else { "False" }).to_string(),
+        Json::Number(_) => match value.number() {
+            Some(json::Number::Int(i)) => i.to_string(),
+            Some(json::Number::Double(d)) => super::text::double_r(d),
+            _ => match value { Json::Number(n) => n.clone(), _ => String::new() },
+        },
+        Json::Array(_) => "System.Object[]".to_string(),
+        Json::Object(_) => "System.Collections.Hashtable".to_string(),
     }
 }
 

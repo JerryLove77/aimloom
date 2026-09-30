@@ -94,6 +94,25 @@ fn write_value(value: &Json, out: &mut String) {
     }
 }
 
+/// A number as `ConvertFrom-Json` types it: Int64 when an integer fits, BigInteger when it does
+/// not, Double for anything with a fraction or exponent (and NaN, Infinity).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Number { Int(i64), Big, Double(f64) }
+
+impl Json {
+    pub fn number(&self) -> Option<Number> {
+        let Json::Number(text) = self else { return None };
+        match text.as_str() {
+            "NaN" => return Some(Number::Double(f64::NAN)),
+            "Infinity" => return Some(Number::Double(f64::INFINITY)),
+            "-Infinity" => return Some(Number::Double(f64::NEG_INFINITY)),
+            _ => {}
+        }
+        if text.contains(['.', 'e', 'E']) { return text.parse::<f64>().ok().map(Number::Double); }
+        Some(text.parse::<i64>().map(Number::Int).unwrap_or(Number::Big))
+    }
+}
+
 /// A JSON string literal with Newtonsoft's default escaping.
 pub fn write_string(text: &str, out: &mut String) {
     out.push('"');

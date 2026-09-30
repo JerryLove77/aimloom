@@ -144,7 +144,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
                     $code=$null; if (-not $reply.ok) { $code=$reply.error.code }
                     $text=ConvertTo-Json -InputObject ([ordered]@{ok=$reply.ok;code=$code}) -Compress
                 } else { $text=ConvertTo-Json -InputObject $reply -Depth 32 -Compress }
-                if ($reply.ok -and $step.Contains('request') -and $step['request'] -ceq 'planEnemy') { $lastPlan=$reply.data.planId }
+                if ($reply.ok -and $reply.data -is [pscustomobject] -and $null -ne $reply.data.PSObject.Properties['planId']) { $lastPlan=$reply.data.planId }
                 $steps.Add([ordered]@{progress=@($progress);reply=$text})
             } elseif ($step.Contains('setPrimary')) {
                 [IO.File]::WriteAllBytes($primary,[IO.File]::ReadAllBytes((Join-Path $fixtures $step['setPrimary'])))

@@ -142,6 +142,33 @@ pub fn json_scalar_string(value: &str) -> String {
     format!("\"{escaped}\"")
 }
 
+/// `double.ToString("R", InvariantCulture)` on .NET Core 3.0 and later: the shortest digits that
+/// read back as the same double, in fixed notation unless the decimal point would sit more than
+/// 17 digits right or more than 3 zeros left of them (probe, 2026-09-30: `1E+16` prints as
+/// `10000000000000000`, `1E+21` as `1E+21`, `1.23E-4` as `0.000123`, `1E-7` as `1E-07`).
+pub fn double_r(value: f64) -> String {
+    if value.is_nan() { return "NaN".to_string(); }
+    if value.is_infinite() { return if value > 0.0 { "Infinity".to_string() } else { "-Infinity".to_string() }; }
+    if value == 0.0 { return if value.is_sign_negative() { "-0".to_string() } else { "0".to_string() }; }
+    // Rust's `{:e}` gives the same shortest round-trip digits: d.ddde±x.
+    let formatted = format!("{:e}", value.abs());
+    let (mantissa, exponent) = formatted.split_once('e').unwrap_or((&formatted, "0"));
+    let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
+    let exponent: i32 = exponent.parse().unwrap_or(0);
+    let scale = exponent + 1;
+    let sign = if value < 0.0 { "-" } else { "" };
+    let count = digits.len() as i32;
+    if scale > 17 || scale < -3 {
+        let rest = &digits[1..];
+        let mantissa = if rest.is_empty() { digits[..1].to_string() } else { format!("{}.{}", &digits[..1], rest) };
+        let exp_sign = if exponent < 0 { '-' } else { '+' };
+        return format!("{sign}{mantissa}E{exp_sign}{:02}", exponent.abs());
+    }
+    if scale <= 0 { return format!("{sign}0.{}{}", "0".repeat((-scale) as usize), digits); }
+    if scale >= count { return format!("{sign}{}{}", digits, "0".repeat((scale - count) as usize)); }
+    format!("{sign}{}.{}", &digits[..scale as usize], &digits[scale as usize..])
+}
+
 /// `text[..start] + replacement + text[end..]`.
 pub fn splice(text: &[u16], start: usize, end: usize, replacement: &[u16]) -> Vec<u16> {
     let mut out = Vec::with_capacity(text.len() + replacement.len());
@@ -205,6 +232,15 @@ mod tests {
             assert_eq!(file.encoding, encoding);
             assert_eq!(file.encoding.encode(&file.text), bytes);
         }
+    }
+
+    #[test]
+    fn doubles_print_like_dotnet_r() {
+        // Probe results from the test PC (2026-09-30).
+        let cases = [(0.1, "0.1"), (0.91, "0.91"), (1e21, "1E+21"), (1e-7, "1E-07"), (123456789.123, "123456789.123"), (5e-324, "5E-324"),
+            (1.7976931348623157e308, "1.7976931348623157E+308"), (-0.0, "-0"), (100.0, "100"), (2.5, "2.5"), (1e15, "1000000000000000"),
+            (1e16, "10000000000000000"), (0.000123, "0.000123"), (4.35, "4.35"), (0.3, "0.3")];
+        for (value, expected) in cases { assert_eq!(double_r(value), expected, "{value:e}"); }
     }
 
     #[test]
