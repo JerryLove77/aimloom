@@ -160,9 +160,10 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
   v0.1.6 (user, 2026-09-30).
 - **The website's explorer ships first.** The App's Explore page follows its design, so the
   catalog and its shape are settled on the web before the App renders them.
-- Open, to decide when this is designed: whether the App's Explore reads the same catalog as the
-  website and downloads in place, or opens the site; and whether Profile (组合管理) sits under
-  更改配置 or stays its own thing. Neither was stated, so neither should be assumed.
+- **Decided 2026-10-01 (user):** in v0.1.6 the App's Explore page holds Quick import (as it is)
+  and a way into the website's explorer, which opens the site; browsing the catalog and
+  downloading inside the App come after v0.1.6 (APP-EXPLORE, below). **Profile (组合管理) sits
+  under 更改配置**, first: a Profile is also a change to the player's own game.
 - This supersedes the flat five-section navigation that CLAUDE.md and the 2026-09-15
   repository-wide design describe. **Those say five sections today and are still correct today;**
   update them when APP-NAV lands, not before.
@@ -211,6 +212,7 @@ lives inside `Aimloom.exe`), the Setup picks the first one, and Settings can cha
 |---|---|---|
 | INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; moved after v0.1.6 (user, 2026-09-30); not designed |
 | ENGINE-RUST 4–5 | Rust becomes the default, then PowerShell is removed (the small download) | After steps 1–3 have shipped and been used |
+| APP-EXPLORE | **The App's Explore page reads the website's catalog and downloads in place**, adding a file through the existing add-file plan | Decided by the user 2026-10-01 (「先入口，下一版再做 App 内下载」): after v0.1.6; not designed |
 | SLIM-2 | **The code slim-down, step 2: features and interaction** — fewer and simpler pages, buttons and flows; the behaviour differences step 1 recorded (for example, a job still running after 60 s locks the file-add flow but not a section apply); and **Profile apply speed** (user, 2026-09-29: 「profile 应用速度有点慢」), measured phase by phase on the tester's PC before anything changes, without weakening a safety check | Step 1 (code only, no behaviour change) shipped in v0.1.5; step 2 after v0.1.6 (user, 2026-09-30) |
 
 **INSTALL-REDESIGN — Quick import gets redesigned (user, 2026-09-21):**
