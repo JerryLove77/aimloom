@@ -42,7 +42,7 @@ struct Fixture { root: PathBuf, game: String, local: String, target: PathBuf, ho
 impl Fixture {
     fn new(bytes: &[u8]) -> Self {
         // The temp folder sits behind a link on macOS; the engine refuses links, as PowerShell does.
-        let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let base = super::paths::temp_dir_without_links();
         let root = base.join(format!("kvk-rust-{}", super::store::new_guid()));
         let game = root.join("游戏 with spaces");
         let target = game.join("FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json");
