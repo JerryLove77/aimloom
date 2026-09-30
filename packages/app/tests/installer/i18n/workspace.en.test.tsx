@@ -25,7 +25,8 @@ describe('workspace shell in English', () => {
     for (const label of ['Profile', 'Theme', 'Sounds', 'Crosshair', 'Enemy look']) {
       expect(within(sidebar).getByRole('button', { name: label })).toBeVisible()
     }
-    expect(within(sidebar).getByRole('button', { name: 'Quick import' })).toBeVisible()
+    expect(within(sidebar).getByText('Customize')).toBeVisible()
+    expect(within(sidebar).getByRole('button', { name: 'Explore' })).toBeVisible()
     expect(within(sidebar).getByRole('button', { name: 'Settings' })).toBeVisible()
   })
 })

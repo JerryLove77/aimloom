@@ -34,10 +34,10 @@ function fixtures(failSave = false, initial = original()) {
   return { bridge, assets, save, stored: () => stored }
 }
 describe('Profile page', () => {
-  it('shows five sections and cancels only the Profile draft', async () => {
+  it('shows the five sections and Explore, and cancels only the Profile draft', async () => {
     const f = fixtures(); render(<ProfilesApp bridge={f.bridge} assets={f.assets} />)
     await screen.findByRole('button', { name: '编辑 每日训练' })
-    expect(screen.getByRole('navigation', { name: '主导航' }).querySelectorAll('button')).toHaveLength(5)
+    expect(screen.getByRole('navigation', { name: '主导航' }).querySelectorAll('button')).toHaveLength(6)
     fireEvent.click(screen.getByRole('button', { name: '编辑 每日训练' }))
     fireEvent.change(await screen.findByLabelText('Profile 名称'), { target: { value: '未保存' } })
     fireEvent.click(screen.getByRole('button', { name: '取消编辑' }))

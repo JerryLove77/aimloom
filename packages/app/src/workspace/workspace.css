@@ -19,7 +19,10 @@
 .ws-brand { display:flex; align-items:center; gap:8px; padding:0 8px 18px; font:700 15px var(--ki-display-font) }
 .ws-brand svg { width:22px; height:22px }
 .ws-sidebar nav { display:flex; flex-direction:column; gap:2px }
-.ws-group { margin:10px 0 4px 10px; font-size:11px; font-weight:500; color:var(--ki-secondary) }
+.ws-sidebar nav .ws-nav-top { margin:0; height:34px; padding:0 10px; display:flex; align-items:center; font:600 14px var(--ki-body-font); color:var(--ki-text) }
+.ws-nav-children { display:flex; flex-direction:column; gap:2px; margin-bottom:10px }
+.ws-sidebar nav .ws-nav-children button { padding-left:24px }
+.ws-nav-divider { margin:3px 10px 3px 24px; border:0; border-top:1px solid var(--ki-line) }
 .ws-sidebar nav button { display:flex; align-items:center; gap:8px; height:30px; padding:0 10px; border:0; border-radius:var(--ws-radius-row); background:transparent; color:var(--ki-text); font:13px var(--ki-body-font); text-align:left; cursor:pointer; transition:background var(--ki-motion) }
 .ws-sidebar nav button:hover { background:var(--ws-hover) }
 .ws-sidebar nav button[aria-current="page"] { background:var(--ki-surface); font-weight:600; box-shadow:0 1px 2px #0000000f, inset 3px 0 var(--ki-accent) }

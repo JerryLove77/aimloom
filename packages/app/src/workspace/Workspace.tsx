@@ -5,8 +5,9 @@ import { SchemePage } from '../scheme/SchemePage'
 import { AudioPage } from '../audio/AudioPage'
 import { CrosshairPage } from '../crosshair/CrosshairPage'
 import { EnemyPage } from '../enemy/EnemyPage'
+import { ExplorePage } from '../explore/ExplorePage'
 import { isAnyDialogOpen } from '../ui/Dialog'
-import { SettingsState, WorkspaceStatus, type SettingsStorage, type WorkspaceSection } from './WorkspaceShell'
+import { SettingsState, WorkspaceStatus, type CustomizeSection, type SettingsStorage, type WorkspaceSection } from './WorkspaceShell'
 import { ReportSheet } from './ReportSheet'
 import { createReportController } from './report-controller'
 import { readAccount } from './account'
@@ -19,16 +20,22 @@ import type { AppInfo, InstallerBridge, UpdateCheck } from '../bridge/contracts'
 import type { ProfileBridge } from '../bridge/profiles'
 import type { ProfileAssetBridge } from '../bridge/assets'
 
-/** The five-section workspace. Every page stays mounted so drafts and pending choices survive switching. */
+/** The workspace: 更改配置's five sections and Explore. Every page stays mounted so drafts and pending choices survive switching. */
 export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrops = noFileDrops, storage = browserStorage() }: {
   bridge: InstallerBridge; profileBridge: ProfileBridge; assetBridge: ProfileAssetBridge; isDemo: boolean
-  /** Files dragged in from outside. Every page gets the one source; only the active section reacts, and the legacy installer takes none. */
+  /** Files dragged in from outside. Every page gets the one source; only the active page reacts (Explore takes a config pack folder), and Quick import takes none. */
   fileDrops?: FileDropSource
   /** The Settings popover's storage for the remembered account and the updates switch. Injectable for tests, browserStorage() otherwise. */
   storage?: SettingsStorage
 }) {
-  const [installer, setInstaller] = useState(false)
-  const [section, setSection] = useState<WorkspaceSection>('profile')
+  // Quick import, open or not; `pack` is the config pack folder dropped on Explore, if any.
+  const [installer, setInstaller] = useState<{ pack: string | null } | null>(null)
+  const [section, setSectionState] = useState<WorkspaceSection>('profile')
+  const [lastCustomize, setLastCustomize] = useState<CustomizeSection>('profile')
+  const setSection = useCallback((next: WorkspaceSection) => {
+    setSectionState(next)
+    if (next !== 'explore') setLastCustomize(next)
+  }, [])
   const [profileUnsaved, setProfileUnsaved] = useState(false)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [update, setUpdate] = useState<UpdateCheck | null>(null)
@@ -84,7 +91,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
     checkGame()
     return () => { gameCheck.current++ }
   }, [checkGame])
-  const open = () => setInstaller(true)
+  const open = (pack?: string) => setInstaller({ pack: pack ?? null })
   // Refuses over another sheet (a page's own ImportSheet/ResourceSheet/etc., or this one already
   // open) rather than stacking dialogs; the Settings button is already unreachable in that case
   // (WorkspaceShell disables it via `useAnyDialogOpen`), so this is a second, defensive guard.
@@ -103,18 +110,19 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
     onOpenLogs={bridge.openLogs.bind(bridge)}
     onClose={() => setReportOpen(false)}
   /> : null
-  return <WorkspaceStatus.Provider value={{ profileUnsaved }}>
+  return <WorkspaceStatus.Provider value={{ profileUnsaved, lastCustomize }}>
     <SettingsState.Provider value={{
       anchor, open: (a: HTMLElement) => { setAnchor(a); setEverOpened(true) }, close: () => { const a = anchor; setAnchor(null); a?.focus() },
       storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge), openExplore: bridge.openExplore.bind(bridge),
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
-      <ProfilesApp bridge={profileBridge} assets={assetBridge} locate={bridge} isDemo={isDemo} isActive={!installer && section === 'profile'} onSelectSection={setSection} onOpenInstaller={open} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
-      <SchemePage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={!installer && section === 'scheme'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />
-      <AudioPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={!installer && section === 'audio'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />
-      <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={!installer && section === 'crosshair'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />
-      <EnemyPage bridge={bridge} isDemo={isDemo} isActive={!installer && section === 'enemy'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />
-      {installer ? <InstallerApp bridge={bridge} isDemo={isDemo} onBackToProfiles={() => setInstaller(false)} onSendReport={openReport} onOpenLogs={bridge.openLogs.bind(bridge)} overlays={rootOverlay} /> : null}
+      <ProfilesApp bridge={profileBridge} assets={assetBridge} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
+      <SchemePage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'scheme'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <AudioPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <EnemyPage bridge={bridge} isDemo={isDemo} isActive={installer === null && section === 'enemy'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <ExplorePage isDemo={isDemo} isActive={installer === null && section === 'explore'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />
+      {installer ? <InstallerApp bridge={bridge} isDemo={isDemo} initialPack={installer.pack} onBack={() => setInstaller(null)} onSendReport={openReport} onOpenLogs={bridge.openLogs.bind(bridge)} overlays={rootOverlay} /> : null}
     </SettingsState.Provider>
   </WorkspaceStatus.Provider>
 }

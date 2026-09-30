@@ -9,16 +9,20 @@ import type { FileDropHint } from './file-drop'
 import type { AppInfo, ExploreKind, SteamAccount, UpdateCheck } from '../bridge/contracts'
 import './workspace.css'
 
-export type WorkspaceSection = 'profile' | 'scheme' | 'audio' | 'crosshair' | 'enemy'
-export const WORKSPACE_SECTIONS: WorkspaceSection[] = ['profile', 'scheme', 'audio', 'crosshair', 'enemy']
-/** Sections with an implemented page. The rest stay visibly unavailable rather than hidden. */
-export const WORKSPACE_READY: WorkspaceSection[] = WORKSPACE_SECTIONS
+/** The five sections under 更改配置 / Customize, then the Explore page. */
+export type WorkspaceSection = 'profile' | 'scheme' | 'audio' | 'crosshair' | 'enemy' | 'explore'
+export type CustomizeSection = Exclude<WorkspaceSection, 'explore'>
+export const CUSTOMIZE_SECTIONS: CustomizeSection[] = ['profile', 'scheme', 'audio', 'crosshair', 'enemy']
+export const WORKSPACE_SECTIONS: WorkspaceSection[] = [...CUSTOMIZE_SECTIONS, 'explore']
 /** English reuses the approved nav wording (Background / Sounds / ... / Enemy look); Chinese keeps today's plain section names. */
 const NAV_KEYS: Record<WorkspaceSection, MessageKey> = {
-  profile: 'shell.nav.profile', scheme: 'shell.nav.scheme', audio: 'shell.nav.audio', crosshair: 'shell.nav.crosshair', enemy: 'shell.nav.enemy',
+  profile: 'shell.nav.profile', scheme: 'shell.nav.scheme', audio: 'shell.nav.audio', crosshair: 'shell.nav.crosshair', enemy: 'shell.nav.enemy', explore: 'shell.nav.explore',
 }
-/** Cross-section facts the sidebar shows. Only Profile's unsaved draft is surfaced (no pending marker, by decision). */
-export const WorkspaceStatus = createContext<{ profileUnsaved: boolean }>({ profileUnsaved: false })
+/**
+ * Cross-section facts the sidebar shows. Only Profile's unsaved draft is surfaced (no pending
+ * marker, by decision). `lastCustomize` is where the collapsed 更改配置 entry returns to.
+ */
+export const WorkspaceStatus = createContext<{ profileUnsaved: boolean; lastCustomize: CustomizeSection }>({ profileUnsaved: false, lastCustomize: 'profile' })
 /**
  * The Settings popover's open/closed state and the bridge access it needs, owned by Workspace
  * and read by whichever shell is mounted. `storage` is the same guarded accessor the account
@@ -70,14 +74,12 @@ export const SettingsState = createContext<{
   rootOverlay: null,
 })
 
-export function WorkspaceShell({ active, onSelect, isDemo, demoNote, locked = false, onOpenInstaller, overlays, dropHint, eyebrow, title, titleExtra, scope, headingRef, actions, actionNote, children }: {
+export function WorkspaceShell({ active, onSelect, isDemo, demoNote, overlays, dropHint, eyebrow, title, titleExtra, scope, headingRef, actions, actionNote, children }: {
   active: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
   isDemo: boolean
   /** What the demo badge says on this page. Pages that do persist something say so themselves. */
   demoNote?: ReactNode
-  locked?: boolean
-  onOpenInstaller?: (() => void) | undefined
   /** Dialogs render here, inside .kvk-installer, because their styles read its --ki-* tokens. */
   overlays?: ReactNode
   /** Shown while a file from outside hovers over the window. Decorative: the button beside it is the keyboard and screen-reader route. */
@@ -91,7 +93,7 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, locked = fa
   actionNote?: ReactNode
   children: ReactNode
 }) {
-  const { profileUnsaved } = useContext(WorkspaceStatus)
+  const { profileUnsaved, lastCustomize } = useContext(WorkspaceStatus)
   const settings = useContext(SettingsState)
   const settingsRef = useRef<HTMLButtonElement>(null)
   const t = useT()
@@ -99,10 +101,11 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, locked = fa
   // report sheet itself...) is always a `Dialog`; while one is open the Settings button becomes
   // unreachable, so `Workspace.openReport` never has to open the report sheet over another one.
   const dialogOpen = useAnyDialogOpen()
-  const item = (section: WorkspaceSection) => {
+  const customizing = active !== 'explore'
+  const item = (section: WorkspaceSection, className?: string) => {
     const unsaved = section === 'profile' && profileUnsaved
     const label = t(NAV_KEYS[section])
-    return <button type="button" key={section} aria-current={section === active ? 'page' : undefined}
+    return <button type="button" key={section} className={className} aria-current={section === active ? 'page' : undefined}
       aria-label={unsaved ? t('shell.nav.unsavedLabel', { label }) : label} onClick={() => onSelect(section)}>
       {label}{unsaved ? <span className="ws-nav-unsaved" aria-hidden="true">{t('shell.unsaved')}</span> : null}
     </button>
@@ -112,13 +115,22 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, locked = fa
       <aside className="ws-sidebar">
         <div className="ws-brand"><TargetMark /><span>Aimloom</span></div>
         <nav aria-label={t('shell.nav.aria')}>
-          <p className="ws-group" aria-hidden="true">{t('shell.group.combinations')}</p>
-          {item('profile')}
-          <p className="ws-group" aria-hidden="true">{t('shell.group.current')}</p>
-          {(['scheme', 'audio', 'crosshair', 'enemy'] as const).map(item)}
+          {/* 更改配置 opens onto its five sections while one of them is active; from Explore it is
+              one collapsed entry that returns to the section last used. */}
+          {customizing
+            ? <p className="ws-nav-top">{t('shell.nav.customize')}</p>
+            : <button type="button" className="ws-nav-top" onClick={() => onSelect(lastCustomize)}
+              aria-label={profileUnsaved ? t('shell.nav.unsavedLabel', { label: t('shell.nav.customize') }) : undefined}>
+              {t('shell.nav.customize')}{profileUnsaved ? <span className="ws-nav-unsaved" aria-hidden="true">{t('shell.unsaved')}</span> : null}
+            </button>}
+          {customizing ? <div className="ws-nav-children">
+            {item('profile')}
+            <hr className="ws-nav-divider" />
+            {(['scheme', 'audio', 'crosshair', 'enemy'] as const).map(section => item(section))}
+          </div> : null}
+          {item('explore', 'ws-nav-top')}
         </nav>
         <div className="ws-sidebar-bottom">
-          {onOpenInstaller ? <Button variant="ghost" onClick={onOpenInstaller} disabled={locked}>{t('shell.installRestore')}</Button> : null}
           <Button variant="ghost" ref={settingsRef} disabled={dialogOpen} aria-haspopup="dialog" aria-expanded={settings.anchor === settingsRef.current && settings.anchor !== null}
             aria-label={settings.updateDot && settings.update?.latest != null
               ? `${t('settings.open')} — ${t(updateAvailableKey(settings.update), { version: settings.update.latest })}`

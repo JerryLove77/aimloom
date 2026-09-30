@@ -18,14 +18,13 @@ import './scheme.css'
 
 const PER_PAGE = 12
 
-export function SchemePage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, onOpenInstaller, fileDrops = noFileDrops }: {
+export function SchemePage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
   bridge: SchemeBridge
   assets: ProfileAssetBridge
   isDemo?: boolean
   isActive?: boolean
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
-  onOpenInstaller?: (() => void) | undefined
   /** Files dragged in from outside the app. Only the active section reacts. */
   fileDrops?: FileDropSource
 }) {
@@ -105,7 +104,7 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
     : pending ? t('scheme.note.pending', { current: state.current ?? t('scheme.notSet'), next: pending.name ?? t('scheme.notSet') })
     : t('scheme.note.default')
   return (
-    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo} locked={locked} onOpenInstaller={onOpenInstaller}
+    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo}
       eyebrow={t('scheme.eyebrow')} title={t('scheme.title')} scope={t('scheme.scope')}
       actions={actions} actionNote={actionNote}>
       {state.unresolved ? <Notice tone="warning"><p>{state.error ? msg(state.error) : t('scheme.error.unresolved')}</p></Notice>

@@ -16,13 +16,12 @@ function choiceLabel(choice: EnemySkinChoice, skins: EnemySkin[]): string {
   return row ? row.label : `${choice.model} · ${choice.skin}`
 }
 
-export function EnemyPage({ bridge, isDemo = false, isActive = true, section, onSelect, onOpenInstaller, fileDrops = noFileDrops }: {
+export function EnemyPage({ bridge, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
   bridge: EnemyBridge
   isDemo?: boolean
   isActive?: boolean
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
-  onOpenInstaller?: (() => void) | undefined
   /** Files dragged in from outside the app. The Enemy section never accepts one. */
   fileDrops?: FileDropSource
 }) {
@@ -54,7 +53,7 @@ export function EnemyPage({ bridge, isDemo = false, isActive = true, section, on
     : pendingDiffers ? t('enemy.note.pending', { label: shapeLabel })
     : t('enemy.note.default', { label: shapeLabel })
   return (
-    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo} locked={locked} onOpenInstaller={onOpenInstaller}
+    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo}
       eyebrow={t('enemy.eyebrow')} title={t('enemy.title')} scope={t('enemy.scope')}
       actions={actions} actionNote={ready ? actionNote : undefined}>
       {state.unresolved ? <Notice tone="warning"><p>{state.error ? msg(state.error) : t('enemy.notice.unresolvedFallback')}</p></Notice>

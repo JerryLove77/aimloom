@@ -18,14 +18,13 @@ import './audio.css'
 
 const LIST_EVENTS: AudioEvent[] = ['kill', 'spawn']
 
-export function AudioPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, onOpenInstaller, fileDrops = noFileDrops }: {
+export function AudioPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
   bridge: AudioBridge
   assets: ProfileAssetBridge
   isDemo?: boolean
   isActive?: boolean
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
-  onOpenInstaller?: (() => void) | undefined
   /** Files dragged in from outside the app. Only the active section reacts. */
   fileDrops?: FileDropSource
 }) {
@@ -117,7 +116,7 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
     : others.length ? t('audio.note.withOthers', { label: eventLabel, others: others.map(label).join(t('audio.listSeparator')) })
     : t('audio.note.default', { label: eventLabel })
   return (
-    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo} locked={locked} onOpenInstaller={onOpenInstaller}
+    <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo}
       eyebrow={t('audio.eyebrow')} title={t('audio.title')} scope={t('audio.scope')}
       actions={actions} actionNote={ready ? actionNote : undefined}>
       {state.unresolved ? <Notice tone="warning"><p>{state.error ? msg(state.error) : t('audio.error.resultUnknown')}</p></Notice>

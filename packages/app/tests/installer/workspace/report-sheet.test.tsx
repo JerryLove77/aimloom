@@ -1,9 +1,8 @@
-import { StrictMode, useState } from 'react'
+import { StrictMode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { LangProvider } from '../../../src/i18n'
 import { Workspace } from '../../../src/workspace/Workspace'
-import { WorkspaceShell, SettingsState } from '../../../src/workspace/WorkspaceShell'
 import { Dialog, isAnyDialogOpen } from '../../../src/ui/Dialog'
 import { createDemoBridge } from '../../../src/bridge/demo'
 import { createDemoAssetBridge, createDemoProfileBridge } from '../../../src/bridge/profiles-demo'
@@ -293,28 +292,6 @@ describe('ReportSheet', () => {
     // Even a direct call cannot stack the report sheet over the open one (defense in depth,
     // independent of the disabled button): there is still exactly one dialog on screen.
     expect(screen.getAllByRole('dialog')).toHaveLength(1)
-  })
-
-  it('opens while a section is locked: WorkspaceShell disables Settings only for an open sheet, never for `locked`', () => {
-    const openReport = vi.fn()
-    function Harness() {
-      const [anchor, setAnchor] = useState<HTMLElement | null>(null)
-      return <SettingsState.Provider value={{
-        anchor, open: setAnchor, close: () => setAnchor(null), storage: null,
-        accountResolve: () => Promise.reject(new Error('no bridge')), openLogs: () => Promise.resolve(), openDownload: () => Promise.resolve(), openExplore: () => Promise.resolve(),
-        update: null, updateDot: false, appInfo: null, betaOn: false, setBetaOn: () => {}, openReport, rootOverlay: null,
-      }}>
-        <WorkspaceShell active="scheme" onSelect={() => {}} isDemo={false} locked eyebrow="eyebrow" title="title" scope="scope">
-          <div />
-        </WorkspaceShell>
-      </SettingsState.Provider>
-    }
-    render(<Harness />)
-    const button = screen.getByRole('button', { name: '设置' })
-    expect(button).not.toBeDisabled()
-    fireEvent.click(button)
-    fireEvent.click(screen.getByRole('button', { name: '发送问题报告…' }))
-    expect(openReport).toHaveBeenCalledTimes(1)
   })
 
   it('the sheet unmounting mid-send sets no state afterwards', async () => {

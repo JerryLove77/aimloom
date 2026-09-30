@@ -6,8 +6,9 @@ keep an untracked `CLAUDE.local.md` beside it with notes that are not part of th
 ## What this repository is
 
 **Aimloom** is a Windows-only, bilingual (中文 / English) Tauri App for KovaaK's players, served
-from https://aimloom.dev. It has five sections — **Profile, Theme, Sounds, Crosshair, Enemy** as a
-player sees them — plus a utility page, **Quick import** (「一键拖入」). Every write to the game goes
+from https://aimloom.dev. Its sidebar has two top-level pages: **更改配置 / Customize**, which holds
+five sections — **Profile, Theme, Sounds, Crosshair, Enemy** as a player sees them — and
+**探索 / Explore**, which opens **Quick import** (「一键拖入」) and the website's explorer. Every write to the game goes
 through the PowerShell engine. What ships next, in order, is in `ROADMAP.md`. Aimloom does not try
 to change a running game: KovaaK keeps its settings in memory and rewrites
 `PrimaryUserSettings.json` when it exits.
@@ -159,8 +160,8 @@ The front end is split by who the code is for: `main.tsx` (entry), `bridge/` (ev
 the wire types in `contracts.ts`, and the browser fakes), `ui/` (domain-free components and
 `tokens.css`), `section/` (what several pages share: game-folder lookup, the plan runner, adding
 an outside file, failure text), `workspace/` (the shell: window, sidebar, Settings, reports),
-`installer/` (Quick import only), `profiles/`, `scheme/`, `audio/`, `enemy/`, `crosshair/` (one
-folder per section) and `i18n/` (dictionaries only).
+`installer/` (Quick import only), `explore/` (the Explore page), `profiles/`, `scheme/`,
+`audio/`, `enemy/`, `crosshair/` (one folder per section) and `i18n/` (dictionaries only).
 
 **A second engine in Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST) implements
 the same 26 operations over the same JSONL, and reads and writes the same data folder, so either

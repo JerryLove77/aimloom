@@ -1,0 +1,19 @@
+/* Explore page (APP-NAV). Token colours from workspace.css; the illustration colours are decorative, like the tile thumbnails. */
+.ws-explore { display:grid; grid-template-columns:repeat(2, minmax(0, 440px)); gap:20px }
+.ws-explore-card { display:flex; flex-direction:column; gap:10px; padding:22px 24px; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-panel) }
+.ws-explore-card h2 { margin:0; display:flex; align-items:center; gap:8px; font:700 17px var(--ki-body-font); color:var(--ki-text) }
+.ws-explore-card p { margin:0; font-size:13px; line-height:20px; color:var(--ki-secondary) }
+.ws-explore-host { padding:2px 8px; border-radius:var(--ws-radius-pill); background:var(--ws-sidebar); font-size:11px; font-weight:500; color:var(--ki-secondary) }
+.ws-explore-art { height:150px; border-radius:var(--ws-radius-tile); display:flex; align-items:center; justify-content:center }
+.ws-explore-drop { flex-direction:column; gap:10px; background:var(--ws-selected); border:2px dashed var(--ki-accent); font-size:13px; font-weight:500; color:var(--ws-accent-text) }
+.ws-explore-files { display:flex }
+.ws-explore-files > span { width:34px; height:42px; border-radius:5px; background:var(--ki-surface); border:1.5px solid var(--ki-accent) }
+.ws-explore-files > span + span { margin-left:-10px; transform:rotate(12deg) }
+.ws-explore-kinds { gap:12px; background:var(--ws-sidebar) }
+.ws-explore-kind { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; border-radius:12px; background:var(--ki-surface); font-size:12px; font-weight:500; color:var(--ki-secondary) }
+.ws-explore-kind i { width:92px; height:58px; border-radius:8px; background:var(--ki-bg) }
+.ws-explore-kind-theme i { background:linear-gradient(#1E1E20 65%, #3A2A5E 65%) }
+.ws-explore-kind-sound i { display:flex; align-items:center; justify-content:center; gap:3px }
+.ws-explore-kind-sound b { width:5px; border-radius:2px; background:var(--ki-accent) }
+.ws-explore-kind-crosshair i { background:linear-gradient(#3CFF6B, #3CFF6B) center / 22px 2px no-repeat, linear-gradient(#3CFF6B, #3CFF6B) center / 2px 22px no-repeat, #2A2A2E }
+@media (max-width: 900px) { .ws-explore { grid-template-columns:1fr } }
