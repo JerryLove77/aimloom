@@ -4,6 +4,44 @@
   "beta": null,
   "releases": [
     {
+      "version": "0.1.5",
+      "status": "preparing",
+      "date": null,
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "WebView2"
+      ],
+      "bytes": null,
+      "sha256": null,
+      "primaryUrl": null,
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "scripts\\",
+        "pwsh\\",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "Aimloom 现在自带 PowerShell 7，不用再另外安装；安装程序和便携版因此都变成约 100 MB。背景、音效、准星页可以直接打开 aimloom.dev 的探索页，下载作者允许分享的背景、音效和准星。连接 Steam 账号后，显示的名字一开始是 Steam 名，可以改成你想要的；已保存的账号也能改名。另外整理了内部代码，界面和功能不变。",
+        "en": "Aimloom now comes with PowerShell 7, so nothing else needs installing; the installer and the portable ZIP are about 100 MB as a result. Theme, Sounds and Crosshair can open the explorer on aimloom.dev to download backgrounds, sounds and crosshairs their authors allow to share. After you link a Steam account, its name starts as your Steam name and can be changed; a saved account can be renamed. The code inside was also reorganized, with no change to what you see or do."
+      },
+      "knownIssues": {
+        "zh": [
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。",
+          "敌人皮肤的列表是按当前游戏版本内置的；游戏以后新增的皮肤，要等 Aimloom 更新后才能选。"
+        ],
+        "en": [
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice.",
+          "The enemy skin list is built in for the current game version; skins the game adds later can be chosen once Aimloom is updated."
+        ]
+      },
+      "setup": null
+    },
+    {
       "version": "0.1.4",
       "status": "stable",
       "date": "2026-09-22",
