@@ -77,27 +77,21 @@ fn reference(value: &Value, extensions: &[&str]) -> Result<(), Fault> {
 }
 
 fn profile(value: &Value) -> Result<(), Fault> {
-    // `crosshair` and `enemy` are both OPTIONAL and their values are never looked at. v0.1.3
-    // removed the crosshair slot -- a crosshair cannot be switched from outside the game -- and
-    // 2026-09-21 removed the enemy slot the same way: a Profile no longer manages the enemy. The
-    // App no longer writes either key, but a Profile saved before each removal still carries it
-    // and must keep opening. The same rule lives in `profiles/model.ts` and in the engine's
-    // `Assert-KvkProfile`, and fixtures under `tests/installer/profiles/` hold all three layers
-    // to it. The engine strips both keys on read and on save, so an unvalidated value can never
-    // reach the disk.
-    let map=object(value,&["schemaVersion","id","name","scheme","audio"],&["crosshair","enemy"])?;
-    if map["schemaVersion"].as_f64()!=Some(1.0) {return Err(fault("不支持此 Profile 版本", "This Profile version is not supported."));}
+    // Profile v2 (2026-09-30): a complete snapshot. The theme (field `theme`) and all six sound events are
+    // required, an empty kill or spawn list means "no sound", and each MBS event holds exactly
+    // one. Version 1 (with its "keep current" gaps and the old `crosshair`/`enemy` fields) is
+    // refused: the user chose no data migration. The same rule lives in `profiles/model.ts`,
+    // `protocol.schema.json` and both engines' profile checks.
+    let map=object(value,&["schemaVersion","id","name","theme","audio"],&[])?;
+    if map["schemaVersion"].as_f64()!=Some(2.0) {return Err(fault("不支持此 Profile 版本", "This Profile version is not supported."));}
     safe_id(&map["id"])?;text(&map["name"],128,true)?;
-    if !map["scheme"].is_null() {
-        reference(&map["scheme"], &[".json"])?;
-    }
-    if !map["audio"].is_null() {
-        let audio=object(&map["audio"],&[],&["kill","spawn","mbsGood","mbsOkay","mbsBad","mbsChangeNow"])?;
-        for list in audio.values() {
-            let files=list.as_array().ok_or_else(|| fault("音效选择必须是数组", "A sound selection must be an array."))?;
-            if files.len()>64 {return Err(fault("每个音效事件最多 64 项", "Each sound event holds at most 64 entries."));}
-            for item in files {reference(item,&[".wav",".ogg"])?;}
-        }
+    reference(&map["theme"], &[".json"])?;
+    let audio=object(&map["audio"],&["kill","spawn","mbsGood","mbsOkay","mbsBad","mbsChangeNow"],&[])?;
+    for (event, list) in audio {
+        let files=list.as_array().ok_or_else(|| fault("音效选择必须是数组", "A sound selection must be an array."))?;
+        if files.len()>64 {return Err(fault("每个音效事件最多 64 项", "Each sound event holds at most 64 entries."));}
+        if event.starts_with("mbs") && files.len()!=1 {return Err(fault("MBS 音效事件必须恰好有一个音效", "Each MBS sound event holds exactly one sound."));}
+        for item in files {reference(item,&[".wav",".ogg"])?;}
     }
     if serde_json::to_vec(value).map_err(|e| Fault::plain(e.to_string()))?.len()>MAX_PROFILE_BYTES {return Err(fault("Profile JSON 超过 256 KiB", "The Profile JSON is over 256 KiB."));}
     Ok(())
@@ -254,7 +248,21 @@ mod tests {
     use super::super::protocol::has_cjk;
 
     fn good_profile() -> Value {
-        json!({"schemaVersion":1,"id":"p1","name":"P","scheme":null,"audio":null,"crosshair":null,"enemy":null})
+        let one = || json!([{"name":"none.ogg","path":"C:/g/sounds/none.ogg"}]);
+        json!({"schemaVersion":2,"id":"p1","name":"P","theme":{"name":"a.json","path":"C:/g/Themes/a.json"},
+            "audio":{"kill":[],"spawn":[],"mbsGood":one(),"mbsOkay":one(),"mbsBad":one(),"mbsChangeNow":one()}})
+    }
+    fn with(changes: &[(&str, Value)]) -> Value {
+        let mut profile = good_profile();
+        for (path, value) in changes {
+            let mut target = &mut profile;
+            let parts: Vec<&str> = path.split('.').collect();
+            for part in &parts[..parts.len() - 1] { target = target.get_mut(*part).unwrap(); }
+            let last = parts[parts.len() - 1];
+            if value.is_null() && last.starts_with('-') { target.as_object_mut().unwrap().remove(&last[1..]); }
+            else { target[last] = value.clone(); }
+        }
+        json!({ "profile": profile })
     }
 
     #[test]
@@ -265,14 +273,23 @@ mod tests {
             ("profileRead", json!({"id":"CON"})),
             ("profileRead", json!({"id":5})),
             ("profileRead", json!({"id":"con"})),
-            ("profileSave", json!({"profile":{"schemaVersion":2,"id":"p1","name":"P","scheme":null,"audio":null,"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":"","scheme":null,"audio":null,"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":7,"scheme":null,"audio":null,"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":"P","scheme":{"name":"a","path":"//?/C:/a.json"},"audio":null,"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":"P","scheme":{"name":"a","path":"http://x/a.json"},"audio":null,"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":"P","scheme":{"name":"a","path":"C:/a.txt"},"audio":null,"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":"P","scheme":null,"audio":{"kill":{}},"crosshair":null,"enemy":null}})),
-            ("profileSave", json!({"profile":{"schemaVersion":1,"id":"p1","name":"P","scheme":null,"audio":{"kill":vec![json!({"name":"a","path":"C:/a.wav"}); 65]},"crosshair":null,"enemy":null}})),
+            ("profileSave", with(&[("schemaVersion", json!(1))])),
+            ("profileSave", with(&[("schemaVersion", json!(3))])),
+            ("profileSave", with(&[("name", json!(""))])),
+            ("profileSave", with(&[("name", json!(7))])),
+            ("profileSave", with(&[("theme", Value::Null)])),
+            ("profileSave", with(&[("theme", json!({"name":"a","path":"//?/C:/a.json"}))])),
+            ("profileSave", with(&[("theme", json!({"name":"a","path":"http://x/a.json"}))])),
+            ("profileSave", with(&[("theme", json!({"name":"a","path":"C:/a.txt"}))])),
+            ("profileSave", with(&[("audio", Value::Null)])),
+            ("profileSave", with(&[("audio.-spawn", Value::Null)])),
+            ("profileSave", with(&[("audio.kill", json!({}))])),
+            ("profileSave", with(&[("audio.kill", json!(vec![json!({"name":"a","path":"C:/a.wav"}); 65]))])),
+            ("profileSave", with(&[("audio.mbsGood", json!([]))])),
+            ("profileSave", with(&[("audio.mbsBad", json!([{"name":"a","path":"C:/a.wav"},{"name":"b","path":"C:/b.wav"}]))])),
+            ("profileSave", with(&[("crosshair", Value::Null)])),
+            ("profileSave", with(&[("scheme", json!({"name":"a.json","path":"C:/a.json"}))])),
+            ("profileSave", with(&[("enemy", json!({"name":"b.json","path":"C:/b.json"}))])),
             ("profileSave", json!({"profile":"x"})),
             ("profileAssetList", json!({"kind":"video","directory":"C:/a"})),
             ("profileAssetList", json!({"kind":"scheme","directory":"relative/dir"})),
@@ -294,7 +311,7 @@ mod tests {
             ("profileList", json!({}), json!({"directory":"C:/P","profiles":[],"errors":[{"fileName":"a.json","message":"坏了"}]})),
             ("profileList", json!({}), json!({"directory":"C:/P","profiles":[],"errors":[{"fileName":"a.json","message":"坏了","messageEn":"文件坏了"}]})),
             ("profileRead", json!({"id":"p1"}), json!({"filePath":"C:/P/p2.json","profile":null})),
-            ("profileRead", json!({"id":"p1"}), json!({"filePath":"C:/P/p1.json","profile":{"schemaVersion":1,"id":"p2","name":"P","scheme":null,"audio":null,"crosshair":null,"enemy":null}})),
+            ("profileRead", json!({"id":"p1"}), json!({"filePath":"C:/P/p1.json","profile":with(&[("id", json!("p2"))])["profile"].clone()})),
             ("profileSave", json!({"profile":good_profile()}), json!({"filePath":"C:/P/p1.json","profile":null})),
             ("profileDelete", json!({"id":"p1"}), json!({"deleted":"yes"})),
             ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/c.json","mimeType":"application/json","base64":"AAAA"})),
@@ -329,32 +346,25 @@ mod tests {
         }
     }
     /// The Rust third of `tests/installer/profiles/profile.saved.fixture.json` — what TypeScript
-    /// really writes today. Earlier branches removed `crosshair`, then `enemy`, from that output
-    /// while this validator still required one or the other, so every save on Windows would have
-    /// failed; `good_profile()` above hand-writes both keys and therefore never noticed. The
-    /// fixture is pinned to the serialiser by `saved-shape.test.ts` and to the engine by
-    /// `profiles.test.ps1`.
+    /// really writes today, pinned to the serialiser by `saved-shape.test.ts` and to the engine by
+    /// `profiles.test.ps1`. A hand-written profile here once hid a validator that refused every
+    /// real save.
     #[test]
     fn the_profile_typescript_really_saves_is_accepted() {
         let saved: Value = serde_json::from_str(include_str!("../../../tests/installer/profiles/profile.saved.fixture.json")).unwrap();
-        assert!(saved.get("crosshair").is_none() && saved.get("enemy").is_none(), "the fixture must be what TypeScript writes today");
         validate_profile_request("profileSave", json!({ "profile": saved })).expect("a Profile saved by the App must validate");
+        validate_profile_request("profileSave", json!({ "profile": good_profile() })).expect("the minimal complete snapshot must validate");
     }
 
-    /// A Profile written by v0.1.2 still carries a crosshair record. It must keep opening.
+    /// A version 1 Profile (keep-current gaps, and the old crosshair and enemy records) is no
+    /// longer supported (user, 2026-09-30: no data migration). Every layer refuses it: here, in
+    /// `saved-shape.test.ts` and in `profiles.test.ps1`.
     #[test]
-    fn a_profile_saved_before_the_crosshair_slot_was_removed_is_still_accepted() {
-        validate_profile_request("profileSave", json!({ "profile": good_profile() })).expect("an old Profile must still validate");
-    }
-
-    /// A Profile written before 2026-09-21 still carries both a crosshair and an enemy record
-    /// (`profile.legacy.fixture.json`, `tests/installer/profiles/`). It must keep opening in
-    /// every layer: here, in `saved-shape.test.ts` and in `profiles.test.ps1`.
-    #[test]
-    fn a_profile_with_both_legacy_slots_is_still_accepted() {
+    fn a_version_one_profile_is_refused() {
         let legacy: Value = serde_json::from_str(include_str!("../../../tests/installer/profiles/profile.legacy.fixture.json")).unwrap();
-        assert!(!legacy["crosshair"].is_null() && !legacy["enemy"].is_null(), "the fixture must actually carry both legacy slots");
-        validate_profile_request("profileSave", json!({ "profile": legacy })).expect("a Profile with both legacy slots must still validate");
+        assert_eq!(legacy["schemaVersion"], json!(1));
+        let issue = validate_profile_request("profileSave", json!({ "profile": legacy })).unwrap_err();
+        assert!(!has_cjk(&issue.message_en));
     }
 
 }
