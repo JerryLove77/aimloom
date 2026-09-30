@@ -18,10 +18,11 @@ describe('buildMail', () => {
     expect(m.text).toContain('Steam: PlayerOne (76561198000000042, unverified)'); expect(m.text).toContain('Contact: someone@example.com'); expect(m.text).toContain('Windows 10.0.22631')
     expect(m.attachments).toEqual([{ filename: 'AL-260921-1234.log.txt', type: 'text/plain; charset=utf-8', disposition: 'attachment', content: report.log }])
   })
-  it('names the engine, and says so when an older App did not report one', () => {
-    expect(buildMail('n', report, 'o@t.invalid').text).toContain('PowerShell: 7.6.6 · engine: powershell · game found: yes')
-    const { engine: _, ...older } = report.system
-    expect(buildMail('n', { ...report, system: older }, 'o@t.invalid').text).toContain('engine: not reported')
+  it('names the engine, and still reads a report from 0.1.5 (a PowerShell version, no engine)', () => {
+    expect(buildMail('n', report, 'o@t.invalid').text).toContain('PowerShell: not used · engine: rust · game found: yes')
+    const { engine: _, ...rest } = report.system
+    const older = { ...rest, powershell: '7.6.6' }
+    expect(buildMail('n', { ...report, system: older }, 'o@t.invalid').text).toContain('PowerShell: 7.6.6 · engine: not reported')
   })
   it('lets the owner just hit Reply when the contact is an email address, and only then', () => {
     expect(buildMail('n', report, 'o@t.invalid').replyTo).toBe('someone@example.com')
