@@ -79,8 +79,8 @@ describe('the Profile library says which Profile is in use', () => {
     expect(inUse).toBeDisabled()
     const trackingRow = inUse.closest('article') as HTMLElement
     expect(within(trackingRow).getByText('当前使用')).toBeVisible()
-    const favRow = screen.getByRole('button', { name: '应用 favoriate' }).closest('article') as HTMLElement
-    expect(screen.getByRole('button', { name: '应用 favoriate' })).toBeDisabled()
+    const favRow = screen.getByRole('button', { name: '编辑 favoriate' }).closest('article') as HTMLElement
+    expect(screen.queryByRole('button', { name: '应用 favoriate' })).toBeNull()
     expect(within(favRow).getByText('没有要应用的内容')).toBeVisible()
     expect(within(favRow).queryByText('当前使用')).toBeNull()
     expect(screen.getByRole('button', { name: '应用 flick' })).toBeEnabled()
