@@ -144,7 +144,8 @@ pub fn all(engine: &Engine, context: &Context) -> EngineResult<Vec<Json>> {
     for (name, is_dir) in names {
         let full = join(&context.backup_root, &name);
         assert_safe_path(&full)?;
-        if name.strip_prefix(".stage-").is_some_and(|g| paths::is_lower_hex(g, 32)) { continue; }
+        // `-match` ignores case: a `.stage-` folder with upper-case hex is skipped as well.
+        if name.strip_prefix(".stage-").is_some_and(|g| paths::is_lower_hex(&g.to_ascii_lowercase(), 32)) { continue; }
         if !is_dir { return Err(EngineError::plain(format!("Unexpected backup entry: \"{full}\""))); }
         manifests.push(read(engine, context, &name)?);
     }

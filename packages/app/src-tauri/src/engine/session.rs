@@ -493,16 +493,24 @@ pub fn parse_request(line: &str) -> Result<Json, String> {
 pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
     for line in input.lines() {
         let line = line?;
-        let mut write = |value: &Json| -> std::io::Result<()> { writeln!(output, "{}", value.to_compact())?; output.flush() };
-        if line.len() > MAX_LINE_BYTES { write(&parse_failure("Request exceeds the 16 MiB limit."))?; continue; }
-        let request = match parse_request(&line) {
-            Ok(request) => request,
-            Err(error) => { write(&parse_failure(&format!("Invalid JSON request: {error}")))?; continue; }
+        let request = if line.len() > MAX_LINE_BYTES { Err("Request exceeds the 16 MiB limit.".to_string()) } else {
+            parse_request(&line).map_err(|error| format!("Invalid JSON request: {error}"))
         };
-        let mut progress = Vec::new();
-        let reply = session.handle(&request, &mut |line| progress.push(line));
-        for line in &progress { write(line)?; }
-        write(&reply)?;
+        let reply = match request {
+            Err(message) => parse_failure(&message),
+            // Progress goes out as it happens, flushed, as the PowerShell worker writes it
+            // (AutoFlush): the App shows it during a long batch.
+            Ok(request) => {
+                let mut failed = None;
+                let reply = session.handle(&request, &mut |progress| {
+                    if failed.is_none() { if let Err(e) = writeln!(output, "{}", progress.to_compact()).and_then(|_| output.flush()) { failed = Some(e); } }
+                });
+                if let Some(error) = failed { return Err(error); }
+                reply
+            }
+        };
+        writeln!(output, "{}", reply.to_compact())?;
+        output.flush()?;
     }
     Ok(())
 }

@@ -95,7 +95,15 @@ pub fn open_exclusive(path: &Path) -> io::Result<File> {
 
 /// `File.Open(path, OpenOrCreate, ReadWrite, FileShare.ReadWrite)`: the data-root hold.
 pub fn open_shared(path: &Path) -> io::Result<File> {
-    OpenOptions::new().read(true).write(true).create(true).truncate(false).open(path)
+    let mut options = OpenOptions::new();
+    options.read(true).write(true).create(true).truncate(false);
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const FILE_SHARE_READ_WRITE: u32 = 0x1 | 0x2; // not FILE_SHARE_DELETE, as .NET's FileShare.ReadWrite
+        options.share_mode(FILE_SHARE_READ_WRITE);
+    }
+    options.open(path)
 }
 
 /// True when the entry itself (never a link's target) is a link or junction:
@@ -131,7 +139,9 @@ pub fn process_names() -> io::Result<Vec<String>> {
     while ok != 0 {
         let len = entry.szExeFile.iter().position(|&c| c == 0).unwrap_or(entry.szExeFile.len());
         let name = String::from_utf16_lossy(&entry.szExeFile[..len]);
-        let stem = if name.len() > 4 && name[name.len() - 4..].eq_ignore_ascii_case(".exe") { name[..name.len() - 4].to_string() } else { name };
+        // By byte, but only at a character boundary: a name may end in any character.
+        let exe = name.len() > 4 && name.get(name.len() - 4..).is_some_and(|s| s.eq_ignore_ascii_case(".exe"));
+        let stem = if exe { name[..name.len() - 4].to_string() } else { name };
         names.push(stem);
         ok = unsafe { Process32NextW(snapshot, &mut entry) };
     }
