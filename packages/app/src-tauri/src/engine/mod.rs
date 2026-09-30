@@ -8,6 +8,7 @@
 //! as the PowerShell engine, and reads and writes the same data folder, so either engine can
 //! pick up what the other left.
 
+pub mod discover;
 pub mod enemy;
 pub mod files;
 pub mod json;

@@ -20,7 +20,14 @@ use app_lib::engine::{paths, platform, EngineError, EngineResult};
 fn parity_dir() -> PathBuf { Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../scripts/installer/tests/parity") }
 
 #[derive(Default)]
-struct HostState { listings: Cell<usize>, running_from: Cell<Option<usize>>, faults: RefCell<Vec<String>> }
+struct HostState {
+    listings: Cell<usize>,
+    running_from: Cell<Option<usize>>,
+    faults: RefCell<Vec<String>>,
+    steam_roots: RefCell<Vec<String>>,
+    drives: RefCell<Vec<String>>,
+    env: RefCell<Vec<(String, String)>>,
+}
 
 struct ParityHost(Rc<HostState>);
 
@@ -36,25 +43,38 @@ impl Host for ParityHost {
         if self.0.faults.borrow().iter().any(|f| f == point) { return Err(EngineError::plain(format!("Injected failure at {point}"))); }
         Ok(())
     }
+
+    fn steam_roots(&self) -> Vec<String> { self.0.steam_roots.borrow().clone() }
+
+    fn drive_roots(&self) -> Vec<String> { self.0.drives.borrow().clone() }
+
+    fn env(&self, name: &str) -> Option<String> { self.0.env.borrow().iter().find(|(k, _)| k == name).map(|(_, v)| v.clone()) }
 }
+
+fn repo_root() -> String { paths::get_full_path(&Path::new(env!("CARGO_MANIFEST_DIR")).join("../../..").to_string_lossy()).unwrap() }
+
+fn runtime_root() -> String { Path::new(&repo_root()).join("scripts/installer").to_string_lossy().into_owned() }
 
 fn literal(text: &str) -> Json {
     json::parse(text, json::ReadOptions { strings: json::Strings::Literal, keys: json::Keys::KeepCaseVariants, max_depth: 64 }).unwrap()
 }
 
-fn resolve(value: &Json, game: &str, pack: &str, plan: &str, batch: &str) -> Json {
+struct Roots { root: String, game: String, pack: String }
+
+fn resolve(value: &Json, roots: &Roots, plan: &str, batch: &str) -> Json {
     match value {
         Json::String(s) if s == "<plan>" => Json::str(plan),
         Json::String(s) if s == "<batch>" => Json::str(batch),
-        Json::String(s) if s.starts_with("<game>") => Json::str(format!("{game}{}", &s[6..])),
-        Json::String(s) if s.starts_with("<pack>") => Json::str(format!("{pack}{}", &s[6..])),
-        Json::Object(fields) => Json::Object(fields.iter().map(|(k, v)| (k.clone(), resolve(v, game, pack, plan, batch))).collect()),
-        Json::Array(items) => Json::Array(items.iter().map(|v| resolve(v, game, pack, plan, batch)).collect()),
+        Json::String(s) if s.starts_with("<game>") => Json::str(format!("{}{}", roots.game, &s[6..])),
+        Json::String(s) if s.starts_with("<pack>") => Json::str(format!("{}{}", roots.pack, &s[6..])),
+        Json::String(s) if s.starts_with("<root>") => Json::str(format!("{}{}", roots.root, &s[6..])),
+        Json::Object(fields) => Json::Object(fields.iter().map(|(k, v)| (k.clone(), resolve(v, roots, plan, batch))).collect()),
+        Json::Array(items) => Json::Array(items.iter().map(|v| resolve(v, roots, plan, batch)).collect()),
         other => other.clone(),
     }
 }
 
-fn write_files(root: &Path, files: Option<&Json>, fixtures: &Path) {
+fn write_files(root: &Path, files: Option<&Json>, fixtures: &Path, case_root: &str) {
     let Some(Json::Object(entries)) = files else { return };
     for (relative, spec) in entries {
         let path = root.join(relative);
@@ -62,7 +82,7 @@ fn write_files(root: &Path, files: Option<&Json>, fixtures: &Path) {
         std::fs::create_dir_all(path.parent().unwrap()).unwrap();
         match spec.get("fixture").and_then(Json::as_str) {
             Some(fixture) => { std::fs::copy(fixtures.join(fixture), &path).unwrap(); }
-            None => std::fs::write(&path, spec.get("text").and_then(Json::as_str).unwrap()).unwrap(),
+            None => std::fs::write(&path, spec.get("text").and_then(Json::as_str).unwrap().replace("<root>", case_root)).unwrap(),
         }
     }
 }
@@ -178,17 +198,28 @@ fn run_case(name: &str, case: &Json) -> Json {
     let game = paths::get_full_path(&root.join("游戏 with spaces").to_string_lossy()).unwrap();
     let local = paths::get_full_path(&root.join("Local Data").to_string_lossy()).unwrap();
     let pack = paths::get_full_path(&root.join("配置 pack").to_string_lossy()).unwrap();
+    let case_root = paths::get_full_path(&root.to_string_lossy()).unwrap();
+    let roots = Roots { root: case_root.clone(), game: game.clone(), pack: pack.clone() };
     let primary = Path::new(&game).join("FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json");
     let fixtures = parity_dir().join("fixtures");
     std::fs::create_dir_all(primary.parent().unwrap()).unwrap();
     std::fs::create_dir_all(Path::new(&game).join("FPSAimTrainer/sounds")).unwrap();
     std::fs::create_dir_all(&local).unwrap();
     std::fs::copy(fixtures.join(case.get("fixture").and_then(Json::as_str).unwrap()), &primary).unwrap();
-    write_files(Path::new(&game), case.get("gameFiles"), &fixtures);
-    if case.get("packFiles").is_some() { std::fs::create_dir_all(&pack).unwrap(); write_files(Path::new(&pack), case.get("packFiles"), &fixtures); }
-    write_files(Path::new(&local), case.get("localFiles"), &fixtures);
+    write_files(Path::new(&game), case.get("gameFiles"), &fixtures, &case_root);
+    if case.get("packFiles").is_some() { std::fs::create_dir_all(&pack).unwrap(); write_files(Path::new(&pack), case.get("packFiles"), &fixtures, &case_root); }
+    write_files(Path::new(&local), case.get("localFiles"), &fixtures, &case_root);
+    write_files(Path::new(&case_root), case.get("rootFiles"), &fixtures, &case_root);
     let host = Rc::new(HostState::default());
-    let mut session = Session::new(Box::new(ParityHost(host.clone())), &local).unwrap();
+    if let Some(machine) = case.get("machine") {
+        let list = |key: &str| machine.get(key).and_then(Json::as_array).map(|a| a.iter().map(|v| resolve(v, &roots, "", "").as_str().unwrap().to_string()).collect()).unwrap_or_default();
+        *host.steam_roots.borrow_mut() = list("steamRoots");
+        *host.drives.borrow_mut() = list("drives");
+        if let Some(Json::Object(env)) = machine.get("env") {
+            *host.env.borrow_mut() = env.iter().map(|(k, v)| (k.clone(), resolve(v, &roots, "", "").as_str().unwrap().to_string())).collect();
+        }
+    }
+    let mut session = Session::new(Box::new(ParityHost(host.clone())), &local, &runtime_root()).unwrap();
     let mut steps: Vec<(Vec<String>, String)> = Vec::new();
     let (mut lock, mut last_plan, mut last_batch, mut number) = (None, "<plan>".to_string(), "<batch>".to_string(), 0);
     for step in case.get("steps").and_then(Json::as_array).unwrap() {
@@ -199,7 +230,7 @@ fn run_case(name: &str, case: &Json) -> Json {
                 (None, Some(raw)) => raw.to_compact(),
                 (None, None) => Json::object(vec![
                     ("v", Json::int(1)), ("requestId", Json::str(format!("r{number}"))),
-                    ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &game, &pack, &last_plan, &last_batch)),
+                    ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &roots, &last_plan, &last_batch)),
                 ]).to_compact(),
             };
             let mut progress = Vec::new();
@@ -248,7 +279,9 @@ fn run_case(name: &str, case: &Json) -> Json {
     let mut n = Normalizer {
         roots: vec![
             (json_root(&game), "<game>".into()), (json_root(&local), "<local>".into()), (json_root(&pack), "<pack>".into()),
+            (json_root(&case_root), "<root>".into()), (json_root(&repo_root()), "<repo>".into()),
             (game.clone(), "<game>".into()), (local.clone(), "<local>".into()), (pack.clone(), "<pack>".into()),
+            (case_root.clone(), "<root>".into()), (repo_root(), "<repo>".into()),
         ],
         game_hash: paths::text_hash(&lower_invariant(&game)),
         pristine: Vec::new(),

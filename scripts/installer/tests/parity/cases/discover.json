@@ -1,0 +1,61 @@
+{
+  "fixture": "enemy-crlf.json",
+  "rootFiles": {
+    "Steam/steamapps/libraryfolders.vdf": {
+      "text": "\"libraryfolders\"\r\n{\r\n\t\"0\"\r\n\t{\r\n\t\t\"path\"\t\t\"<root>/Steam\"\r\n\t\t\"apps\"\r\n\t\t{\r\n\t\t\t\"228980\"\t\t\"1\"\r\n\t\t}\r\n\t}\r\n\t\"1\"\r\n\t{\r\n\t\t\"PATH\"\t\t\"<root>/Lib\"\r\n\t\t\"apps\"\r\n\t\t{\r\n\t\t\t\"824270\"\t\t\"1\"\r\n\t\t}\r\n\t}\r\n}\r\n"
+    },
+    "Lib/steamapps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json": {
+      "text": "{}"
+    },
+    "Lib/steamapps/common/FPSAimTrainer/FPSAimTrainer/sounds/.keep": {
+      "text": ""
+    },
+    "Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json": {
+      "text": "{}"
+    },
+    "Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer/sounds/.keep": {
+      "text": ""
+    },
+    "PF/Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json": {
+      "text": "{}"
+    },
+    "PF/Steam/steamapps/common/FPSAimTrainer/FPSAimTrainer/sounds/.keep": {
+      "text": ""
+    },
+    "D/SteamLibrary/steamapps/common/FPSAimTrainer/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json": {
+      "text": "{}"
+    },
+    "D/SteamLibrary/steamapps/common/FPSAimTrainer/FPSAimTrainer/sounds/.keep": {
+      "text": ""
+    },
+    "E/SteamLibrary/steamapps/common/FPSAimTrainer/FPSAimTrainer/sounds/.keep": {
+      "text": ""
+    }
+  },
+  "machine": {
+    "steamRoots": [
+      "<root>/Steam",
+      "<root>/NoSteam"
+    ],
+    "drives": [
+      "<root>/D/",
+      "<root>/E/",
+      "<root>/D/"
+    ],
+    "env": {
+      "ProgramFiles": "<root>/PF"
+    }
+  },
+  "steps": [
+    {
+      "request": "discover",
+      "args": {}
+    },
+    {
+      "request": "discover",
+      "args": {
+        "x": 1
+      }
+    }
+  ]
+}

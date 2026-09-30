@@ -24,6 +24,15 @@ pub trait Host {
     /// A test's chance to fail at a named step (`snapshot`, `file-change`, …). Never fails in
     /// the App.
     fn fault(&self, _point: &str) -> EngineResult<()> { Ok(()) }
+
+    /// `Get-KvkSteamRoots`: where Steam says it is installed, from the registry.
+    fn steam_roots(&self) -> Vec<String> { Vec::new() }
+
+    /// The roots of `Get-PSDrive -PSProvider FileSystem`, in drive-name order.
+    fn drive_roots(&self) -> Vec<String> { Vec::new() }
+
+    /// An environment variable (`ProgramFiles`, `ProgramFiles(x86)`).
+    fn env(&self, name: &str) -> Option<String> { std::env::var(name).ok().filter(|v| !v.is_empty()) }
 }
 
 /// The real machine.
@@ -35,6 +44,31 @@ impl Host for SystemHost {
         { platform::process_names() }
         #[cfg(not(windows))]
         { Ok(Vec::new()) }
+    }
+
+    fn steam_roots(&self) -> Vec<String> {
+        #[cfg(windows)]
+        {
+            let mut roots: Vec<String> = Vec::new();
+            for (hive, key) in [(platform::Hive::CurrentUser, "Software\\Valve\\Steam"), (platform::Hive::LocalMachine, "SOFTWARE\\WOW6432Node\\Valve\\Steam"), (platform::Hive::LocalMachine, "SOFTWARE\\Valve\\Steam")] {
+                for name in ["SteamPath", "InstallPath"] {
+                    let Some(value) = platform::registry_string(hive, key, name).filter(|v| !v.trim().is_empty()) else { continue };
+                    // The same install is normally named by all three keys; read its library list once.
+                    let normalized = value.replace('/', "\\").trim_end_matches('\\').to_string();
+                    if !roots.iter().any(|r| eq_ignore_case(r, &normalized)) { roots.push(normalized); }
+                }
+            }
+            roots
+        }
+        #[cfg(not(windows))]
+        { Vec::new() }
+    }
+
+    fn drive_roots(&self) -> Vec<String> {
+        #[cfg(windows)]
+        { platform::drive_roots() }
+        #[cfg(not(windows))]
+        { Vec::new() }
     }
 }
 
