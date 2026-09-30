@@ -148,8 +148,8 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
 
 | ID | Deliverable | Status |
 |---|---|---|
-| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma drawn and approved 2026-10-01; **built** on `feat/app-nav`, not yet released |
-| ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); steps 1–2 **merged** 2026-10-01 (PR #24); step 3 after APP-NAV |
+| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma drawn and approved 2026-10-01; **built** on `feat/app-nav` and checked on the test PC (test builds 0.1.6-test.1–3); ships as 0.1.6-beta.1 first (user, 2026-09-30) |
+| ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); steps 1–2 **merged** 2026-10-01 (PR #24); step 3 **built** on `feat/app-nav`; 0.1.6 ships as a beta first (user, 2026-09-30: 「先发 beta」) |
 
 **APP-NAV — the shell the user described (2026-09-21):**
 - The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
@@ -168,6 +168,18 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
   only while one of them is open; a config pack folder dropped on Explore opens Quick import with
   it (Quick import reads folders only, so a ZIP is refused with "unzip it first").
 - CLAUDE.md, the interaction contract and the 2026-09-13 workspace spec describe the new shell.
+
+**Also in v0.1.6 (user, 2026-09-30):**
+- **A Profile is a complete snapshot** (「profile里的保持当前没有意义」): format v2 records the
+  theme and all six sound events, a new Profile starts as the game is, and 当前使用 marks the
+  Profile the game holds (grey = in use, bright = can be applied). Version 1 Profiles are refused;
+  the testers recreate theirs (no data migration).
+- **Version 0.1.6 on the branch**, so its test builds (0.1.6-test.N) no longer sort below the
+  released 0.1.5 and Settings stops offering 0.1.5 as an update.
+- **A mainland-China download**: the maintainer puts the same Setup on a network drive and links
+  it from the promotion posts (Bilibili, Xiaohongshu, Xiaoheihe), with its SHA-256. The website
+  does not link it for now. Why a drive: dl.aimloom.dev and GitHub are often slow there, object
+  storage bills every download to the owner, and an ICP filing is out of reach for `.dev`.
 
 **ENGINE-RUST — the engine in Rust:**
 
@@ -203,16 +215,17 @@ lives inside `Aimloom.exe`), every install starts on PowerShell, and Settings ca
 |---|---|---|
 | 1 | **Spike**: the write core plus Enemy in Rust, compared with PowerShell goldens, and cross-restores in both directions; a go/no-go report with measured numbers | **Done** 2026-10-01 (PR #24), folded into step 2 |
 | 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | **Merged** 2026-10-01 (PR #24): all 26 operations; 52 parity cases match PowerShell on the Mac and on Windows; the cross-engine test passes 6/6; CI runs both. Not reachable by players |
-| 3 | **Choosing the engine**: the Settings switch under the rules above (PowerShell 7 recommended, Rust marked as a test); one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | **Built** on `feat/app-nav`, not yet run on Windows: `Aimloom.exe --worker` is the Rust worker, `engine.json` holds the choice, the report's `system.engine` is accepted by the site (optional, so older Apps still report) |
-| 4 | **Rust becomes the default**; PowerShell stays an option | Not started |
-| 5 | **PowerShell removed**: a small Setup and a Rust ZIP; decide the console wizard's future (`安装配置.cmd` / `恢复配置.cmd`); CLAUDE.md, both READMEs and the site copy updated | Not started |
+| 3 | **Choosing the engine**: the Settings switch under the rules above (PowerShell 7 recommended, Rust marked as a test); one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | **Built** on `feat/app-nav` and used in the real App on the test PC (switching both ways, the choice surviving a restart, a Profile applied through Rust). The Setup does not ask (user). The site's Worker must be deployed before the App, since the report now carries `system.engine` |
+| 4 | **Rust becomes the default**; PowerShell stays an option. Before it: every real write done once through Rust on the test PC and seen in the game (Quick import install and restore; Theme, Sounds, Enemy and Crosshair apply and add; Profile apply; save a copy), and the 0.1.6 beta's reports. Decide whether players who never chose an engine move to Rust | Not started |
+| 5 | **PowerShell removed**: a Setup of a few MB and a Rust ZIP (no `pwsh\` or engine scripts); the App's PowerShell start-up code, the Setup's winget offer and the PowerShell pin go; decide the console wizard's future (`安装配置.cmd` / `恢复配置.cmd`: delete, or a command-line mode of `Aimloom.exe`); the parity goldens freeze into Rust's own regression tests and the "PowerShell + goldens + Rust in one PR" rule retires; every text naming PowerShell (App errors, the site's home, FAQ, guide, download and privacy pages, both READMEs, CLAUDE.md, the report's `powershell` field) | Not started |
 
 ## After v0.1.6
 
 | ID | Deliverable | Status |
 |---|---|---|
 | INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; moved after v0.1.6 (user, 2026-09-30); not designed |
-| ENGINE-RUST 4–5 | Rust becomes the default, then PowerShell is removed (the small download) | After steps 1–3 have shipped and been used |
+| ENGINE-RUST 4–5 | Rust becomes the default, then PowerShell is removed (the small download, which also eases the mainland download) | After steps 1–3 have shipped and been used; suggested 0.1.7 and 0.1.8 |
+| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS, `kvk-scheme.ps1` and the Rust engine, in lockstep across the four wire mirrors and both engines, with the goldens regenerated. The Profile JSON already says `theme` (format v2). Players see no change | After v0.1.6 (user, 2026-09-30) |
 | APP-EXPLORE | **The App's Explore page reads the website's catalog and downloads in place**, adding a file through the existing add-file plan | Decided by the user 2026-10-01 (「先入口，下一版再做 App 内下载」): after v0.1.6; not designed |
 | SLIM-2 | **The code slim-down, step 2: features and interaction** — fewer and simpler pages, buttons and flows; the behaviour differences step 1 recorded (for example, a job still running after 60 s locks the file-add flow but not a section apply); and **Profile apply speed** (user, 2026-09-29: 「profile 应用速度有点慢」), measured phase by phase on the tester's PC before anything changes, without weakening a safety check | Step 1 (code only, no behaviour change) shipped in v0.1.5; step 2 after v0.1.6 (user, 2026-09-30) |
 
