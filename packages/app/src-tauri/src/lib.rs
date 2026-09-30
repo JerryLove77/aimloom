@@ -1,3 +1,4 @@
+pub mod engine;
 pub mod installer;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
