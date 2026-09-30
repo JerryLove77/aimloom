@@ -144,7 +144,7 @@ pub fn json_scalar_string(value: &str) -> String {
 
 /// `double.ToString("R", InvariantCulture)` on .NET Core 3.0 and later: the shortest digits that
 /// read back as the same double, in fixed notation unless the decimal point would sit more than
-/// 17 digits right or more than 3 zeros left of them (probe, 2026-09-30: `1E+16` prints as
+/// 17 digits right or more than 3 zeros left of them (probes, 2026-09-30 and 2026-10-01: `1E+16` prints as
 /// `10000000000000000`, `1E+21` as `1E+21`, `1.23E-4` as `0.000123`, `1E-7` as `1E-07`).
 pub fn double_r(value: f64) -> String {
     if value.is_nan() { return "NaN".to_string(); }
@@ -239,7 +239,10 @@ mod tests {
         // Probe results from the test PC (2026-09-30).
         let cases = [(0.1, "0.1"), (0.91, "0.91"), (1e21, "1E+21"), (1e-7, "1E-07"), (123456789.123, "123456789.123"), (5e-324, "5E-324"),
             (1.7976931348623157e308, "1.7976931348623157E+308"), (-0.0, "-0"), (100.0, "100"), (2.5, "2.5"), (1e15, "1000000000000000"),
-            (1e16, "10000000000000000"), (0.000123, "0.000123"), (4.35, "4.35"), (0.3, "0.3")];
+            (1e16, "10000000000000000"), (0.000123, "0.000123"), (4.35, "4.35"), (0.3, "0.3"),
+            // Second probe round (2026-10-01): where each notation ends.
+            (1e17, "1E+17"), (1e20, "1E+20"), (123456789012345678.0, "1.2345678901234568E+17"), (12345678901234567.0, "12345678901234568"),
+            (1e-5, "1E-05"), (1e-4, "0.0001"), (0.0001234, "0.0001234")];
         for (value, expected) in cases { assert_eq!(double_r(value), expected, "{value:e}"); }
     }
 

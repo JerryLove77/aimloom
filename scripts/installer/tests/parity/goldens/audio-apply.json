@@ -1,0 +1,169 @@
+{
+  "case": "audio-apply",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/audio-previews/<guid#2>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/audio-previews/<guid#2>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#3>\",\"items\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/sounds\",\"sounds\":[{\"name\":\"1\",\"file\":\"1.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/1.wav\",\"ambiguous\":false},{\"name\":\"Dup\",\"file\":\"Dup.ogg\",\"path\":\"<game>/FPSAimTrainer/sounds/Dup.ogg\",\"ambiguous\":true},{\"name\":\"hit\",\"file\":\"hit.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"ambiguous\":false},{\"name\":\"kill\",\"file\":\"kill.ogg\",\"path\":\"<game>/FPSAimTrainer/sounds/kill.ogg\",\"ambiguous\":false},{\"name\":\"Zeta\",\"file\":\"Zeta.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\",\"ambiguous\":false}],\"bindings\":{\"kill\":[\"hit\",\"KILL\"],\"spawn\":[],\"mbsGood\":[],\"mbsOkay\":[],\"mbsBad\":[],\"mbsChangeNow\":[]}}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#4>\",\"revision\":2,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/audio-previews/<guid#5>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/audio-previews/<guid#5>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"op-2\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"op-2\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"op-2\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"op-2\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"op-2\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#6>\",\"items\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#7>\",\"revision\":3,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/audio-previews/<guid#8>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/audio-previews/<guid#8>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"skip\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r7\",\"type\":\"progress\",\"operationId\":\"op-3\",\"data\":{\"phase\":\"verifying\",\"completed\":0,\"total\":0,\"currentFile\":null,\"batchId\":null}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"no-change\",\"batchId\":null,\"items\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"state\":\"skip\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#9>\",\"revision\":4,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/audio-previews/<guid#10>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/audio-previews/<guid#10>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"skip\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r9\",\"type\":\"progress\",\"operationId\":\"op-4\",\"data\":{\"phase\":\"verifying\",\"completed\":0,\"total\":0,\"currentFile\":null,\"batchId\":null}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"no-change\",\"batchId\":null,\"items\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"state\":\"skip\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/sounds\",\"sounds\":[{\"name\":\"1\",\"file\":\"1.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/1.wav\",\"ambiguous\":false},{\"name\":\"Dup\",\"file\":\"Dup.ogg\",\"path\":\"<game>/FPSAimTrainer/sounds/Dup.ogg\",\"ambiguous\":true},{\"name\":\"hit\",\"file\":\"hit.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"ambiguous\":false},{\"name\":\"kill\",\"file\":\"kill.ogg\",\"path\":\"<game>/FPSAimTrainer/sounds/kill.ogg\",\"ambiguous\":false},{\"name\":\"Zeta\",\"file\":\"Zeta.wav\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\",\"ambiguous\":false}],\"bindings\":{\"kill\":[\"hit\",\"KILL\"],\"spawn\":[],\"mbsGood\":[\"Zeta\"],\"mbsOkay\":[],\"mbsBad\":[],\"mbsChangeNow\":[]}}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 8222,
+        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/1.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Dup.ogg",
+        "size": 1,
+        "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Zeta.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/dup.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/kill.ogg",
+        "size": 1,
+        "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/audio-previews/<guid#10>/PrimaryUserSettings.json",
+        "size": 8222,
+        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
+      },
+      {
+        "path": "Aimloom/audio-previews/<guid#2>/PrimaryUserSettings.json",
+        "size": 8218,
+        "sha256": "26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9"
+      },
+      {
+        "path": "Aimloom/audio-previews/<guid#5>/PrimaryUserSettings.json",
+        "size": 8222,
+        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
+      },
+      {
+        "path": "Aimloom/audio-previews/<guid#8>/PrimaryUserSettings.json",
+        "size": 8222,
+        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 8226,
+        "sha256": "a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#3>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/audio-previews/<guid#2>\",\"Categories\":[\"primary\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5\",\"AfterHash\":\"26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9\",\"Backup\":\"files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json.kvk-<guid#3>-<guid#11>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/source/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 8218,
+        "sha256": "26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 8218,
+        "sha256": "26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#6>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/audio-previews/<guid#5>\",\"Categories\":[\"primary\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9\",\"AfterHash\":\"9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638\",\"Backup\":\"files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json.kvk-<guid#6>-<guid#12>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/source/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 8222,
+        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/files/<pristine#1>.bin",
+        "size": 8226,
+        "sha256": "a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5\",\"AfterHash\":\"26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9\",\"Backup\":\"files/<pristine#1>.bin\",\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/locks/<gamehash>.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/locks/palette.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  }
+}

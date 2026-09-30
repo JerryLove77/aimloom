@@ -1,0 +1,54 @@
+{
+  "case": "enemy-execute-checks",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/enemy-previews/<guid#2>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/enemy-previews/<guid#2>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"PLAN_MISSING\",\"message\":\"预览已失效，请重新生成。\",\"messageEn\":\"The preview is no longer available. Create a new preview.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"PLAN_STALE\",\"message\":\"确认内容与缓存的清单不一致。\",\"messageEn\":\"Confirmation does not match the cached plan.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"PLAN_MISSING\",\"message\":\"预览已失效，请重新生成。\",\"messageEn\":\"The preview is no longer available. Create a new preview.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#3>\",\"revision\":2,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/enemy-previews/<guid#4>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/enemy-previews/<guid#4>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"CONFLICT\",\"message\":\"安装清单不接受冲突覆盖许可。\",\"messageEn\":\"Install plans do not accept conflict permission.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"PLAN_MISSING\",\"message\":\"预览已失效，请重新生成。\",\"messageEn\":\"The preview is no longer available. Create a new preview.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/enemy-previews/<guid#2>/PrimaryUserSettings.json",
+        "size": 515,
+        "sha256": "a9d492dd17e914ca198a92f9af1868235b8e900387f0d0455ff16bdd059f7fa5"
+      },
+      {
+        "path": "Aimloom/enemy-previews/<guid#4>/PrimaryUserSettings.json",
+        "size": 515,
+        "sha256": "a9d492dd17e914ca198a92f9af1868235b8e900387f0d0455ff16bdd059f7fa5"
+      }
+    ]
+  }
+}

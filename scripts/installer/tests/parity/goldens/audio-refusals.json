@@ -1,0 +1,95 @@
+{
+  "case": "audio-refusals",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持的音效事件 (unknown audio event): boom\",\"messageEn\":\"Unknown audio event: boom.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"音效名称无效 (invalid sound name): a;b\",\"messageEn\":\"The sound name is not valid: \\\"a;b\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"音效名称无效 (invalid sound name): \",\"messageEn\":\"The sound name is not valid: \\\"\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"音效名称无效 (invalid sound name): x/y\",\"messageEn\":\"The sound name is not valid: \\\"x/y\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"游戏 sounds 目录里没有这个音效 (sound not installed): missing\",\"messageEn\":\"This sound is not in the game sounds folder: \\\"missing\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"有多个文件同名「dup」，无法确定要绑定哪一个 (ambiguous sound name)\",\"messageEn\":\"Two files share the name \\\"dup\\\", so it cannot be bound.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"mbsBad 只能绑定一个音效 (this event takes exactly one sound)\",\"messageEn\":\"mbsBad takes exactly one sound.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"mbsBad 只能绑定一个音效 (this event takes exactly one sound)\",\"messageEn\":\"mbsBad takes exactly one sound.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/audio-previews/<guid#2>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/audio-previews/<guid#2>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"游戏 sounds 目录里没有这个音效 (sound not installed): True\",\"messageEn\":\"This sound is not in the game sounds folder: \\\"True\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"names must be an array.\",\"messageEn\":\"names must be an array.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 8226,
+        "sha256": "a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/1.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Dup.ogg",
+        "size": 1,
+        "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Zeta.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/dup.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/kill.ogg",
+        "size": 1,
+        "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/audio-previews/<guid#2>/PrimaryUserSettings.json",
+        "size": 8211,
+        "sha256": "f495be5900a699e7beddf657b0d3d3f932bf8f28a5a8db0f03eb60033b7c8775"
+      }
+    ]
+  }
+}

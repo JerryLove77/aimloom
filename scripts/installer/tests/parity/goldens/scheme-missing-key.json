@@ -1,0 +1,94 @@
+{
+  "case": "scheme-missing-key",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"当前设置缺少所需的键 (missing key): EStringSettingId::CurrentThemeName\",\"messageEn\":\"The current settings are missing a required key: EStringSettingId::CurrentThemeName.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Default.json",
+        "size": 1742,
+        "sha256": "fa51712ee233b1e1a25e4e0e6901679ffab83be06908e3367416a9f91971ef2d"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Hauntr.json",
+        "size": 982,
+        "sha256": "69430db8a7f34a9a6f90fc662cae599f895bfd959f0c3854f8eadffea2e06e51"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json",
+        "size": 1004,
+        "sha256": "f50a113188546e4a12d53f469eec0cf68fae60f592aa85cd9cfb859a1db45dcc"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Smári-ctrl.json",
+        "size": 1966,
+        "sha256": "80d48ca64d5fa08d9df3c14d2a5eb3f928378c78a73c7b6dd9130b5f531a94bd"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-big.json",
+        "size": 85,
+        "sha256": "45424911c57bf45bef6b78bf6cbee3b460e31f3c16350c6bffc1b454e2bf29a7"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-color.json",
+        "size": 49,
+        "sha256": "8f5c257b7efc947bac93e85504bd9579338fdaacc57bd635d0b5f12ca0707816"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-flag.json",
+        "size": 49,
+        "sha256": "8f55a83e38f12483625e628382bb5cf6c869beb376ba5a7a862f93f5ac2018c1"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-material.json",
+        "size": 50,
+        "sha256": "be7e7a51702b96a493cc4f9a7f8fe9d8ec233c1298ade6e14a39c59a486be5c0"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-scale.json",
+        "size": 49,
+        "sha256": "1b29bbe90591d97c4ddfea21e876a6c7697e9f0d62d2ed4a0b8157a6f0be7113"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-sky.json",
+        "size": 44,
+        "sha256": "c980bce52918fb115291895f416851c95c83a93c27d24f6008966b0cbd841719"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-tint.json",
+        "size": 63,
+        "sha256": "1e1e88142a4db99fd2c2d75782b9345ac366d648699bf53c184f993079c665b8"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/broken.json",
+        "size": 13,
+        "sha256": "2c788658de4682e4db84cebd16c14e9024283e893c3ad654eb441fefe22877ef"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/numbers.json",
+        "size": 264,
+        "sha256": "084b148ff0247710cc01e6e4f6eda233b32504498782c236aac435e379dc86c8"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/same-a.json",
+        "size": 21,
+        "sha256": "69311271e641b4a669a5e615cfdaa9ea9c0deff9928dc23ed7858b2284cca806"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/same-b.json",
+        "size": 21,
+        "sha256": "60cdc410b6dbdd921e93fb3b331381845d8e5be8a4142a437e1fa082fe922b29"
+      }
+    ],
+    "local": []
+  }
+}

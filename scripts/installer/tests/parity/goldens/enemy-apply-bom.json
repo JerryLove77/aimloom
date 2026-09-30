@@ -1,0 +1,72 @@
+{
+  "case": "enemy-apply-bom",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/enemy-previews/<guid#2>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/enemy-previews/<guid#2>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#3>\",\"items\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"current\":{\"cylindrical\":{\"model\":\"Stylized Ecto\",\"skin\":\"Default\"},\"cuboid\":{\"model\":\"Mummy\",\"skin\":\"Default\"},\"spheroid\":{\"model\":\"Mummy\",\"skin\":\"Default\"}},\"skins\":[{\"label\":\"None\",\"model\":\"None\",\"skin\":\"None\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Ghost\",\"model\":\"Ghost\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Mummy\",\"model\":\"Mummy\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Stylized\",\"model\":\"Stylized Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Ecto\",\"model\":\"Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Endo\",\"model\":\"Endo\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Meso\",\"model\":\"Meso\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Shinji\",\"model\":\"Meso\",\"skin\":\"Genji\",\"shapes\":[\"cylindrical\"]},{\"label\":\"McCoy\",\"model\":\"Meso\",\"skin\":\"McCree\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Rocket Flyer\",\"model\":\"Meso\",\"skin\":\"Pharah\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Racer\",\"model\":\"Meso\",\"skin\":\"Tracer\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Arya\",\"model\":\"Anime Girl\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - SWAT\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Arya\",\"model\":\"Anime Girl\",\"skin\":\"Arya - School\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - School\",\"shapes\":[\"cylindrical\"]}]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 526,
+        "sha256": "de7c3a3ffa42be9fccbf52a4dcd87158e4855d24ede86707d115d5fa3f946ee0"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 526,
+        "sha256": "efd5533a0c815a25fa50d84348c34c266e65fff094fbfd65dc54ad6ec14ceca2"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#3>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/enemy-previews/<guid#2>\",\"Categories\":[\"primary\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"efd5533a0c815a25fa50d84348c34c266e65fff094fbfd65dc54ad6ec14ceca2\",\"AfterHash\":\"de7c3a3ffa42be9fccbf52a4dcd87158e4855d24ede86707d115d5fa3f946ee0\",\"Backup\":\"files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json.kvk-<guid#3>-<guid#4>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/source/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 526,
+        "sha256": "de7c3a3ffa42be9fccbf52a4dcd87158e4855d24ede86707d115d5fa3f946ee0"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/files/<pristine#1>.bin",
+        "size": 526,
+        "sha256": "efd5533a0c815a25fa50d84348c34c266e65fff094fbfd65dc54ad6ec14ceca2"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"efd5533a0c815a25fa50d84348c34c266e65fff094fbfd65dc54ad6ec14ceca2\",\"AfterHash\":\"de7c3a3ffa42be9fccbf52a4dcd87158e4855d24ede86707d115d5fa3f946ee0\",\"Backup\":\"files/<pristine#1>.bin\",\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/enemy-previews/<guid#2>/PrimaryUserSettings.json",
+        "size": 526,
+        "sha256": "de7c3a3ffa42be9fccbf52a4dcd87158e4855d24ede86707d115d5fa3f946ee0"
+      },
+      {
+        "path": "Aimloom/locks/<gamehash>.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/locks/palette.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  }
+}

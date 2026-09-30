@@ -1,0 +1,49 @@
+{
+  "case": "audio-missing-key",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"当前设置缺少所需的键 (missing key): EStringSettingId::KillConfirmedSound\",\"messageEn\":\"The current settings are missing a required key: EStringSettingId::KillConfirmedSound.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/1.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Dup.ogg",
+        "size": 1,
+        "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/Zeta.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/dup.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 1,
+        "sha256": "50e721e49c013f00c62cf59f2163542a9d8df02464efeb615d31051b0fddc326"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/kill.ogg",
+        "size": 1,
+        "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
+      }
+    ],
+    "local": []
+  }
+}

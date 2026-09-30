@@ -1,0 +1,19 @@
+{
+  "case": "enemy-missing-shape",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"当前设置缺少 characterModelOverride.Cylindrical；请先在游戏里打开一次皮肤浏览器 (Skin Browser)。\",\"messageEn\":\"The current settings are missing characterModelOverride.\\\"Cylindrical\\\". Open the Skin Browser in the game once.\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 90,
+        "sha256": "8288e1d273fdf62b4a895b977268ae5205353d9e080a3cf06e060942ad11e8d7"
+      }
+    ],
+    "local": []
+  }
+}

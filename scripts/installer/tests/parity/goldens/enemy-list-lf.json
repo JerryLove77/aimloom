@@ -1,0 +1,19 @@
+{
+  "case": "enemy-list-lf",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"current\":{\"cylindrical\":{\"model\":\"Stylized Ecto\",\"skin\":\"Default\"},\"cuboid\":{\"model\":\"Ghost\",\"skin\":\"Default\"},\"spheroid\":{\"model\":\"Mummy\",\"skin\":\"Default\"}},\"skins\":[{\"label\":\"None\",\"model\":\"None\",\"skin\":\"None\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Ghost\",\"model\":\"Ghost\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Mummy\",\"model\":\"Mummy\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Stylized\",\"model\":\"Stylized Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Ecto\",\"model\":\"Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Endo\",\"model\":\"Endo\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Meso\",\"model\":\"Meso\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Shinji\",\"model\":\"Meso\",\"skin\":\"Genji\",\"shapes\":[\"cylindrical\"]},{\"label\":\"McCoy\",\"model\":\"Meso\",\"skin\":\"McCree\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Rocket Flyer\",\"model\":\"Meso\",\"skin\":\"Pharah\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Racer\",\"model\":\"Meso\",\"skin\":\"Tracer\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Arya\",\"model\":\"Anime Girl\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - SWAT\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Arya\",\"model\":\"Anime Girl\",\"skin\":\"Arya - School\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - School\",\"shapes\":[\"cylindrical\"]}]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 399,
+        "sha256": "d93e55e9e9769407c007e58720cd975e70d61f17f4f83f6c8e22791b2c7d7d7b"
+      }
+    ],
+    "local": []
+  }
+}

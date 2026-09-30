@@ -1,0 +1,19 @@
+{
+  "case": "enemy-list-missing-shape",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"current\":{\"cylindrical\":null,\"cuboid\":{\"model\":\"Ghost\",\"skin\":\"Default\"},\"spheroid\":null},\"skins\":[{\"label\":\"None\",\"model\":\"None\",\"skin\":\"None\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Ghost\",\"model\":\"Ghost\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Mummy\",\"model\":\"Mummy\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\",\"cuboid\",\"spheroid\"]},{\"label\":\"Stylized\",\"model\":\"Stylized Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Ecto\",\"model\":\"Ecto\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Endo\",\"model\":\"Endo\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Meso\",\"model\":\"Meso\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Shinji\",\"model\":\"Meso\",\"skin\":\"Genji\",\"shapes\":[\"cylindrical\"]},{\"label\":\"McCoy\",\"model\":\"Meso\",\"skin\":\"McCree\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Rocket Flyer\",\"model\":\"Meso\",\"skin\":\"Pharah\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Racer\",\"model\":\"Meso\",\"skin\":\"Tracer\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Arya\",\"model\":\"Anime Girl\",\"skin\":\"Default\",\"shapes\":[\"cylindrical\"]},{\"label\":\"Swat Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - SWAT\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Arya\",\"model\":\"Anime Girl\",\"skin\":\"Arya - School\",\"shapes\":[\"cylindrical\"]},{\"label\":\"School Katsumi\",\"model\":\"Anime Girl\",\"skin\":\"Katsumi - School\",\"shapes\":[\"cylindrical\"]}]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 90,
+        "sha256": "8288e1d273fdf62b4a895b977268ae5205353d9e080a3cf06e060942ad11e8d7"
+      }
+    ],
+    "local": []
+  }
+}

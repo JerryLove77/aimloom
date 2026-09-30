@@ -1,0 +1,27 @@
+{
+  "case": "restore-missing-batch",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"BACKUP_INVALID\",\"message\":\"Missing backup manifest: \\\"<local>/Aimloom/backups/<gamehash>/<guid#1>/manifest.json\\\"\",\"messageEn\":\"Missing backup manifest: \\\"<local>/Aimloom/backups/<gamehash>/<guid#1>/manifest.json\\\"\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"BACKUP_INVALID\",\"message\":\"Invalid backup identifier.\",\"messageEn\":\"Invalid backup identifier.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"BACKUP_INVALID\",\"message\":\"Missing backup manifest: \\\"<local>/Aimloom/backups/<gamehash>/pristine/manifest.json\\\"\",\"messageEn\":\"Missing backup manifest: \\\"<local>/Aimloom/backups/<gamehash>/pristine/manifest.json\\\"\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

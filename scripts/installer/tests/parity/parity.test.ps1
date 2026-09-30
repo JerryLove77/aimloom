@@ -79,7 +79,8 @@ function Get-ParityFiles([string]$Root) {
     if (-not [IO.Directory]::Exists($Root)) { return ,$entries }
     foreach ($file in @(Get-ChildItem -LiteralPath $Root -Recurse -File -Force)) {
         $relative=[IO.Path]::GetRelativePath($Root,$file.FullName).Replace('\','/')
-        if ($file.Name -ceq 'manifest.json') { $entries.Add([ordered]@{path=$relative;text=[IO.File]::ReadAllText($file.FullName)}) }
+        # Manifests and Profiles are recorded as text: they hold absolute paths, which normalize.
+        if ($file.Name -ceq 'manifest.json' -or $relative.StartsWith('Aimloom/profiles/',[StringComparison]::Ordinal)) { $entries.Add([ordered]@{path=$relative;text=[IO.File]::ReadAllText($file.FullName)}) }
         else { $bytes=[IO.File]::ReadAllBytes($file.FullName); $entries.Add([ordered]@{path=$relative;size=$bytes.Length;sha256=(Get-ParitySha $bytes)}) }
     }
     return ,$entries
@@ -129,11 +130,12 @@ function Invoke-ParityCase([string]$Name,$Case) {
         if ($machine.Contains('drives')) { $script:MachineDrives=@($machine['drives'] | ForEach-Object { Resolve-ParityValue $_ $roots '' '' }) }
     }
     # ProgramFiles and ProgramFiles(x86) are read from the process; set them for the case only.
-    foreach ($name in @('ProgramFiles','ProgramFiles(x86)')) {
-        $savedEnv[$name]=[Environment]::GetEnvironmentVariable($name)
+    # (Not $name: PowerShell variables ignore case, and that would overwrite the $Name parameter.)
+    foreach ($envName in @('ProgramFiles','ProgramFiles(x86)')) {
+        $savedEnv[$envName]=[Environment]::GetEnvironmentVariable($envName)
         $value=$null
-        if ($Case.Contains('machine') -and $Case['machine'].Contains('env') -and $Case['machine']['env'].Contains($name)) { $value=Resolve-ParityValue $Case['machine']['env'][$name] $roots '' '' }
-        [Environment]::SetEnvironmentVariable($name,$value)
+        if ($Case.Contains('machine') -and $Case['machine'].Contains('env') -and $Case['machine']['env'].Contains($envName)) { $value=Resolve-ParityValue $Case['machine']['env'][$envName] $roots '' '' }
+        [Environment]::SetEnvironmentVariable($envName,$value)
     }
     Clear-KvkDataRootMemo
     $session=New-KvkGuiSession -RuntimeRoot $installerRoot -LocalDataRoot $local
@@ -205,7 +207,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
             } else { throw "Unknown step in case $Name" }
         }
     } finally {
-        foreach ($name in $savedEnv.Keys) { [Environment]::SetEnvironmentVariable($name,$savedEnv[$name]) }
+        foreach ($envName in $savedEnv.Keys) { [Environment]::SetEnvironmentVariable($envName,$savedEnv[$envName]) }
         if ($null -ne $lock) { $lock.Dispose() }
         Clear-ParityFaults
         Clear-KvkDataRootMemo

@@ -1,0 +1,147 @@
+{
+  "case": "scheme-apply-utf16-theme",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/scheme-previews/<guid#2>\",\"categories\":[\"primary\"],\"sourceId\":null,\"rows\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"category\":\"primary\",\"source\":\"<local>/Aimloom/scheme-previews/<guid#2>/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"primary/PrimaryUserSettings.json\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"op-1\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#3>\",\"items\":[{\"key\":\"primary/PrimaryUserSettings.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes\",\"current\":\"Smari Sample\",\"themes\":[{\"name\":\"Big\",\"file\":\"bad-big.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-big.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Bad Color\",\"file\":\"bad-color.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-color.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Bad Flag\",\"file\":\"bad-flag.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-flag.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Bad Material\",\"file\":\"bad-material.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-material.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Bad Scale\",\"file\":\"bad-scale.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-scale.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Bad Sky\",\"file\":\"bad-sky.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-sky.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Bad Tint\",\"file\":\"bad-tint.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/bad-tint.json\",\"readable\":true,\"duplicateName\":false},{\"name\":null,\"file\":\"broken.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/broken.json\",\"readable\":false,\"duplicateName\":false},{\"name\":\"Default\",\"file\":\"Default.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"sample-mismatched-name\",\"file\":\"Hauntr.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Hauntr.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Legacy Sample\",\"file\":\"Legacy Sample.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Numbers\",\"file\":\"numbers.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/numbers.json\",\"readable\":true,\"duplicateName\":false},{\"name\":\"Twin\",\"file\":\"same-a.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/same-a.json\",\"readable\":true,\"duplicateName\":true},{\"name\":\"twin\",\"file\":\"same-b.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/same-b.json\",\"readable\":true,\"duplicateName\":true},{\"name\":\"Smari Sample\",\"file\":\"Smári-ctrl.json\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Smári-ctrl.json\",\"readable\":true,\"duplicateName\":false}]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 8245,
+        "sha256": "f098830a0a368863911681f680d39aeab09073d61a8659d47403bb757980d25f"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Default.json",
+        "size": 1742,
+        "sha256": "fa51712ee233b1e1a25e4e0e6901679ffab83be06908e3367416a9f91971ef2d"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Hauntr.json",
+        "size": 982,
+        "sha256": "69430db8a7f34a9a6f90fc662cae599f895bfd959f0c3854f8eadffea2e06e51"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json",
+        "size": 1004,
+        "sha256": "f50a113188546e4a12d53f469eec0cf68fae60f592aa85cd9cfb859a1db45dcc"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/Smári-ctrl.json",
+        "size": 1966,
+        "sha256": "80d48ca64d5fa08d9df3c14d2a5eb3f928378c78a73c7b6dd9130b5f531a94bd"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-big.json",
+        "size": 85,
+        "sha256": "45424911c57bf45bef6b78bf6cbee3b460e31f3c16350c6bffc1b454e2bf29a7"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-color.json",
+        "size": 49,
+        "sha256": "8f5c257b7efc947bac93e85504bd9579338fdaacc57bd635d0b5f12ca0707816"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-flag.json",
+        "size": 49,
+        "sha256": "8f55a83e38f12483625e628382bb5cf6c869beb376ba5a7a862f93f5ac2018c1"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-material.json",
+        "size": 50,
+        "sha256": "be7e7a51702b96a493cc4f9a7f8fe9d8ec233c1298ade6e14a39c59a486be5c0"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-scale.json",
+        "size": 49,
+        "sha256": "1b29bbe90591d97c4ddfea21e876a6c7697e9f0d62d2ed4a0b8157a6f0be7113"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-sky.json",
+        "size": 44,
+        "sha256": "c980bce52918fb115291895f416851c95c83a93c27d24f6008966b0cbd841719"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/bad-tint.json",
+        "size": 63,
+        "sha256": "1e1e88142a4db99fd2c2d75782b9345ac366d648699bf53c184f993079c665b8"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/broken.json",
+        "size": 13,
+        "sha256": "2c788658de4682e4db84cebd16c14e9024283e893c3ad654eb441fefe22877ef"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/numbers.json",
+        "size": 264,
+        "sha256": "084b148ff0247710cc01e6e4f6eda233b32504498782c236aac435e379dc86c8"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/same-a.json",
+        "size": 21,
+        "sha256": "69311271e641b4a669a5e615cfdaa9ea9c0deff9928dc23ed7858b2284cca806"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/same-b.json",
+        "size": 21,
+        "sha256": "60cdc410b6dbdd921e93fb3b331381845d8e5be8a4142a437e1fa082fe922b29"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 8226,
+        "sha256": "a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#3>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/scheme-previews/<guid#2>\",\"Categories\":[\"primary\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5\",\"AfterHash\":\"f098830a0a368863911681f680d39aeab09073d61a8659d47403bb757980d25f\",\"Backup\":\"files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json.kvk-<guid#3>-<guid#4>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/source/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
+        "size": 8245,
+        "sha256": "f098830a0a368863911681f680d39aeab09073d61a8659d47403bb757980d25f"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/files/<pristine#1>.bin",
+        "size": 8226,
+        "sha256": "a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5\",\"AfterHash\":\"f098830a0a368863911681f680d39aeab09073d61a8659d47403bb757980d25f\",\"Backup\":\"files/<pristine#1>.bin\",\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/locks/<gamehash>.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/locks/palette.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/scheme-previews/<guid#2>/PrimaryUserSettings.json",
+        "size": 8245,
+        "sha256": "f098830a0a368863911681f680d39aeab09073d61a8659d47403bb757980d25f"
+      }
+    ]
+  }
+}

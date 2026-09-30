@@ -1,0 +1,219 @@
+{
+  "case": "crosshair-replace-and-add",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/crosshair-previews/<guid#2>\",\"categories\":[\"crosshairs\"],\"sourceId\":null,\"rows\":[{\"key\":\"crosshairs/red.png\",\"category\":\"crosshairs\",\"source\":\"<local>/Aimloom/crosshair-previews/<guid#2>/crosshairs/red.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[\"<local>/Aimloom/crosshair-previews/<guid#2>/crosshair-replacement.json\"]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"crosshairs/red.png\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"crosshairs/red.png\",\"batchId\":\"<guid#3>\"}}",
+        "{\"v\":1,\"requestId\":\"r2\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#3>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#3>\",\"items\":[{\"key\":\"crosshairs/red.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/crosshairs\",\"crosshairs\":[{\"name\":\"red\",\"file\":\"red.png\",\"path\":\"<game>/FPSAimTrainer/crosshairs/red.png\"}]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#4>\",\"revision\":2,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/crosshair-previews/<guid#5>\",\"categories\":[\"crosshairs\"],\"sourceId\":null,\"rows\":[{\"key\":\"crosshairs/new.PNG\",\"category\":\"crosshairs\",\"source\":\"<local>/Aimloom/crosshair-previews/<guid#5>/crosshairs/new.PNG\",\"target\":\"<game>/FPSAimTrainer/crosshairs/new.PNG\",\"action\":\"create\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"crosshairs/new.PNG\",\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"crosshairs/new.PNG\",\"batchId\":\"<guid#6>\"}}",
+        "{\"v\":1,\"requestId\":\"r5\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#6>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#6>\",\"items\":[{\"key\":\"crosshairs/new.PNG\",\"target\":\"<game>/FPSAimTrainer/crosshairs/new.PNG\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<game>/FPSAimTrainer/crosshairs\",\"crosshairs\":[{\"name\":\"new\",\"file\":\"new.PNG\",\"path\":\"<game>/FPSAimTrainer/crosshairs/new.PNG\"},{\"name\":\"red\",\"file\":\"red.png\",\"path\":\"<game>/FPSAimTrainer/crosshairs/red.png\"}]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":true,\"data\":{\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"records\":[{\"id\":\"<guid#6>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"completed\",\"categories\":[\"crosshairs\"],\"fileCount\":1},{\"id\":\"<guid#3>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"completed\",\"categories\":[\"crosshairs\"],\"fileCount\":1}],\"hasPristine\":true}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"crosshairs 文件夹里已经有「red.png」，新增不会覆盖它；请换一个文件名 (file already exists)。\",\"messageEn\":\"The crosshairs folder already has \\\"red.png\\\", and adding never overwrites it. Choose another file name.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"游戏目录里没有这个准星文件 (target does not exist): missing.png\",\"messageEn\":\"The game folder has no such crosshair file: \\\"missing.png\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星文件名无效：不能包含 / / : * ? \\\" < > | 或连续的点，不能以点或空格开头结尾，连同 .png 不超过 128 个字符 (invalid file name): x.jpg\",\"messageEn\":\"The crosshair file name is not valid: it cannot contain / / : * ? < > | a double quote, or consecutive dots, cannot start or end with a dot or a space, and must be at most 128 characters including .png: \\\"x.jpg\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星文件名无效：不能包含 / / : * ? \\\" < > | 或连续的点，不能以点或空格开头结尾，连同 .png 不超过 128 个字符 (invalid file name): ..x.png\",\"messageEn\":\"The crosshair file name is not valid: it cannot contain / / : * ? < > | a double quote, or consecutive dots, cannot start or end with a dot or a space, and must be at most 128 characters including .png: \\\"..x.png\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星文件名无效：不能包含 / / : * ? \\\" < > | 或连续的点，不能以点或空格开头结尾，连同 .png 不超过 128 个字符 (invalid file name): con.png\",\"messageEn\":\"The crosshair file name is not valid: it cannot contain / / : * ? < > | a double quote, or consecutive dots, cannot start or end with a dot or a space, and must be at most 128 characters including .png: \\\"con.png\\\".\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r13\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星 PNG 编码无效或超出大小限制。\",\"messageEn\":\"The crosshair PNG encoding is invalid or over the size limit.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r14\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星 PNG 编码不是规范 base64。\",\"messageEn\":\"The crosshair PNG encoding is not canonical base64.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r15\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星 PNG 编码无效或超出大小限制。\",\"messageEn\":\"The crosshair PNG encoding is invalid or over the size limit.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r16\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星 PNG 必须在 45 字节到 2 MiB 之间 (size limit)。\",\"messageEn\":\"A crosshair PNG must be between 45 bytes and 2 MiB.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r17\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星 PNG 必须是 RGBA 颜色类型。\",\"messageEn\":\"A crosshair PNG must use the RGBA color type.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r18\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Expected canonical RGBA PNG from preview service.\",\"messageEn\":\"Expected canonical RGBA PNG from preview service.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r19\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"准星 PNG 尺寸必须在 1 到 512 之间 (image size)。\",\"messageEn\":\"A crosshair PNG must be between 1 and 512 pixels on each side.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r20\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#7>\",\"revision\":3,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<local>/Aimloom/crosshair-previews/<guid#8>\",\"categories\":[\"crosshairs\"],\"sourceId\":null,\"rows\":[{\"key\":\"crosshairs/red.png\",\"category\":\"crosshairs\",\"source\":\"<local>/Aimloom/crosshair-previews/<guid#8>/crosshairs/red.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false}],\"skipped\":[\"<local>/Aimloom/crosshair-previews/<guid#8>/crosshair-replacement.json\"]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r21\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":1,\"currentFile\":\"crosshairs/red.png\",\"batchId\":\"<guid#9>\"}}",
+        "{\"v\":1,\"requestId\":\"r21\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"protecting\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#9>\"}}",
+        "{\"v\":1,\"requestId\":\"r21\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#9>\"}}",
+        "{\"v\":1,\"requestId\":\"r21\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":\"crosshairs/red.png\",\"batchId\":\"<guid#9>\"}}",
+        "{\"v\":1,\"requestId\":\"r21\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":1,\"currentFile\":null,\"batchId\":\"<guid#9>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r21\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#9>\",\"items\":[{\"key\":\"crosshairs/red.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      },
+      {
+        "path": "FPSAimTrainer/crosshairs/new.PNG",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "FPSAimTrainer/crosshairs/red.png",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/files/0bd6ea31ffc7ee1bde793810b0b1641fe0cea41bef5f31bebc58b5a69c46ae7b.bin",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#3>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/crosshair-previews/<guid#2>\",\"Categories\":[\"crosshairs\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"crosshairs/red.png\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"BeforeHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"AfterHash\":\"45060b1475431e6042e95d61d3fa2a6da6966846d9895f2084caf1c2add585ce\",\"Backup\":\"files/0bd6ea31ffc7ee1bde793810b0b1641fe0cea41bef5f31bebc58b5a69c46ae7b.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/crosshairs/red.png.kvk-<guid#3>-<guid#10>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#3>/source/0bd6ea31ffc7ee1bde793810b0b1641fe0cea41bef5f31bebc58b5a69c46ae7b.bin",
+        "size": 74,
+        "sha256": "45060b1475431e6042e95d61d3fa2a6da6966846d9895f2084caf1c2add585ce"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#6>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/crosshair-previews/<guid#5>\",\"Categories\":[\"crosshairs\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"crosshairs/new.PNG\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/new.PNG\",\"BeforeHash\":null,\"AfterHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/crosshairs/new.PNG.kvk-<guid#6>-<guid#11>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#6>/source/3476fde864114e1929b7d8c59fa36b2ad247a1bdaef1be21bc7a6b2d374a6abf.bin",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#9>/files/0bd6ea31ffc7ee1bde793810b0b1641fe0cea41bef5f31bebc58b5a69c46ae7b.bin",
+        "size": 74,
+        "sha256": "45060b1475431e6042e95d61d3fa2a6da6966846d9895f2084caf1c2add585ce"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#9>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#9>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<local>/Aimloom/crosshair-previews/<guid#8>\",\"Categories\":[\"crosshairs\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"crosshairs/red.png\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"BeforeHash\":\"45060b1475431e6042e95d61d3fa2a6da6966846d9895f2084caf1c2add585ce\",\"AfterHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"Backup\":\"files/0bd6ea31ffc7ee1bde793810b0b1641fe0cea41bef5f31bebc58b5a69c46ae7b.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/crosshairs/red.png.kvk-<guid#9>-<guid#12>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#9>/source/0bd6ea31ffc7ee1bde793810b0b1641fe0cea41bef5f31bebc58b5a69c46ae7b.bin",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/files/<pristine#1>.bin",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"crosshairs/red.png\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/red.png\",\"BeforeHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"AfterHash\":\"45060b1475431e6042e95d61d3fa2a6da6966846d9895f2084caf1c2add585ce\",\"Backup\":\"files/<pristine#1>.bin\",\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"crosshairs/new.PNG\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/new.PNG\",\"BeforeHash\":null,\"AfterHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#2>/crosshair-replacement.json",
+        "size": 292,
+        "sha256": "8677ac25146d07b66ce2e4d28f37e31db3ee68bf412a90fdb3faf364a477d42a"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#2>/crosshairs/red.png",
+        "size": 74,
+        "sha256": "45060b1475431e6042e95d61d3fa2a6da6966846d9895f2084caf1c2add585ce"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#5>/crosshairs/new.PNG",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#8>/crosshair-replacement.json",
+        "size": 292,
+        "sha256": "46612130e81e0f9627af156404a87cf285c6c04cb788d52f5fbc401b5de73e35"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#8>/crosshairs/red.png",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#13>/crosshair-replacement.json",
+        "size": 292,
+        "sha256": "bf87567c0fe1b0bd1f10fd78636a322047a2f640e7422abc01ce1cd4078a0ff7"
+      },
+      {
+        "path": "Aimloom/crosshair-previews/<guid#13>/crosshairs/red.png",
+        "size": 75,
+        "sha256": "c907265466913b91e365101b93b73c2897f2e6161a6f0a2ca6ceb4561dd51a74"
+      },
+      {
+        "path": "Aimloom/locks/<gamehash>.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/locks/palette.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  }
+}

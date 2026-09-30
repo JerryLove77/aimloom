@@ -1,0 +1,47 @@
+{
+  "case": "protocol-envelope",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":null,\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"request must be a JSON object.\",\"messageEn\":\"request must be a JSON object.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":null,\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"request is missing field: args\",\"messageEn\":\"request is missing field: args.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"x\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Unsupported protocol version.\",\"messageEn\":\"Unsupported protocol version.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"requestId must be a non-empty string.\",\"messageEn\":\"requestId must be a non-empty string.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"x\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"args contains an unknown field: extra\",\"messageEn\":\"args contains an unknown field: extra.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"x\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Unsupported protocol version.\",\"messageEn\":\"Unsupported protocol version.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":null,\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"request contains an unknown field: more\",\"messageEn\":\"request contains an unknown field: more.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"x\",\"type\":\"reply\",\"ok\":true,\"data\":\"closed\"}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      }
+    ],
+    "local": []
+  }
+}

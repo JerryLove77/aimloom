@@ -1,0 +1,209 @@
+{
+  "case": "install-pack",
+  "steps": [
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r1\",\"type\":\"reply\",\"ok\":true,\"data\":{\"packRoot\":\"<pack>\",\"categories\":[{\"category\":\"crosshairs\",\"count\":1},{\"category\":\"palette\",\"count\":1},{\"category\":\"primary\",\"count\":1},{\"category\":\"sounds\",\"count\":2},{\"category\":\"themes\",\"count\":1},{\"category\":\"ui\",\"count\":1}],\"skipped\":[\"<pack>/Themes/bad.txt\"]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r2\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#1>\",\"revision\":1,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<pack>\",\"categories\":[\"sounds\",\"themes\",\"crosshairs\"],\"sourceId\":null,\"rows\":[{\"key\":\"crosshairs/c.png\",\"category\":\"crosshairs\",\"source\":\"<pack>/crosshairs/c.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/c.png\",\"action\":\"create\",\"conflict\":false,\"unowned\":false},{\"key\":\"sounds/extra.ogg\",\"category\":\"sounds\",\"source\":\"<pack>/sounds/extra.ogg\",\"target\":\"<game>/FPSAimTrainer/sounds/extra.ogg\",\"action\":\"create\",\"conflict\":false,\"unowned\":false},{\"key\":\"sounds/hit.wav\",\"category\":\"sounds\",\"source\":\"<pack>/sounds/hit.wav\",\"target\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"action\":\"replace\",\"conflict\":false,\"unowned\":false},{\"key\":\"themes/pack-theme.json\",\"category\":\"themes\",\"source\":\"<pack>/Themes/pack-theme.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json\",\"action\":\"create\",\"conflict\":false,\"unowned\":false}],\"skipped\":[\"<pack>/Themes/bad.txt\"]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":4,\"currentFile\":\"crosshairs/c.png\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"preparing\",\"completed\":1,\"total\":4,\"currentFile\":\"sounds/extra.ogg\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"preparing\",\"completed\":2,\"total\":4,\"currentFile\":\"sounds/hit.wav\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"preparing\",\"completed\":3,\"total\":4,\"currentFile\":\"themes/pack-theme.json\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"protecting\",\"completed\":4,\"total\":4,\"currentFile\":null,\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":4,\"currentFile\":null,\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":4,\"currentFile\":\"crosshairs/c.png\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":2,\"total\":4,\"currentFile\":\"sounds/extra.ogg\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":3,\"total\":4,\"currentFile\":\"sounds/hit.wav\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":4,\"total\":4,\"currentFile\":\"themes/pack-theme.json\",\"batchId\":\"<guid#2>\"}}",
+        "{\"v\":1,\"requestId\":\"r3\",\"type\":\"progress\",\"operationId\":\"a\",\"data\":{\"phase\":\"verifying\",\"completed\":4,\"total\":4,\"currentFile\":null,\"batchId\":\"<guid#2>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r3\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#2>\",\"items\":[{\"key\":\"crosshairs/c.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/c.png\",\"state\":\"applied\"},{\"key\":\"sounds/extra.ogg\",\"target\":\"<game>/FPSAimTrainer/sounds/extra.ogg\",\"state\":\"applied\"},{\"key\":\"sounds/hit.wav\",\"target\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"state\":\"applied\"},{\"key\":\"themes/pack-theme.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r4\",\"type\":\"reply\",\"ok\":true,\"data\":{\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"records\":[{\"id\":\"<guid#2>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"completed\",\"categories\":[\"sounds\",\"themes\",\"crosshairs\"],\"fileCount\":4}],\"hasPristine\":true}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r5\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#3>\",\"revision\":2,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<pack>\",\"categories\":[\"sounds\",\"themes\",\"crosshairs\"],\"sourceId\":null,\"rows\":[{\"key\":\"crosshairs/c.png\",\"category\":\"crosshairs\",\"source\":\"<pack>/crosshairs/c.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/c.png\",\"action\":\"skip\",\"conflict\":false,\"unowned\":false},{\"key\":\"sounds/extra.ogg\",\"category\":\"sounds\",\"source\":\"<pack>/sounds/extra.ogg\",\"target\":\"<game>/FPSAimTrainer/sounds/extra.ogg\",\"action\":\"skip\",\"conflict\":false,\"unowned\":false},{\"key\":\"sounds/hit.wav\",\"category\":\"sounds\",\"source\":\"<pack>/sounds/hit.wav\",\"target\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"action\":\"skip\",\"conflict\":false,\"unowned\":false},{\"key\":\"themes/pack-theme.json\",\"category\":\"themes\",\"source\":\"<pack>/Themes/pack-theme.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json\",\"action\":\"skip\",\"conflict\":false,\"unowned\":false}],\"skipped\":[\"<pack>/Themes/bad.txt\"]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r6\",\"type\":\"progress\",\"operationId\":\"b\",\"data\":{\"phase\":\"verifying\",\"completed\":0,\"total\":0,\"currentFile\":null,\"batchId\":null}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r6\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"no-change\",\"batchId\":null,\"items\":[{\"key\":\"crosshairs/c.png\",\"target\":\"<game>/FPSAimTrainer/crosshairs/c.png\",\"state\":\"skip\"},{\"key\":\"sounds/extra.ogg\",\"target\":\"<game>/FPSAimTrainer/sounds/extra.ogg\",\"state\":\"skip\"},{\"key\":\"sounds/hit.wav\",\"target\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"state\":\"skip\"},{\"key\":\"themes/pack-theme.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json\",\"state\":\"skip\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r7\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#4>\",\"revision\":3,\"kind\":\"install\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":\"<pack>\",\"categories\":[\"palette\",\"ui\"],\"sourceId\":null,\"rows\":[{\"key\":\"palette/Palette.ini\",\"category\":\"palette\",\"source\":\"<pack>/Palette.ini\",\"target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"action\":\"create\",\"conflict\":false,\"unowned\":false},{\"key\":\"ui/UI.json\",\"category\":\"ui\",\"source\":\"<pack>/UI.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"action\":\"create\",\"conflict\":false,\"unowned\":false}],\"skipped\":[\"<pack>/Themes/bad.txt\"]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":2,\"currentFile\":\"palette/Palette.ini\",\"batchId\":\"<guid#5>\"}}",
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"preparing\",\"completed\":1,\"total\":2,\"currentFile\":\"ui/UI.json\",\"batchId\":\"<guid#5>\"}}",
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"protecting\",\"completed\":2,\"total\":2,\"currentFile\":null,\"batchId\":\"<guid#5>\"}}",
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"installing\",\"completed\":0,\"total\":2,\"currentFile\":null,\"batchId\":\"<guid#5>\"}}",
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":2,\"currentFile\":\"palette/Palette.ini\",\"batchId\":\"<guid#5>\"}}",
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"verifying\",\"completed\":2,\"total\":2,\"currentFile\":\"ui/UI.json\",\"batchId\":\"<guid#5>\"}}",
+        "{\"v\":1,\"requestId\":\"r8\",\"type\":\"progress\",\"operationId\":\"c\",\"data\":{\"phase\":\"verifying\",\"completed\":2,\"total\":2,\"currentFile\":null,\"batchId\":\"<guid#5>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r8\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"completed\",\"batchId\":\"<guid#5>\",\"items\":[{\"key\":\"palette/Palette.ini\",\"target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"state\":\"applied\"},{\"key\":\"ui/UI.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r9\",\"type\":\"reply\",\"ok\":true,\"data\":{\"planId\":\"<guid#6>\",\"revision\":4,\"kind\":\"restore\",\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"packRoot\":null,\"categories\":[\"palette\",\"ui\"],\"sourceId\":\"<guid#5>\",\"rows\":[{\"key\":\"palette/Palette.ini\",\"category\":\"palette\",\"source\":null,\"target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"action\":\"delete\",\"conflict\":false,\"unowned\":false},{\"key\":\"ui/UI.json\",\"category\":\"ui\",\"source\":null,\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"action\":\"delete\",\"conflict\":false,\"unowned\":false}],\"skipped\":[]}}"
+    },
+    {
+      "progress": [
+        "{\"v\":1,\"requestId\":\"r10\",\"type\":\"progress\",\"operationId\":\"d\",\"data\":{\"phase\":\"preparing\",\"completed\":0,\"total\":2,\"currentFile\":\"palette/Palette.ini\",\"batchId\":\"<guid#7>\"}}",
+        "{\"v\":1,\"requestId\":\"r10\",\"type\":\"progress\",\"operationId\":\"d\",\"data\":{\"phase\":\"preparing\",\"completed\":1,\"total\":2,\"currentFile\":\"ui/UI.json\",\"batchId\":\"<guid#7>\"}}",
+        "{\"v\":1,\"requestId\":\"r10\",\"type\":\"progress\",\"operationId\":\"d\",\"data\":{\"phase\":\"restoring\",\"completed\":0,\"total\":2,\"currentFile\":null,\"batchId\":\"<guid#7>\"}}",
+        "{\"v\":1,\"requestId\":\"r10\",\"type\":\"progress\",\"operationId\":\"d\",\"data\":{\"phase\":\"verifying\",\"completed\":1,\"total\":2,\"currentFile\":\"palette/Palette.ini\",\"batchId\":\"<guid#7>\"}}",
+        "{\"v\":1,\"requestId\":\"r10\",\"type\":\"progress\",\"operationId\":\"d\",\"data\":{\"phase\":\"verifying\",\"completed\":2,\"total\":2,\"currentFile\":\"ui/UI.json\",\"batchId\":\"<guid#7>\"}}",
+        "{\"v\":1,\"requestId\":\"r10\",\"type\":\"progress\",\"operationId\":\"d\",\"data\":{\"phase\":\"verifying\",\"completed\":2,\"total\":2,\"currentFile\":null,\"batchId\":\"<guid#7>\"}}"
+      ],
+      "reply": "{\"v\":1,\"requestId\":\"r10\",\"type\":\"reply\",\"ok\":true,\"data\":{\"status\":\"restored\",\"batchId\":\"<guid#7>\",\"items\":[{\"key\":\"palette/Palette.ini\",\"target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"state\":\"applied\"},{\"key\":\"ui/UI.json\",\"target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"state\":\"applied\"}],\"errors\":[],\"errorsEn\":[]}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r11\",\"type\":\"reply\",\"ok\":true,\"data\":{\"location\":{\"gameRoot\":\"<game>\",\"backupRoot\":\"<local>/Aimloom/backups/<gamehash>\",\"gameState\":\"closed\"},\"records\":[{\"id\":\"<guid#7>\",\"createdAt\":\"<time>\",\"kind\":\"restore\",\"status\":\"completed\",\"categories\":[],\"fileCount\":2},{\"id\":\"<guid#5>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"rolled-back\",\"categories\":[\"palette\",\"ui\"],\"fileCount\":2},{\"id\":\"<guid#2>\",\"createdAt\":\"<time>\",\"kind\":\"install\",\"status\":\"completed\",\"categories\":[\"sounds\",\"themes\",\"crosshairs\"],\"fileCount\":4}],\"hasPristine\":true}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r12\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PACK\",\"message\":\"categories must be an array.\",\"messageEn\":\"categories must be an array.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r13\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PACK\",\"message\":\"categories contains an unknown value.\",\"messageEn\":\"categories contains an unknown value.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r14\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"INVALID_PACK\",\"message\":\"categories must not contain duplicates.\",\"messageEn\":\"categories must not contain duplicates.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r15\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Select at least one category.\",\"messageEn\":\"Select at least one category.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r16\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Category is not available: sounds\",\"messageEn\":\"Category is not available: sounds\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r17\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Pack directory is missing: \\\"<pack>/missing\\\"\",\"messageEn\":\"Pack directory is missing: \\\"<pack>/missing\\\"\",\"path\":null}}"
+    }
+  ],
+  "files": {
+    "game": [
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json",
+        "size": 523,
+        "sha256": "6d83355c3009fd3b5c13b5810314e77ea794e7355c49a98e20f857f4bc0437e6"
+      },
+      {
+        "path": "FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json",
+        "size": 27,
+        "sha256": "72c91487927092a9d65ddae6bc8599d9f0386ec6293cb558f06b0fd4bf15df6e"
+      },
+      {
+        "path": "FPSAimTrainer/crosshairs/c.png",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/extra.ogg",
+        "size": 5,
+        "sha256": "c8dee78f8c7b466c881847accc196998bad00e2b96c5ef913dfbe454d3807c96"
+      },
+      {
+        "path": "FPSAimTrainer/sounds/hit.wav",
+        "size": 7,
+        "sha256": "1ab8dd656f5f9d33bdd1b1436a530ea5be0efdc66ff4bed985c35d0b87e8bd04"
+      }
+    ],
+    "local": [
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#2>/files/6ea2752419eadf08e7af5a82256d9d232ccfc614b1f5a115cc6dc62671542989.bin",
+        "size": 7,
+        "sha256": "436b36e0788a6400a7286800e6d89a580dd6920da1ce2968abf56108645c8961"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#2>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#2>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<pack>\",\"Categories\":[\"sounds\",\"themes\",\"crosshairs\"],\"Status\":\"completed\",\"SourceId\":null,\"Items\":[{\"Key\":\"crosshairs/c.png\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/c.png\",\"BeforeHash\":null,\"AfterHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/crosshairs/c.png.kvk-<guid#2>-<guid#8>.tmp\"},{\"Key\":\"sounds/extra.ogg\",\"Target\":\"<game>/FPSAimTrainer/sounds/extra.ogg\",\"BeforeHash\":null,\"AfterHash\":\"c8dee78f8c7b466c881847accc196998bad00e2b96c5ef913dfbe454d3807c96\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/sounds/extra.ogg.kvk-<guid#2>-<guid#9>.tmp\"},{\"Key\":\"sounds/hit.wav\",\"Target\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"BeforeHash\":\"436b36e0788a6400a7286800e6d89a580dd6920da1ce2968abf56108645c8961\",\"AfterHash\":\"1ab8dd656f5f9d33bdd1b1436a530ea5be0efdc66ff4bed985c35d0b87e8bd04\",\"Backup\":\"files/6ea2752419eadf08e7af5a82256d9d232ccfc614b1f5a115cc6dc62671542989.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/sounds/hit.wav.kvk-<guid#2>-<guid#10>.tmp\"},{\"Key\":\"themes/pack-theme.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json\",\"BeforeHash\":null,\"AfterHash\":\"72c91487927092a9d65ddae6bc8599d9f0386ec6293cb558f06b0fd4bf15df6e\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json.kvk-<guid#2>-<guid#11>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#2>/source/5226a51b16e8196884888e99b142108963f27c9cbeab5eb36fbbaba95dd921ed.bin",
+        "size": 27,
+        "sha256": "72c91487927092a9d65ddae6bc8599d9f0386ec6293cb558f06b0fd4bf15df6e"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#2>/source/6ea2752419eadf08e7af5a82256d9d232ccfc614b1f5a115cc6dc62671542989.bin",
+        "size": 7,
+        "sha256": "1ab8dd656f5f9d33bdd1b1436a530ea5be0efdc66ff4bed985c35d0b87e8bd04"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#2>/source/9b66e248903f57059a54294611bb60016571b0fd0d2a8c9c93596899c8741c47.bin",
+        "size": 75,
+        "sha256": "8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#2>/source/a770b201e783858845773a88cfe59ab15eca66b6d3c455ffd8c97dd32fb9033e.bin",
+        "size": 5,
+        "sha256": "c8dee78f8c7b466c881847accc196998bad00e2b96c5ef913dfbe454d3807c96"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#5>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#5>\",\"Kind\":\"install\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"<pack>\",\"Categories\":[\"palette\",\"ui\"],\"Status\":\"rolled-back\",\"SourceId\":null,\"Items\":[{\"Key\":\"palette/Palette.ini\",\"Target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"BeforeHash\":null,\"AfterHash\":\"83e0bdc368788bd096b9cd113a5e7f9f57873ac0d5a4bf74a912d92eb219c704\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"restored\",\"TempPath\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini.kvk-<guid#5>-<guid#12>.tmp\"},{\"Key\":\"ui/UI.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"BeforeHash\":null,\"AfterHash\":\"302a70231782a97f479d7c31b4d54ad2c2645a2ec4b2ed6e775e6844f58b1b11\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"restored\",\"TempPath\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json.kvk-<guid#5>-<guid#13>.tmp\"}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#5>/source/47d249c2fb4055bf1ac803bc77c0f4f725e2936166a35d4020fdcedfd2ec3217.bin",
+        "size": 14,
+        "sha256": "83e0bdc368788bd096b9cd113a5e7f9f57873ac0d5a4bf74a912d92eb219c704"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#5>/source/bd23bbd59239fa793cf788c8ddb8a832eba0ccf088590b5a3605d200263e4496.bin",
+        "size": 8,
+        "sha256": "302a70231782a97f479d7c31b4d54ad2c2645a2ec4b2ed6e775e6844f58b1b11"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#7>/files/47d249c2fb4055bf1ac803bc77c0f4f725e2936166a35d4020fdcedfd2ec3217.bin",
+        "size": 14,
+        "sha256": "83e0bdc368788bd096b9cd113a5e7f9f57873ac0d5a4bf74a912d92eb219c704"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#7>/files/bd23bbd59239fa793cf788c8ddb8a832eba0ccf088590b5a3605d200263e4496.bin",
+        "size": 8,
+        "sha256": "302a70231782a97f479d7c31b4d54ad2c2645a2ec4b2ed6e775e6844f58b1b11"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/<guid#7>/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"<guid#7>\",\"Kind\":\"restore\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"completed\",\"SourceId\":\"<guid#5>\",\"Items\":[{\"Key\":\"palette/Palette.ini\",\"Target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"BeforeHash\":\"83e0bdc368788bd096b9cd113a5e7f9f57873ac0d5a4bf74a912d92eb219c704\",\"AfterHash\":null,\"Backup\":\"files/47d249c2fb4055bf1ac803bc77c0f4f725e2936166a35d4020fdcedfd2ec3217.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":null},{\"Key\":\"ui/UI.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"BeforeHash\":\"302a70231782a97f479d7c31b4d54ad2c2645a2ec4b2ed6e775e6844f58b1b11\",\"AfterHash\":null,\"Backup\":\"files/bd23bbd59239fa793cf788c8ddb8a832eba0ccf088590b5a3605d200263e4496.bin\",\"DesiredBackup\":null,\"State\":\"applied\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/files/<pristine#1>.bin",
+        "size": 7,
+        "sha256": "436b36e0788a6400a7286800e6d89a580dd6920da1ce2968abf56108645c8961"
+      },
+      {
+        "path": "Aimloom/backups/<gamehash>/pristine/manifest.json",
+        "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"crosshairs/c.png\",\"Target\":\"<game>/FPSAimTrainer/crosshairs/c.png\",\"BeforeHash\":null,\"AfterHash\":\"8e4ae8c56dd0af8d196c02ae5a4224b21302de3f6f701f24cf11d7c644984150\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"sounds/extra.ogg\",\"Target\":\"<game>/FPSAimTrainer/sounds/extra.ogg\",\"BeforeHash\":null,\"AfterHash\":\"c8dee78f8c7b466c881847accc196998bad00e2b96c5ef913dfbe454d3807c96\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"sounds/hit.wav\",\"Target\":\"<game>/FPSAimTrainer/sounds/hit.wav\",\"BeforeHash\":\"436b36e0788a6400a7286800e6d89a580dd6920da1ce2968abf56108645c8961\",\"AfterHash\":\"1ab8dd656f5f9d33bdd1b1436a530ea5be0efdc66ff4bed985c35d0b87e8bd04\",\"Backup\":\"files/<pristine#1>.bin\",\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"themes/pack-theme.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/pack-theme.json\",\"BeforeHash\":null,\"AfterHash\":\"72c91487927092a9d65ddae6bc8599d9f0386ec6293cb558f06b0fd4bf15df6e\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"palette/Palette.ini\",\"Target\":\"<local>/FPSAimTrainer/Saved/Config/WindowsNoEditor/Palette.ini\",\"BeforeHash\":null,\"AfterHash\":\"83e0bdc368788bd096b9cd113a5e7f9f57873ac0d5a4bf74a912d92eb219c704\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null},{\"Key\":\"ui/UI.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/UI.json\",\"BeforeHash\":null,\"AfterHash\":\"302a70231782a97f479d7c31b4d54ad2c2645a2ec4b2ed6e775e6844f58b1b11\",\"Backup\":null,\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
+      },
+      {
+        "path": "Aimloom/locks/<gamehash>.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "Aimloom/locks/palette.lock",
+        "size": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  }
+}
