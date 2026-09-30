@@ -61,7 +61,8 @@ Aimloom 没有代码签名，第一次运行时 Windows SmartScreen 可能会提
 | 路径 | 内容 |
 |---|---|
 | `packages/app` | App：React 前端，Tauri（Rust）外壳 |
-| `scripts/installer` | PowerShell 引擎，所有写入游戏的操作都经过它 |
+| `scripts/installer` | PowerShell 参考引擎（Rust 引擎对照的 parity goldens）和控制台向导；App 自 0.1.6 起不再运行它 |
+| `packages/app/src-tauri/src/engine` | Rust 引擎，所有写入游戏的操作都经过它（`Aimloom.exe --worker`，0.1.6 起） |
 | `packages/crosshair` | CS2 / VALORANT 准星代码解析和 PNG 渲染 |
 | `packages/theme` | 主题解析和背景预览图（App 与官网共用） |
 | `packages/site` | aimloom.dev 官网和它的 Cloudflare Worker（反馈报告、探索页、登录与上传） |

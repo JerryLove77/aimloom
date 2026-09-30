@@ -111,7 +111,7 @@ or unverified native bindings stay visible; do not infer current state from the 
 opened Profile or the existence of a copied file. These pages reuse the completed component
 functions rather than implementing a second renderer, codec or game-write engine.
 
-The existing PowerShell engine owns game writes, game-closed checks, stale-source checks,
+The engine (PowerShell up to 0.1.5, Rust from 0.1.6) owns game writes, game-closed checks, stale-source checks,
 backups, rollback and restore. Preserve sensitivity, DPI, FOV, gameplay and unrelated
 components. All previews remain read-only. Profile draft state and current-setting state
 must have separate owners, even when they reuse the same preview controls.

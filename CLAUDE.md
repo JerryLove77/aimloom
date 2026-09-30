@@ -9,7 +9,8 @@ keep an untracked `CLAUDE.local.md` beside it with notes that are not part of th
 from https://aimloom.dev. Its sidebar has two top-level pages: **更改配置 / Customize**, which holds
 five sections — **Profile, Theme, Sounds, Crosshair, Enemy** as a player sees them — and
 **探索 / Explore**, which opens **Quick import** (「一键拖入」) and the website's explorer. Every write to the game goes
-through the PowerShell engine. What ships next, in order, is in `ROADMAP.md`. Aimloom does not try
+through the engine: the Rust engine in `packages/app/src-tauri/src/engine/`, which the App runs as
+`Aimloom.exe --worker` (from 0.1.6; 0.1.5 and earlier ran PowerShell). What ships next, in order, is in `ROADMAP.md`. Aimloom does not try
 to change a running game: KovaaK keeps its settings in memory and rewrites
 `PrimaryUserSettings.json` when it exits.
 
@@ -50,8 +51,9 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
   `THIRD_PARTY_NOTICES.md`, including inside images.
 - **Releases** are two files, both attached to the GitHub release: a Setup
   (`Aimloom-Setup-v<version>.exe`, Tauri's NSIS installer with our hooks), which the website also
-  serves from R2, and the portable ZIP, which the website links to on GitHub. Since PowerShell 7
-  ships inside, each is about 100 MB (`packages/site/README.md`).
+  serves from R2, and the portable ZIP, which the website links to on GitHub. From 0.1.6 each
+  carries `Aimloom.exe`, the readmes and `VERSION.txt` only, a few MB with no PowerShell inside
+  (0.1.5 and earlier shipped PowerShell 7 and were about 100 MB; `packages/site/README.md`).
 - **A Mac or Linux machine is a development host only.** Browser preview and tests run there; the
   App target is Windows. `npm run build:installer:windows` deliberately exits 2 elsewhere, and the
   Rust `installer::run()` refuses to start off Windows.
@@ -132,7 +134,8 @@ pwsh -NoProfile -File scripts/installer/tests/parity/cross.test.ps1   # both eng
 ```
 
 CI (`.github/workflows/ci.yml`) runs all of the above, plus the seventeen PowerShell
-suites on Windows (the sixteen and `parity`) on the pinned bundled PowerShell, and
+suites on Windows (the sixteen and `parity`) on the PowerShell pinned in `pwsh-runtime.json` (CI
+only: the release no longer ships it), and
 `cross.test.ps1` after `cargo test` has built `examples/engine_worker`. `distribution`, `windows-entrypoints` and `gui-distribution` need an extracted
 release ZIP and are not in CI. If `cargo` is missing from a non-interactive shell,
 `export PATH="$HOME/.cargo/bin:$PATH"`.
@@ -144,18 +147,22 @@ React  packages/app/src/
   <page>/controller.ts   single owner of that page's state transitions; pages are presentation only
   bridge/native.ts       @tauri-apps/api invoke      bridge/demo.ts   browser fake, no filesystem
         │  8 engine commands: installer_read / _profile / _execute / _job / _reconcile / _pick_folder / _pick_file / _open_backup
-        │  + 11 more: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info, and _engine / _engine_set (which engine; a switch probes the new one)
+        │  + 9 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info
 Rust   packages/app/src-tauri/src/installer/
   commands.rs     validates every op in AND out; owns plan→gameRoot ownership and operationId idempotency
   dialogs.rs shell.rs reporting.rs account.rs update.rs   the commands that never touch the engine
-  worker.rs       spawns ONE worker (pwsh 7, or Aimloom.exe --worker); JSONL over stdin/stdout, v=1, 16 MiB line cap
+  worker.rs       spawns ONE `Aimloom.exe --worker` child (`WorkerConfig::production`); JSONL over stdin/stdout, v=1, 16 MiB line cap
   jobs.rs         job state machine: running / finished / failed / unknown / reconciled
         │  JSONL
-PowerShell 7  scripts/installer/gui/
-  kvk-gui-worker.ps1    read-line loop     kvk-gui-service.ps1   typed boundary + DTO shaping
-        │  dot-source
-scripts/installer/kvk-engine.ps1   the transaction engine — every filesystem write happens here
+Rust engine  packages/app/src-tauri/src/engine/
+  session.rs      read-line loop, typed boundary, DTO shaping (a panic in one request answers ENGINE_ERROR)
+        │  calls
+  store.rs txn.rs files.rs settings.rs …   the transaction engine — every filesystem write happens here
 ```
+
+The PowerShell engine (`scripts/installer/kvk-engine.ps1`, `gui/kvk-gui-worker.ps1` and
+`kvk-gui-service.ps1`) is no longer run by the App. It stays in the repository as the **reference
+the Rust engine is held to**: it writes the parity goldens, and its seventeen suites run in CI.
 
 The front end is split by who the code is for: `main.tsx` (entry), `bridge/` (every `invoke`,
 the wire types in `contracts.ts`, and the browser fakes), `ui/` (domain-free components and
@@ -164,38 +171,40 @@ an outside file, failure text), `workspace/` (the shell: window, sidebar, Settin
 `installer/` (Quick import only), `explore/` (the Explore page), `profiles/`, `scheme/`,
 `audio/`, `enemy/`, `crosshair/` (one folder per section) and `i18n/` (dictionaries only).
 
-**A second engine in Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST) implements
-the same 26 operations over the same JSONL, and reads and writes the same data folder, so either
-engine picks up what the other left. PowerShell is the default; a player can switch to Rust in
-Settings (`installer/engine_choice.rs` keeps the choice in `engine.json` in the data folder), and
-`WorkerConfig` then starts `Aimloom.exe --worker` instead of `pwsh`. The switch is refused while
-an operation is unresolved or a batch on disk is unfinished, and a report names the engine
-(`system.engine`, optional on the site so older Apps still report). It is held to PowerShell by the goldens in `scripts/installer/tests/parity/`
-(regenerated on Windows with `parity.test.ps1 -Write`) and by `cross.test.ps1`; accepted
-differences are in that folder's `DIVERGENCES.md`. **An engine change is one PR: the PowerShell
+**The engine is Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST). It implements
+the 26 operations over JSONL and reads and writes the data folder the earlier PowerShell releases
+used. From 0.1.6 the App always starts it (`WorkerConfig::production` runs `Aimloom.exe --worker`,
+dispatched in `lib.rs` to `engine::run_worker`) and never PowerShell; there is no engine switch in
+Settings, and a report says `"engine": "rust"` with `"powershell": null`. The PowerShell engine
+stays as the reference until the Rust release has proven itself (ROADMAP ENGINE-RUST step 5 deletes
+it): the Rust engine is held to it by the goldens in `scripts/installer/tests/parity/` (regenerated
+on Windows with `parity.test.ps1 -Write`) and by `cross.test.ps1`; accepted differences are in that
+folder's `DIVERGENCES.md`. **Until PowerShell is deleted, an engine change is one PR: the PowerShell
 change, the regenerated goldens, and the Rust change.**
 
-`kvk-config.ps1` (the console wizard behind `安装配置.cmd` / `恢复配置.cmd`) drives the *same*
-engine. The GUI adds no write rules of its own; fix write behaviour in the engine, not in a shell.
+`kvk-config.ps1` (the console wizard behind `安装配置.cmd` / `恢复配置.cmd`) drives the PowerShell
+engine and is not shipped. The GUI adds no write rules of its own; fix write behaviour in the
+engine, not in a shell.
 
 **The wire contract is mirrored in four places and must change in lockstep:** `bridge/contracts.ts` (TS)
-→ `protocol.rs` (serde + `validate_read`) → `gui/protocol.schema.json` (request schema) →
-`gui/kvk-gui-service.ps1` (producer). camelCase on the wire; Rust renames. `PROTOCOL_VERSION = 1`.
-The Rust engine (`src/engine/session.rs`) is a second producer and answers the same; a reply's
-field names are exact, since the App decodes with `deny_unknown_fields`, while PowerShell reads
-properties ignoring case (an `exportFile` reply in the wrong case went unnoticed that way).
+→ `protocol.rs` (serde + `validate_read`) → `gui/protocol.schema.json` (request schema) → the
+producers. `PROTOCOL_VERSION = 1`, camelCase on the wire; Rust renames. The producer the App
+talks to is the Rust engine (`src/engine/session.rs`); `gui/kvk-gui-service.ps1` remains a producer
+only for the goldens and the suites. A reply's field names are exact, since the App decodes with
+`deny_unknown_fields`, while PowerShell reads properties ignoring case (an `exportFile` reply in
+the wrong case went unnoticed that way).
 
 **Both languages travel on the wire.** An `Issue` carries `messageEn` beside `message`, an
 execution report carries `errorsEn` beside `errors`, and a Profile list error row carries its own
 `messageEn`. Rust rejects a worker issue whose `messageEn` is empty or is not **English-safe**, so
-PowerShell always derives a valid English text (`Get-KvkEnglishText`) rather than echoing the
-Chinese one. English-safe means **no CJK outside double-quoted spans** — a span is `"…"`, ASCII
+an engine always derives a valid English text (`engine::english_text` in Rust,
+`Get-KvkEnglishText` in PowerShell) rather than echoing the Chinese one. English-safe means **no CJK outside double-quoted spans** — a span is `"…"`, ASCII
 double quotes, no nesting, and an odd number of quotes leaves the unclosed tail outside. Game
 content (a file name, a theme name, a Profile name, a path) is never translated, so an English
 message wraps every such value in quotes and a Chinese name then reaches an English player; an
-untranslated Chinese sentence is still refused. One definition per layer, kept identical by a
+untranslated Chinese sentence is still refused. Three definitions, kept identical by a
 shared eight-case parity table: `Test-KvkEnglishSafe` (`kvk-engine.ps1`), `is_english`
-(`protocol.rs`), `isEnglishText` (`src/i18n/index.ts`), asserted in `engine.test.ps1`,
+(`protocol.rs`, which the Rust engine also calls) and `isEnglishText` (`src/i18n/index.ts`), asserted in `engine.test.ps1`,
 `protocol.rs` and `tests/installer/i18n/english-text.test.ts`.
 `tests/installer/i18n/engine-messages.test.ts` fails a PowerShell English literal that
 interpolates a name or path outside quotes; counts, limits, JSON keys and codes stay unquoted.
@@ -217,8 +226,8 @@ interpolates a name or path outside quotes; counts, limits, JSON keys and codes 
   Two record kinds: per-path *first-protection* (permanent, never rewritten) and per-batch
   install backup. Call it 首次保护状态, never "factory settings".
 - **One data folder, never two.** The folder was `KovaaKConfigInstaller` before the rename.
-  `Get-KvkDataRoot` (engine) and `data_root` (Rust `worker.rs`) implement the same rule and must
-  stay in step: `Aimloom` wins if it exists; otherwise an existing old folder is adopted by a single
+  `Get-KvkDataRoot` (the PowerShell engine), `Engine::data_root` (the Rust engine, `store.rs`) and
+  `data_root` (`worker.rs`) implement the same rule and must stay in step: `Aimloom` wins if it exists; otherwise an existing old folder is adopted by a single
   same-volume rename; if that fails, the old folder is used unchanged for the whole session, which
   holds a file open in it so no other process renames it away. Every path under the data folder
   comes from the resolver — never join the folder name by hand. Rust resolves at each worker spawn
@@ -226,27 +235,24 @@ interpolates a name or path outside quotes; counts, limits, JSON keys and codes 
   and strand the old data.
 - **Batch status is persisted** (`prepared`/`applying`/`completed`/`rolled-back`/
   `recovery-required`); an unfinished batch forces recovery before any new install.
-- **Adding an outside file is a plan like any other.** `planFileAdd` (`kvk-import.ps1`) copies one
+- **Adding an outside file is a plan like any other.** `planFileAdd` (`kvk-import.ps1`; in Rust `file_add_plan` and `file_add_execute` in
+  `engine/files.rs`) copies one
   theme or sound into the game byte for byte: the source is named by path and re-read by the
   worker, the UI sends the SHA-256 of what it previewed (a mismatch is `PLAN_STALE`), the bytes are
   staged at plan time, and the recorded preview must be exactly one `create` row. It refuses an
   existing target, a sound stem already present under the other extension, and a `themeName` that
   is already installed. A code-generated crosshair goes into the game the same way, through
   `planCrosshairAdd`.
-- **One write bypasses the plan path, deliberately.** `Export-KvkFile` is the secondary "save a
+- **One write bypasses the plan path, deliberately.** `Export-KvkFile` (Rust: `export` in `engine/files.rs`) is the secondary "save a
   copy elsewhere" for a code-generated PNG: it writes to a user-chosen folder. It must stay
   `CreateNew` (never overwrite), refuse any target inside the game directory, enforce safe names
   and a size ceiling, and create no backup batch. Anything that changes the game still goes through
   a plan.
 - **The game must be closed** — the engine checks `FPSAimTrainer` /
   `FPSAimTrainer-Win64-Shipping` before and during writes. Detection failure means stop; never
-  force-close, never auto-elevate, never touch execution policy. (The App does remove the
-  browser-download mark — the `Zone.Identifier` stream — from the files in **its own** `scripts\`
-  and `pwsh\` folders at startup, as Properties → Unblock would; without that, RemoteSigned refuses
-  the worker in every browser download, and the bundled PowerShell cannot load its own modules.
-  Nothing outside those folders, and never the policy.) The exceptions are
+  force-close, never auto-elevate, never touch execution policy. The exceptions are
   the writes that only place files — Crosshair replace/add and the theme/sound add (`planFileAdd`)
-  — which pass `-AllowRunningGame`; installer and restore callers must not use that switch.
+  — which pass `-AllowRunningGame` (Rust: `allow_running` in `txn::install`); installer and restore callers must not use that switch.
   **Anything that writes `PrimaryUserSettings.json` (Theme, Sounds, Enemy, Profile apply) requires
   the game closed, at preview and at write:** the game rewrites the whole file when it exits, so a
   write made while it runs is lost.
@@ -259,21 +265,22 @@ SHA-256; any missing, changed or extra file stops the build. Never trim the inve
 incomplete checkout "succeed". The tracked `KVK Settings 2025/` is a synthetic sample corpus for
 the tests.
 
-ZIP builds are byte-reproducible (fixed timestamps, permissions, ordering) and self-verified by
-reading the ZIP back before replacing the previous output. **The Setup is not reproducible:** NSIS
+The legacy Python builders (`build-release.py`, `build-gui-release.py`), which the current release
+flow does not use, make byte-reproducible ZIPs that they read back. The current flow's
+`package-test-build.ps1` zips with `ZipFile.CreateFromDirectory` and promises neither. **The Setup is not reproducible:** NSIS
 gives a different file on every bundle of identical inputs, so it is built once, and the file that
 was accepted is the file that is released — never rebuild it "identically". On Windows,
-`scripts/installer/test-build/package-test-build.ps1` packages the folder and the ZIP, and
-`package-setup.ps1 -Folder <that folder>` bundles the same `scripts\**`, `pwsh\**` and
-`VERSION.txt` into the Setup. **PowerShell 7 ships inside every release** as `pwsh\`: the official
-`PowerShell-<version>-win-x64.zip`, passed as `-PwshZip`, refused unless its size and SHA-256 match
-`scripts/installer/test-build/pwsh-runtime.json`, extracted unchanged. The App tries it before any
-installed PowerShell (`pwsh_candidates` in `worker.rs`), so a player installs nothing; moving the
-pin to a new PowerShell release means running every suite on it first. The installer's behaviour
-lives in `packages/app/src-tauri/windows/` (`installer.nsi` is Tauri 2.11.4's template with one
-line changed, pinned by SHA-256; `hooks.nsh` refuses the data folder before install and, only when
-no PowerShell 7 answers after it — the bundled one first — offers one through winget) and is pinned by
-`tests/installer/setup-installer.test.ts`. A preview deploy must never move `aimloom.dev`: every
+`scripts/installer/test-build/package-test-build.ps1` packages the folder and the ZIP, which carry
+`Aimloom.exe`, the readmes and `VERSION.txt` only, and `package-setup.ps1 -Folder <that folder>`
+bundles `VERSION.txt` into the Setup (`Aimloom.exe` comes from the build) and refuses a folder in
+the old layout, one that still has `scripts\` or `pwsh\`. **From 0.1.6 no PowerShell ships**: the
+engine is inside `Aimloom.exe`, so there is no `-PwshZip`. `pwsh-runtime.json` remains only to pin
+the PowerShell CI runs the reference suites on. The installer's behaviour lives in
+`packages/app/src-tauri/windows/` (`installer.nsi` is Tauri 2.11.4's template with one line
+changed, pinned by SHA-256; `hooks.nsh` refuses the data folder before install and does nothing
+else) and is pinned by `tests/installer/setup-installer.test.ts`. An upgrade over 0.1.5 may leave
+its `pwsh\` and `scripts\` folders behind (a silent upgrade, or an uninstall that was declined);
+the Setup never deletes anything. A preview deploy must never move `aimloom.dev`: every
 wrangler environment other than production declares `"routes": []`
 (`packages/site/tests/deploy-config.test.ts`).
 
@@ -319,8 +326,9 @@ UTF-16LE. The refusal prints only the rule and a hit count, never the matched te
   Settings popover; on first launch `'system'` follows the Windows display language. Commit
   messages are English conventional commits (`feat:`, `docs:`, `chore:`). **Documents are written
   in English.** The Chinese specs dated 2026-09-08 and earlier are history; don't translate them.
-- **Strict mode:** the worker runs `Set-StrictMode -Version 3.0`, so every PowerShell suite and
-  every dot-sourced test helper runs at 3.0 too (`tests/installer/strict-mode.test.ts` enforces
+- **Strict mode:** the PowerShell engine runs `Set-StrictMode -Version 3.0` (the App no longer
+  runs it, but the suites still hold the reference), so every PowerShell suite and every
+  dot-sourced test helper runs at 3.0 too (`tests/installer/strict-mode.test.ts` enforces
   it). A suite at 2.0 once hid a thrown error behind a silent `$null`.
 - **Encoding:** any `.ps1` containing non-ASCII must be saved UTF-8 **with BOM**. Everything targets
   `#Requires -Version 7.0`; PowerShell 5.1 results in old documents are history, not a target.

@@ -57,7 +57,7 @@ pwsh.exe -NoProfile -File .\tests\windows-entrypoints.test.ps1 -ReleaseRoot $rel
 
 ## Windows GUI 与开发边界
 
-GUI 仅面向 Windows。Mac 上使用浏览器预览与 PowerShell 7 的临时文件测试，不发布 Mac App。当前 GUI 运行时通过固定 PowerShell worker 调用同一份引擎；生产入口不提供测试用 LocalAppData 参数。
+GUI 仅面向 Windows。Mac 上使用浏览器预览与 PowerShell 7 的临时文件测试，不发布 Mac App。自 0.1.6 起 App 的 GUI 运行时不再调用 PowerShell worker，而是运行 Rust 引擎（`Aimloom.exe --worker`）；这里的脚本是 Rust 引擎所对照的参考引擎（parity goldens）和控制台向导。生产入口不提供测试用 LocalAppData 参数。
 
 `gui-distribution.test.ps1` 用受控测试包装器将**内部 worker 循环**连接到随机临时游戏／LocalAppData，能在 Mac 上检查真实素材和 JSONL 协议。它不等于 Windows GUI、系统 LocalAppData 解析或完整 EXE 的验收。
 

@@ -2,7 +2,7 @@
 #
 # What this covers, and what it cannot: the three Vitest projects, both typechecks, the site's
 # Node and workerd suites, the Python packaging tests, the Rust suite on Linux and on Windows, the
-# seventeen PowerShell suites on a real Windows with the PowerShell 7 the App ships — the ones that
+# seventeen PowerShell suites on a real Windows with the pinned PowerShell 7 (the release no longer ships it) — the ones that
 # could only run on the tester's PC before — and the Rust engine against PowerShell's goldens and
 # across the two engines. It does not build the Setup (built once, on the tester's PC), does not
 # run the suites that need an extracted release ZIP, and cannot observe the game.
@@ -102,8 +102,8 @@ jobs:
       # suites then stop matching their own "`n" edits.
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
-      # The suites run on the PowerShell every release carries (pwsh-runtime.json), which the App
-      # tries first: the parity goldens were made with it, and the runner's own 7.x may be older.
+      # The suites run on the PowerShell pinned in pwsh-runtime.json (0.1.5 and earlier shipped it;
+      # later releases do not): the parity goldens were made with it, and the runner's own 7.x may be older.
       - uses: actions/cache@v4
         with:
           path: ${{ runner.temp }}/pwsh.zip
