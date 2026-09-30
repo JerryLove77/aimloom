@@ -27,3 +27,13 @@ ureq = { version = "=3.2.1", default-features = false, features = ["rustls", "js
 # because the report payload's SHA-256 (the preview-equals-sent guarantee) is a direct dependency
 # of this crate now, not an incidental transitive one.
 sha2 = "=0.10.9"
+# The Rust engine (src/engine). Each is already in the tree transitively at this exact version,
+# with these features, so nothing new is downloaded: uuid for the engine's GUIDs (via tauri),
+# libc for the Unix file lock the tests take, windows-sys for the Win32 calls .NET makes.
+uuid = { version = "=1.26.0", features = ["v4"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "=0.2.189"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "=0.61.2", features = ["Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_Diagnostics_ToolHelp"] }
