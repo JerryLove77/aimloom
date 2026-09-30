@@ -10,6 +10,7 @@ function renderLink(lang: 'zh' | 'en', kind: ExploreKind, openExplore = vi.fn().
     anchor: null, open: () => {}, close: () => {}, storage: null,
     accountResolve: () => Promise.reject(new Error('no bridge')), openLogs: () => Promise.resolve(), openDownload: () => Promise.resolve(), openExplore,
     update: null, updateDot: false, appInfo: null, betaOn: false, setBetaOn: () => {}, openReport: () => {}, rootOverlay: null,
+    engineStatus: () => Promise.resolve({ engine: 'powershell' as const, blocked: null }), setEngine: () => Promise.reject(new Error('no bridge')), reloadWindow: () => {},
   }
   render(<LangProvider storage={null} languages={[lang === 'zh' ? 'zh-CN' : 'en-US']}><SettingsState.Provider value={value}><ExploreLink kind={kind} /></SettingsState.Provider></LangProvider>)
   return openExplore

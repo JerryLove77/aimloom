@@ -54,7 +54,7 @@
 .ws-strip-divider { width:1px; height:18px; background:var(--ki-line) }
 .ws-strip-aside { margin-left:auto; display:inline-flex; gap:8px; align-items:center; font-size:12px; color:var(--ki-secondary) }
 .ws-toast { position:fixed; left:calc(220px + (100vw - 220px) / 2); bottom:72px; transform:translateX(-50%); display:flex; gap:8px; align-items:center; padding:8px 16px 8px 14px; border-radius:var(--ws-radius-pill); background:var(--ws-inverse); color:#fff; font-size:13px; box-shadow:0 2px 6px #00000014, 0 8px 20px #0000001a; z-index:20 }
-.ws-settings { position:fixed; width:288px; padding:16px 16px 14px; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-panel); box-shadow:var(--ki-modal-shadow); z-index:30 }
+.ws-settings { position:fixed; width:288px; padding:16px 16px 14px; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-panel); box-shadow:var(--ki-modal-shadow); z-index:30; max-height:calc(100vh - 16px); overflow:auto }
 .ws-settings h2 { margin:0 0 10px; font:500 15px var(--ki-display-font); color:var(--ki-text) }
 .ws-settings fieldset { border:0; margin:0; padding:0 }
 .ws-settings legend { padding:0 0 4px; font-size:12px; color:var(--ki-secondary) }
@@ -68,6 +68,8 @@
 .ws-settings-account-name { font-size:13px; font-weight:600; margin-right:6px }
 .ws-settings-account-tag { display:inline-flex; align-items:center; padding:2px 7px; border-radius:var(--ws-radius-pill); background:var(--ws-sidebar); color:var(--ki-secondary); font-size:11px }
 .ws-settings-error { color:var(--ki-error) }
+.ws-settings-note { margin:4px 0 0; padding:8px 10px; border-radius:var(--ws-radius-row); background:var(--ws-warning-bg); color:var(--ki-warning); font-size:12px; line-height:18px }
+.ws-settings-engine { margin:0; padding:0; border:0 }
 .ws-settings-email { user-select:text; font-size:12px; color:var(--ki-secondary) }
 .ws-settings-switch { display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer }
 .ws-settings-update { display:flex; align-items:center; gap:8px; flex-wrap:wrap }

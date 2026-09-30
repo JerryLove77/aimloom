@@ -10,6 +10,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::Value;
 
+use super::engine_choice::EngineKind;
 use super::jobs::JobManager;
 use super::protocol::{
     parse_worker_line, validate_execution, ErrorCode, ExecuteRequest, Execution, Issue, WorkerMessage, WorkerRequest,
@@ -18,8 +19,10 @@ use super::protocol::{
 
 #[derive(Clone, Debug)]
 pub struct WorkerConfig {
-    executable: PathBuf,
-    script: PathBuf,
+    /// What is started: `pwsh` running `kvk-gui-worker.ps1`, or `Aimloom.exe --worker`.
+    program: PathBuf,
+    args: Vec<std::ffi::OsString>,
+    engine: EngineKind,
     /// `%LOCALAPPDATA%`, under which the worker's stderr log is kept. `None` discards the log
     /// (tests, and any machine without the variable). The log's folder is resolved at each
     /// spawn, not here, so it always matches the folder the worker is about to use.
@@ -27,9 +30,19 @@ pub struct WorkerConfig {
 }
 
 impl WorkerConfig {
-    pub fn production() -> Result<Self, Issue> {
+    #[cfg_attr(not(any(test, target_os = "windows")), allow(dead_code))]
+    fn powershell(executable: PathBuf, script: &Path, log_root: Option<PathBuf>) -> Self {
+        let mut args: Vec<std::ffi::OsString> = ["-NoProfile", "-NonInteractive", "-File"].iter().map(Into::into).collect();
+        args.push(script.as_os_str().to_owned());
+        Self { program: executable, args, engine: EngineKind::Powershell, log_root }
+    }
+
+    pub fn engine(&self) -> EngineKind { self.engine }
+
+    pub fn production(engine: EngineKind) -> Result<Self, Issue> {
         #[cfg(not(target_os = "windows"))]
         {
+            let _ = engine;
             Err(Issue::plain(
                 ErrorCode::UnsupportedPlatform,
                 "The installer engine is available only on Windows with PowerShell 7 or newer.",
@@ -37,6 +50,12 @@ impl WorkerConfig {
         }
         #[cfg(target_os = "windows")]
         {
+            let log_root = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+            if engine == EngineKind::Rust {
+                // The Rust engine is this executable, started again as a JSONL worker.
+                let program = std::env::current_exe().map_err(|e| Issue::worker(format!("could not locate Aimloom.exe: {e}")))?;
+                return Ok(Self { program, args: vec![RUST_WORKER_FLAG.into()], engine, log_root });
+            }
             // <exe dir>\pwsh: the PowerShell 7 the release ships. Unblocked before it is tried,
             // for the same reason as the scripts (see unblock_own_scripts).
             let bundled = std::env::current_exe().ok()
@@ -50,14 +69,13 @@ impl WorkerConfig {
             if let Some(scripts) = script.parent().and_then(Path::parent) {
                 unblock_own_scripts(scripts);
             }
-            let log_root = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
-            Ok(Self { executable, script, log_root })
+            Ok(Self::powershell(executable, &script, log_root))
         }
     }
 
     #[cfg(test)]
     pub fn for_test(executable: impl Into<PathBuf>, script: impl Into<PathBuf>) -> Self {
-        Self { executable: executable.into(), script: script.into(), log_root: None }
+        Self::powershell(executable.into(), &script.into(), None)
     }
 }
 
@@ -205,8 +223,11 @@ fn remove_download_mark(_path: &Path) -> bool {
 /// Rotate the worker log once it passes this size, so it cannot grow without bound.
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 
-const DATA_FOLDER: &str = "Aimloom";
-const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
+/// The argument that makes `Aimloom.exe` the Rust engine's worker instead of the App.
+pub const RUST_WORKER_FLAG: &str = "--worker";
+
+pub(crate) const DATA_FOLDER: &str = "Aimloom";
+pub(crate) const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
 
 /// The data folder under `%LOCALAPPDATA%`: backups, first-protection records, Profiles, locks
 /// and this log. It was `KovaaKConfigInstaller` before the product became Aimloom.
@@ -217,7 +238,7 @@ const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
 /// volume, so atomic); if that rename fails, the old folder is used as it is. The app opens
 /// its log before the worker starts, so without this rule it would create `Aimloom` first and
 /// the engine would then never adopt the old folder.
-fn data_root(local_app_data: &Path) -> PathBuf {
+pub(crate) fn data_root(local_app_data: &Path) -> PathBuf {
     let current = local_app_data.join(DATA_FOLDER);
     let legacy = local_app_data.join(LEGACY_DATA_FOLDER);
     if current.is_dir() {
@@ -347,9 +368,8 @@ pub struct WorkerClient {
 
 impl WorkerClient {
     pub fn spawn(config: WorkerConfig, jobs: Arc<Mutex<JobManager>>) -> Result<Arc<Self>, Issue> {
-        let mut command = Command::new(&config.executable);
-        command.args(["-NoProfile", "-NonInteractive", "-File"])
-            .arg(&config.script)
+        let mut command = Command::new(&config.program);
+        command.args(&config.args)
             .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
         #[cfg(target_os = "windows")]
         {

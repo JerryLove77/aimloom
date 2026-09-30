@@ -17,7 +17,7 @@ export function buildMail(number: string, report: Report, to: string): MailMessa
     `Report ${number}`,
     `App: ${report.app.label} · commit ${report.app.commit} · built ${report.app.built}`,
     `Windows ${report.system.windows} · display language ${report.system.displayLanguage} · App language ${report.system.lang} (choice: ${report.system.langChoice})`,
-    `PowerShell: ${report.system.powershell ?? 'not found'} · game found: ${report.game.found ? 'yes' : 'no'}`,
+    `PowerShell: ${report.system.powershell ?? 'not found'} · engine: ${report.system.engine ?? 'not reported'} · game found: ${report.game.found ? 'yes' : 'no'}`,
     `Steam: ${who}`,
     `Contact: ${report.contact ?? 'none'}`,
     '',

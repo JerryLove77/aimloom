@@ -175,11 +175,11 @@ Added to the near-term plan by the user on 2026-09-29
 (「把rust改版加到最近的计划里，可以平缓过度，比如安装包里有两个选项，powershell 7和rust」), ordered
 after the bundled-PowerShell release (v0.1.5). The goal is a release of a few MB
 without PowerShell. The transition is gradual: every release carries both engines (the Rust one
-lives inside `Aimloom.exe`), the Setup picks the first one, and Settings can change it later.
+lives inside `Aimloom.exe`), every install starts on PowerShell, and Settings can change it.
 
-- **The Setup picks the first engine**: PowerShell by default, Rust marked as a test. Re-running it
-  preselects the current choice; a silent install keeps PowerShell. The portable ZIP starts on
-  PowerShell.
+- **The Setup does not ask** (user, 2026-10-01: 「安装程序不问，只在设置里换」). Every install and
+  the portable ZIP start on PowerShell; a player who wants to try Rust switches in Settings. The
+  choice is `engine.json` in the data folder, so it survives an update or a reinstall.
 - **Settings can switch engines, only when it is safe** (user, 2026-09-29: first 「设置切换容易出问题，
   而且报错处理也会麻烦」, then 「如果能处理报错，也可以选择吧rust/powershell加到设置里」). The rules:
   - The switch is disabled, with the reason shown, while an operation is running or unresolved, or
@@ -203,7 +203,7 @@ lives inside `Aimloom.exe`), the Setup picks the first one, and Settings can cha
 |---|---|---|
 | 1 | **Spike**: the write core plus Enemy in Rust, compared with PowerShell goldens, and cross-restores in both directions; a go/no-go report with measured numbers | **Done** 2026-10-01 (PR #24), folded into step 2 |
 | 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | **Merged** 2026-10-01 (PR #24): all 26 operations; 52 parity cases match PowerShell on the Mac and on Windows; the cross-engine test passes 6/6; CI runs both. Not reachable by players |
-| 3 | **Choosing the engine**: the Setup's choice (PowerShell default, Rust marked as a test) and the Settings switch under the rules above; one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | Not started; the Setup page needs a change to the pinned `installer.nsi` template (or a hooks-only fallback); where the choice is stored is open |
+| 3 | **Choosing the engine**: the Settings switch under the rules above (PowerShell 7 recommended, Rust marked as a test); one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | **Built** on `feat/app-nav`, not yet run on Windows: `Aimloom.exe --worker` is the Rust worker, `engine.json` holds the choice, the report's `system.engine` is accepted by the site (optional, so older Apps still report) |
 | 4 | **Rust becomes the default**; PowerShell stays an option | Not started |
 | 5 | **PowerShell removed**: a small Setup and a Rust ZIP; decide the console wizard's future (`安装配置.cmd` / `恢复配置.cmd`); CLAUDE.md, both READMEs and the site copy updated | Not started |
 

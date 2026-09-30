@@ -228,9 +228,19 @@ the currently checked language radio. Esc, or a pointer-down outside both the po
 Settings button, closes it and returns focus to the button. The Settings button keeps
 `aria-haspopup="dialog"` and `aria-expanded`, and stays enabled while the workspace is locked — an
 in-progress apply does not block reading the version or switching language. It grows upward from
-a bottom anchor and does not scroll.
+a bottom anchor and scrolls only when the window is too short for it.
 
-It has five sections top to bottom: Language · Account · Feedback · Updates · version.
+It has six sections top to bottom: Language · Account · Feedback · Updates · Engine · version.
+
+**Engine (ENGINE-RUST step 3, 2026-10-01).** Two radios, PowerShell 7（推荐） and Rust（测试）,
+asked from native code (`installer_engine`) each time the popover opens. While an operation is
+running or unresolved, or a backup batch on disk is unfinished, the group is disabled and a note
+says which; native code refuses the switch in those cases too. Choosing the other engine calls
+`installer_engine_set`, which saves the choice, waits for the old worker to exit, forgets every
+recorded plan and starts the new engine; on success the window reloads so every page reads
+again. If the new engine does not start, the alert says so, the new choice stays checked (never a
+silent fallback) and a 切回 … button switches back. A refused switch leaves the old engine checked
+with no such button.
 
 A language choice applies immediately (no separate confirm) and only writes to the WebView's
 `localStorage` under `aimloom.lang`; it never touches the game or the Profile draft, and it is

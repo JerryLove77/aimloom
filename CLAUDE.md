@@ -143,11 +143,11 @@ React  packages/app/src/
   <page>/controller.ts   single owner of that page's state transitions; pages are presentation only
   bridge/native.ts       @tauri-apps/api invoke      bridge/demo.ts   browser fake, no filesystem
         │  8 engine commands: installer_read / _profile / _execute / _job / _reconcile / _pick_folder / _pick_file / _open_backup
-        │  + 9 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info
+        │  + 11 more: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info, and _engine / _engine_set (which engine; a switch probes the new one)
 Rust   packages/app/src-tauri/src/installer/
   commands.rs     validates every op in AND out; owns plan→gameRoot ownership and operationId idempotency
   dialogs.rs shell.rs reporting.rs account.rs update.rs   the commands that never touch the engine
-  worker.rs       spawns ONE pwsh 7 child; JSONL over stdin/stdout, v=1, 16 MiB line cap
+  worker.rs       spawns ONE worker (pwsh 7, or Aimloom.exe --worker); JSONL over stdin/stdout, v=1, 16 MiB line cap
   jobs.rs         job state machine: running / finished / failed / unknown / reconciled
         │  JSONL
 PowerShell 7  scripts/installer/gui/
@@ -165,8 +165,11 @@ an outside file, failure text), `workspace/` (the shell: window, sidebar, Settin
 
 **A second engine in Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST) implements
 the same 26 operations over the same JSONL, and reads and writes the same data folder, so either
-engine picks up what the other left. The App does not start it yet: `WorkerConfig` runs the
-PowerShell worker. It is held to PowerShell by the goldens in `scripts/installer/tests/parity/`
+engine picks up what the other left. PowerShell is the default; a player can switch to Rust in
+Settings (`installer/engine_choice.rs` keeps the choice in `engine.json` in the data folder), and
+`WorkerConfig` then starts `Aimloom.exe --worker` instead of `pwsh`. The switch is refused while
+an operation is unresolved or a batch on disk is unfinished, and a report names the engine
+(`system.engine`, optional on the site so older Apps still report). It is held to PowerShell by the goldens in `scripts/installer/tests/parity/`
 (regenerated on Windows with `parity.test.ps1 -Write`) and by `cross.test.ps1`; accepted
 differences are in that folder's `DIVERGENCES.md`. **An engine change is one PR: the PowerShell
 change, the regenerated goldens, and the Rust change.**

@@ -17,7 +17,7 @@ describe('the report contract', () => {
     const report = JSON.parse(read('packages/app/tests/installer/report/contract.fixture.json'))
     expect(Object.keys(report).sort()).toEqual(['account', 'app', 'contact', 'description', 'game', 'log', 'system'])
     expect(Object.keys(report.app).sort()).toEqual(['built', 'commit', 'label'])
-    expect(Object.keys(report.system).sort()).toEqual(['displayLanguage', 'lang', 'langChoice', 'powershell', 'windows'])
+    expect(Object.keys(report.system).sort()).toEqual(['displayLanguage', 'engine', 'lang', 'langChoice', 'powershell', 'windows'])
     expect(Object.keys(report.game)).toEqual(['found'])
     expect(Object.keys(report.account).sort()).toEqual(['name', 'steamId', 'verified'])
     expect(report.account.verified).toBe(false)

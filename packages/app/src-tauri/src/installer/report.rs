@@ -107,6 +107,8 @@ pub struct Facts {
     pub windows: String,
     pub display_language: String,
     pub powershell: Option<String>,
+    /// The engine the App is using, so a report says which one wrote (or failed to write).
+    pub engine: super::engine_choice::EngineKind,
     pub version: AppVersion,
     pub log_tail: Option<String>,
     pub user: String,
@@ -140,6 +142,7 @@ struct SystemOut<'a> {
     lang_choice: &'a str,
     lang: &'a str,
     powershell: Option<&'a str>,
+    engine: super::engine_choice::EngineKind,
 }
 
 #[derive(Serialize)]
@@ -311,6 +314,7 @@ pub fn prepare(input: &ReportInput, env: &Facts) -> Result<Prepared, Issue> {
         lang_choice: &input.lang_choice,
         lang: &input.lang,
         powershell: env.powershell.as_deref(),
+        engine: env.engine,
     };
     let game = GameOut { found: input.game_found };
 
@@ -558,6 +562,7 @@ mod tests {
             windows: "10.0.22631".into(),
             display_language: "zh-CN".into(),
             powershell: Some("7.6.6".into()),
+            engine: super::super::engine_choice::EngineKind::Powershell,
             version: app_version(),
             log_tail: Some("=== worker session 2026-09-21 12:00:00 UTC ===\nC:\\Users\\Player1\\AppData\\Local\\Aimloom\\logs\n".into()),
             user: "Player1".into(),

@@ -1,3 +1,4 @@
+import { StrictMode } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { LangProvider, LANG_STORAGE_KEY } from '../../../src/i18n'
@@ -9,11 +10,11 @@ import type { InstallerBridge } from '../../../src/bridge/contracts'
 
 const memory = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => { m.set(k, v) }, removeItem: (k: string) => { m.delete(k) }, m } }
 
-function app({ langStorage = memory(), settingsStorage = memory(), bridge = createDemoBridge() }: {
-  langStorage?: ReturnType<typeof memory>; settingsStorage?: ReturnType<typeof memory>; bridge?: InstallerBridge
+function app({ langStorage = memory(), settingsStorage = memory(), bridge = createDemoBridge(), reloadWindow = () => {} }: {
+  langStorage?: ReturnType<typeof memory>; settingsStorage?: ReturnType<typeof memory>; bridge?: InstallerBridge; reloadWindow?: () => void
 } = {}) {
   render(<LangProvider storage={langStorage} languages={['zh-CN']}>
-    <Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo storage={settingsStorage} />
+    <Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo storage={settingsStorage} reloadWindow={reloadWindow} />
   </LangProvider>)
   return { langStorage, settingsStorage }
 }
@@ -346,5 +347,66 @@ describe('Settings', () => {
       fireEvent.click(settingsButton())
       expect(document.querySelector('.ws-update-dot')).toBeNull()
     })
+  })
+})
+
+describe('Settings: the engine', () => {
+  const engineGroup = () => screen.getByRole('group', { name: '引擎' })
+
+  it('shows PowerShell 7 in use, and a switch reloads the window once native code accepts it', async () => {
+    const bridge = createDemoBridge(); const setEngine = vi.spyOn(bridge, 'setEngine'); const reloadWindow = vi.fn()
+    // StrictMode, as the real App runs: its double mount once left the answer dropped.
+    render(<StrictMode><LangProvider storage={memory()} languages={['zh-CN']}>
+      <Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo storage={memory()} reloadWindow={reloadWindow} />
+    </LangProvider></StrictMode>)
+    fireEvent.click(settingsButton())
+    await waitFor(() => expect(within(engineGroup()).getByRole('radio', { name: 'PowerShell 7（推荐）' })).toBeChecked())
+    fireEvent.click(within(engineGroup()).getByRole('radio', { name: 'Rust（测试）' }))
+    expect(setEngine).toHaveBeenCalledWith('rust')
+    await waitFor(() => expect(reloadWindow).toHaveBeenCalledTimes(1))
+  })
+
+  it('is disabled with the reason while an operation is unresolved or a batch needs recovery', async () => {
+    for (const [blocked, text] of [['busy', '有一次操作还没结束'], ['unfinished', '备份恢复里处理']] as const) {
+      const bridge = createDemoBridge(); vi.spyOn(bridge, 'engine').mockResolvedValue({ engine: 'powershell', blocked })
+      const { unmount } = render(<LangProvider storage={memory()} languages={['zh-CN']}>
+        <Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo storage={memory()} />
+      </LangProvider>)
+      fireEvent.click(settingsButton())
+      await waitFor(() => expect(engineGroup()).toBeDisabled())
+      expect(engineGroup()).toHaveAccessibleDescription(new RegExp(text))
+      unmount()
+    }
+  })
+
+  it('says so when the new engine does not start, keeps the choice, and offers the way back', async () => {
+    const bridge = createDemoBridge(); const reloadWindow = vi.fn()
+    let current: 'powershell' | 'rust' = 'powershell'
+    vi.spyOn(bridge, 'engine').mockImplementation(async () => ({ engine: current, blocked: null }))
+    const setEngine = vi.spyOn(bridge, 'setEngine').mockImplementation(async engine => {
+      current = engine
+      if (engine === 'rust') throw new InstallerFailure({ code: 'WORKER_UNAVAILABLE', message: 'Rust 引擎没有启动：后台组件意外退出。', messageEn: 'The Rust engine did not start: the background component stopped unexpectedly.', path: null })
+      return { engine, blocked: null }
+    })
+    app({ bridge, reloadWindow }); fireEvent.click(settingsButton())
+    await waitFor(() => expect(within(engineGroup()).getByRole('radio', { name: 'PowerShell 7（推荐）' })).toBeChecked())
+    fireEvent.click(within(engineGroup()).getByRole('radio', { name: 'Rust（测试）' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Rust 引擎没有启动')
+    expect(within(engineGroup()).getByRole('radio', { name: 'Rust（测试）' })).toBeChecked()
+    expect(reloadWindow).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: '切回 PowerShell 7' }))
+    expect(setEngine).toHaveBeenLastCalledWith('powershell')
+    await waitFor(() => expect(reloadWindow).toHaveBeenCalledTimes(1))
+  })
+
+  it('a refused switch leaves the engine as it was, with no way-back button', async () => {
+    const bridge = createDemoBridge()
+    vi.spyOn(bridge, 'setEngine').mockRejectedValue(new InstallerFailure({ code: 'BUSY', message: '有一次操作还没结束，处理完才能切换引擎。', messageEn: 'An operation has not finished. Finish it before switching engines.', path: null }))
+    app({ bridge }); fireEvent.click(settingsButton())
+    await waitFor(() => expect(within(engineGroup()).getByRole('radio', { name: 'PowerShell 7（推荐）' })).toBeChecked())
+    fireEvent.click(within(engineGroup()).getByRole('radio', { name: 'Rust（测试）' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('处理完才能切换引擎')
+    expect(within(engineGroup()).getByRole('radio', { name: 'PowerShell 7（推荐）' })).toBeChecked()
+    expect(screen.queryByRole('button', { name: /^切回/ })).toBeNull()
   })
 })
