@@ -146,24 +146,35 @@ describe('the committed releases.json', () => {
       expect(releases.releases.find(x => x.version === version)?.status, version).toBe('withdrawn')
     }
   })
-  it('recommends 0.1.4, stable, with a Setup and a portable ZIP, both served by the site itself', () => {
-    // Both files were built once from 54668f4 with the path-remapping build; 0.1.4-beta.2 from
-    // 856fb40 was the build accepted on the tester's PC. The Setup is not byte-reproducible, so
-    // these facts name the one file that exists. Change them only together.
+  it('recommends 0.1.5, stable, with the Setup on the site\'s R2 bucket and the portable ZIP on GitHub', () => {
+    // Both files were built once from fe2a80e with the path-remapping build; the Setup was then
+    // installed in a clean Windows Sandbox on the tester's PC. The Setup is not byte-reproducible,
+    // so these facts name the one file that exists. Change them only together.
     const r = recommendedRelease(releases)
     expect(r).toMatchObject({
-      version: '0.1.4', status: 'stable', bytes: 4_390_696, mirrorUrl: null, primaryUrl: '/files/Aimloom-v0.1.4.zip',
-      sha256: '8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14',
+      version: '0.1.5', status: 'stable', bytes: 114_017_809, mirrorUrl: null,
+      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.5/Aimloom-v0.1.5.zip',
+      sha256: 'cb34187ef962fb56d0a383acbf58fce7baa32728e38debfba13c329dd1e8d5b8',
       setup: {
-        url: '/files/Aimloom-Setup-v0.1.4.exe', bytes: 3_172_457,
-        sha256: 'aef57e8284b3a68ebb0eb09bbcba10122c3b920e4c9c79bc3758e34369a0095a',
+        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.5.exe', bytes: 80_782_712,
+        sha256: 'dc7fcab8cddbca172c9a5c6d3969b85bc49c5fcc236703b8e9e8ab95efca0901',
       },
     })
     expect(r?.contents).toContain('README.txt')
     expect(r?.contents).toContain('Aimloom.exe')
-    expect(r?.requires).toEqual(['PowerShell 7.0+', 'WebView2'])
+    expect(r?.contents).toContain('pwsh\\')
+    // PowerShell 7 ships inside (pwsh\), so WebView2 is the only requirement left.
+    expect(r?.requires).toEqual(['WebView2'])
     expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
     expect(r?.knownIssues.zh.length).toBeGreaterThan(0)
+  })
+  it('keeps 0.1.4 as a stable record, served by the site itself', () => {
+    const r = releases.releases.find(x => x.version === '0.1.4')
+    expect(r).toMatchObject({
+      status: 'stable', bytes: 4_390_696, primaryUrl: '/files/Aimloom-v0.1.4.zip',
+      sha256: '8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14',
+      setup: { url: '/files/Aimloom-Setup-v0.1.4.exe', bytes: 3_172_457, sha256: 'aef57e8284b3a68ebb0eb09bbcba10122c3b920e4c9c79bc3758e34369a0095a' },
+    })
   })
   it('lists no release that was never published', () => {
     expect(releases.releases.map(r => r.version)).not.toContain('0.1.0')

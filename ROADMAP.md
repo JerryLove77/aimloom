@@ -1,6 +1,6 @@
 # Aimloom roadmap
 
-Updated 2026-09-23. This is the repository-wide scheduling entry point.
+Updated 2026-09-30. This is the repository-wide scheduling entry point.
 [Shared workspace design](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
 is the product authority. The website is designed in
 [the website and explorer spec](docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md),
@@ -100,7 +100,7 @@ release, then the site is deployed once for all of it.
 - To settle in design: how closely the render matches each game, and what "reset to the pasted
   code" does.
 
-## v0.1.5 — the website explorer (EXP)
+## Released: v0.1.5 — the website explorer, PowerShell 7 inside (2026-09-30)
 
 Curated backgrounds, sounds and crosshairs to download from aimloom.dev, plus a link to them from
 the App. Moved behind the App core on 2026-09-22 (user: 「网页探索页放在0.1.5」). Decided with the
@@ -121,6 +121,7 @@ user on 2026-09-22 and written down in
   OpenID sign-in, needed for uploading only; trusted creators go live at once, others are reviewed.
 - **The App gains a link** to the explorer on Theme, Sounds and Crosshair, released as
   **`0.1.5-beta.N` through the beta channel**; the stable release stays 0.1.4 (user, 2026-09-22).
+  On 2026-09-30 the user chose to release 0.1.5 as the stable release instead.
 
 | Step | Status |
 |---|---|
@@ -134,10 +135,10 @@ user on 2026-09-22 and written down in
 | Content with permission | **Open** — the user asks the authors; the explorer has little curated content until then |
 | `0.1.5-beta.1` on GitHub | **Done** 2026-09-22 (pre-release only; the site's beta field is not set) |
 | Deploy the site | **Done** 2026-09-23 (PRs #15 and #16; the READMEs followed in #17) |
-| `0.1.5-beta.2` / the site's beta field | Not released: the only 0.1.5 build is `0.1.5-beta.1`, and `latest.json`'s `beta` is `null` |
-| **PowerShell 7 in every release** (user, 2026-09-24: a tester in China, with a proxy, saw the Setup's winget step stall with no progress; 「不行就把powershell 7直接打进aimloom」): the official 7.6.6 ZIP, pinned, in `pwsh\`, tried first by the App and the Setup; the winget offer kept as a fallback, Store first and in a visible window | **Built** 2026-09-24 on `feat/bundled-pwsh`: suites on the tester's PC, the engine suites run under the bundled copy, a real `0.1.5-test.99` Setup (77 MB) and ZIP (109 MB). Not yet installed on a clean PC |
+| Release | **Stable 0.1.5**, 2026-09-30, built once from `fe2a80e` (no `beta.2`): the Setup (80,782,712 bytes) on dl.aimloom.dev, the Setup and the portable ZIP (114,017,809 bytes) on the GitHub release. The user installed the Setup in a clean Windows Sandbox and opened the App: it started without asking for PowerShell |
+| **PowerShell 7 in every release** (user, 2026-09-24: a tester in China, with a proxy, saw the Setup's winget step stall with no progress; 「不行就把powershell 7直接打进aimloom」): the official 7.6.6 ZIP, pinned, in `pwsh\`, tried first by the App and the Setup; the winget offer kept as a fallback, Store first and in a visible window | **Built** 2026-09-24 on `feat/bundled-pwsh`: suites on the tester's PC, the engine suites run under the bundled copy, a real `0.1.5-test.99` Setup (77 MB) and ZIP (109 MB). **Released in 0.1.5**; its Setup was installed in a clean Windows Sandbox on 2026-09-30 |
 | **Releases over 25 MiB on R2**; the site offers **only the Setup**, the portable ZIP stays on GitHub (user, 2026-09-24) | **Built** 2026-09-24 (`release:upload`, the deploy's live check, the Download page) |
-| **Feedback tickets on the site**: a side panel from a fixed button and the footer; the changelog moves to the footer (user, 2026-09-24) | **Built** 2026-09-24: `/api/tickets`, migration 0004, workerd tests, checked in a browser with Turnstile's test key. Not designed in Figma |
+| **Feedback tickets on the site**: a side panel from a fixed button and the footer; the changelog moves to the footer (user, 2026-09-24) | **Built** 2026-09-24: `/api/tickets`, migration 0004, workerd tests, checked in a browser with Turnstile's test key. Ships with 0.1.5. Not designed in Figma |
 
 ## After v0.1.5
 

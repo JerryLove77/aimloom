@@ -48,9 +48,12 @@ describe('build output', () => {
   })
 
   it('loads nothing from the network', () => {
+    // A release over 25 MiB is a download link to the site's own R2 bucket (dl.aimloom.dev/releases/);
+    // nothing is ever loaded from another origin.
     for (const r of ['', ...routes]) {
       const html = page(r)
-      expect(html, r).not.toMatch(/(src|href)="https?:\/\/(?!github\.com)/)
+      expect(html, r).not.toMatch(/src="https?:\/\/(?!github\.com)/)
+      expect(html, r).not.toMatch(/href="https?:\/\/(?!github\.com|dl\.aimloom\.dev\/releases\/)/)
     }
   })
 
@@ -63,11 +66,11 @@ describe('build output', () => {
   it('home hides the showcase while showcase.json is empty', () => {
     expect(page('zh')).not.toContain('id="showcase"')
   })
-  it('home offers the 0.1.4 Setup from the site itself, in the hero and the closing block, and no ZIP', () => {
+  it('home offers the 0.1.5 Setup from the site\'s R2 bucket, in the hero and the closing block, and no ZIP', () => {
     for (const r of ['zh', 'en']) {
       const html = page(r)
       expect(html.match(/data-download-state="stable"/g)?.length, r).toBe(2)
-      expect(html.match(/<a[^>]+href="\/files\/Aimloom-Setup-v0\.1\.4\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
+      expect(html.match(/<a[^>]+href="https:\/\/dl\.aimloom\.dev\/releases\/Aimloom-Setup-v0\.1\.5\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
       expect(html, r).not.toMatch(/href="[^"]+\.zip"/)
     }
     expect(page('en')).toContain('One setup for each way you train.')
@@ -78,9 +81,9 @@ describe('build output', () => {
     for (const r of ['zh/download', 'en/download']) {
       const html = page(r)
       expect(html, r).toContain('data-download-state="stable"')
-      expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="/files/Aimloom-Setup-v0.1.4.exe"'])
-      expect(html, r).toContain('aef57e8284b3a68ebb0eb09bbcba10122c3b920e4c9c79bc3758e34369a0095a')
-      expect(html, r).not.toContain('8020db50161b59de4dee51c9f754bc7b7840298c68f4580f31b0c167e8165c14')
+      expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual(['href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.5.exe"'])
+      expect(html, r).toContain('dc7fcab8cddbca172c9a5c6d3969b85bc49c5fcc236703b8e9e8ab95efca0901')
+      expect(html, r).not.toContain('cb34187ef962fb56d0a383acbf58fce7baa32728e38debfba13c329dd1e8d5b8')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')
       expect(html, r).not.toContain('id="beta"')
