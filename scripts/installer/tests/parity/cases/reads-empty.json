@@ -1,0 +1,35 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "schemeList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "crosshairList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "locate",
+      "args": {
+        "gameRoot": "<game>/missing"
+      }
+    },
+    {
+      "request": "locate",
+      "args": {
+        "gameRoot": "<pack>"
+      }
+    }
+  ]
+}

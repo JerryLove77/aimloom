@@ -42,13 +42,27 @@ fn literal(text: &str) -> Json {
     json::parse(text, json::ReadOptions { strings: json::Strings::Literal, keys: json::Keys::KeepCaseVariants, max_depth: 64 }).unwrap()
 }
 
-fn resolve(value: &Json, game: &str, plan: &str) -> Json {
+fn resolve(value: &Json, game: &str, pack: &str, plan: &str) -> Json {
     match value {
-        Json::String(s) if s == "<game>" => Json::str(game),
         Json::String(s) if s == "<plan>" => Json::str(plan),
-        Json::Object(fields) => Json::Object(fields.iter().map(|(k, v)| (k.clone(), resolve(v, game, plan))).collect()),
-        Json::Array(items) => Json::Array(items.iter().map(|v| resolve(v, game, plan)).collect()),
+        Json::String(s) if s.starts_with("<game>") => Json::str(format!("{game}{}", &s[6..])),
+        Json::String(s) if s.starts_with("<pack>") => Json::str(format!("{pack}{}", &s[6..])),
+        Json::Object(fields) => Json::Object(fields.iter().map(|(k, v)| (k.clone(), resolve(v, game, pack, plan))).collect()),
+        Json::Array(items) => Json::Array(items.iter().map(|v| resolve(v, game, pack, plan)).collect()),
         other => other.clone(),
+    }
+}
+
+fn write_files(root: &Path, files: Option<&Json>, fixtures: &Path) {
+    let Some(Json::Object(entries)) = files else { return };
+    for (relative, spec) in entries {
+        let path = root.join(relative);
+        if spec.get("dir").is_some() { std::fs::create_dir_all(&path).unwrap(); continue; }
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        match spec.get("fixture").and_then(Json::as_str) {
+            Some(fixture) => { std::fs::copy(fixtures.join(fixture), &path).unwrap(); }
+            None => std::fs::write(&path, spec.get("text").and_then(Json::as_str).unwrap()).unwrap(),
+        }
     }
 }
 
@@ -162,12 +176,15 @@ fn run_case(name: &str, case: &Json) -> Json {
     let root = base.join(format!("kvk-parity-{}", app_lib::engine::store::new_guid()));
     let game = paths::get_full_path(&root.join("游戏 with spaces").to_string_lossy()).unwrap();
     let local = paths::get_full_path(&root.join("Local Data").to_string_lossy()).unwrap();
+    let pack = paths::get_full_path(&root.join("配置 pack").to_string_lossy()).unwrap();
     let primary = Path::new(&game).join("FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json");
     let fixtures = parity_dir().join("fixtures");
     std::fs::create_dir_all(primary.parent().unwrap()).unwrap();
     std::fs::create_dir_all(Path::new(&game).join("FPSAimTrainer/sounds")).unwrap();
     std::fs::create_dir_all(&local).unwrap();
     std::fs::copy(fixtures.join(case.get("fixture").and_then(Json::as_str).unwrap()), &primary).unwrap();
+    write_files(Path::new(&game), case.get("gameFiles"), &fixtures);
+    if case.get("packFiles").is_some() { std::fs::create_dir_all(&pack).unwrap(); write_files(Path::new(&pack), case.get("packFiles"), &fixtures); }
     let host = Rc::new(HostState::default());
     let mut session = Session::new(Box::new(ParityHost(host.clone())), &local).unwrap();
     let mut steps: Vec<(Vec<String>, String)> = Vec::new();
@@ -179,7 +196,7 @@ fn run_case(name: &str, case: &Json) -> Json {
                 Some(raw) => raw.clone(),
                 None => Json::object(vec![
                     ("v", Json::int(1)), ("requestId", Json::str(format!("r{number}"))),
-                    ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &game, &last_plan)),
+                    ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &game, &pack, &last_plan)),
                 ]),
             };
             let request = json::parse(&value.to_compact(), REQUEST_OPTIONS).unwrap();
@@ -224,7 +241,10 @@ fn run_case(name: &str, case: &Json) -> Json {
 
     let json_root = |p: &str| p.replace('\\', "\\\\").replace('"', "\\\"");
     let mut n = Normalizer {
-        roots: vec![(json_root(&game), "<game>".into()), (json_root(&local), "<local>".into()), (game.clone(), "<game>".into()), (local.clone(), "<local>".into())],
+        roots: vec![
+            (json_root(&game), "<game>".into()), (json_root(&local), "<local>".into()), (json_root(&pack), "<pack>".into()),
+            (game.clone(), "<game>".into()), (local.clone(), "<local>".into()), (pack.clone(), "<pack>".into()),
+        ],
         game_hash: paths::text_hash(&lower_invariant(&game)),
         pristine: Vec::new(),
         guids: Vec::new(),

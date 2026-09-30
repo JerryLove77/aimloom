@@ -123,6 +123,41 @@ impl Session {
                 assert_fields(args, &[], "args")?;
                 Ok(Json::str(self.engine.game_state()))
             }
+            "locate" => {
+                assert_fields(args, &["gameRoot"], "args")?;
+                let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
+                Ok(self.location(&context))
+            }
+            "catalog" => {
+                assert_fields(args, &["packRoot"], "args")?;
+                let files = super::txn::pack_files(string_arg(args, "packRoot")?)?;
+                // Group-Object then Sort-Object Name: the fixed category names, alphabetically.
+                let mut categories: Vec<(String, i64)> = Vec::new();
+                for item in &files.items {
+                    match categories.iter_mut().find(|(c, _)| *c == item.category) { Some(entry) => entry.1 += 1, None => categories.push((item.category.clone(), 1)) }
+                }
+                categories.sort();
+                Ok(Json::object(vec![
+                    ("packRoot", Json::str(&files.root)),
+                    ("categories", Json::Array(categories.into_iter().map(|(c, n)| Json::object(vec![("category", Json::str(c)), ("count", Json::int(n))])).collect())),
+                    ("skipped", Json::Array(files.skipped.iter().map(Json::str).collect())),
+                ]))
+            }
+            "schemeList" => {
+                assert_fields(args, &["gameRoot"], "args")?;
+                let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
+                Ok(super::lists::scheme_list_json(&super::lists::installed_themes(&self.engine, &context)?))
+            }
+            "audioList" => {
+                assert_fields(args, &["gameRoot"], "args")?;
+                let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
+                super::lists::audio_list_json(&self.engine, &context)
+            }
+            "crosshairList" => {
+                assert_fields(args, &["gameRoot"], "args")?;
+                let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
+                super::lists::crosshair_list_json(&self.engine, &context)
+            }
             "enemyList" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;

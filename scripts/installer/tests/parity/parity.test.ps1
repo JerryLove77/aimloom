@@ -40,19 +40,29 @@ function Get-ParitySha([byte[]]$Bytes) {
     try { return ([BitConverter]::ToString($sha.ComputeHash($Bytes))).Replace('-','').ToLowerInvariant() } finally { $sha.Dispose() }
 }
 
-function Resolve-ParityValue($Value,[string]$Game,[string]$Plan) {
+function Resolve-ParityValue($Value,[string]$Game,[string]$Pack,[string]$Plan) {
     if ($Value -is [string]) {
-        if ($Value -ceq '<game>') { return $Game }
         if ($Value -ceq '<plan>') { return $Plan }
+        if ($Value.StartsWith('<game>',[StringComparison]::Ordinal)) { return $Game+$Value.Substring(6) }
+        if ($Value.StartsWith('<pack>',[StringComparison]::Ordinal)) { return $Pack+$Value.Substring(6) }
         return $Value
     }
     if ($Value -is [Collections.IDictionary]) {
         $copy=[ordered]@{}
-        foreach ($key in $Value.Keys) { $copy[$key]=Resolve-ParityValue $Value[$key] $Game $Plan }
+        foreach ($key in $Value.Keys) { $copy[$key]=Resolve-ParityValue $Value[$key] $Game $Pack $Plan }
         return $copy
     }
-    if ($Value -is [Array]) { return ,@($Value | ForEach-Object { Resolve-ParityValue $_ $Game $Plan }) }
+    if ($Value -is [Array]) { return ,@($Value | ForEach-Object { Resolve-ParityValue $_ $Game $Pack $Plan }) }
     return $Value
+}
+function Write-ParityFiles([string]$Root,$Files,[string]$Fixtures) {
+    foreach ($relative in $Files.Keys) {
+        $spec=$Files[$relative]; $path=Join-Path $Root $relative
+        if ($spec.Contains('dir')) { $null=[IO.Directory]::CreateDirectory($path); continue }
+        $null=[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($path))
+        if ($spec.Contains('fixture')) { [IO.File]::WriteAllBytes($path,[IO.File]::ReadAllBytes((Join-Path $Fixtures $spec['fixture']))) }
+        else { [IO.File]::WriteAllBytes($path,[Text.UTF8Encoding]::new($false).GetBytes([string]$spec['text'])) }
+    }
 }
 
 function Get-ParityFiles([string]$Root) {
@@ -90,12 +100,15 @@ function Invoke-ParityCase([string]$Name,$Case) {
     $root=Join-Path $base ('kvk-parity-'+[guid]::NewGuid().ToString('N'))
     $game=[IO.Path]::GetFullPath((Join-Path $root '游戏 with spaces'))
     $local=[IO.Path]::GetFullPath((Join-Path $root 'Local Data'))
+    $pack=[IO.Path]::GetFullPath((Join-Path $root '配置 pack'))
     $primary=Join-Path $game 'FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json'
     $fixtures=Join-Path $PSScriptRoot 'fixtures'
     $null=[IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($primary))
     $null=[IO.Directory]::CreateDirectory((Join-Path $game 'FPSAimTrainer/sounds'))
     $null=[IO.Directory]::CreateDirectory($local)
     [IO.File]::WriteAllBytes($primary,[IO.File]::ReadAllBytes((Join-Path $fixtures $Case['fixture'])))
+    if ($Case.Contains('gameFiles')) { Write-ParityFiles $game $Case['gameFiles'] $fixtures }
+    if ($Case.Contains('packFiles')) { $null=[IO.Directory]::CreateDirectory($pack); Write-ParityFiles $pack $Case['packFiles'] $fixtures }
     Clear-KvkDataRootMemo
     $session=New-KvkGuiSession -RuntimeRoot $installerRoot -LocalDataRoot $local
     $script:ProcessListings=0; $script:RunningFrom=$null
@@ -106,7 +119,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
             if ($step.Contains('request') -or $step.Contains('raw')) {
                 $number++
                 if ($step.Contains('raw')) { $value=$step['raw'] }
-                else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $lastPlan)} }
+                else { $value=[ordered]@{v=1;requestId=('r'+$number);op=$step['request'];args=(Resolve-ParityValue $step['args'] $game $pack $lastPlan)} }
                 # The request travels as a JSON line and is parsed exactly as the worker parses it.
                 $line=ConvertTo-Json -InputObject $value -Depth 32 -Compress
                 $strings=$script:KvkJsonStrings
@@ -163,7 +176,7 @@ function Invoke-ParityCase([string]$Name,$Case) {
 
     $jsonRoot={ param($path) $path.Replace('\','\\').Replace('"','\"') }
     $context=[pscustomobject]@{
-        Roots=@(@((& $jsonRoot $game),'<game>'),@((& $jsonRoot $local),'<local>'),@($game,'<game>'),@($local,'<local>'))
+        Roots=@(@((& $jsonRoot $game),'<game>'),@((& $jsonRoot $local),'<local>'),@((& $jsonRoot $pack),'<pack>'),@($game,'<game>'),@($local,'<local>'),@($pack,'<pack>'))
         GameHash=(Get-KvkTextHash $game.ToLowerInvariant())
         Pristine=[ordered]@{}
         Guids=[ordered]@{}

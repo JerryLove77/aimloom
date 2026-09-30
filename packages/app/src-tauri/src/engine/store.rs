@@ -288,3 +288,20 @@ pub fn copy_snapshot(engine: &Engine, source: &str, destination: &str, expected:
 
 /// `[Guid]::NewGuid().ToString('N')`.
 pub fn new_guid() -> String { uuid::Uuid::new_v4().simple().to_string() }
+
+/// `[IO.Directory]::EnumerateFiles(directory, '*<suffix>', TopDirectoryOnly)` with Windows
+/// matching (the suffix ignores case on every host), in `Sort-KvkByName` order of the full
+/// paths it returns (`directory` joined with each name).
+pub fn enumerate_files(directory: &str, suffix: &str) -> EngineResult<Vec<String>> {
+    let mut paths = Vec::new();
+    for entry in std::fs::read_dir(directory).map_err(|e| EngineError::io(&e))? {
+        let entry = entry.map_err(|e| EngineError::io(&e))?;
+        if std::fs::metadata(entry.path()).map(|m| m.is_dir()).unwrap_or(false) { continue; }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if name.len() >= suffix.len() && name.is_char_boundary(name.len() - suffix.len()) && eq_ignore_case(&name[name.len() - suffix.len()..], suffix) {
+            paths.push(join(directory, &name));
+        }
+    }
+    paths.sort_by(|a, b| super::txn::name_order(a, b));
+    Ok(paths)
+}

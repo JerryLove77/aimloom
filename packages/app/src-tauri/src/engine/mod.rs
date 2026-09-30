@@ -10,6 +10,7 @@
 
 pub mod enemy;
 pub mod json;
+pub mod lists;
 pub mod manifest;
 pub mod paths;
 pub mod platform;

@@ -127,6 +127,14 @@ pub enum Strings { Dates, Literal }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Keys { RefuseCaseVariants, KeepCaseVariants }
 
+/// Which parser is being copied. `Newtonsoft` is `ConvertFrom-Json`: comments, trailing commas,
+/// single quotes, bare property names, `NaN`/`Infinity`/`undefined`, hex and octal integers, any
+/// Unicode whitespace, raw control characters inside strings (probed on the test PC,
+/// 2026-09-30). `Strict` is System.Text.Json's `JsonDocument` defaults, which the Profile store
+/// uses: RFC 8259 and nothing more.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Grammar { Newtonsoft, Strict }
+
 #[derive(Clone, Copy, Debug)]
 pub struct ReadOptions { pub strings: Strings, pub keys: Keys, pub max_depth: usize }
 
@@ -138,44 +146,79 @@ impl ReadOptions {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ParseError(pub String);
 
-/// Parses one JSON document. The grammar is strict JSON; the lenient Newtonsoft extras
-/// (comments, trailing commas, single quotes, bare keys, NaN) arrive with the theme reader.
-pub fn parse(text: &str, options: ReadOptions) -> Result<Json, ParseError> {
-    let mut parser = Parser { chars: text.chars().collect(), pos: 0, options, depth: 0 };
-    parser.skip_ws();
-    if parser.pos >= parser.chars.len() { return Ok(Json::Null); }
+/// Parses one JSON document the way `ConvertFrom-Json` does.
+pub fn parse(text: &str, options: ReadOptions) -> Result<Json, ParseError> { parse_with(text, options, Grammar::Newtonsoft) }
+
+/// Parses one JSON document with the given grammar.
+pub fn parse_with(text: &str, options: ReadOptions, grammar: Grammar) -> Result<Json, ParseError> {
+    let mut parser = Parser { chars: text.chars().collect(), pos: 0, options, grammar, depth: 0 };
+    parser.skip_ws()?;
+    if parser.pos >= parser.chars.len() {
+        return if grammar == Grammar::Strict { Err(parser.error("The input does not contain any JSON tokens")) } else { Ok(Json::Null) };
+    }
     let value = parser.value()?;
-    parser.skip_ws();
+    parser.skip_ws()?;
     if parser.pos < parser.chars.len() { return Err(parser.error("Additional text encountered after finished reading JSON content")); }
     Ok(value)
 }
 
-struct Parser { chars: Vec<char>, pos: usize, options: ReadOptions, depth: usize }
+struct Parser { chars: Vec<char>, pos: usize, options: ReadOptions, grammar: Grammar, depth: usize }
 
 impl Parser {
     fn error(&self, what: &str) -> ParseError { ParseError(format!("{what} at position {}", self.pos)) }
 
+    fn lenient(&self) -> bool { self.grammar == Grammar::Newtonsoft }
+
     fn peek(&self) -> Option<char> { self.chars.get(self.pos).copied() }
 
-    fn skip_ws(&mut self) {
-        while let Some(c) = self.peek() { if matches!(c, ' ' | '\t' | '\n' | '\r') { self.pos += 1; } else { break; } }
+    fn peek_at(&self, offset: usize) -> Option<char> { self.chars.get(self.pos + offset).copied() }
+
+    /// Whitespace, and in the Newtonsoft grammar any Unicode whitespace and comments.
+    fn skip_ws(&mut self) -> Result<(), ParseError> {
+        loop {
+            match self.peek() {
+                Some(' ' | '\t' | '\n' | '\r') => self.pos += 1,
+                Some(c) if self.lenient() && c.is_whitespace() => self.pos += 1,
+                Some('/') if self.lenient() && self.peek_at(1) == Some('*') => {
+                    self.pos += 2;
+                    loop {
+                        match self.peek() {
+                            None => return Err(self.error("Unexpected end while parsing comment")),
+                            Some('*') if self.peek_at(1) == Some('/') => { self.pos += 2; break; }
+                            Some(_) => self.pos += 1,
+                        }
+                    }
+                }
+                Some('/') if self.lenient() && self.peek_at(1) == Some('/') => {
+                    while let Some(c) = self.peek() { if c == '\n' || c == '\r' { break; } self.pos += 1; }
+                }
+                _ => return Ok(()),
+            }
+        }
     }
 
     fn value(&mut self) -> Result<Json, ParseError> {
-        self.skip_ws();
+        self.skip_ws()?;
         match self.peek() {
             Some('{') => self.object(),
             Some('[') => self.array(),
-            Some('"') => {
-                let s = self.string()?;
-                Ok(Json::String(if self.options.strings == Strings::Dates { round_trip_date(&s).unwrap_or(s) } else { s }))
-            }
+            Some('"') => self.string_value(),
+            Some('\'') if self.lenient() => self.string_value(),
             Some('t') => self.literal("true", Json::Bool(true)),
             Some('f') => self.literal("false", Json::Bool(false)),
             Some('n') => self.literal("null", Json::Null),
-            Some(c) if c == '-' || c.is_ascii_digit() => self.number(),
+            Some('u') if self.lenient() => self.literal("undefined", Json::Null),
+            Some('N') if self.lenient() => self.literal("NaN", Json::Number("NaN".into())),
+            Some('I') if self.lenient() => self.literal("Infinity", Json::Number("Infinity".into())),
+            Some('-') if self.lenient() && self.peek_at(1) == Some('I') => { self.pos += 1; self.literal("Infinity", Json::Number("-Infinity".into())) }
+            Some(c) if c == '-' || c.is_ascii_digit() || (self.lenient() && c == '.') => self.number(),
             _ => Err(self.error("Unexpected character encountered while parsing value")),
         }
+    }
+
+    fn string_value(&mut self) -> Result<Json, ParseError> {
+        let s = self.string()?;
+        Ok(Json::String(if self.options.strings == Strings::Dates { round_trip_date(&s).unwrap_or(s) } else { s }))
     }
 
     fn enter(&mut self) -> Result<(), ParseError> {
@@ -184,17 +227,28 @@ impl Parser {
         Ok(())
     }
 
+    fn property_name(&mut self) -> Result<String, ParseError> {
+        match self.peek() {
+            Some('"') => self.string(),
+            Some('\'') if self.lenient() => self.string(),
+            Some(c) if self.lenient() && (c.is_alphanumeric() || c == '_' || c == '$') => {
+                let start = self.pos;
+                while self.peek().is_some_and(|c| c.is_alphanumeric() || c == '_' || c == '$') { self.pos += 1; }
+                Ok(self.chars[start..self.pos].iter().collect())
+            }
+            _ => Err(self.error("Invalid property identifier character")),
+        }
+    }
+
     fn object(&mut self) -> Result<Json, ParseError> {
         self.enter()?;
         self.pos += 1;
         let mut fields: Vec<(String, Json)> = Vec::new();
-        self.skip_ws();
-        if self.peek() == Some('}') { self.pos += 1; self.depth -= 1; return Ok(Json::Object(fields)); }
         loop {
-            self.skip_ws();
-            if self.peek() != Some('"') { return Err(self.error("Invalid property identifier character")); }
-            let key = self.string()?;
-            self.skip_ws();
+            self.skip_ws()?;
+            if self.peek() == Some('}') && (fields.is_empty() || self.lenient()) { self.pos += 1; self.depth -= 1; return Ok(Json::Object(fields)); }
+            let key = self.property_name()?;
+            self.skip_ws()?;
             if self.peek() != Some(':') { return Err(self.error("Invalid character after parsing property name")); }
             self.pos += 1;
             let value = self.value()?;
@@ -206,7 +260,7 @@ impl Parser {
                 }
                 fields.push((key, value));
             }
-            self.skip_ws();
+            self.skip_ws()?;
             match self.peek() {
                 Some(',') => { self.pos += 1; }
                 Some('}') => { self.pos += 1; self.depth -= 1; return Ok(Json::Object(fields)); }
@@ -219,11 +273,11 @@ impl Parser {
         self.enter()?;
         self.pos += 1;
         let mut items = Vec::new();
-        self.skip_ws();
-        if self.peek() == Some(']') { self.pos += 1; self.depth -= 1; return Ok(Json::Array(items)); }
         loop {
+            self.skip_ws()?;
+            if self.peek() == Some(']') && (items.is_empty() || self.lenient()) { self.pos += 1; self.depth -= 1; return Ok(Json::Array(items)); }
             items.push(self.value()?);
-            self.skip_ws();
+            self.skip_ws()?;
             match self.peek() {
                 Some(',') => { self.pos += 1; }
                 Some(']') => { self.pos += 1; self.depth -= 1; return Ok(Json::Array(items)); }
@@ -243,10 +297,48 @@ impl Parser {
     }
 
     fn number(&mut self) -> Result<Json, ParseError> {
+        if !self.lenient() { return self.strict_number(); }
+        // Newtonsoft reads a run of number characters, then decides: 0x… is hex, a leading zero
+        // followed by more digits is octal, anything with '.', 'e' or 'E' is a double.
+        let start = self.pos;
+        while self.peek().is_some_and(|c| c.is_ascii_hexdigit() || matches!(c, '-' | '+' | '.' | 'x' | 'X')) { self.pos += 1; }
+        let text: String = self.chars[start..self.pos].iter().collect();
+        let (negative, body) = match text.strip_prefix('-') { Some(rest) => (true, rest), None => (false, text.as_str()) };
+        let invalid = || ParseError(format!("Input string '{text}' is not a valid number"));
+        let integer = |digits: &str, radix: u32| -> Result<Json, ParseError> {
+            let magnitude = i128::from_str_radix(digits, radix).map_err(|_| invalid())?;
+            Ok(Json::Number(if negative { (-magnitude).to_string() } else { magnitude.to_string() }))
+        };
+        if let Some(hex) = body.strip_prefix("0x").or_else(|| body.strip_prefix("0X")) { return integer(hex, 16); }
+        if body.len() > 1 && body.starts_with('0') && body.bytes().all(|b| b.is_ascii_digit()) { return integer(&body[1..], 8); }
+        let well_formed = {
+            let b = body.as_bytes();
+            let mut i = 0;
+            while i < b.len() && b[i].is_ascii_digit() { i += 1; }
+            let int_digits = i;
+            let mut frac_digits = 0;
+            if i < b.len() && b[i] == b'.' { i += 1; let f = i; while i < b.len() && b[i].is_ascii_digit() { i += 1; } frac_digits = i - f; }
+            let mut ok = int_digits + frac_digits > 0;
+            if i < b.len() && (b[i] == b'e' || b[i] == b'E') {
+                i += 1;
+                if i < b.len() && (b[i] == b'+' || b[i] == b'-') { i += 1; }
+                let e = i;
+                while i < b.len() && b[i].is_ascii_digit() { i += 1; }
+                ok &= i > e;
+            }
+            ok && i == b.len()
+        };
+        if !well_formed { return Err(invalid()); }
+        Ok(Json::Number(text))
+    }
+
+    fn strict_number(&mut self) -> Result<Json, ParseError> {
         let start = self.pos;
         if self.peek() == Some('-') { self.pos += 1; }
         let digits = |p: &mut Parser| { let s = p.pos; while p.peek().is_some_and(|c| c.is_ascii_digit()) { p.pos += 1; } p.pos - s };
-        if digits(self) == 0 { return Err(self.error("Invalid number")); }
+        let first = self.peek();
+        let n = digits(self);
+        if n == 0 || (n > 1 && first == Some('0')) { return Err(self.error("Invalid number")); }
         if self.peek() == Some('.') { self.pos += 1; if digits(self) == 0 { return Err(self.error("Invalid number")); } }
         if matches!(self.peek(), Some('e' | 'E')) {
             self.pos += 1;
@@ -257,30 +349,33 @@ impl Parser {
     }
 
     fn string(&mut self) -> Result<String, ParseError> {
+        let quote = self.peek().unwrap_or('"');
         self.pos += 1;
         let mut units: Vec<u16> = Vec::new();
         loop {
             let Some(c) = self.peek() else { return Err(self.error("Unterminated string")) };
             self.pos += 1;
             match c {
-                '"' => break,
+                c if c == quote => break,
                 '\\' => {
                     let Some(e) = self.peek() else { return Err(self.error("Unterminated string")) };
                     self.pos += 1;
                     match e {
                         '"' => units.push(0x22), '\\' => units.push(0x5c), '/' => units.push(0x2f),
+                        '\'' if self.lenient() => units.push(0x27),
                         'b' => units.push(0x08), 'f' => units.push(0x0c), 'n' => units.push(0x0a),
                         'r' => units.push(0x0d), 't' => units.push(0x09),
                         'u' => {
                             let hex: String = self.chars.get(self.pos..self.pos + 4).map(|s| s.iter().collect()).unwrap_or_default();
-                            let unit = u16::from_str_radix(&hex, 16).map_err(|_| self.error("Invalid Unicode escape"))?;
                             if hex.len() != 4 { return Err(self.error("Invalid Unicode escape")); }
+                            let unit = u16::from_str_radix(&hex, 16).map_err(|_| self.error("Invalid Unicode escape"))?;
                             self.pos += 4;
                             units.push(unit);
                         }
                         _ => return Err(self.error("Bad JSON escape sequence")),
                     }
                 }
+                c if !self.lenient() && (c as u32) < 0x20 => return Err(self.error("A control character is not allowed in a string")),
                 c => { let mut buf = [0u16; 2]; units.extend_from_slice(c.encode_utf16(&mut buf)); }
             }
         }
@@ -383,8 +478,29 @@ mod tests {
     }
 
     #[test]
+    fn accepts_what_convert_from_json_accepts() {
+        // Each input and its reading on the test PC (probe, 2026-09-30).
+        let cases = [
+            ("{\"a\":1 /*c*/}", r#"{"a":1}"#), ("{\"a\":1 // c\n}", r#"{"a":1}"#), ("{\"a\":1,}", r#"{"a":1}"#),
+            ("[1,]", "[1]"), ("{'a':1}", r#"{"a":1}"#), ("{a:1}", r#"{"a":1}"#), ("{\"n\":NaN}", r#"{"n":NaN}"#),
+            ("{\"a\":undefined}", r#"{"a":null}"#), ("{\"a\":01}", r#"{"a":1}"#), ("{\"a\":.5}", r#"{"a":.5}"#),
+            ("{\"a\":\"x\ny\"}", "{\"a\":\"x\\ny\"}"), ("{\"a\":0x1F}", r#"{"a":31}"#), ("null", "null"), ("  ", "null"),
+        ];
+        for (input, expected) in cases { assert_eq!(read(input).to_compact(), expected, "{input}"); }
+    }
+
+    #[test]
+    fn the_strict_grammar_is_rfc_json() {
+        let strict = |t: &str| parse_with(t, ReadOptions::CONVERT_FROM_JSON, Grammar::Strict);
+        for bad in ["{\"a\":1,}", "[1,]", "{'a':1}", "{a:1}", "{\"a\":NaN}", "{\"a\":01}", "/*c*/{}", "{\"a\":\"x\ny\"}", ""] {
+            assert!(strict(bad).is_err(), "{bad}");
+        }
+        assert_eq!(strict(r#"{"a":[1,2.5e3,-0,"\u00e9"]}"#).unwrap().to_compact(), r#"{"a":[1,2.5e3,-0,"é"]}"#);
+    }
+
+    #[test]
     fn refuses_what_convert_from_json_refuses() {
-        for bad in ["\u{feff}{}", "{\"a\":1} x", "{\"a\":+1}", "[1 2]"] {
+        for bad in ["\u{feff}{}", "{\"a\":1} x", "{\"a\":+1}", "[1 2]", "{\"a\":1e}"] {
             assert!(parse(bad, ReadOptions::CONVERT_FROM_JSON).is_err(), "{bad}");
         }
         assert_eq!(read(""), Json::Null);
