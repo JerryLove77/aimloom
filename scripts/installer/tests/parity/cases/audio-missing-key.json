@@ -1,0 +1,36 @@
+{
+  "fixture": "enemy-crlf.json",
+  "gameFiles": {
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/kill.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/Zeta.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/dup.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/Dup.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/1.wav": {
+      "text": "w"
+    }
+  },
+  "steps": [
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          "hit"
+        ],
+        "revision": 1
+      }
+    }
+  ]
+}

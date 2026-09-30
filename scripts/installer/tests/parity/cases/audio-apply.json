@@ -1,0 +1,117 @@
+{
+  "fixture": "sample-primary.json",
+  "gameFiles": {
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/kill.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/Zeta.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/dup.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/Dup.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/1.wav": {
+      "text": "w"
+    }
+  },
+  "steps": [
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "kill",
+        "names": [
+          "hit",
+          "KILL"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-1",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "mbsGood",
+        "names": [
+          "Zeta"
+        ],
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-2",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "spawn",
+        "names": [],
+        "revision": 3
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-3",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planAudio",
+      "args": {
+        "gameRoot": "<game>",
+        "event": "KILL",
+        "names": [
+          "hit",
+          "KILL"
+        ],
+        "revision": 4
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-4",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

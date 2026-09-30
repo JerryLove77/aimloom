@@ -1,0 +1,69 @@
+{
+  "fixture": "sample-primary.json",
+  "gameFiles": {
+    "FPSAimTrainer/Saved/SaveGames/Themes/Default.json": {
+      "fixture": "theme-default.json"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json": {
+      "fixture": "theme-legacy.json"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/Smári-ctrl.json": {
+      "fixture": "theme-smari-utf16.json"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/Hauntr.json": {
+      "fixture": "theme-hauntr.json"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/numbers.json": {
+      "text": "{\"themeName\":\"Numbers\",\"wallRoughness\":0.30000000000000004,\"wallTextureScale\":1e21,\"floorTextureScale\":0.000001,\"wallTint\":{\"x\":0.5,\"y\":1,\"z\":0},\"skyPresetId\":3.0,\"cloudCoverId\":5,\"skyColor\":{\"r\":255,\"g\":0.0,\"b\":12,\"a\":255},\"solidSkyColor\":false,\"sunVisible\":true}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/broken.json": {
+      "text": "{\"themeName\":"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/same-a.json": {
+      "text": "{\"themeName\": \"Twin\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/same-b.json": {
+      "text": "{\"themeName\": \"twin\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-tint.json": {
+      "text": "{\"themeName\": \"Bad Tint\", \"wallTint\": {\"x\": 2, \"y\": 0, \"z\": 0}}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-sky.json": {
+      "text": "{\"themeName\": \"Bad Sky\", \"skyPresetId\": 2.5}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-flag.json": {
+      "text": "{\"themeName\": \"Bad Flag\", \"solidSkyColor\": \"yes\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-scale.json": {
+      "text": "{\"themeName\": \"Bad Scale\", \"wallTextureScale\": 0}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-material.json": {
+      "text": "{\"themeName\": \"Bad Material\", \"wallMaterial\": \" \"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-big.json": {
+      "text": "{\"themeName\":\"Big\",\"skyColor\":{\"r\":123456789012345678901234567890,\"g\":0,\"b\":0,\"a\":0}}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/bad-color.json": {
+      "text": "{\"themeName\": \"Bad Color\", \"skyColor\": [1, 2, 3]}"
+    }
+  },
+  "steps": [
+    {
+      "request": "planScheme",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "numbers.json",
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-1",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    }
+  ]
+}

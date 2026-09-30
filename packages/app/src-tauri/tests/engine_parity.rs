@@ -207,9 +207,7 @@ fn run_case(name: &str, case: &Json) -> Json {
                 let code = if ok { Json::Null } else { reply.get("error").and_then(|e| e.get("code")).cloned().unwrap_or(Json::Null) };
                 Json::object(vec![("ok", Json::Bool(ok)), ("code", code)]).to_compact()
             } else { reply.to_compact() };
-            if ok && step.get("request").and_then(Json::as_str) == Some("planEnemy") {
-                last_plan = reply.get("data").and_then(|d| d.get("planId")).and_then(Json::as_str).unwrap().to_string();
-            }
+            if let Some(plan) = reply.get("data").and_then(|d| d.get("planId")).and_then(Json::as_str).filter(|_| ok) { last_plan = plan.to_string(); }
             steps.push((progress, text));
         } else if let Some(file) = step.get("setPrimary").and_then(Json::as_str) {
             std::fs::copy(fixtures.join(file), &primary).unwrap();
