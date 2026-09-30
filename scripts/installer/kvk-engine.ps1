@@ -17,6 +17,26 @@ function Send-KvkObservation([scriptblock]$Observer, $Event) {
         try { [Console]::Error.WriteLine("KVK observer error: $($_.Exception.Message)") } catch { }
     }
 }
+# Name order and name matching for every list a player sees: ordinal, ignoring case, with an
+# exact ordinal comparison breaking ties. Sort-Object and @{} compare with the current culture,
+# so a list's order, and which names counted as the same, followed the Windows display language.
+# The Rust engine (src/engine) uses the same rule.
+function Sort-KvkByName($Items,[string]$Property='') {
+    $list=[Collections.Generic.List[object]]::new()
+    foreach ($item in @($Items)) { $list.Add($item) }
+    $compare={
+        param($a,$b)
+        $x=if ($Property) { [string]$a.$Property } else { [string]$a }
+        $y=if ($Property) { [string]$b.$Property } else { [string]$b }
+        $order=[string]::Compare($x,$y,[StringComparison]::OrdinalIgnoreCase)
+        if ($order -ne 0) { return $order }
+        return [string]::CompareOrdinal($x,$y)
+    }.GetNewClosure()
+    $list.Sort([Comparison[object]]$compare)
+    # Unrolled into the pipeline: every caller collects the result with @(...).
+    return $list.ToArray()
+}
+function New-KvkNameMap { return ,[Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase) }
 function Get-KvkFullPath([string]$Path) {
     if ([string]::IsNullOrWhiteSpace($Path)) { throw 'Path is empty.' }
     return [IO.Path]::GetFullPath($Path).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
@@ -230,14 +250,14 @@ function Get-KvkTarget($Context, [string]$Key) {
 function Get-KvkPackFiles([string]$PackRoot) {
     $root=Get-KvkFullPath $PackRoot; Assert-KvkSafePath $root
     if (-not [IO.Directory]::Exists($root)) { throw "Pack directory is missing: `"$root`"" }
-    $items=@(); $skipped=@(); $names=@{}
-    foreach ($entry in @(Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop | Sort-Object Name)) {
+    $items=@(); $skipped=@(); $names=New-KvkNameMap
+    foreach ($entry in @(Sort-KvkByName @(Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop) 'Name')) {
         if ($names.ContainsKey($entry.Name)) { throw "Case collision in pack: `"$($entry.Name)`"" }; $names[$entry.Name]=$true
         Assert-KvkSafePath $entry.FullName
         $category=$null
         if ($entry.PSIsContainer -and $entry.Name -in @('Themes','sounds','crosshairs')) {
-            $category=$entry.Name.ToLowerInvariant(); $seen=@{}
-            foreach ($file in @(Get-ChildItem -LiteralPath $entry.FullName -Force -ErrorAction Stop | Sort-Object Name)) {
+            $category=$entry.Name.ToLowerInvariant(); $seen=New-KvkNameMap
+            foreach ($file in @(Sort-KvkByName @(Get-ChildItem -LiteralPath $entry.FullName -Force -ErrorAction Stop) 'Name')) {
                 Assert-KvkSafePath $file.FullName
                 if ($seen.ContainsKey($file.Name)) { throw "Case collision in pack: `"$($file.FullName)`"" }; $seen[$file.Name]=$true
                 $ext=[IO.Path]::GetExtension($file.Name).ToLowerInvariant()
@@ -984,7 +1004,7 @@ function Get-KvkProfiles([string]$LocalDataRoot) {
     $profiles=@();$errors=@()
     if([IO.File]::Exists($directory)){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 存储目录被文件占用。' 'A file is in the way of the Profile store folder.'}
     if([IO.Directory]::Exists($directory)){
-        foreach($entry in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop | Where-Object {$_.Name.EndsWith('.json',[StringComparison]::OrdinalIgnoreCase)} | Sort-Object Name)){
+        foreach($entry in @(Sort-KvkByName @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop | Where-Object {$_.Name.EndsWith('.json',[StringComparison]::OrdinalIgnoreCase)}) 'Name')){
             try{
                 $id=[IO.Path]::GetFileNameWithoutExtension($entry.Name);Assert-KvkProfileId $id
                 if($entry.Name -cne ($id+'.json')){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 文件名无效。' 'The Profile file name is not valid.'}
@@ -1075,7 +1095,7 @@ function Get-KvkProfileAssets($Kind,$Directory) {
         try{$item=Get-KvkProfileAssetInfo $Kind $path;$files.Add(@{name=$item.Name;path=$item.FullName})}
         catch{$errors.Add(@{fileName=$name;message=$_.Exception.Message;messageEn=(Get-KvkErrorEnglish $_.Exception)})}
     }
-    return @{directory=$full;files=@($files.ToArray() | Sort-Object { $_.name });errors=@($errors.ToArray())}
+    return @{directory=$full;files=@(Sort-KvkByName $files.ToArray() 'name');errors=@($errors.ToArray())}
 }
 # The guarded read shared by previews and imports: a plain local file of the kind's type,
 # at most 8 MiB, with no link in its path, that does not change while it is read.

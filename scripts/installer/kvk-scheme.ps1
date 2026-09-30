@@ -21,15 +21,18 @@ function Get-KvkInstalledThemes($Context) {
     $directory=Get-KvkThemeDirectory $Context
     $themes=@()
     if ([IO.Directory]::Exists($directory)) {
-        $paths=@([IO.Directory]::EnumerateFiles($directory,'*.json',[IO.SearchOption]::TopDirectoryOnly)) | Sort-Object
+        $paths=@(Sort-KvkByName @([IO.Directory]::EnumerateFiles($directory,'*.json',[IO.SearchOption]::TopDirectoryOnly)))
         foreach ($path in $paths) {
             $name=$null;$readable=$false
             try { $name=(Read-KvkThemeFile $path)['themeName']; $readable=$true } catch { }
             $themes += [pscustomobject]@{Name=$name;File=[IO.Path]::GetFileName($path);Path=$path;Readable=$readable;DuplicateName=$false}
         }
     }
-    $counts=@{}
-    foreach ($theme in $themes) { if ($theme.Readable) { $counts[$theme.Name]=1+($counts[$theme.Name] ?? 0) } }
+    $counts=New-KvkNameMap
+    foreach ($theme in $themes) {
+        if (-not $theme.Readable) { continue }
+        if ($counts.ContainsKey($theme.Name)) { $counts[$theme.Name]++ } else { $counts[$theme.Name]=1 }
+    }
     foreach ($theme in $themes) { if ($theme.Readable -and $counts[$theme.Name] -gt 1) { $theme.DuplicateName=$true } }
     $current=$null
     $target=Get-KvkTarget $Context 'primary/PrimaryUserSettings.json'
