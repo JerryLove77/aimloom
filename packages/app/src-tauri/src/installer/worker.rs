@@ -39,10 +39,12 @@ impl WorkerConfig {
 
     pub fn engine(&self) -> EngineKind { self.engine }
 
-    pub fn production(engine: EngineKind) -> Result<Self, Issue> {
+    /// `local_app_data` is the runtime's own `%LOCALAPPDATA%`: the worker log goes under it and the
+    /// worker is started with it, so a runtime pointed at a test folder never reaches the real one.
+    pub fn production(engine: EngineKind, local_app_data: Option<PathBuf>) -> Result<Self, Issue> {
         #[cfg(not(target_os = "windows"))]
         {
-            let _ = engine;
+            let _ = (engine, local_app_data);
             Err(Issue::plain(
                 ErrorCode::UnsupportedPlatform,
                 "The installer engine is available only on Windows with PowerShell 7 or newer.",
@@ -50,7 +52,7 @@ impl WorkerConfig {
         }
         #[cfg(target_os = "windows")]
         {
-            let log_root = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+            let log_root = local_app_data;
             if engine == EngineKind::Rust {
                 // The Rust engine is this executable, started again as a JSONL worker.
                 let program = std::env::current_exe().map_err(|e| Issue::worker(format!("could not locate Aimloom.exe: {e}")))?;
@@ -369,7 +371,9 @@ pub struct WorkerClient {
 impl WorkerClient {
     pub fn spawn(config: WorkerConfig, jobs: Arc<Mutex<JobManager>>) -> Result<Arc<Self>, Issue> {
         let mut command = Command::new(&config.program);
-        command.args(&config.args)
+        command.args(&config.args);
+        if let Some(root) = &config.log_root { command.env("LOCALAPPDATA", root); }
+        command
             .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
         #[cfg(target_os = "windows")]
         {

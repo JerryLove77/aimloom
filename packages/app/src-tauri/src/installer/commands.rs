@@ -36,7 +36,7 @@ impl Default for InstallerRuntime {
         Self {
             jobs: Arc::new(Mutex::new(JobManager::default())),
             worker: Mutex::new(None),
-            config: Mutex::new(WorkerConfig::production(engine)),
+            config: Mutex::new(WorkerConfig::production(engine, local_app_data.clone())),
             engine: Mutex::new(engine),
             local_app_data,
             report: Mutex::new(None),
@@ -130,7 +130,7 @@ impl InstallerRuntime {
             }
             engine_choice::write_choice(local, engine).map_err(|e| Issue::new(ErrorCode::EngineError,
                 format!("没能保存引擎选择：{e}"), format!("Could not save the engine choice: {e}")))?;
-            *self.config.lock().unwrap() = WorkerConfig::production(engine);
+            *self.config.lock().unwrap() = WorkerConfig::production(engine, Some(local.to_path_buf()));
             *self.engine.lock().unwrap() = engine;
             self.jobs.lock().unwrap().forget_plans();
         }
