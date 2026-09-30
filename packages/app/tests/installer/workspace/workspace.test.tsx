@@ -13,12 +13,12 @@ beforeEach(() => { localStorage.clear() })
 const tree = () => <Workspace bridge={createDemoBridge()} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo />
 
 describe('workspace: 更改配置 and 探索', () => {
-  it('lists the five sections under 更改配置, then 探索, each available', async () => {
+  it('lists 探索 first, then the five sections under 更改配置, each available', async () => {
     render(tree())
     const nav = await screen.findByRole('navigation', { name: '主导航' })
     expect(within(nav).getByText('更改配置')).toBeVisible()
     const buttons = within(nav).getAllByRole('button')
-    expect(buttons.map(button => button.textContent)).toEqual(['Profile', 'Theme', 'Sounds', 'Crosshair', 'Enemy', '探索'])
+    expect(buttons.map(button => button.textContent)).toEqual(['探索', 'Profile', 'Theme', 'Sounds', 'Crosshair', 'Enemy'])
     for (const button of buttons) expect(button).toBeEnabled()
     // Quick import is opened from Explore now, not from the sidebar.
     expect(screen.queryByRole('button', { name: '一键拖入' })).toBeNull()
@@ -31,7 +31,7 @@ describe('workspace: 更改配置 and 探索', () => {
     fireEvent.click(screen.getByRole('button', { name: '探索' }))
     expect(await screen.findByRole('heading', { level: 1, name: '探索' })).toBeVisible()
     const nav = screen.getByRole('navigation', { name: '主导航' })
-    expect(within(nav).getAllByRole('button').map(button => button.textContent)).toEqual(['更改配置', '探索'])
+    expect(within(nav).getAllByRole('button').map(button => button.textContent)).toEqual(['探索', '更改配置'])
     expect(within(nav).getByRole('button', { name: '探索' })).toHaveAttribute('aria-current', 'page')
     fireEvent.click(within(nav).getByRole('button', { name: '更改配置' }))
     expect(await screen.findByRole('heading', { level: 1, name: '音效' })).toBeVisible()

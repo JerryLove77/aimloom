@@ -50,7 +50,8 @@ names Scheme and Audio, which are also the folder, key and wire names.
 
 ### Navigation — APP-NAV, 2026-10-01
 
-- The sidebar has **two top-level pages**. **更改配置 / Customize** holds the five sections,
+- The sidebar has **two top-level pages**, 探索 first so 更改配置 opens downward without moving it
+  (user, 0.1.6-test.7). **更改配置 / Customize** holds the five sections,
   Profile first and set off by a rule. While one of them is active the five are listed under the
   heading; on Explore they collapse to one 更改配置 entry that returns to the section last used
   and carries Profile's 未保存 marker.

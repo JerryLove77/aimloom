@@ -115,6 +115,8 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, overlays, d
       <aside className="ws-sidebar">
         <div className="ws-brand"><TargetMark /><span>Aimloom</span></div>
         <nav aria-label={t('shell.nav.aria')}>
+          {/* Explore first (user, 0.1.6-test.7): 更改配置 then opens downward without moving it. */}
+          {item('explore', 'ws-nav-top')}
           {/* 更改配置 opens onto its five sections while one of them is active; from Explore it is
               one collapsed entry that returns to the section last used. */}
           {customizing
@@ -128,7 +130,6 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, overlays, d
             <hr className="ws-nav-divider" />
             {(['scheme', 'audio', 'crosshair', 'enemy'] as const).map(section => item(section))}
           </div> : null}
-          {item('explore', 'ws-nav-top')}
         </nav>
         <div className="ws-sidebar-bottom">
           <Button variant="ghost" ref={settingsRef} disabled={dialogOpen} aria-haspopup="dialog" aria-expanded={settings.anchor === settingsRef.current && settings.anchor !== null}
