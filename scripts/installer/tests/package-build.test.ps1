@@ -97,7 +97,8 @@ Test-Case 'the folder holds exactly the EXE, VERSION.txt and the two readmes, an
     Assert ($lines.Count -eq 3) "VERSION.txt has $($lines.Count) lines"
     Assert ($lines[0] -ceq "Aimloom $appVersion" -and $lines[1] -ceq 'commit abc1234' -and $lines[2] -match '^built \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC$') "Wrong VERSION.txt: $($lines -join ' / ')"
     $zip = [IO.Compression.ZipFile]::OpenRead($result.Zip)
-    try { $inZip = @($zip.Entries | ForEach-Object { $_.FullName } | Sort-Object) } finally { $zip.Dispose() }
+    try { $inZip = @($zip.Entries | ForEach-Object { $_.FullName -replace '^Aimloom-v[^/\\]+[/\\]', '' } | Sort-Object) } finally { $zip.Dispose() }
+    # The ZIP keeps the folder name as its one top-level folder.
     Assert (($inZip -join '|') -ceq ($expected -join '|')) "The ZIP holds $($inZip -join ', ')"
 }
 
