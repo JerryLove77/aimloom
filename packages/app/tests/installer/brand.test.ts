@@ -66,13 +66,25 @@ describe('the product is named Aimloom wherever a player can see it', () => {
 
     it(`the ${channel} package also ships an English README.txt`, () => {
       const readme = read(repo, `scripts/installer/test-build/channels/${channel}/README.txt`)
-      for (const fact of ['Aimloom.exe', 'PowerShell 7', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\\Aimloom', '{{VERSION}}']) {
+      for (const fact of ['Aimloom.exe', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\\Aimloom', '{{VERSION}}']) {
         expect(readme).toContain(fact)
       }
+      // Since 0.1.6 the App runs its own worker: no readme may send a player to PowerShell.
+      expect(readme).not.toMatch(/pwsh|PowerShell/i)
+      expect(read(repo, `scripts/installer/test-build/channels/${channel}/使用说明.txt`)).not.toMatch(/pwsh|PowerShell/i)
       // English only: a CJK character here means a line was left untranslated.
       expect(readme).not.toMatch(/[　-〿㐀-䶿一-鿿＀-￯]/)
     })
   }
+
+  it('the beta pair says Profiles from 0.1.5 are not read and beta Profiles do not open in 0.1.5', () => {
+    const zh = read(repo, 'scripts/installer/test-build/channels/beta/使用说明.txt')
+    const en = read(repo, 'scripts/installer/test-build/channels/beta/README.txt')
+    expect(zh).toMatch(/0\.1\.5[^\n]*读不了[^\n]*重新创建/)
+    expect(zh).toMatch(/0\.1\.5 也打不开/)
+    expect(en).toMatch(/Profiles saved by 0\.1\.5[\s\S]*not read by this\s+version[\s\S]*recreate them/)
+    expect(en).toMatch(/cannot be opened by 0\.1\.5/)
+  })
 
   it('only the test readme calls the build a test', () => {
     expect(read(repo, 'scripts/installer/test-build/channels/test/使用说明.txt')).toContain('测试版')

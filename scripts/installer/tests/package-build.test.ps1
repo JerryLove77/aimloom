@@ -17,29 +17,10 @@ function Test-Case([string]$Name,[scriptblock]$Action) {
     # Only the MZ header is checked, so a four-byte stand-in is enough.
     $script:Exe = Join-Path $root 'app.exe'; [IO.File]::WriteAllBytes($script:Exe, [byte[]](0x4D, 0x5A, 0, 0))
     $script:Out = Join-Path $root 'out'; $null = [IO.Directory]::CreateDirectory($script:Out)
-    # A stand-in for the official PowerShell ZIP: the running pwsh.exe (only its version resource
-    # is read), a licence and one nested file, with a pin that describes exactly these bytes.
-    $source = Join-Path $root 'pwsh-source'
-    $null = [IO.Directory]::CreateDirectory((Join-Path $source 'Modules/Fake'))
-    Copy-Item -LiteralPath (Join-Path $PSHOME 'pwsh.exe') -Destination (Join-Path $source 'pwsh.exe')
-    [IO.File]::WriteAllText((Join-Path $source 'LICENSE.txt'), 'MIT')
-    [IO.File]::WriteAllText((Join-Path $source 'Modules/Fake/Fake.psd1'), '@{}')
-    $script:PwshZip = Join-Path $root 'PowerShell-win-x64.zip'
-    [IO.Compression.ZipFile]::CreateFromDirectory($source, $script:PwshZip)
-    $script:PwshVersion = "$((Get-Item -LiteralPath (Join-Path $source 'pwsh.exe')).VersionInfo.ProductVersion)".Split(' ')[0]
-    $script:PwshPin = Join-Path $root 'pwsh-runtime.json'
-    Write-Pin @{}
     try { & $Action; $script:Count++; Write-Host "PASS $Name" } finally { Remove-Item -LiteralPath $root -Recurse -Force }
 }
-function Write-Pin([hashtable]$Change) {
-    $pin = @{ schemaVersion = 1; version = $script:PwshVersion; url = 'https://example.invalid/pwsh.zip'
-        bytes = (Get-Item -LiteralPath $script:PwshZip).Length
-        sha256 = (Get-FileHash -LiteralPath $script:PwshZip -Algorithm SHA256).Hash.ToLowerInvariant() }
-    foreach ($key in $Change.Keys) { $pin[$key] = $Change[$key] }
-    $pin | ConvertTo-Json | Set-Content -LiteralPath $script:PwshPin -Encoding utf8NoBOM
-}
 function Invoke-Packager([hashtable]$Arguments) {
-    $all = @{ Exe = $script:Exe; Commit = 'abc1234'; OutRoot = $script:Out; PwshZip = $script:PwshZip; PwshPin = $script:PwshPin }
+    $all = @{ Exe = $script:Exe; Commit = 'abc1234'; OutRoot = $script:Out }
     foreach ($key in $Arguments.Keys) { $all[$key] = $Arguments[$key] }
     return & $packager @all
 }
@@ -71,16 +52,16 @@ Test-Case 'a release build carries the app version and a readme with no test wor
     $readme = Get-Content -LiteralPath (Join-Path $result.Folder '使用说明.txt') -Raw
     Assert (-not $readme.Contains('测试')) 'A release readme must not call itself a test'
     Assert ($readme.Contains("v$appVersion")) 'The release readme must name its version'
-    foreach ($fact in @('Aimloom.exe', 'PowerShell 7', 'WebView2', '仍要运行', '%LOCALAPPDATA%\Aimloom')) {
+    foreach ($fact in @('Aimloom.exe', 'WebView2', '仍要运行', '%LOCALAPPDATA%\Aimloom')) {
         Assert ($readme.Contains($fact)) "The release readme must still say: $fact"
     }
     $english = Get-Content -LiteralPath (Join-Path $result.Folder 'README.txt') -Raw
     Assert (-not $english.Contains('{{')) 'A README.txt placeholder was left unfilled'
-    foreach ($fact in @('Aimloom.exe', 'PowerShell 7', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\Aimloom')) {
+    foreach ($fact in @('Aimloom.exe', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\Aimloom')) {
         Assert ($english.Contains($fact)) "README.txt must say: $fact"
     }
     Assert (@(Get-ChildItem -LiteralPath $result.Folder -Filter '*.txt').Count -eq 3) 'Exactly two readmes plus VERSION.txt'
-    Assert ($result.Files -contains 'Aimloom.exe' -and $result.Files -contains 'scripts\kvk-import.ps1' -and $result.Files -contains 'scripts\gui\protocol.schema.json') "Missing files: $($result.Files -join ', ')"
+    foreach ($text in @($readme, $english)) { Assert (-not ($text -match 'pwsh|PowerShell')) 'A readme must not mention PowerShell or pwsh' }
     $bytes = [IO.File]::ReadAllBytes((Join-Path $result.Folder '使用说明.txt'))
     Assert ($bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF) 'Notepad needs the readme as UTF-8 with a BOM'
     $englishBytes = [IO.File]::ReadAllBytes((Join-Path $result.Folder 'README.txt'))
@@ -101,49 +82,27 @@ Test-Case 'a beta build is labelled as a beta everywhere a player looks' {
     Assert (-not $english.Contains('{{')) 'A README.txt placeholder was left unfilled'
     Assert ($english.Contains('Beta') -and $english.Contains("$appVersion-beta.3")) 'README.txt must say Beta and name its version'
     Assert (-not ($english -match 'test build')) 'The beta README must not call itself a test build'
-    foreach ($fact in @('Aimloom.exe', 'PowerShell 7', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\Aimloom')) {
+    Assert ($readme.Contains('0.1.5') -and $english.Contains('0.1.5')) 'The beta readmes must state the Profile caveat against 0.1.5'
+    foreach ($fact in @('Aimloom.exe', 'WebView2', 'Run anyway', '%LOCALAPPDATA%\Aimloom')) {
         Assert ($english.Contains($fact)) "README.txt must say: $fact"
     }
 }
 
-Test-Case 'PowerShell 7 ships in pwsh\, extracted from the pinned ZIP byte for byte' {
+Test-Case 'the folder holds exactly the EXE, VERSION.txt and the two readmes, and VERSION.txt has three lines' {
     $result = Invoke-Packager @{ Version = $appVersion; Channel = 'release' }
-    Assert ($result.Pwsh -ceq $script:PwshVersion) "Wrong bundled version: $($result.Pwsh)"
-    $zip = [IO.Compression.ZipFile]::OpenRead($script:PwshZip)
-    try {
-        $entries = @($zip.Entries | Where-Object { $_.Name })
-        $shipped = @($result.Files | Where-Object { $_ -like 'pwsh\*' } | ForEach-Object { $_.Substring(5) -replace '\\', '/' } | Sort-Object)
-        $expected = @($entries | ForEach-Object { $_.FullName -replace '\\', '/' } | Sort-Object)
-        Assert (($shipped -join '|') -ceq ($expected -join '|')) "pwsh\ holds $($shipped -join ', '), the ZIP $($expected -join ', ')"
-        foreach ($entry in $entries) {
-            $reader = $entry.Open(); $memory = [IO.MemoryStream]::new()
-            try { $reader.CopyTo($memory) } finally { $reader.Dispose() }
-            $onDisk = [IO.File]::ReadAllBytes((Join-Path $result.Folder "pwsh/$($entry.FullName)"))
-            Assert ([Convert]::ToHexString($onDisk) -ceq [Convert]::ToHexString($memory.ToArray())) "pwsh/$($entry.FullName) differs from the ZIP"
-        }
-    } finally { $zip.Dispose() }
+    $names = @($result.Files | Sort-Object)
+    $expected = @('Aimloom.exe', 'README.txt', 'VERSION.txt', '使用说明.txt' | Sort-Object)
+    Assert (($names -join '|') -ceq ($expected -join '|')) "Folder holds $($names -join ', ')"
     $lines = @(Get-Content -LiteralPath (Join-Path $result.Folder 'VERSION.txt'))
-    Assert ($lines -contains "PowerShell $script:PwshVersion") 'VERSION.txt must name the bundled PowerShell'
-    Assert ($lines[0] -ceq "Aimloom $appVersion") 'The first line stays the build label'
+    Assert ($lines.Count -eq 3) "VERSION.txt has $($lines.Count) lines"
+    Assert ($lines[0] -ceq "Aimloom $appVersion" -and $lines[1] -ceq 'commit abc1234' -and $lines[2] -match '^built \d{4}-\d\d-\d\d \d\d:\d\d:\d\d UTC$') "Wrong VERSION.txt: $($lines -join ' / ')"
+    $zip = [IO.Compression.ZipFile]::OpenRead($result.Zip)
+    try { $inZip = @($zip.Entries | ForEach-Object { $_.FullName } | Sort-Object) } finally { $zip.Dispose() }
+    Assert (($inZip -join '|') -ceq ($expected -join '|')) "The ZIP holds $($inZip -join ', ')"
 }
 
-Test-Case 'a PowerShell ZIP that is not the pinned one is refused, and nothing is left behind' {
-    Write-Pin @{ sha256 = '0' * 64 }
-    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'SHA-256'
-    Write-Pin @{ bytes = 1 }
-    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'bytes'
-    Write-Pin @{}
-    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release'; PwshZip = (Join-Path $script:Out 'missing.zip') } } 'does not exist'
-    Write-Pin @{ sha256 = 'not-a-hash' }
-    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'not a valid PowerShell pin'
-}
-
-Test-Case 'a pwsh.exe that states another version than the pin is refused, and nothing is left behind' {
-    Write-Pin @{ version = '0.0.1' }
-    Expect-Refusal { Invoke-Packager @{ Version = $appVersion; Channel = 'release' } } 'says version'
-}
-
-Test-Case 'the tracked pin names the official PowerShell 7 ZIP' {
+# The pin is no longer shipped; CI downloads that ZIP to run the PowerShell suites.
+Test-Case 'the tracked pin, which CI uses to run these suites, still names the official PowerShell 7 ZIP' {
     $pin = Get-Content -LiteralPath (Join-Path (Split-Path $packager -Parent) 'pwsh-runtime.json') -Raw | ConvertFrom-Json -AsHashtable
     Assert ($pin.schemaVersion -eq 1) 'schemaVersion 1'
     Assert ($pin.version -cmatch '^7\.\d+\.\d+$') "A PowerShell 7 release: $($pin.version)"
@@ -162,17 +121,26 @@ Test-Case 'a label that disagrees with the app version or the channel is refused
 }
 $setupPackager = Join-Path (Split-Path $PSScriptRoot -Parent) 'test-build/package-setup.ps1'
 
-Test-Case 'the Setup payload is exactly the packaged folder: every script, the bundled PowerShell and VERSION.txt, nothing else' {
+Test-Case 'the Setup payload is exactly VERSION.txt' {
     $result = Invoke-Packager @{ Version = $appVersion; Channel = 'release' }
     $plan = & $setupPackager -Folder $result.Folder -OutRoot $script:Out -ConfigOnly
-    $expected = @($result.Files | Where-Object { $_ -like 'scripts\*' -or $_ -like 'pwsh\*' -or $_ -eq 'VERSION.txt' } | ForEach-Object { $_ -replace '\\', '/' } | Sort-Object)
-    $targets = @($plan.Resources.Values | Sort-Object)
-    Assert (($targets -join '|') -ceq ($expected -join '|')) "Payload $($targets -join ', ') differs from $($expected -join ', ')"
+    $targets = @($plan.Resources.Values)
+    Assert (($targets -join '|') -ceq 'VERSION.txt') "Payload $($targets -join ', ') is not exactly VERSION.txt"
     foreach ($source in $plan.Resources.Keys) { Assert (Test-Path -LiteralPath $source -PathType Leaf) "Missing payload source $source" }
-    Assert ($targets -notcontains 'Aimloom.exe' -and $targets -notcontains '使用说明.txt') 'The EXE comes from the build and the readme is for the ZIP only'
-    Assert ($targets -contains 'pwsh/pwsh.exe' -and $targets -contains 'pwsh/Modules/Fake/Fake.psd1') 'The Setup must carry the bundled PowerShell'
     $json = Get-Content -LiteralPath $plan.Config -Raw | ConvertFrom-Json -AsHashtable
-    Assert ($json.bundle.resources.Count -eq $targets.Count) 'The written config must carry the same map'
+    Assert ($json.bundle.resources.Count -eq 1) 'The written config must carry the same map'
+}
+
+Test-Case 'the Setup packager refuses a folder in the old layout, with scripts\ or pwsh\' {
+    foreach ($old in 'scripts', 'pwsh') {
+        $result = Invoke-Packager @{ Version = $appVersion; Channel = 'release' }
+        $null = New-Item -ItemType Directory -Path (Join-Path $result.Folder $old)
+        $caught = $null; try { & $setupPackager -Folder $result.Folder -OutRoot $script:Out -ConfigOnly | Out-Null } catch { $caught = $_.Exception.Message }
+        Assert ($null -ne $caught -and $caught -match "still has a $old folder" -and $caught -match 'older layout') "Wrong refusal for ${old}: $caught"
+        Assert (@(Get-ChildItem -LiteralPath $script:Out -Filter 'setup-bundle-*.conf.json').Count -eq 0) 'A refused folder must write no bundle config'
+        Remove-Item -LiteralPath $result.Folder -Recurse -Force
+        Remove-Item -LiteralPath $result.Zip -Force
+    }
 }
 
 Test-Case 'the Setup packager refuses a folder that is not a packaged Aimloom folder' {
