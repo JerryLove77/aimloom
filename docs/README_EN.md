@@ -69,6 +69,11 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 
 ## Status
 
+- **In development (not released):** v0.1.6 — the sidebar becomes two big pages, Customize
+  (Profile, Theme, Sounds, Crosshair, Enemy) and Explore; Quick import moves into Explore, and a
+  config pack folder dropped on Explore opens it with the folder filled in; Explore also opens the
+  website's explorer. A second engine, written in Rust, sits beside PowerShell 7. None of this is
+  released yet.
 - **Released:** v0.1.5 (2026-09-30) — PowerShell 7 comes with Aimloom, so nothing else needs
   installing (the installer is about 81 MB, the portable ZIP about 114 MB); Theme, Sounds and
   Crosshair open the website's Explore page; a linked Steam account's display name can be changed.

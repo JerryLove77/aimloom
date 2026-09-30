@@ -19,7 +19,7 @@ describe('the Crosshair page in English', () => {
     )
     const heading = await screen.findByRole('heading', { name: 'Crosshair', level: 1 })
     const main = heading.closest('main') ?? heading.parentElement!.parentElement!
-    expect(within(main).getByText('CROSSHAIR · CURRENT SETUP')).toBeVisible()
+    expect(within(main).getByText('CROSSHAIR · CUSTOMIZE')).toBeVisible()
     expect(await screen.findByRole('button', { name: 'Paste a crosshair code' })).toBeVisible()
     expect(screen.getByText('A CS2 / VALORANT share code, previewed first')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Drop or choose a PNG' })).toBeVisible()

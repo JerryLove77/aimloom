@@ -153,7 +153,7 @@ export const zh = {
   'import.drop.unzipFirst': 'ZIP 要先解压，再把解压出的文件夹拖到「探索」页。',
 
   // scheme.* — SchemePage.tsx, SchemePreview.tsx, controller.ts.
-  'scheme.eyebrow': 'THEME · 当前配置',
+  'scheme.eyebrow': 'THEME · 更改配置',
   'scheme.title': '背景',
   'scheme.noun': '背景',
   'scheme.scope': '选择主题只会预览；先退出 KovaaK，再点「应用背景」更新游戏当前背景。不修改任何 Profile。',
@@ -234,7 +234,7 @@ export const zh = {
   'scheme.import.added': '已添加「{file}」。',
 
   // audio.* — AudioPage.tsx, controller.ts, preview.ts.
-  'audio.eyebrow': 'SOUNDS · 当前配置',
+  'audio.eyebrow': 'SOUNDS · 更改配置',
   'audio.title': '音效',
   'audio.noun': '音效',
   'audio.scope': '选择事件，编辑它绑定的音效并试听；先退出 KovaaK，再点「应用音效」更新游戏当前音效。一次应用一个事件，不修改任何 Profile。',
@@ -332,7 +332,7 @@ export const zh = {
   'audio.preview.error.timeoutConfig': '音频加载超时必须大于零。',
 
   // crosshair.* — CrosshairPage.tsx, controller.ts, CodeExportDialog.tsx, export-controller.ts, png.ts.
-  'crosshair.eyebrow': 'CROSSHAIR · 当前配置',
+  'crosshair.eyebrow': 'CROSSHAIR · 更改配置',
   'crosshair.title': '准星',
   'crosshair.noun': '准星',
   'crosshair.scope': '把 CS2 / VALORANT 准星代码或 PNG 图片加到游戏的准星文件夹。用哪个准星要在游戏设置里选。',
@@ -466,7 +466,7 @@ export const zh = {
 
   // enemy.* — EnemyPage.tsx, controller.ts. What page can change: the equipped
   // {model, skin} pair per shape in the game's own Skin Browser. No colour/glow feature.
-  'enemy.eyebrow': 'ENEMY · 当前配置',
+  'enemy.eyebrow': 'ENEMY · 更改配置',
   'enemy.title': '敌人皮肤',
   'enemy.scope': '这里只改游戏「皮肤浏览器」（Skin Browser）能改的东西：选一个皮肤，先退出 KovaaK，再点「应用皮肤」；下次启动 KovaaK 生效。不修改任何 Profile。',
   'enemy.discard': '退出',

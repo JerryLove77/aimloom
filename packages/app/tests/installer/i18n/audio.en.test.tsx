@@ -19,7 +19,7 @@ describe('the Sounds (Audio) page in English', () => {
     )
     const heading = await screen.findByRole('heading', { name: 'Sounds', level: 1 })
     const main = heading.closest('main') ?? heading.parentElement!.parentElement!
-    expect(within(main).getByText('SOUNDS · CURRENT SETUP')).toBeVisible()
+    expect(within(main).getByText('SOUNDS · CUSTOMIZE')).toBeVisible()
 
     const tabs = within(main).getByRole('group', { name: 'Sound events' })
     const buttons = within(tabs).getAllByRole('button')

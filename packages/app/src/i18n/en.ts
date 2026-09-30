@@ -149,7 +149,7 @@ export const en: Record<keyof typeof zh, string> = {
   'import.drop.readyPack': 'Drop to open Quick import',
   'import.drop.unzipFirst': 'Unzip it first, then drop the folder on the Explore page.',
 
-  'scheme.eyebrow': 'THEME · CURRENT SETUP',
+  'scheme.eyebrow': 'THEME · CUSTOMIZE',
   'scheme.title': 'Theme',
   'scheme.noun': 'theme',
   'scheme.scope': 'Choosing a theme only previews it; quit KovaaK, then click "Apply background" to update the game\'s current background. No Profile is changed.',
@@ -229,7 +229,7 @@ export const en: Record<keyof typeof zh, string> = {
   'scheme.import.selected': 'Added "{file}" and selected it; click "Apply background" to make it take effect.',
   'scheme.import.added': 'Added "{file}".',
 
-  'audio.eyebrow': 'SOUNDS · CURRENT SETUP',
+  'audio.eyebrow': 'SOUNDS · CUSTOMIZE',
   'audio.title': 'Sounds',
   'audio.noun': 'sounds',
   'audio.scope': 'Choose an event, edit the sounds it binds and preview them; quit KovaaK, then click "Apply sound" to update the game\'s current sound. One event is applied at a time. No Profile is changed.',
@@ -326,7 +326,7 @@ export const en: Record<keyof typeof zh, string> = {
   'audio.preview.error.timeout': 'Loading the audio timed out; check the file and try again.',
   'audio.preview.error.timeoutConfig': 'The audio load timeout must be greater than zero.',
 
-  'crosshair.eyebrow': 'CROSSHAIR · CURRENT SETUP',
+  'crosshair.eyebrow': 'CROSSHAIR · CUSTOMIZE',
   'crosshair.title': 'Crosshair',
   'crosshair.noun': 'crosshair',
   'crosshair.scope': "Add a CS2 / VALORANT crosshair code or a PNG image to the game's crosshairs folder. Which one is used is chosen in the game's settings.",
@@ -458,7 +458,7 @@ export const en: Record<keyof typeof zh, string> = {
   'crosshair.tune.valorant.outer.thickness': 'Outer thickness',
   'crosshair.tune.valorant.outer.offset': 'Outer offset',
 
-  'enemy.eyebrow': 'ENEMY · CURRENT SETUP',
+  'enemy.eyebrow': 'ENEMY · CUSTOMIZE',
   'enemy.title': 'Enemy skin',
   'enemy.scope': 'This only changes what the game\'s own Skin Browser changes: pick a skin, quit KovaaK, then click "Apply skin"; it takes effect the next time KovaaK starts. No Profile is changed.',
   'enemy.discard': 'Cancel',
