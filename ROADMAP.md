@@ -1,6 +1,6 @@
 # Aimloom roadmap
 
-Updated 2026-09-30. This is the repository-wide scheduling entry point.
+Updated 2026-10-01. This is the repository-wide scheduling entry point.
 [Shared workspace design](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
 is the product authority. The website is designed in
 [the website and explorer spec](docs/superpowers/specs/2026-09-17-aimloom-website-and-explore-design.md),
@@ -149,7 +149,7 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
 | ID | Deliverable | Status |
 |---|---|---|
 | APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma first; not designed |
-| ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); the spike's plan is approved; not started |
+| ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); steps 1–2 **merged** 2026-10-01 (PR #24); step 3 after APP-NAV |
 
 **APP-NAV — the shell the user described (2026-09-21):**
 - The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
@@ -199,8 +199,8 @@ lives inside `Aimloom.exe`), the Setup picks the first one, and Settings can cha
 
 | Step | Deliverable | Status |
 |---|---|---|
-| 1 | **Spike**: the write core plus Enemy in Rust, compared with PowerShell goldens, and cross-restores in both directions; a go/no-go report with measured numbers | Planned; starts after the bundled-PowerShell release |
-| 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | Not started |
+| 1 | **Spike**: the write core plus Enemy in Rust, compared with PowerShell goldens, and cross-restores in both directions; a go/no-go report with measured numbers | **Done** 2026-10-01 (PR #24), folded into step 2 |
+| 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | **Merged** 2026-10-01 (PR #24): all 26 operations; 52 parity cases match PowerShell on the Mac and on Windows; the cross-engine test passes 6/6; CI runs both. Not reachable by players |
 | 3 | **Choosing the engine**: the Setup's choice (PowerShell default, Rust marked as a test) and the Settings switch under the rules above; one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | Not started; the Setup page needs a change to the pinned `installer.nsi` template (or a hooks-only fallback); where the choice is stored is open |
 | 4 | **Rust becomes the default**; PowerShell stays an option | Not started |
 | 5 | **PowerShell removed**: a small Setup and a Rust ZIP; decide the console wizard's future (`安装配置.cmd` / `恢复配置.cmd`); CLAUDE.md, both READMEs and the site copy updated | Not started |
