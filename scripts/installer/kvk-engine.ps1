@@ -1014,17 +1014,17 @@ function Get-KvkProfiles([string]$LocalDataRoot) {
                 $id=[IO.Path]::GetFileNameWithoutExtension($entry.Name);Assert-KvkProfileId $id
                 if($entry.Name -cne ($id+'.json')){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 文件名无效。' 'The Profile file name is not valid.'}
                 $profiles+=Read-KvkProfileFile $entry.FullName $id
-            }catch{$errors+=@{fileName=$entry.Name;message=$_.Exception.Message;messageEn=(Get-KvkErrorEnglish $_.Exception)}}
+            }catch{$errors+=[ordered]@{fileName=$entry.Name;message=$_.Exception.Message;messageEn=(Get-KvkErrorEnglish $_.Exception)}}
         }
     }
-    return @{directory=$directory;profiles=@($profiles);errors=@($errors)}
+    return [ordered]@{directory=$directory;profiles=@($profiles);errors=@($errors)}
 }
 function Get-KvkProfile([string]$LocalDataRoot,$Id) {
     $path=Get-KvkProfilePath $LocalDataRoot $Id
     $profile=$null
     if([IO.Directory]::Exists($path)){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 路径不是文件。' 'The Profile path is not a file.'}
     if([IO.File]::Exists($path)){$profile=Read-KvkProfileFile $path $Id}
-    return @{filePath=$path;profile=$profile}
+    return [ordered]@{filePath=$path;profile=$profile}
 }
 function Move-KvkProfileAtomic([string]$TemporaryPath,[string]$Path) {
     [IO.File]::Move($TemporaryPath,$Path,$true)
@@ -1048,7 +1048,7 @@ function Save-KvkProfile([string]$LocalDataRoot,$Profile) {
         Assert-KvkProfileSafePath $path
         $null=Get-KvkProfile $LocalDataRoot $Profile.id
         Move-KvkProfileAtomic $temporary $path
-        return @{filePath=$path;profile=$validated}
+        return [ordered]@{filePath=$path;profile=$validated}
     }catch{
         if($_.Exception.Data.Contains('KvkCode')){throw}
         Throw-KvkFailure 'ENGINE_ERROR' '无法保存 Profile，原有文件已保留。' 'The Profile could not be saved; the existing file is unchanged.'
@@ -1061,7 +1061,7 @@ function Remove-KvkProfile([string]$LocalDataRoot,$Id) {
     if([IO.Directory]::Exists($path)){Throw-KvkFailure 'ENGINE_ERROR' 'Profile 路径不是文件。' 'The Profile path is not a file.'}
     $exists=[IO.File]::Exists($path)
     if($exists){Assert-KvkProfileSafePath $path;[IO.File]::Delete($path)}
-    return @{deleted=$exists}
+    return [ordered]@{deleted=$exists}
 }
 
 # Read-only Profile asset access. No context creation, game state or plan mutation.
@@ -1097,10 +1097,10 @@ function Get-KvkProfileAssets($Kind,$Directory) {
         if([IO.Path]::GetExtension($path) -inotin $extensions){continue}
         $count++;if($count -gt 1000){Throw-KvkFailure 'ENGINE_ERROR' '资源目录超过 1000 个候选文件，请选择更小的目录。' 'The asset folder has more than 1000 candidate files. Choose a smaller folder.'}
         $name=[IO.Path]::GetFileName($path)
-        try{$item=Get-KvkProfileAssetInfo $Kind $path;$files.Add(@{name=$item.Name;path=$item.FullName})}
-        catch{$errors.Add(@{fileName=$name;message=$_.Exception.Message;messageEn=(Get-KvkErrorEnglish $_.Exception)})}
+        try{$item=Get-KvkProfileAssetInfo $Kind $path;$files.Add([ordered]@{name=$item.Name;path=$item.FullName})}
+        catch{$errors.Add([ordered]@{fileName=$name;message=$_.Exception.Message;messageEn=(Get-KvkErrorEnglish $_.Exception)})}
     }
-    return @{directory=$full;files=@(Sort-KvkByName $files.ToArray() 'name');errors=@($errors.ToArray())}
+    return [ordered]@{directory=$full;files=@(Sort-KvkByName $files.ToArray() 'name');errors=@($errors.ToArray())}
 }
 # The guarded read shared by previews and imports: a plain local file of the kind's type,
 # at most 8 MiB, with no link in its path, that does not change while it is read.
@@ -1121,5 +1121,5 @@ function Read-KvkProfileAsset($Kind,$Path) {
     $read=Read-KvkProfileAssetBytes $Kind $Path
     $item=$read.Item;$bytes=$read.Bytes
     $mime=switch($item.Extension.ToLowerInvariant()){'.json' {'application/json'} '.png' {'image/png'} '.wav' {'audio/wav'} '.ogg' {'audio/ogg'}}
-    return @{path=$item.FullName;mimeType=$mime;base64=[Convert]::ToBase64String($bytes)}
+    return [ordered]@{path=$item.FullName;mimeType=$mime;base64=[Convert]::ToBase64String($bytes)}
 }

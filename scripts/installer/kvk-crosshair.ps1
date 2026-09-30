@@ -120,7 +120,7 @@ function New-KvkCrosshairImagePlan($Context,[string]$FileName,[byte[]]$Png) {
     # Same metadata shape the Node service writes, read back by the adapter above.
     $metadata=[pscustomobject]@{
         schemaVersion=1;kind='crosshair-replacement';targetFileName=$FileName
-        png=@{file=('crosshairs/'+$FileName);sha256=$sha;bytes=$Png.Length;width=[int]$size.Width;height=[int]$size.Height}
+        png=[ordered]@{file=('crosshairs/'+$FileName);sha256=$sha;bytes=$Png.Length;width=[int]$size.Width;height=[int]$size.Height}
         warnings=@();requiresConfirmation=$true;gameSelectionChanged=$false
     }
     $metadataPath=Join-Path $stage 'crosshair-replacement.json'
