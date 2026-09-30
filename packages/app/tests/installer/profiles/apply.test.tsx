@@ -81,17 +81,16 @@ function localStorageFake() {
 }
 
 describe('applying a saved Profile', () => {
-  it('shows 应用 beside 复制 and 删除, disabled with a reason when there is nothing to apply', async () => {
+  it('shows 应用 beside 复制 and 删除, and no 应用 but a note when there is nothing to apply', async () => {
     const f = fixtures([fullProfile(), emptyProfile(), keepAudioProfile()])
     render(<ProfilesApp bridge={f.bridge} assets={f.assets} locate={f.game} storage={localStorageFake()} />)
     const applyFull = await screen.findByRole('button', { name: '应用 每日训练' })
     expect(applyFull).toBeEnabled()
-    const applyEmpty = screen.getByRole('button', { name: '应用 空组合' })
-    expect(applyEmpty).toBeDisabled()
-    // The reason is on the row, not only in a hover title: a bare grey 应用 was read as "in use".
-    expect(applyEmpty.closest('.pr-row-actions')).toHaveTextContent('没有要应用的内容')
-    const applyKeep = screen.getByRole('button', { name: '应用 仅保持音效' })
-    expect(applyKeep).toBeDisabled()
+    // Grey means "in use" only (the user, 0.1.6-test.1), so a Profile that would change nothing
+    // has no 应用 button, only the note.
+    expect(screen.queryByRole('button', { name: '应用 空组合' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '应用 仅保持音效' })).toBeNull()
+    expect(screen.getAllByText('没有要应用的内容')).toHaveLength(2)
   })
 
   it('resolves the game folder and calls planProfileApply with the saved id, even after an unsaved draft edit', async () => {
