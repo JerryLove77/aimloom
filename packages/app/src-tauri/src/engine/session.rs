@@ -21,7 +21,16 @@ const OPERATIONS: [&str; 26] = [
 
 const PROFILE_OPERATIONS: [&str; 6] = ["profileList", "profileRead", "profileSave", "profileDelete", "profileAssetList", "profileAssetRead"];
 
-enum Adapter { Enemy(enemy::EnemyPlan), Scheme(super::settings::SchemePlan), Audio(super::txn::Plan), Restore(super::txn::RestorePlan) }
+enum Adapter {
+    Install(super::txn::Plan),
+    Enemy(enemy::EnemyPlan),
+    Scheme(super::settings::SchemePlan),
+    Audio(super::txn::Plan),
+    Crosshair(super::files::CrosshairReplacement),
+    CrosshairAdd(super::txn::Plan),
+    FileAdd(super::files::FileAdd),
+    Restore(super::txn::RestorePlan),
+}
 
 struct CachedPlan { id: String, kind: &'static str, context: Context, adapter: Adapter }
 
@@ -171,6 +180,77 @@ impl Session {
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
                 super::lists::crosshair_list_json(&self.engine, &context)
             }
+            "planInstall" => {
+                assert_fields(args, &["gameRoot", "packRoot", "categories", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, pack_root) = (string_arg(args, "gameRoot")?, string_arg(args, "packRoot")?);
+                let Some(Json::Array(categories)) = args.get("categories") else {
+                    return Err(EngineError::coded("INVALID_PACK", "categories must be an array.", "categories must be an array."));
+                };
+                let revision = revision_arg(args)?;
+                let mut seen: Vec<String> = Vec::new();
+                for category in categories {
+                    let known = category.as_str().filter(|c| ["themes", "sounds", "crosshairs", "ui", "palette", "primary"].contains(c));
+                    let Some(category) = known else { return Err(EngineError::coded("INVALID_PACK", "categories contains an unknown value.", "categories contains an unknown value.")) };
+                    if seen.iter().any(|s| s == category) { return Err(EngineError::coded("INVALID_PACK", "categories must not contain duplicates.", "categories must not contain duplicates.")); }
+                    seen.push(category.to_string());
+                }
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能安装。", "An unfinished operation must be recovered before installing."));
+                }
+                let plan = super::txn::new_plan(&self.engine, &context, pack_root, &seen)?;
+                Ok(self.record_plan(context, &plan.clone(), revision, Adapter::Install(plan)))
+            }
+            "planCrosshair" | "planCrosshairAdd" => {
+                assert_fields(args, &["gameRoot", "file", "pngBase64", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, file, encoded) = (string_arg(args, "gameRoot")?, string_arg(args, "file")?, string_arg(args, "pngBase64")?);
+                let revision = revision_arg(args)?;
+                let png = super::files::decode_base64(encoded,
+                    ("准星 PNG 编码无效或超出大小限制。", "The crosshair PNG encoding is invalid or over the size limit."),
+                    ("准星 PNG 编码无效。", "The crosshair PNG encoding is invalid."),
+                    ("准星 PNG 编码不是规范 base64。", "The crosshair PNG encoding is not canonical base64."))?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                let adding = op == "planCrosshairAdd";
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(if adding {
+                        EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能添加准星。", "An unfinished operation must be recovered before adding a crosshair.")
+                    } else {
+                        EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能替换准星。", "An unfinished operation must be recovered before replacing a crosshair.")
+                    });
+                }
+                if adding {
+                    let plan = super::files::add_plan(&self.engine, &context, file, &png)?;
+                    Ok(self.record_plan(context, &plan.clone(), revision, Adapter::CrosshairAdd(plan)))
+                } else {
+                    let replacement = super::files::image_plan(&self.engine, &context, file, &png)?;
+                    Ok(self.record_plan(context, &replacement.plan.clone(), revision, Adapter::Crosshair(replacement)))
+                }
+            }
+            "planFileAdd" => {
+                assert_fields(args, &["gameRoot", "kind", "sourcePath", "sourceSha256", "file", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, kind, file) = (string_arg(args, "gameRoot")?, string_arg(args, "kind")?, string_arg(args, "file")?);
+                let (source_path, source_sha) = (string_arg(args, "sourcePath")?, string_arg(args, "sourceSha256")?);
+                let revision = revision_arg(args)?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "上一次操作没有完成，请先到「一键拖入」处理，再添加文件 (an unfinished operation must be recovered first)。", "The last operation did not finish. Resolve it in Quick import before adding files."));
+                }
+                let add = super::files::file_add_plan(&self.engine, &context, kind, source_path, source_sha, file)?;
+                Ok(self.record_plan(context, &add.plan.clone(), revision, Adapter::FileAdd(add)))
+            }
+            "exportFile" => {
+                assert_fields(args, &["directory", "fileName", "base64", "gameRoot"], "args")?;
+                let (directory, file) = (string_arg(args, "directory")?, string_arg(args, "fileName")?);
+                let (encoded, game_root) = (string_arg(args, "base64")?, string_arg(args, "gameRoot")?);
+                let bytes = super::files::decode_base64(encoded,
+                    ("导出内容编码无效或超出大小限制。", "The export encoding is invalid or over the size limit."),
+                    ("导出内容编码无效。", "The export encoding is invalid."),
+                    ("导出内容不是规范 base64。", "The export encoding is not canonical base64."))?;
+                super::files::export(directory, file, &bytes, game_root)
+            }
             "planScheme" => {
                 assert_fields(args, &["gameRoot", "file", "revision"], "args")?;
                 self.plan = None;
@@ -283,7 +363,10 @@ impl Session {
                 let report = match &cached.adapter {
                     Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Scheme(plan) => super::settings::scheme_execute(&self.engine, &cached.context, plan, observer)?,
-                    Adapter::Audio(plan) => super::txn::install(&self.engine, &cached.context, plan, observer)?,
+                    Adapter::Audio(plan) | Adapter::Install(plan) => super::txn::install(&self.engine, &cached.context, plan, false, observer)?,
+                    Adapter::Crosshair(plan) => super::files::image_execute(&self.engine, &cached.context, plan, observer)?,
+                    Adapter::CrosshairAdd(plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,
+                    Adapter::FileAdd(add) => super::files::file_add_execute(&self.engine, &cached.context, add, observer)?,
                     Adapter::Restore(_) => unreachable_restore(),
                 };
                 Ok(execution(&report))

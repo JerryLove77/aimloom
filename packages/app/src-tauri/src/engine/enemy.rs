@@ -140,5 +140,5 @@ pub fn execute(engine: &Engine, context: &Context, enemy: &EnemyPlan, observer: 
     if store::hash(&enemy.settings_path)?.as_deref() != Some(enemy.settings_hash.as_str()) {
         return Err(EngineError::coded("PLAN_STALE", "预览之后设置发生了变化，请重新核对。", "The settings changed after preview; review it again."));
     }
-    txn::install(engine, context, &enemy.plan, observer)
+    txn::install(engine, context, &enemy.plan, false, observer)
 }

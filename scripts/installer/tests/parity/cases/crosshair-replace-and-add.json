@@ -1,0 +1,196 @@
+{
+  "fixture": "enemy-crlf.json",
+  "gameFiles": {
+    "FPSAimTrainer/crosshairs/red.png": {
+      "fixture": "crosshair-red.png"
+    }
+  },
+  "steps": [
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAEUlEQVR42mNgYPj/Hz8eEQoAQ1d/gea06iUAAAAASUVORK5CYII=",
+        "revision": 1
+      }
+    },
+    {
+      "gameRunningFrom": 1
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "a",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "gameRunningFrom": null
+    },
+    {
+      "request": "crosshairList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planCrosshairAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "new.PNG",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "b",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "crosshairList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "backups",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planCrosshairAdd",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "missing.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "x.jpg",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "..x.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "con.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "abc",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "YR==",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "####",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw==",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAAAAACMmsGiAAAADklEQVR42mNoAAIGVAIAUBQIAW1N4EkAAAAASUVORK5CYII=",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAQCw6q8/AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAlgAAAACCAYAAACE7KJkAAAAIUlEQVR42u3QMQEAAAzDoPg3vZnoyYEBujoAAHaSAACw9adoVyjyGFX5AAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "planCrosshair",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "red.png",
+        "pngBase64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "revision": 3
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "c",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    }
+  ]
+}

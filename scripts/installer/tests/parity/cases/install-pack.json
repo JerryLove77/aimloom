@@ -1,0 +1,199 @@
+{
+  "fixture": "enemy-crlf.json",
+  "gameFiles": {
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "old hit"
+    }
+  },
+  "packFiles": {
+    "Themes/pack-theme.json": {
+      "text": "{\"themeName\": \"Pack Theme\"}"
+    },
+    "sounds/hit.wav": {
+      "text": "new hit"
+    },
+    "sounds/extra.ogg": {
+      "text": "extra"
+    },
+    "crosshairs/c.png": {
+      "fixture": "crosshair-red.png"
+    },
+    "UI.json": {
+      "text": "{\"ui\":1}"
+    },
+    "PrimaryUserSettings.json": {
+      "text": "{\"sensitivity\":4}"
+    },
+    "Palette.ini": {
+      "text": "[Palette]\nx=1\n"
+    },
+    "Themes/bad.txt": {
+      "text": "x"
+    }
+  },
+  "steps": [
+    {
+      "request": "catalog",
+      "args": {
+        "packRoot": "<pack>"
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "sounds",
+          "themes",
+          "crosshairs"
+        ],
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "a",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "backups",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "sounds",
+          "themes",
+          "crosshairs"
+        ],
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "b",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "palette",
+          "ui"
+        ],
+        "revision": 3
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "c",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planRestore",
+      "args": {
+        "gameRoot": "<game>",
+        "sourceId": "<batch>",
+        "revision": 4
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "d",
+        "planId": "<plan>",
+        "confirmation": "restore",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "backups",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": "sounds",
+        "revision": 5
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "music"
+        ],
+        "revision": 5
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [
+          "sounds",
+          "sounds"
+        ],
+        "revision": 5
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>",
+        "categories": [],
+        "revision": 5
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>/sounds",
+        "categories": [
+          "sounds"
+        ],
+        "revision": 5
+      }
+    },
+    {
+      "request": "planInstall",
+      "args": {
+        "gameRoot": "<game>",
+        "packRoot": "<pack>/missing",
+        "categories": [
+          "sounds"
+        ],
+        "revision": 5
+      }
+    }
+  ]
+}

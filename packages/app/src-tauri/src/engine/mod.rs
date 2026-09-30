@@ -9,6 +9,7 @@
 //! pick up what the other left.
 
 pub mod enemy;
+pub mod files;
 pub mod json;
 pub mod lists;
 pub mod manifest;

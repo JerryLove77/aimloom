@@ -1,0 +1,100 @@
+{
+  "fixture": "enemy-crlf.json",
+  "packFiles": {
+    "keep.txt": {
+      "text": "x"
+    }
+  },
+  "steps": [
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "copy.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "copy.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<game>/FPSAimTrainer",
+        "fileName": "copy.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "relative",
+        "fileName": "copy.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>/missing",
+        "fileName": "copy.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "..copy.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "nul.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "a/b.png",
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEklEQVR42mP4z8DwHxkzkC4AADxAH+Ea86VIAAAAAElFTkSuQmCC",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "copy2.png",
+        "base64": "YR==",
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "exportFile",
+      "args": {
+        "directory": "<pack>",
+        "fileName": "copy2.png",
+        "base64": "abc",
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

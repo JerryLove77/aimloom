@@ -242,6 +242,10 @@ fn add_pristine(engine: &Engine, context: &Context, install: &Json, install_dir:
     Ok(())
 }
 
+/// `Assert-KvkGameClosedUnless`: the writes that only place files (a crosshair, an added theme or
+/// sound) may run while the game is open; every other write requires it closed.
+fn game_closed_unless(engine: &Engine, allowed: bool) -> EngineResult<()> { if allowed { Ok(()) } else { engine.assert_game_closed() } }
+
 fn items_mut(manifest: &mut Json) -> &mut Vec<Json> {
     match manifest { Json::Object(fields) => match fields.iter_mut().find(|(k, _)| k == "Items") { Some((_, Json::Array(items))) => items, _ => unreachable_items() }, _ => unreachable_items() }
 }
@@ -251,9 +255,9 @@ fn unreachable_items() -> ! { panic!("a validated manifest always has an Items a
 
 /// `Invoke-KvkFileChange`: one target, from its before-hash to its after-hash, with the intent
 /// journaled before the rename so a crash is recoverable.
-fn file_change(engine: &Engine, context: &Context, manifest: &mut Json, index: usize, source: &str) -> EngineResult<()> {
+fn file_change(engine: &Engine, context: &Context, manifest: &mut Json, index: usize, source: &str, allow_running: bool) -> EngineResult<()> {
     engine.host.fault("file-change")?;
-    engine.assert_game_closed()?;
+    game_closed_unless(engine, allow_running)?;
     let id = text(manifest, "Id").unwrap_or_default();
     let item = items_mut(manifest)[index].clone();
     let target = text(&item, "Target").unwrap_or_default();
@@ -264,7 +268,7 @@ fn file_change(engine: &Engine, context: &Context, manifest: &mut Json, index: u
         None => {
             items_mut(manifest)[index].set("State", Json::str("writing"));
             manifest::save(context, manifest)?;
-            engine.assert_game_closed()?;
+            game_closed_unless(engine, allow_running)?;
             if hash(&target)? != before { return Err(EngineError::plain(format!("Target changed before deletion: \"{target}\""))); }
             if before.is_some() { std::fs::remove_file(&target).map_err(|e| EngineError::io(&e))?; }
         }
@@ -275,7 +279,7 @@ fn file_change(engine: &Engine, context: &Context, manifest: &mut Json, index: u
             copy_snapshot(engine, source, &temp, after_hash)?;
             items_mut(manifest)[index].set("State", Json::str("writing"));
             manifest::save(context, manifest)?;
-            engine.assert_game_closed()?;
+            game_closed_unless(engine, allow_running)?;
             if hash(&target)? != before { return Err(EngineError::plain(format!("Target changed before replacement: \"{target}\""))); }
             let moved = if before.is_none() { super::platform::move_file_no_replace(Path::new(&temp), Path::new(&target)) } else { super::platform::replace_file(Path::new(&temp), Path::new(&target)) };
             moved.map_err(|e| EngineError::io(&e))?;
@@ -289,9 +293,9 @@ fn file_change(engine: &Engine, context: &Context, manifest: &mut Json, index: u
 /// `Invoke-KvkInstall`: backs up every target, publishes the backup, extends the first
 /// protection, then writes and verifies each file; on failure rolls the batch back, and if
 /// that fails too leaves it `recovery-required`.
-pub fn install(engine: &Engine, context: &Context, plan: &Plan, observer: Observer) -> EngineResult<Report> {
+pub fn install(engine: &Engine, context: &Context, plan: &Plan, allow_running: bool, observer: Observer) -> EngineResult<Report> {
     let _locks = engine.enter_lock(context)?;
-    engine.assert_game_closed()?;
+    game_closed_unless(engine, allow_running)?;
     let manifests = manifest::all(engine, context)?;
     if manifest::has_unfinished(&manifests) {
         return Err(EngineError::coded("RECOVERY_REQUIRED", "上一次操作还没有完成，请先恢复再安装。", "An unfinished operation must be recovered before installing."));
@@ -339,7 +343,7 @@ pub fn install(engine: &Engine, context: &Context, plan: &Plan, observer: Observ
         observer(&Observation { name: "installing", phase: "installing", completed: Some(0), total, current_file: None, batch_id: Some(id.clone()) });
         for index in 0..total as usize {
             let key = text(&items_mut(&mut m)[index], "Key").unwrap_or_default();
-            file_change(engine, context, &mut m, index, &join(&published, &source_name(&key)))?;
+            file_change(engine, context, &mut m, index, &join(&published, &source_name(&key)), allow_running)?;
             observer(&Observation { name: "file-verified", phase: "verifying", completed: Some(index as u64 + 1), total, current_file: Some(key), batch_id: Some(id.clone()) });
         }
         m.set("Status", Json::str("completed"));
@@ -354,7 +358,7 @@ pub fn install(engine: &Engine, context: &Context, plan: &Plan, observer: Observ
             let mut errors = vec![error.message.clone()];
             let mut errors_en = vec![error.english()];
             let total = items_mut(&mut m).len() as u64;
-            match undo_failed_install(engine, context, &mut m, observer) {
+            match undo_failed_install(engine, context, &mut m, allow_running, observer) {
                 Ok(rollback) => {
                     errors.extend(rollback.errors);
                     errors_en.extend(rollback.errors_en);
@@ -378,10 +382,10 @@ pub fn install(engine: &Engine, context: &Context, plan: &Plan, observer: Observ
 
 /// `Undo-KvkFailedInstall`: every file this batch owns goes back to its before-hash; a file
 /// someone else changed stops the rollback, leaving the batch `recovery-required`.
-fn undo_failed_install(engine: &Engine, context: &Context, m: &mut Json, observer: Observer) -> EngineResult<Report> {
+fn undo_failed_install(engine: &Engine, context: &Context, m: &mut Json, allow_running: bool, observer: Observer) -> EngineResult<Report> {
     let id = text(m, "Id").unwrap_or_default();
     manifest::read(engine, context, &id)?;
-    engine.assert_game_closed()?;
+    game_closed_unless(engine, allow_running)?;
     m.set("Status", Json::str("recovery-required"));
     manifest::save(context, m)?;
     let total = items_mut(m).len() as u64;
@@ -398,7 +402,7 @@ fn undo_failed_install(engine: &Engine, context: &Context, m: &mut Json, observe
         let (target, key) = (text(&x, "Target").unwrap_or_default(), text(&x, "Key").unwrap_or_default());
         let (before, after) = (text(&x, "BeforeHash"), text(&x, "AfterHash"));
         if hash(&target)? != before {
-            engine.assert_game_closed()?;
+            game_closed_unless(engine, allow_running)?;
             if hash(&target)? != after { return Err(EngineError::plain(format!("Target changed during rollback: \"{target}\""))); }
             match &before {
                 None => std::fs::remove_file(&target).map_err(|e| EngineError::io(&e))?,
@@ -407,7 +411,7 @@ fn undo_failed_install(engine: &Engine, context: &Context, m: &mut Json, observe
                     let backup = join(&join(&context.backup_root, &id), &text(&x, "Backup").unwrap_or_default());
                     copy_snapshot(engine, &backup, &temp, before_hash)?;
                     let replaced = (|| {
-                        engine.assert_game_closed()?;
+                        game_closed_unless(engine, allow_running)?;
                         if hash(&target)? != after { return Err(EngineError::plain("Target changed during rollback.")); }
                         super::platform::replace_file(Path::new(&temp), Path::new(&target)).map_err(|e| EngineError::io(&e))
                     })();
@@ -615,7 +619,7 @@ pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_con
             let x = items_mut(&mut m)[index].clone();
             if text(&x, "State").as_deref() == Some("applied") { completed += 1; continue; }
             let desired_path = text(&x, "DesiredBackup").map(|rel| join(&join(&context.backup_root, &id), &rel)).unwrap_or_default();
-            file_change(engine, context, &mut m, index, &desired_path)?;
+            file_change(engine, context, &mut m, index, &desired_path, false)?;
             completed += 1;
             observer(&Observation { name: "file-verified", phase: "verifying", completed: Some(completed), total, current_file: text(&x, "Key"), batch_id: Some(id.clone()) });
         }
