@@ -87,10 +87,17 @@ pub fn english_text(message: &str, english: Option<&str>) -> String {
 #[cfg(test)]
 mod tests;
 
-/// `Aimloom.exe --worker`: the Rust engine as the App's JSONL worker, the counterpart of
-/// `kvk-gui-worker.ps1`. The runtime root is the folder that script treats as its own (the
-/// release's `scripts`, or `scripts/installer` in a development build), so both engines offer
-/// the same sample pack. Returns the process exit code.
+/// The worker's runtime root in a release: `<exe dir>\scripts`. The folder is not shipped (from
+/// v0.1.6 the download holds `Aimloom.exe`, its readmes and `VERSION.txt`); it is only the
+/// anchor `discover` searches from: a `KVK Settings 2025` sample pack is looked for in its parent
+/// (beside `Aimloom.exe`) and grandparent, the same places the PowerShell worker looked.
+pub fn runtime_root(exe_dir: &std::path::Path) -> std::path::PathBuf {
+    exe_dir.join("scripts")
+}
+
+/// `Aimloom.exe --worker`: the Rust engine as the App's JSONL worker. A development build's
+/// runtime root is the repository's `scripts/installer`, so the repository's sample pack is found
+/// as a release finds one. Returns the process exit code.
 pub fn run_worker() -> i32 {
     use std::io::{self, BufReader};
     let Some(local) = std::env::var_os("LOCALAPPDATA") else {
@@ -100,7 +107,7 @@ pub fn run_worker() -> i32 {
     #[cfg(debug_assertions)]
     let runtime = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../scripts/installer");
     #[cfg(not(debug_assertions))]
-    let runtime = match std::env::current_exe().ok().and_then(|exe| exe.parent().map(|dir| dir.join("scripts"))) {
+    let runtime = match std::env::current_exe().ok().and_then(|exe| exe.parent().map(runtime_root)) {
         Some(dir) => dir,
         None => { eprintln!("could not locate the application folder"); return 2; }
     };
