@@ -1,5 +1,9 @@
 # Aimloom Setup — a Windows installer that also installs PowerShell 7
 
+Note, 2026-09-30: from 0.1.6 the App runs the Rust engine, and the Setup neither ships nor
+offers PowerShell 7; §3.3 and the PowerShell 7 parts of this spec describe 0.1.2 to 0.1.5 and are
+history. The Setup still refuses the data folder.
+
 Status: **implemented and released in v0.1.2 (2026-09-20).** Approved by the user on 2026-09-19.
 What was and was not observed on Windows is in the maintainer's private verification note of
 2026-09-20. Added after this spec was

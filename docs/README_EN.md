@@ -99,7 +99,8 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 | Path | What it is |
 |---|---|
 | `packages/app` | The App: React front end, Tauri (Rust) shell |
-| `scripts/installer` | The PowerShell engine — every write to the game goes through it |
+| `scripts/installer` | The PowerShell reference engine (what the Rust engine's parity goldens come from) and the console wizard; the App does not run it from 0.1.6 |
+| `packages/app/src-tauri/src/engine` | The Rust engine — every write to the game goes through it (`Aimloom.exe --worker`, from 0.1.6) |
 | `packages/crosshair` | CS2 / VALORANT crosshair code parser and PNG renderer |
 | `packages/theme` | Theme parsing and the background preview (shared by the App and site) |
 | `packages/site` | The aimloom.dev website and its Cloudflare Worker (reports, Explore, sign-in and uploads) |

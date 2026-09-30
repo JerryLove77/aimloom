@@ -6,7 +6,7 @@ Scope: Profile workspace and legacy React installer utility; Chinese (`zh-CN`), 
 
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
-| CRUD | `controller.ts`, `profiles/editor.ts` and PowerShell worker | v0.1.x file-operation design and shared DTO | Preview / confirmed installation / confirmed recovery; no row-level edits or implicit deletion | Controller, GUI protocol and full distribution fixtures |
+| CRUD | `controller.ts`, `profiles/editor.ts` and the engine worker | v0.1.x file-operation design and shared DTO | Preview / confirmed installation / confirmed recovery; no row-level edits or implicit deletion | Controller, GUI protocol and full distribution fixtures |
 | Form | `components/PathField.tsx` | This interaction contract and UI design spec | Native labelled text field, direct edit plus native folder picker; invalid text linked with `aria-describedby`, first invalid field focused; cancel preserves path | Root flow tests, `LocationPage` |
 | Select/Listbox | Native `<select>` in Profile audio component editor | Profile workspace section below | Six fixed audio events; OS-owned popup; real label and keyboard semantics | `page.test.tsx` and browser audio-event checks |
 | Selection | `components/CategoryCard.tsx` | This interaction contract and UI design spec | Native checkbox over whole card; empty categories disabled; no implicit Primary opt-in | `components.test.tsx`, `views.test.tsx` |
@@ -232,17 +232,7 @@ Settings button, closes it and returns focus to the button. The Settings button 
 in-progress apply does not block reading the version or switching language. It grows upward from
 a bottom anchor and scrolls only when the window is too short for it.
 
-It has six sections top to bottom: Language · Account · Feedback · Updates · Engine · version.
-
-**Engine (ENGINE-RUST step 3, 2026-10-01).** Two radios, PowerShell 7（推荐） and Rust（测试）,
-asked from native code (`installer_engine`) each time the popover opens. While an operation is
-running or unresolved, or a backup batch on disk is unfinished, the group is disabled and a note
-says which; native code refuses the switch in those cases too. Choosing the other engine calls
-`installer_engine_set`, which saves the choice, waits for the old worker to exit, forgets every
-recorded plan and starts the new engine; on success the window reloads so every page reads
-again. If the new engine does not start, the alert says so, the new choice stays checked (never a
-silent fallback) and a 切回 … button switches back. A refused switch leaves the old engine checked
-with no such button.
+It has five sections top to bottom: Language · Account · Feedback · Updates · version.
 
 A language choice applies immediately (no separate confirm) and only writes to the WebView's
 `localStorage` under `aimloom.lang`; it never touches the game or the Profile draft, and it is

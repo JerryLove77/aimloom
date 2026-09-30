@@ -1,7 +1,7 @@
 # Third-party notices
 
 The crosshair module uses/adapts the sources below. No Valve or Riot game source is included.
-The release packages also carry PowerShell 7 (last section).
+The release packages up to 0.1.5 also carried PowerShell 7 (last section); 0.1.6 packages do not.
 
 ## csgo-sharecode
 
@@ -130,8 +130,10 @@ THE SOFTWARE.
 Source: https://github.com/PowerShell/PowerShell (the official `PowerShell-<version>-win-x64.zip`
 release asset; the version and SHA-256 are pinned in `scripts/installer/test-build/pwsh-runtime.json`)
 
-Use: the release packages (the portable ZIP and the Setup) carry it, unmodified, in their `pwsh\`
-folder; the App runs its PowerShell engine with it. Nothing from it is in this repository. Its own
+Use: the release packages up to 0.1.5 (the portable ZIP and the Setup) carried it, unmodified, in
+their `pwsh\` folder, and the App ran its PowerShell engine with it. The 0.1.6 packages do not carry
+it; CI still uses the pinned version to run the reference suites. Nothing from it is in this
+repository. Its own
 `LICENSE.txt` and `ThirdPartyNotices.txt` (the notices for the components it includes) ship beside
 it in that folder, unchanged.
 
