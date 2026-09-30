@@ -103,7 +103,103 @@
     },
     {
       "progress": [],
-      "reply": "{\"v\":1,\"requestId\":\"r26\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[],\"errors\":[]}}"
+      "reply": "{\"v\":1,\"requestId\":\"r26\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 含未知字段：crosshair\",\"messageEn\":\"The Profile has an unknown field: crosshair.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r27\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 含未知字段：enemy\",\"messageEn\":\"The Profile has an unknown field: enemy.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r28\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r29\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"不支持此 Profile 版本。\",\"messageEn\":\"This Profile version is not supported.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r30\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：theme\",\"messageEn\":\"The Profile is missing the field: theme.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r31\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 字段必须是 JSON 对象。\",\"messageEn\":\"A Profile field must be a JSON object.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r32\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：theme\",\"messageEn\":\"The Profile is missing the field: theme.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r33\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 字段必须是 JSON 对象。\",\"messageEn\":\"A Profile field must be a JSON object.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r34\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：kill\",\"messageEn\":\"The Profile is missing the field: kill.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r35\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：spawn\",\"messageEn\":\"The Profile is missing the field: spawn.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r36\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：mbsGood\",\"messageEn\":\"The Profile is missing the field: mbsGood.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r37\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：mbsOkay\",\"messageEn\":\"The Profile is missing the field: mbsOkay.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r38\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：mbsBad\",\"messageEn\":\"The Profile is missing the field: mbsBad.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r39\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 缺少字段：mbsChangeNow\",\"messageEn\":\"The Profile is missing the field: mbsChangeNow.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r40\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 音效必须是最多 64 项的数组。\",\"messageEn\":\"Profile sounds must be an array of at most 64 entries.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r41\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r42\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r43\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r44\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r45\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r46\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r47\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r48\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 的 MBS 音效必须恰好一项。\",\"messageEn\":\"A Profile MBS sound must have exactly one entry.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r49\",\"type\":\"reply\",\"ok\":false,\"error\":{\"code\":\"ENGINE_ERROR\",\"message\":\"Profile 文件引用格式或扩展名无效。\",\"messageEn\":\"A Profile file reference has an invalid format or extension.\",\"path\":null}}"
+    },
+    {
+      "progress": [],
+      "reply": "{\"v\":1,\"requestId\":\"r50\",\"type\":\"reply\",\"ok\":true,\"data\":{\"directory\":\"<local>/Aimloom/profiles\",\"profiles\":[],\"errors\":[]}}"
     }
   ],
   "files": {
