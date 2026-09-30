@@ -1,0 +1,94 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "humanoid",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Does Not Exist",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cuboid",
+        "model": "Stylized Ecto",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "spheroid",
+        "model": "Meso",
+        "skin": "Genji",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Stylized Ecto",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": -1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1,
+        "extra": 1
+      }
+    },
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": " ",
+        "model": "Ghost",
+        "skin": "Default",
+        "revision": 1
+      }
+    },
+    {
+      "request": "removeEverything",
+      "args": {}
+    },
+    {
+      "request": "gameState",
+      "args": {}
+    }
+  ]
+}

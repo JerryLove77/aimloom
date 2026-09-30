@@ -1,0 +1,11 @@
+{
+  "fixture": "enemy-no-shape.json",
+  "steps": [
+    {
+      "request": "enemyList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "fixture": "enemy-no-key.json",
+  "steps": [
+    {
+      "request": "planEnemy",
+      "args": {
+        "gameRoot": "<game>",
+        "shape": "cylindrical",
+        "model": "Mummy",
+        "skin": "Default",
+        "revision": 1
+      }
+    }
+  ]
+}
