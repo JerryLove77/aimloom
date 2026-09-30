@@ -36,6 +36,11 @@ function Sort-KvkByName($Items,[string]$Property='') {
     # Unrolled into the pipeline: every caller collects the result with @(...).
     return $list.ToArray()
 }
+# Splat into ConvertFrom-Json so a string that looks like a date stays a string. -DateKind arrived
+# in PowerShell 7.5: the bundled 7.6 has it, and an older installed 7.x (used only when the
+# bundled copy is missing) keeps its old date promotion rather than failing every call.
+$script:KvkJsonStrings=@{}
+if ($PSVersionTable.PSVersion -ge [version]'7.5') { $script:KvkJsonStrings=@{DateKind='String'} }
 function New-KvkNameMap { return ,[Collections.Generic.Dictionary[string,object]]::new([StringComparer]::OrdinalIgnoreCase) }
 function Get-KvkFullPath([string]$Path) {
     if ([string]::IsNullOrWhiteSpace($Path)) { throw 'Path is empty.' }
@@ -359,7 +364,7 @@ function Get-KvkJsonSettingValue([string]$Text,[string]$Key,[string[]]$Channels)
     if ($null -eq $span) { return $null }
     $region=$Text.Substring($span.ValueStart,$span.ValueEnd-$span.ValueStart)
     if ($null -eq $Channels) {
-        try { return ($region | ConvertFrom-Json -Depth 8) } catch { return $region }
+        $strings=$script:KvkJsonStrings; try { return ($region | ConvertFrom-Json -Depth 8 @strings) } catch { return $region }
     }
     $value=@{}
     foreach ($channel in $Channels) {

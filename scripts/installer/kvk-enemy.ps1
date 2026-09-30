@@ -60,8 +60,10 @@ function Get-KvkEnemySkinChoiceFromRegion([string]$Region) {
     $skinSpan=Find-KvkJsonValue $Region 'characterSkin'
     if ($null -eq $modelSpan -or $null -eq $skinSpan) { return $null }
     try {
-        $model=ConvertFrom-Json ($Region.Substring($modelSpan.ValueStart,$modelSpan.ValueEnd-$modelSpan.ValueStart))
-        $skin=ConvertFrom-Json ($Region.Substring($skinSpan.ValueStart,$skinSpan.ValueEnd-$skinSpan.ValueStart))
+        # A model or skin name that looks like a date stays a string.
+        $strings=$script:KvkJsonStrings
+        $model=ConvertFrom-Json ($Region.Substring($modelSpan.ValueStart,$modelSpan.ValueEnd-$modelSpan.ValueStart)) @strings
+        $skin=ConvertFrom-Json ($Region.Substring($skinSpan.ValueStart,$skinSpan.ValueEnd-$skinSpan.ValueStart)) @strings
     } catch { return $null }
     if ($model -isnot [string] -or $skin -isnot [string]) { return $null }
     return [pscustomobject]@{Model=[string]$model;Skin=[string]$skin}

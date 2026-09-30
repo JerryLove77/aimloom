@@ -12,7 +12,7 @@ function Read-KvkCrosshairReplacement([string]$PackRoot) {
     $path=Join-Path $root 'crosshair-replacement.json';Assert-KvkSafePath $path
     if (-not [IO.File]::Exists($path) -or ([IO.FileInfo]$path).Length -gt 65536) { throw 'Missing or oversized crosshair replacement metadata.' }
     $metadataHash=Get-KvkHash $path
-    $m=ConvertFrom-Json -InputObject ([IO.File]::ReadAllText($path)) -ErrorAction Stop
+    $strings=$script:KvkJsonStrings; $m=ConvertFrom-Json -InputObject ([IO.File]::ReadAllText($path)) @strings -ErrorAction Stop
     if ($m.schemaVersion -ne 1 -or $m.kind -cne 'crosshair-replacement' -or $m.requiresConfirmation -ne $true -or $m.gameSelectionChanged -ne $false) { throw 'Invalid crosshair replacement metadata.' }
     Assert-KvkCrosshairTargetName $m.targetFileName
     if ($m.png.file -cne ('crosshairs/'+$m.targetFileName) -or $m.png.sha256 -cnotmatch '^[a-f0-9]{64}$') { throw 'Invalid crosshair asset identity.' }
