@@ -347,3 +347,16 @@ fn the_worker_loop_answers_one_line_per_request() {
     assert!(lines[1].starts_with(r#"{"v":1,"requestId":null,"type":"reply","ok":false,"error":{"code":"ENGINE_ERROR","message":"Invalid JSON request: "#), "{}", lines[1]);
     assert_eq!(lines[2], r#"{"v":1,"requestId":"g","type":"reply","ok":true,"data":"closed"}"#);
 }
+
+#[test]
+fn a_saved_copy_replies_with_the_names_the_app_decodes() {
+    let mut f = Fixture::new(&original());
+    let out = f.root.join("out");
+    std::fs::create_dir_all(&out).unwrap();
+    let png = super::profiles::base64(&[1, 2, 3]);
+    let game = f.game.clone();
+    let data = f.ok("exportFile", Json::object(vec![("directory", Json::str(out.to_string_lossy())), ("fileName", Json::str("copy.png")), ("base64", Json::str(png)), ("gameRoot", Json::str(&game))]));
+    // The App refuses unknown fields: a reply in any other casing fails there (it did, 2026-10-01).
+    let decoded: crate::installer::protocol::ExportedFile = serde_json::from_str(&data.to_compact()).unwrap();
+    assert_eq!(decoded.bytes, 3);
+}

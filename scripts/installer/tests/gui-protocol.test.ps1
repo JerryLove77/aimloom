@@ -420,6 +420,8 @@ Invoke-WithKvkGuiFixture {
     $written = Join-Path $out 'shot.png'
     Assert ([Convert]::ToBase64String([IO.File]::ReadAllBytes($written)) -ceq $rgba) 'The exported bytes differ from the request.'
     Assert ($saved.data.sha256 -ceq (Get-KvkHash $written)) 'The reported hash does not match the file.'
+    # PowerShell reads properties ignoring case; the App does not (serde, deny_unknown_fields).
+    Assert ((@($saved.data.PSObject.Properties.Name) -join ',') -ceq 'path,bytes,sha256') 'exportFile must reply with the exact wire names path, bytes, sha256.'
 
     $again = Invoke-KvkGuiRequest -Session $f.Session -Request @{v=1;requestId='export2';op='exportFile';args=@{directory=$out;fileName='shot.png';base64=$rgba;gameRoot=$f.GameRoot}}
     Assert (-not $again.ok) 'An export overwrote an existing file.'
