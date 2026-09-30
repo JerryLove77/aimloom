@@ -1,10 +1,10 @@
 import { AUDIO_EVENTS, type AudioBindings } from '../bridge/contracts'
-import type { ProfileAudio, ProfileFileReference, TrainingProfile } from './model'
+import { SINGLE_SOUND_EVENTS, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
 
 /**
- * What the game is set to right now, so that 「保持当前」 can say what it keeps. Each part is
- * best effort and independent: a part that cannot be read is null, and the UI then falls back to
- * the bare 「保持当前」 it showed before (2026-09-21, the user: 「保持当前完全不清楚是什么配置」).
+ * What the game is set to right now: what a new Profile starts from (`snapshotFromGame`) and what
+ * 当前使用 compares against (`profileInUse`). Each part is best effort and independent: a part
+ * that cannot be read is null, and then nothing is taken from it and no Profile reads as in use.
  *
  * A Profile no longer manages the enemy (2026-09-21), so this no longer reads it: `keptEnemy`,
  * `enemyList` and the swatch helpers went with it.
@@ -54,6 +54,8 @@ const reference = (entry: InstalledEntry): ProfileFileReference => ({ name: entr
  * Each part the game names is resolved to the one installed file with that name; a part that
  * cannot be resolved (nothing read, no such file, or two files with the name) is left unchosen,
  * and the player picks it before saving. An empty kill or spawn list is kept: it is "no sound".
+ * An MBS event holds exactly one sound, so one the game leaves empty (or a settings file that
+ * could not be read) is left unchosen too, never recorded as an empty list.
  */
 export function snapshotFromGame(current: CurrentGame | null): { theme: ProfileFileReference | null; audio: ProfileAudio } {
   const audio: ProfileAudio = {}
@@ -62,6 +64,7 @@ export function snapshotFromGame(current: CurrentGame | null): { theme: ProfileF
   for (const event of AUDIO_EVENTS) {
     const bound = current.sounds?.[event]
     if (!bound) continue
+    if (SINGLE_SOUND_EVENTS.includes(event) && bound.length !== 1) continue
     const files = bound.map(name => unique(current.installedSounds, name))
     if (files.every(entry => entry !== null)) audio[event] = files.map(entry => reference(entry!))
   }

@@ -105,8 +105,13 @@ export function createProfileEditor(bridge: ProfileBridge) {
     create(name = t('zh', 'profile.editor.defaultName'), start?: { theme: ProfileFileReference | null; audio: ProfileAudio }) {
       session++
       const fallback = t('zh', 'profile.editor.defaultName')
-      const draft = createProfileDraft(newId(), nameError(name) ? fallback : name, start)
-      publish({ draft: { ...draft, name }, filePath: null, baseline: null, reading: false, nameError: nameError(name), error: null })
+      // A start the model refuses must never leave 新建组合 doing nothing: fall back to an empty
+      // draft and say why.
+      let draft: TrainingProfile
+      let error: Msg | null = null
+      try { draft = createProfileDraft(newId(), nameError(name) ? fallback : name, start) }
+      catch (reason) { draft = createProfileDraft(newId(), nameError(name) ? fallback : name); error = message(reason) }
+      publish({ draft: { ...draft, name }, filePath: null, baseline: null, reading: false, nameError: nameError(name), error })
     },
     edit: (id: string) => open(id, null),
     duplicate: (id: string, copyName = (name: string) => t('zh', 'profile.editor.copyName', { name })) => open(id, copyName),
