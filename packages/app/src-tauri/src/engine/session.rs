@@ -29,6 +29,7 @@ enum Adapter {
     Crosshair(super::files::CrosshairReplacement),
     CrosshairAdd(super::txn::Plan),
     FileAdd(super::files::FileAdd),
+    ProfileApply(super::settings::ProfileApply),
     Restore(super::txn::RestorePlan),
 }
 
@@ -251,6 +252,19 @@ impl Session {
                     ("导出内容不是规范 base64。", "The export encoding is not canonical base64."))?;
                 super::files::export(directory, file, &bytes, game_root)
             }
+            "planProfileApply" => {
+                assert_fields(args, &["gameRoot", "id", "revision"], "args")?;
+                self.plan = None;
+                let (game_root, id) = (string_arg(args, "gameRoot")?, string_arg(args, "id")?);
+                let revision = revision_arg(args)?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                self.engine.assert_game_closed()?;
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能应用 Profile。", "An unfinished operation must be recovered before applying a Profile."));
+                }
+                let apply = super::settings::profile_apply_plan(&self.engine, &context, id)?;
+                Ok(self.record_plan(context, &apply.plan.clone(), revision, Adapter::ProfileApply(apply)))
+            }
             "planScheme" => {
                 assert_fields(args, &["gameRoot", "file", "revision"], "args")?;
                 self.plan = None;
@@ -367,6 +381,7 @@ impl Session {
                     Adapter::Crosshair(plan) => super::files::image_execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::CrosshairAdd(plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,
                     Adapter::FileAdd(add) => super::files::file_add_execute(&self.engine, &cached.context, add, observer)?,
+                    Adapter::ProfileApply(apply) => super::settings::profile_apply_execute(&self.engine, &cached.context, apply, observer)?,
                     Adapter::Restore(_) => unreachable_restore(),
                 };
                 Ok(execution(&report))

@@ -1,0 +1,359 @@
+{
+  "fixture": "sample-primary.json",
+  "gameFiles": {
+    "FPSAimTrainer/Saved/SaveGames/Themes/Default.json": {
+      "fixture": "theme-default.json"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json": {
+      "fixture": "theme-legacy.json"
+    },
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/kill.ogg": {
+      "text": "o"
+    },
+    "FPSAimTrainer/sounds/Zeta.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/dup.wav": {
+      "text": "w"
+    },
+    "FPSAimTrainer/sounds/Dup.ogg": {
+      "text": "o"
+    }
+  },
+  "steps": [
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "full",
+          "name": "P",
+          "scheme": {
+            "name": "Default",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "<game>/FPSAimTrainer/sounds/hit.wav"
+              },
+              {
+                "name": "kill",
+                "path": "<game>/FPSAimTrainer/sounds/kill.ogg"
+              }
+            ],
+            "mbsGood": [
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "full",
+        "revision": 1
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "a",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "schemeList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "audioList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "full",
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "b",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "nope",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "gone-theme",
+          "name": "P",
+          "scheme": {
+            "name": "X",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Missing.json"
+          },
+          "audio": null
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "gone-theme",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "gone-sound",
+          "name": "P",
+          "scheme": null,
+          "audio": {
+            "kill": [
+              {
+                "name": "x",
+                "path": "<game>/FPSAimTrainer/sounds/missing.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "gone-sound",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "two-for-one",
+          "name": "P",
+          "scheme": null,
+          "audio": {
+            "mbsBad": [
+              {
+                "name": "hit",
+                "path": "<game>/FPSAimTrainer/sounds/hit.wav"
+              },
+              {
+                "name": "Zeta",
+                "path": "<game>/FPSAimTrainer/sounds/Zeta.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "two-for-one",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "empty",
+          "name": "P",
+          "scheme": null,
+          "audio": {
+            "kill": [],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "empty",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "nulls",
+          "name": "P",
+          "scheme": null,
+          "audio": null
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "nulls",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "ambiguous",
+          "name": "P",
+          "scheme": null,
+          "audio": {
+            "kill": [
+              {
+                "name": "dup",
+                "path": "<game>/FPSAimTrainer/sounds/dup.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "ambiguous",
+        "revision": 3
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "legacy-only",
+          "name": "P",
+          "scheme": {
+            "name": "Legacy Sample",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json"
+          },
+          "audio": null
+        }
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "legacy-only",
+        "revision": 4
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "legacy-only",
+          "name": "Renamed",
+          "scheme": {
+            "name": "Legacy Sample",
+            "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/Legacy Sample.json"
+          },
+          "audio": null
+        }
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "c",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "legacy-only",
+        "revision": 5
+      }
+    },
+    {
+      "gameRunningFrom": 1
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "d",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "gameRunningFrom": null
+    },
+    {
+      "request": "planProfileApply",
+      "args": {
+        "gameRoot": "<game>",
+        "id": "legacy-only",
+        "revision": 6
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "e",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "backups",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    }
+  ]
+}
