@@ -32,8 +32,8 @@ the five.
 
 - **Profiles.** One JSON file per Profile holding {name, path} records; audio keeps records per
   event. Profile Save writes JSON, never the game; 应用 applies the saved JSON as one batch.
-- **Game writes.** Every game write goes through the PowerShell engine: backup first, a
-  recoverable transaction, never overwriting unowned files.
+- **Game writes.** Every game write goes through the engine (Rust from v0.1.6, PowerShell before):
+  backup first, a recoverable transaction, never overwriting unowned files.
 - **Adding files.** Files can be added from outside the App (picker or drag-and-drop) and are
   copied byte for byte.
 
@@ -140,16 +140,18 @@ user on 2026-09-22 and written down in
 | **Releases over 25 MiB on R2**; the site offers **only the Setup**, the portable ZIP stays on GitHub (user, 2026-09-24) | **Built** 2026-09-24 (`release:upload`, the deploy's live check, the Download page) |
 | **Feedback tickets on the site**: a side panel from a fixed button and the footer; the changelog moves to the footer (user, 2026-09-24) | **Built** 2026-09-24: `/api/tickets`, migration 0004, workerd tests, checked in a browser with Turnstile's test key. Ships with 0.1.5. Not designed in Figma |
 
-## Next: v0.1.6 — APP-NAV and the engine in Rust (first steps)
+## Next: v0.1.6 — APP-NAV and the Rust engine
 
 Set by the user on 2026-09-30 (「v016就先做app-nav和rust。瘦身，一键拖入和later都后面再说」): v0.1.6 is the
-new App shell and Rust's first release. Rust arrives beside PowerShell 7 and does not replace it
-yet; the code slim-down's second step, the Quick import redesign and everything under Later wait.
+new App shell and Rust's first release. **Rust takes over** (user, 2026-09-30: 「接管是指只有rust」):
+the App runs only the Rust engine and the download no longer carries PowerShell 7. It ships as
+0.1.6-beta.1 first, on the website, then stable. The code slim-down's second step, the Quick import
+redesign and everything under Later wait.
 
 | ID | Deliverable | Status |
 |---|---|---|
 | APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma drawn and approved 2026-10-01; **built** on `feat/app-nav` and checked on the test PC (test builds 0.1.6-test.1–3); ships as 0.1.6-beta.1 first (user, 2026-09-30) |
-| ENGINE-RUST 1–3 | **The engine in Rust, offered beside PowerShell:** the spike, the whole engine with PowerShell goldens, then choosing the engine (Rust marked as a test, PowerShell the default and still installed) — see the notes after this table | In v0.1.6 (user, 2026-09-30: Rust's first release does not fully replace PowerShell 7); steps 1–2 **merged** 2026-10-01 (PR #24); step 3 **built** on `feat/app-nav`; 0.1.6 ships as a beta first (user, 2026-09-30: 「先发 beta」) |
+| ENGINE-RUST 1–4 | **The engine in Rust takes over:** the spike, the whole engine with PowerShell goldens, then the App running only Rust with no PowerShell in the download — see the notes after this table | Steps 1–2 **merged** 2026-10-01 (PR #24); step 3 (a Settings switch) built and then replaced by the takeover (user, 2026-09-30); step 4 in progress on `feat/app-nav` |
 
 **APP-NAV — the shell the user described (2026-09-21):**
 - The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
@@ -185,47 +187,43 @@ yet; the code slim-down's second step, the Quick import redesign and everything 
 
 Added to the near-term plan by the user on 2026-09-29
 (「把rust改版加到最近的计划里，可以平缓过度，比如安装包里有两个选项，powershell 7和rust」), ordered
-after the bundled-PowerShell release (v0.1.5). The goal is a release of a few MB
-without PowerShell. The transition is gradual: every release carries both engines (the Rust one
-lives inside `Aimloom.exe`), every install starts on PowerShell, and Settings can change it.
+after the bundled-PowerShell release (v0.1.5). The goal is a release of a few MB without
+PowerShell. The first plan was a gradual transition (both engines in every release, a Settings
+switch); on 2026-09-30 the user chose a takeover instead:
 
-- **The Setup does not ask** (user, 2026-10-01: 「安装程序不问，只在设置里换」). Every install and
-  the portable ZIP start on PowerShell; a player who wants to try Rust switches in Settings. The
-  choice is `engine.json` in the data folder, so it survives an update or a reinstall.
-- **Settings can switch engines, only when it is safe** (user, 2026-09-29: first 「设置切换容易出问题，
-  而且报错处理也会麻烦」, then 「如果能处理报错，也可以选择吧rust/powershell加到设置里」). The rules:
-  - The switch is disabled, with the reason shown, while an operation is running or unresolved, or
-    while an unfinished batch is on disk. Native code enforces this, not only the UI.
-  - Switching waits for the old worker to exit, discards the current preview, and reloads the
-    window, so every page reads again through the new engine.
-  - If the chosen engine does not start, the App says so and offers switching back. It never falls
-    back by itself, and never in the middle of a write.
-  - Settings and every report name the engine in use.
-- **One engine does everything.** An install never sends some operations to Rust and others to
-  PowerShell: both write the same backups, manifests, batch status and locks.
+- **v0.1.6 runs only Rust.** The App always starts `Aimloom.exe --worker` and never PowerShell; the
+  Setup and the portable ZIP carry `Aimloom.exe`, its readmes and `VERSION.txt` only (a few MB),
+  and the Setup no longer looks for or offers PowerShell 7. There is no engine switch.
+- **PowerShell stays in the repository until Rust has proven itself** (「认为没问题发rust版本后再删掉
+  powershell的痕迹」): the PowerShell engine, its 17 suites, the parity goldens and CI's pinned
+  PowerShell remain, as the reference Rust is held to. Until then an engine change is still one PR:
+  PowerShell, the regenerated goldens and Rust.
+- **The fallback is a branch, not a switch.** `backup/0.1.6-powershell-default` (kept on the
+  maintainer's machine) holds the dual-engine build with PowerShell as the default.
 - **Either engine reads what the other wrote.** Backups, first-protection records, Profiles, and an
-  unfinished (`recovery-required`) batch left by the other engine are recovered, both ways. This is
-  tested before the choice is offered.
-- **The download does not shrink until the end.** `pwsh\` stays installed during the transition, so
-  a player can always switch back to PowerShell.
-- **New engine behaviour lands in both engines** (or waits) until PowerShell is removed; the parity
-  goldens enforce it.
+  unfinished (`recovery-required`) batch left by PowerShell (0.1.5) are recovered by Rust, and the
+  other way round; `cross.test.ps1` tests both.
+- **An upgrade may leave the old `pwsh\` and `scripts\` folders** (a silent install, or declining the
+  uninstall step). They are unused and harmless; the Setup keeps its rule of never deleting
+  anything (user, 2026-09-30), and the beta's known issues say so.
+- **Before the beta:** every real write done once through Rust on the test PC and seen in the game
+  (a checklist the user clicks through while Claude checks each step remotely).
 
 | Step | Deliverable | Status |
 |---|---|---|
 | 1 | **Spike**: the write core plus Enemy in Rust, compared with PowerShell goldens, and cross-restores in both directions; a go/no-go report with measured numbers | **Done** 2026-10-01 (PR #24), folded into step 2 |
-| 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | **Merged** 2026-10-01 (PR #24): all 26 operations; 52 parity cases match PowerShell on the Mac and on Windows; the cross-engine test passes 6/6; CI runs both. Not reachable by players |
-| 3 | **Choosing the engine**: the Settings switch under the rules above (PowerShell 7 recommended, Rust marked as a test); one stored choice read by the App before it starts a worker; reports and the Privacy page name the engine. Beta first, then stable | **Built** on `feat/app-nav` and used in the real App on the test PC (switching both ways, the choice surviving a restart, a Profile applied through Rust). The Setup does not ask (user). The site's Worker must be deployed before the App, since the report now carries `system.engine` |
-| 4 | **Rust becomes the default**; PowerShell stays an option. Before it: every real write done once through Rust on the test PC and seen in the game (Quick import install and restore; Theme, Sounds, Enemy and Crosshair apply and add; Profile apply; save a copy), and the 0.1.6 beta's reports. Decide whether players who never chose an engine move to Rust | Not started |
-| 5 | **PowerShell removed**: a Setup of a few MB and a Rust ZIP (no `pwsh\` or engine scripts); the App's PowerShell start-up code, the Setup's winget offer and the PowerShell pin go; decide the console wizard's future (`安装配置.cmd` / `恢复配置.cmd`: delete, or a command-line mode of `Aimloom.exe`); the parity goldens freeze into Rust's own regression tests and the "PowerShell + goldens + Rust in one PR" rule retires; every text naming PowerShell (App errors, the site's home, FAQ, guide, download and privacy pages, both READMEs, CLAUDE.md, the report's `powershell` field) | Not started |
+| 2 | **The whole engine in Rust**: every operation the App sends (discover, locate, catalog, backups, every list and plan, execute for install and restore, export, Profiles), each pinned by PowerShell goldens | **Merged** 2026-10-01 (PR #24): all 26 operations; 52 parity cases match PowerShell on the Mac and on Windows; the cross-engine test passes 6/6; CI runs both |
+| 3 | **Choosing the engine** in Settings | Built on `feat/app-nav` and used on the test PC, then **replaced by step 4** (user, 2026-09-30); it survives on `backup/0.1.6-powershell-default` |
+| 4 | **Rust takes over (v0.1.6)**: the App runs only Rust; no PowerShell in the Setup or ZIP; the Setup's PowerShell detection and winget offer go; reports send `engine: "rust"` and no PowerShell version; 0.1.6-beta.1 first, then stable | In progress on `feat/app-nav` |
+| 5 | **PowerShell removed from the repository**, once the Rust release has proven itself: the PowerShell engine and its 17 suites, CI's pinned PowerShell and the pin, the goldens frozen into Rust's own regression tests (the one-PR rule retires), the console wizard (`安装配置.cmd` / `恢复配置.cmd`: delete, or a command-line mode of `Aimloom.exe`), and every remaining mention | After 0.1.6 stable; before THEME-RENAME, so the rename touches one engine |
 
 ## After v0.1.6
 
 | ID | Deliverable | Status |
 |---|---|---|
 | INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; moved after v0.1.6 (user, 2026-09-30); not designed |
-| ENGINE-RUST 4–5 | Rust becomes the default, then PowerShell is removed (the small download, which also eases the mainland download) | After steps 1–3 have shipped and been used; suggested 0.1.7 and 0.1.8 |
-| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS, `kvk-scheme.ps1` and the Rust engine, in lockstep across the four wire mirrors and both engines, with the goldens regenerated. The Profile JSON already says `theme` (format v2). Players see no change | After v0.1.6 (user, 2026-09-30) |
+| ENGINE-RUST 5 | PowerShell removed from the repository (see step 5 above) | After 0.1.6 stable |
+| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS and the Rust engine, across the wire mirrors. The Profile JSON already says `theme` (format v2). Players see no change | After v0.1.6 and after ENGINE-RUST step 5 (user, 2026-09-30) |
 | APP-EXPLORE | **The App's Explore page reads the website's catalog and downloads in place**, adding a file through the existing add-file plan | Decided by the user 2026-10-01 (「先入口，下一版再做 App 内下载」): after v0.1.6; not designed |
 | SLIM-2 | **The code slim-down, step 2: features and interaction** — fewer and simpler pages, buttons and flows; the behaviour differences step 1 recorded (for example, a job still running after 60 s locks the file-add flow but not a section apply); and **Profile apply speed** (user, 2026-09-29: 「profile 应用速度有点慢」), measured phase by phase on the tester's PC before anything changes, without weakening a safety check | Step 1 (code only, no behaviour change) shipped in v0.1.5; step 2 after v0.1.6 (user, 2026-09-30) |
 
@@ -333,7 +331,7 @@ lives inside `Aimloom.exe`), every install starts on PowerShell, and Settings ca
 
 ## Boundaries
 
-- Reuse the existing component implementations and the PowerShell backup/restore; no second
+- Reuse the existing component implementations and the engine's backup/restore; no second
   writer.
 - Preserve sensitivity, DPI, FOV, gameplay, unrelated components and original source assets.
 - Preview is read-only. Every game write keeps its checks, stale-source protection,
