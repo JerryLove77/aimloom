@@ -490,6 +490,30 @@ pub fn parse_request(line: &str) -> Result<Json, String> {
 
 /// `Start-KvkGuiWorker`: one JSON request per line in, progress lines then one reply out.
 /// Ends at end of input.
+/// Runs one request. A panic (an engine bug, such as an index out of range) becomes a bilingual
+/// `ENGINE_ERROR` reply to that request instead of ending the worker, as the PowerShell worker
+/// caught each request's errors: a failed read then fails alone, and an execute still becomes
+/// `unknown` in the App (an `ENGINE_ERROR` is not a safe refusal), which leads to reconciliation.
+/// The default panic hook has already written the panic to stderr, which the App keeps in
+/// `worker.log`. Returns the reply and whether it panicked.
+fn guard_request(request_id: Json, handle: impl FnOnce() -> Json) -> (Json, bool) {
+    match std::panic::catch_unwind(std::panic::AssertUnwindSafe(handle)) {
+        Ok(reply) => (reply, false),
+        Err(_) => {
+            let issue = Json::object(vec![
+                ("code", Json::str("ENGINE_ERROR")),
+                ("message", Json::str("引擎内部出错，这次操作没有完成。请在「设置」里点「发送问题报告…」并附上日志。")),
+                ("messageEn", Json::str("The engine hit an internal error and this operation did not finish. Use \"Send a report…\" in Settings and attach the log.")),
+                ("path", Json::Null),
+            ]);
+            (Json::object(vec![("v", Json::int(1)), ("requestId", request_id), ("type", Json::str("reply")), ("ok", Json::Bool(false)), ("error", issue)]), true)
+        }
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn guard_request_for_test(request_id: Json, handle: impl FnOnce() -> Json) -> (Json, bool) { guard_request(request_id, handle) }
+
 pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
     for line in input.lines() {
         let line = line?;
@@ -502,9 +526,12 @@ pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Wr
             // (AutoFlush): the App shows it during a long batch.
             Ok(request) => {
                 let mut failed = None;
-                let reply = session.handle(&request, &mut |progress| {
+                let request_id = request.get("requestId").cloned().unwrap_or(Json::Null);
+                let (reply, panicked) = guard_request(request_id, || session.handle(&request, &mut |progress| {
                     if failed.is_none() { if let Err(e) = writeln!(output, "{}", progress.to_compact()).and_then(|_| output.flush()) { failed = Some(e); } }
-                });
+                }));
+                // A plan made before an engine bug is not trusted afterwards.
+                if panicked { session.plan = None; }
                 if let Some(error) = failed { return Err(error); }
                 reply
             }
