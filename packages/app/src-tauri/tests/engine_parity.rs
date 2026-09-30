@@ -194,7 +194,7 @@ impl Normalizer {
 }
 
 fn run_case(name: &str, case: &Json) -> Json {
-    let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+    let base = paths::temp_dir_without_links();
     let root = base.join(format!("kvk-parity-{}", app_lib::engine::store::new_guid()));
     let game = paths::get_full_path(&root.join("游戏 with spaces").to_string_lossy()).unwrap();
     let local = paths::get_full_path(&root.join("Local Data").to_string_lossy()).unwrap();

@@ -98,6 +98,14 @@ pub fn assert_file_name(name: &str) -> EngineResult<()> {
     Ok(())
 }
 
+/// The temporary folder with no link in its path, for tests: macOS keeps it behind `/var`, a
+/// link the engine refuses. On Windows `canonicalize` would return a `\\?\` device path, which
+/// the engine also refuses, so the folder is used as it is there.
+pub fn temp_dir_without_links() -> std::path::PathBuf {
+    let temp = std::env::temp_dir();
+    if cfg!(windows) { temp } else { std::fs::canonicalize(&temp).unwrap_or(temp) }
+}
+
 /// Lowercase hex SHA-256 of `bytes`.
 pub fn sha256_hex(bytes: &[u8]) -> String {
     use sha2::{Digest, Sha256};
