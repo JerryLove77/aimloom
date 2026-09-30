@@ -20,8 +20,8 @@ import { AUDIO_EVENTS, type AudioList, type SchemeList } from '../bridge/contrac
 import { browserStorage } from '../i18n'
 import { plural, useLang, useMsg, useT, type Lang, type MessageKey } from '../i18n'
 import { resolveProfileAssetPath, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
-import { profileInUse, readCurrentGame, type CurrentGame } from './current-game'
-import { describeAudio, describeEvent, describeFile, eventLabel } from './describe'
+import { profileInUse, readCurrentGame, snapshotFromGame, type CurrentGame } from './current-game'
+import { describeAudio, describeEvent, describeTheme, eventLabel } from './describe'
 import { AssetPreview } from './AssetPreview'
 import { addFileToGame, type FileAddOutcome, type FileImportInput } from '../section/file-import'
 import type { FileAddKind, PlanFileAddRequest } from '../bridge/contracts'
@@ -38,30 +38,18 @@ export interface ProfileGameBridge extends ApplyBridge {
 /** A tile before the sheet marks which one is staged. */
 export type InstalledChoice = Omit<TileChoice, 'pending'>
 
-const labelKeys: Record<ProfileComponent, MessageKey> = { scheme: 'profile.label.scheme', audio: 'profile.label.audio' }
-const subtitleKeys: Record<ProfileComponent, MessageKey> = { scheme: 'profile.subtitle.scheme', audio: 'audio.title' }
-// The same nouns lowercased, for the sentence in profile.slot.noRecordDetail.
-const nounKeys: Record<ProfileComponent, MessageKey> = { scheme: 'profile.subtitle.schemeNoun', audio: 'audio.noun' }
-const components: ProfileComponent[] = ['scheme', 'audio']
-/** A component as the player reads it: the recorded names, or what 「保持当前」 keeps right now. */
-function summary(profile: TrainingProfile, kind: ProfileComponent, current: CurrentGame | null, t: ReturnType<typeof useT>) {
-  return kind === 'audio' ? describeAudio(profile.audio, current, t) : describeFile(kind, profile[kind], current, t)
+const labelKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.label.scheme', audio: 'profile.label.audio' }
+const subtitleKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.subtitle.scheme', audio: 'audio.title' }
+// The same nouns lowercased, for the sentence in profile.slot.unchosenDetail.
+const nounKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.subtitle.schemeNoun', audio: 'audio.noun' }
+const components: ProfileComponent[] = ['theme', 'audio']
+/** A component as the player reads it: the recorded names, or 「未选择」 in an unfinished draft. */
+function summary(profile: TrainingProfile, kind: ProfileComponent, t: ReturnType<typeof useT>) {
+  return kind === 'audio' ? describeAudio(profile.audio, t) : describeTheme(profile.theme, t)
 }
-/**
- * Ruling (2026-09-21): scheme kept and every audio list empty or absent means there is
- * nothing for `planProfileApply` to write, so the UI disables 应用 rather than round-tripping to
- * the engine for a refusal it can already see.
- */
-function nothingToApply(profile: TrainingProfile): boolean {
-  if (profile.scheme !== null) return false
-  if (!profile.audio) return true
-  return Object.values(profile.audio).every(files => !files || files.length === 0)
-}
-/** Whether the Sounds component records any file at all -- the same "any event non-empty" test
- * `describeAudio` and `nothingToApply` already use, so the card's outline, tag and name line
- * agree with each other. */
-function audioRecorded(audio: ProfileAudio | null): boolean {
-  return !!audio && Object.values(audio).some(files => files && files.length > 0)
+/** Whether a draft still lacks this part: no theme, or a sound event not chosen yet. */
+function unchosen(profile: TrainingProfile, kind: ProfileComponent): boolean {
+  return kind === 'theme' ? profile.theme === null : AUDIO_EVENTS.some(event => profile.audio[event] === undefined)
 }
 /** Stands in for `locate` when the caller has none, so Apply always has a bridge to call into
  * even though its button stays disabled in that case (no game folder was ever wired in). */
@@ -140,7 +128,7 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
     return () => { live = false }
   }, [isActive, gameRoot, locate, currentStamp])
   useEffect(() => {
-    const kind = sheet === 'scheme' ? sheet : null
+    const kind = sheet === 'theme' ? 'scheme' as const : null
     if (!kind || !gameRoot || !locate || installed?.kind === kind) return
     let live = true
     setInstalledError(false)
@@ -237,15 +225,15 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
       onReconcile={locate ? reconcileImport : undefined}
       onUnresolvedChange={setImportUnresolved}
       onConfirm={value => { if (editor.setComponent('audio', value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
-    {state.draft && sheet && sheet !== 'audio' ? <ResourceSheet kind={sheet} open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
-      value={state.draft[sheet]} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder(sheet, gameRoot) : null}
-      installed={!installedError && installed?.kind === sheet ? installed.choices : null}
+    {state.draft && sheet === 'theme' ? <ResourceSheet kind="scheme" open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
+      value={state.draft.theme} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('scheme', gameRoot) : null}
+      installed={!installedError && installed?.kind === 'scheme' ? installed.choices : null}
       onAddFile={locate && gameRoot ? input => addFile('theme', input) : undefined}
       onPickFile={locate ? lang => locate.pickFile('theme', lang) : undefined}
       onReconcile={locate ? reconcileImport : undefined}
       onUnresolvedChange={setImportUnresolved}
       onAdded={() => setInstalled(null)}
-      onConfirm={value => { if (editor.setComponent(sheet, value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
+      onConfirm={value => { if (editor.setComponent('theme', value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
     <ApplyDialog state={applyState} current={currentGame} launching={applyIntent === 'launch'}
       onChooseGameRoot={root => void applyController.chooseGameRoot(root)}
       onChooseFolder={() => void applyController.chooseFolder(lang)}
@@ -272,19 +260,17 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
             <div className="pr-json"><span className="ws-muted">{t('profile.savePath.label')}</span><span className="ws-path">{basePath}</span></div>
           </div>
           <h2 className="pr-section-title">{t('profile.contents.heading')}</h2>
-          <div className="pr-slots">{components.map(kind => <Slot key={kind} kind={kind} profile={state.draft!} current={currentGame} profilePath={basePath} assets={assets} onOpen={() => setSheet(kind)} />)}</div>
+          <div className="pr-slots">{components.map(kind => <Slot key={kind} kind={kind} profile={state.draft!} profilePath={basePath} assets={assets} onOpen={() => setSheet(kind)} />)}</div>
           <p className="ws-note">{t('profile.draft.persistNote')}</p>
         </form> : <>
-          <div className="pr-library-toolbar"><div className="pr-search"><label className="pr-sr-only" htmlFor="profile-search">{t('profile.search.label')}</label><input id="profile-search" ref={searchInput} type="search" placeholder={t('profile.search.label')} value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} />{search ? <Button variant="ghost" aria-label={t('crosshair.clearSearch')} onClick={() => { setSearch(''); setPage(0); searchInput.current?.focus() }}>×</Button> : null}</div><Button onClick={() => void editor.load()} disabled={locked || state.loading}>{t('scheme.refresh')}</Button><Button variant="primary" disabled={locked || state.loading} onClick={() => { setNotice(''); editor.create(t('profile.editor.defaultName')) }}>{t('profile.new')}</Button></div>
+          <div className="pr-library-toolbar"><div className="pr-search"><label className="pr-sr-only" htmlFor="profile-search">{t('profile.search.label')}</label><input id="profile-search" ref={searchInput} type="search" placeholder={t('profile.search.label')} value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} />{search ? <Button variant="ghost" aria-label={t('crosshair.clearSearch')} onClick={() => { setSearch(''); setPage(0); searchInput.current?.focus() }}>×</Button> : null}</div><Button onClick={() => void editor.load()} disabled={locked || state.loading}>{t('scheme.refresh')}</Button><Button variant="primary" disabled={locked || state.loading} onClick={() => { setNotice(''); editor.create(t('profile.editor.defaultName'), snapshotFromGame(currentGame)) }}>{t('profile.new')}</Button></div>
           {state.listErrors.length ? <Notice tone="warning"><p>{t(plural(state.listErrors.length, 'profile.listErrors.summary'), { count: state.listErrors.length })}</p><details><summary>{t('profile.listErrors.viewFiles')}</summary>{state.listErrors.map((e, i) => <p key={i}>{t('profile.listErrors.item', { file: e.fileName, message: msg(e.message) })}</p>)}</details></Notice> : null}
           {state.loading ? <p role="status">{t('profile.library.loading')}</p> : null}
           <div className="pr-library" aria-busy={state.loading}>{matches.slice(activePage * 12, activePage * 12 + 12).map(profile => {
             const inUse = profileInUse(profile, currentGame)
-            const empty = nothingToApply(profile)
-            return <article className={`pr-profile-row${inUse ? ' pr-profile-row-current' : ''}`} key={profile.id}><div className="pr-profile-emblem" aria-hidden="true">◎</div><button className="pr-profile-title" type="button" disabled={locked} onClick={() => void editor.edit(profile.id)} aria-label={t('profile.edit.aria', { name: profile.name })}><div className="pr-profile-name"><strong>{profile.name}</strong>{inUse ? <Tag kind="current" /> : null}</div><span>{components.map(kind => t('profile.row.component', { label: t(labelKeys[kind]), summary: summary(profile, kind, currentGame, t) })).join(t('profile.componentJoin'))}</span></button><div className="pr-row-actions">
-              {/* The user (test 0.1.6-test.1): grey means in use, bright means it can be applied. A
-                  Profile with nothing to apply therefore has no 应用 at all, only this note. */}
-              {empty ? <span className="pr-row-note">{t('profile.apply.nothing')}</span> : <Button variant="ghost" disabled={locked || inUse} aria-label={inUse ? t('profile.apply.inUseAria', { name: profile.name }) : t('profile.apply.aria', { name: profile.name })} onClick={() => void applyController.open(profile)}>{inUse ? t('profile.apply.inUse') : t('profile.apply.button')}</Button>}<Button variant="ghost" disabled={locked} aria-label={t('profile.duplicate.aria', { name: profile.name })} onClick={() => void editor.duplicate(profile.id, name => t('profile.editor.copyName', { name }))}>{t('profile.duplicate.button')}</Button><Button variant="ghost" disabled={locked} aria-label={t('profile.delete.aria', { name: profile.name })} onClick={() => setDeleting(profile)}>{t('profile.delete.button')}</Button></div></article>
+            return <article className={`pr-profile-row${inUse ? ' pr-profile-row-current' : ''}`} key={profile.id}><div className="pr-profile-emblem" aria-hidden="true">◎</div><button className="pr-profile-title" type="button" disabled={locked} onClick={() => void editor.edit(profile.id)} aria-label={t('profile.edit.aria', { name: profile.name })}><div className="pr-profile-name"><strong>{profile.name}</strong>{inUse ? <Tag kind="current" /> : null}</div><span>{components.map(kind => t('profile.row.component', { label: t(labelKeys[kind]), summary: summary(profile, kind, t) })).join(t('profile.componentJoin'))}</span></button><div className="pr-row-actions">
+              {/* The user (test 0.1.6-test.1): grey means in use, bright means it can be applied. */}
+              <Button variant="ghost" disabled={locked || inUse} aria-label={inUse ? t('profile.apply.inUseAria', { name: profile.name }) : t('profile.apply.aria', { name: profile.name })} onClick={() => void applyController.open(profile)}>{inUse ? t('profile.apply.inUse') : t('profile.apply.button')}</Button><Button variant="ghost" disabled={locked} aria-label={t('profile.duplicate.aria', { name: profile.name })} onClick={() => void editor.duplicate(profile.id, name => t('profile.editor.copyName', { name }))}>{t('profile.duplicate.button')}</Button><Button variant="ghost" disabled={locked} aria-label={t('profile.delete.aria', { name: profile.name })} onClick={() => setDeleting(profile)}>{t('profile.delete.button')}</Button></div></article>
           })}{!state.loading && matches.length === 0 ? <div className="pr-empty"><span aria-hidden="true">◎</span><h2>{search ? t('profile.empty.title.search') : t('profile.empty.title.default')}</h2><p>{search ? t('profile.empty.body.search') : t('profile.empty.body.default')}</p></div> : null}</div>
           <div className="pr-pagination"><span>{t(plural(matches.length, 'profile.pagination.count'), { count: matches.length })}</span>{lastPage > 0 ? <div><Button disabled={activePage === 0} onClick={() => setPage(activePage - 1)}>{t('scheme.pagination.prev')}</Button><span>{activePage + 1} / {lastPage + 1}</span><Button disabled={activePage === lastPage} onClick={() => setPage(activePage + 1)}>{t('scheme.pagination.next')}</Button></div> : null}</div>
         </>}
@@ -295,38 +281,34 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
 /**
  * One component of the draft, as a card that opens its chooser: a corner chip naming the card, a
  * preview filling the body, and the name on a bottom line. An orange outline (`pr-slot-recorded`)
- * marks a card the Profile records, as opposed to one that keeps the current game setting -- that
- * second state also reads in the bottom line's own text (「保持当前 · X」) and the `keep` tag, never
- * by the outline colour alone.
+ * marks a complete card; a part a new draft could not take from the game reads 「未选择」 in its
+ * own text and tag, never by the outline colour alone.
  */
-function Slot({ kind, profile, current, profilePath, assets, onOpen }: {
-  kind: ProfileComponent; profile: TrainingProfile; current: CurrentGame | null; profilePath: string; assets: ProfileAssetBridge; onOpen: () => void
+function Slot({ kind, profile, profilePath, assets, onOpen }: {
+  kind: ProfileComponent; profile: TrainingProfile; profilePath: string; assets: ProfileAssetBridge; onOpen: () => void
 }) {
   const t = useT()
-  const value = profile[kind]
+  const theme = kind === 'theme' ? profile.theme : null
   const [missing, setMissing] = useState(false)
   useEffect(() => {
     let cancelled = false
     setMissing(false)
-    if (kind === 'audio' || !value) return
-    const reference = value as ProfileFileReference
-    assets.read(kind, resolveProfileAssetPath(profilePath, reference.path)).catch(() => { if (!cancelled) setMissing(true) })
+    if (!theme) return
+    assets.read('scheme', resolveProfileAssetPath(profilePath, theme.path)).catch(() => { if (!cancelled) setMissing(true) })
     return () => { cancelled = true }
-  }, [kind, value, profilePath, assets])
-  const keep = kind === 'scheme' ? value === null : !audioRecorded(profile.audio)
+  }, [theme, profilePath, assets])
+  const open = unchosen(profile, kind)
   const noun = t(subtitleKeys[kind])
   const label = t(labelKeys[kind])
   // English section names already say what the subtitle says (Sounds / Sounds); show the label alone then.
   const subtitle = noun.toLocaleLowerCase().startsWith(label.toLocaleLowerCase()) ? null : noun
-  const name = summary(profile, kind, current, t)
-  const emptyBody = t('profile.slot.noRecordDetail', { noun: t(nounKeys[kind]) })
-  return <button type="button" className={`pr-slot${keep ? '' : ' pr-slot-recorded'}${missing ? ' pr-slot-missing' : ''}`} aria-label={subtitle ? t('profile.slot.aria', { label, noun: subtitle, detail: name }) : t('profile.slot.ariaLabelOnly', { label, detail: name })} onClick={onOpen}>
-    <span className="pr-slot-head"><span className="pr-slot-kind">{label.toUpperCase()}</span><span className="pr-slot-tags">{keep ? <Tag kind="keep" /> : null}{missing ? <Tag kind="missing" /> : null}</span></span>
-    <span className="pr-slot-body">{kind === 'scheme'
-      ? <AssetPreview kind="scheme" reference={value as ProfileFileReference | null} profilePath={profilePath} assets={assets} emptyLabel={emptyBody} />
-      : audioRecorded(profile.audio)
-        ? <ul className="pr-slot-audio-list">{AUDIO_EVENTS.map(event => <li key={event}>{t('profile.eventSounds', { event: eventLabel(event, t), names: describeEvent(event, profile.audio, current, t) })}</li>)}</ul>
-        : <div className="pr-preview pr-preview-empty">{emptyBody}</div>}</span>
+  const name = summary(profile, kind, t)
+  const emptyBody = t('profile.slot.unchosenDetail', { noun: t(nounKeys[kind]) })
+  return <button type="button" className={`pr-slot${open ? '' : ' pr-slot-recorded'}${missing ? ' pr-slot-missing' : ''}`} aria-label={subtitle ? t('profile.slot.aria', { label, noun: subtitle, detail: name }) : t('profile.slot.ariaLabelOnly', { label, detail: name })} onClick={onOpen}>
+    <span className="pr-slot-head"><span className="pr-slot-kind">{label.toUpperCase()}</span><span className="pr-slot-tags">{open ? <Tag kind="missing">{t('profile.unchosen')}</Tag> : null}{missing ? <Tag kind="missing" /> : null}</span></span>
+    <span className="pr-slot-body">{kind === 'theme'
+      ? <AssetPreview kind="scheme" reference={theme} profilePath={profilePath} assets={assets} emptyLabel={emptyBody} />
+      : <ul className="pr-slot-audio-list">{AUDIO_EVENTS.map(event => <li key={event}>{t('profile.eventSounds', { event: eventLabel(event, t), names: describeEvent(event, profile.audio, t) })}</li>)}</ul>}</span>
     <span className="pr-slot-foot"><strong>{name}</strong><span className="pr-slot-action" aria-hidden="true">{t('profile.slot.change')}</span></span>
   </button>
 }

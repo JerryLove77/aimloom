@@ -90,7 +90,7 @@ export function AssetPreview({ kind, reference, profilePath, assets, onStatus, e
     })()
     return () => { current.current = null; clearTimeout(timer); player = audio.current; release() }
   }, [kind, path, profilePath, assets, lang])
-  if (!reference) return <div className="pr-preview pr-preview-empty">{emptyLabel ?? t('common.tag.keep')}</div>
+  if (!reference) return <div className="pr-preview pr-preview-empty">{emptyLabel ?? t('profile.unchosen')}</div>
   const valid = preview?.token === current.current
   const status = valid ? preview.status : 'loading'
   const active = (token: object) => current.current === token

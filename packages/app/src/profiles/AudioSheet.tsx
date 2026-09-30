@@ -7,7 +7,7 @@ import { plural, useLang, useMsg, useT, type Lang, type Msg } from '../i18n'
 import { errorMsg } from '../section/issue-text'
 import { AssetPreview } from './AssetPreview'
 import { AUDIO_EVENTS, type AudioEvent } from '../bridge/contracts'
-import { MAX_AUDIO_FILES, type ProfileAudio, type ProfileFileReference } from './model'
+import { MAX_AUDIO_FILES, SINGLE_SOUND_EVENTS, type ProfileAudio, type ProfileFileReference } from './model'
 import type { ProfileAssetBridge } from '../bridge/assets'
 import { ImportSheet } from '../section/ImportSheet'
 import { SearchBox } from '../ui/SearchBox'
@@ -15,8 +15,9 @@ import { importFileName } from '../section/import-check'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
 import { useSheetImport } from './sheet-import'
 
-type Mode = 'keep' | 'none' | 'files'
-const modeOf = (files: ProfileFileReference[] | undefined): Mode => (files === undefined ? 'keep' : files.length ? 'files' : 'none')
+/** A Profile records every event (v2): 「无音效」 or files. `unset` only in a draft not yet chosen. */
+type Mode = 'unset' | 'none' | 'files'
+const modeOf = (files: ProfileFileReference[] | undefined): Mode => (files === undefined ? 'unset' : files.length ? 'files' : 'none')
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const GENERIC: Msg = { key: 'profile.sheet.error.generic' }
 /** A row in the listing is one sound file, so a failure there is about that file — not the Profile. */
@@ -29,7 +30,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
 export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onConfirm, onCancel }: {
   profileName: string
   profilePath: string
-  value: ProfileAudio | null
+  value: ProfileAudio
   assets: ProfileAssetBridge
   isDemo: boolean
   open: boolean
@@ -50,7 +51,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   onReconcile?: (() => Promise<void>) | undefined
   /** Lifts "an add here is unresolved" so the caller can lock the whole Profile page too. */
   onUnresolvedChange?: ((unresolved: boolean) => void) | undefined
-  onConfirm: (value: ProfileAudio | null) => void
+  onConfirm: (value: ProfileAudio) => void
   onCancel: () => void
 }) {
   const t = useT()
@@ -60,7 +61,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     kill: t('profile.audioSheet.event.kill'), spawn: t('profile.audioSheet.event.spawn'),
     mbsGood: t('audio.tab.mbsGood'), mbsOkay: t('audio.tab.mbsOkay'), mbsBad: t('audio.tab.mbsBad'), mbsChangeNow: t('audio.tab.mbsChangeNow'),
   }
-  const [temp, setTemp] = useState<ProfileAudio | null>(() => structuredClone(value))
+  const [temp, setTemp] = useState<ProfileAudio>(() => structuredClone(value))
   const [event, setEvent] = useState<AudioEvent>('kill')
   const [listen, setListen] = useState<ProfileFileReference | null>(null)
   const [directory, setDirectory] = useState('')
@@ -79,14 +80,11 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   })
   const { importPath, importing, importError, unresolved, reconciling } = importer
   useEffect(() => { if (open) { setTemp(structuredClone(value)); setEvent('kill'); setSearch(''); setListen(null); setError(null); setFileErrors([]); importer.reset() } }, [open, value])
-  const eventFiles = temp?.[event]
+  const eventFiles = temp[event]
   const mode = modeOf(eventFiles)
-  const setEventFiles = (next: ProfileFileReference[] | undefined) => {
-    const updated: ProfileAudio = { ...(temp ?? {}) }
-    if (next === undefined) delete updated[event]; else updated[event] = next
-    // An object with no events left means "this Profile records no audio at all".
-    setTemp(Object.keys(updated).length ? updated : null)
-  }
+  // An MBS event holds exactly one sound: choosing one replaces it, and it cannot be emptied.
+  const single = SINGLE_SOUND_EVENTS.includes(event)
+  const setEventFiles = (next: ProfileFileReference[]) => setTemp({ ...temp, [event]: next })
   async function load(path: string) {
     try {
       const own = ++request.current
@@ -132,20 +130,20 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
       <p><Button variant="primary" disabled={reconciling || !onReconcile} onClick={() => void importer.reconcile()}>{reconciling ? t('audio.status.loading') : t('audio.reconcile')}</Button></p></Notice> : <>
     <div className="pr-audio-event"><label htmlFor="sheet-audio-event">{t('profile.audioSheet.eventLabel')}</label>
       <select id="sheet-audio-event" value={event} onChange={e => { setEvent(e.target.value as AudioEvent); setListen(null) }}>
-        {AUDIO_EVENTS.map(key => <option key={key} value={key}>{EVENTS[key]}{same(temp?.[key], value?.[key]) ? '' : t('profile.audioSheet.changedSuffix')}</option>)}
+        {AUDIO_EVENTS.map(key => <option key={key} value={key}>{EVENTS[key]}{same(temp[key], value[key]) ? '' : t('profile.audioSheet.changedSuffix')}</option>)}
       </select></div>
-    <div role="radiogroup" aria-label={t('profile.audioSheet.settingsAria', { event: EVENTS[event] })} className="pr-sheet-list">
-      <label className="pr-sheet-row"><input type="radio" name="sheet-audio-mode" checked={mode === 'keep'} onChange={() => setEventFiles(undefined)} /><span><strong>{t('profile.audioSheet.keep.title')}</strong><small>{t('profile.audioSheet.keep.hint')}</small></span></label>
+    {single ? <p className="ws-note">{t('profile.audioSheet.single.hint')}</p> : <div role="radiogroup" aria-label={t('profile.audioSheet.settingsAria', { event: EVENTS[event] })} className="pr-sheet-list">
       <label className="pr-sheet-row"><input type="radio" name="sheet-audio-mode" checked={mode === 'none'} onChange={() => setEventFiles([])} /><span><strong>{t('profile.audioSheet.none.title')}</strong><small>{t('profile.audioSheet.none.hint')}</small></span></label>
       <label className="pr-sheet-row"><input type="radio" name="sheet-audio-mode" checked={mode === 'files'} onChange={() => { if (mode !== 'files') setEventFiles(eventFiles?.length ? eventFiles : []) }} disabled={!files.length && !eventFiles?.length} /><span><strong>{t('profile.audioSheet.files.title')}</strong><small>{t('profile.audioSheet.files.hint', { max: MAX_AUDIO_FILES })}</small></span></label>
-    </div>
+    </div>}
     {eventFiles?.length ? <div className="pr-sheet-files"><strong>{t(plural(eventFiles.length, 'profile.audioSheet.filesHeading'), { event: EVENTS[event], count: eventFiles.length })}</strong>
     {eventFiles.map((file, index) => <div className="au-draft-row" key={`${index}-${file.path}`}>
       <span>{index + 1}. {file.name}</span>
       <Button variant="ghost" aria-pressed={listen?.path === file.path} aria-label={t(listen?.path === file.path ? 'profile.audioSheet.listenAria.stop' : 'profile.audioSheet.listenAria.play', { name: file.name })} onClick={() => setListen(listen?.path === file.path ? null : file)}>{listen?.path === file.path ? t('audio.stop.button') : t('audio.play.button')}</Button>
+      {single ? null : <>
       <Button variant="ghost" aria-label={t('profile.audioSheet.moveUp', { index: index + 1 })} disabled={index === 0} onClick={() => move(index, -1)}>↑</Button>
       <Button variant="ghost" aria-label={t('profile.audioSheet.moveDown', { index: index + 1 })} disabled={index === eventFiles.length - 1} onClick={() => move(index, 1)}>↓</Button>
-      <Button variant="ghost" aria-label={t('profile.audioSheet.removeAria', { index: index + 1 })} onClick={() => setEventFiles(eventFiles.filter((_, i) => i !== index))}>{t('audio.remove')}</Button>
+      <Button variant="ghost" aria-label={t('profile.audioSheet.removeAria', { index: index + 1 })} onClick={() => setEventFiles(eventFiles.filter((_, i) => i !== index))}>{t('audio.remove')}</Button></>}
     </div>)}</div> : null}
     {listen ? <AssetPreview key={listen.path} kind="audio" reference={listen} profilePath={profilePath} assets={assets} /> : null}
     <div className="cx-picker-source"><span className="ws-path">{directory || t('profile.audioSheet.dirPlaceholder')}</span><Button variant="ghost" onClick={() => void browse()}>{isDemo ? t('profile.sheet.browseDemo') : t('audio.locate.chooseFolder')}</Button>
@@ -157,7 +155,9 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
     {needle && files.length && !shownFiles.length ? <p className="ws-note">{t('audio.sounds.noMatch', { query: search.trim() })}</p> : null}
     <div className="pr-sheet-list">{shownFiles.map(file => <div className="pr-sheet-row" key={file.path}><span><strong>{file.name}</strong><small>{file.path}</small></span>
       {eventFiles?.some(item => item.path === file.path) ? <Tag kind="temporary">{t('audio.advanced.inList')}</Tag> : null}
-      <Button aria-label={t('profile.audioSheet.addAria', { name: file.name })} disabled={(eventFiles?.length ?? 0) >= MAX_AUDIO_FILES} onClick={() => setEventFiles([...(eventFiles ?? []), file])}>{t('profile.audioSheet.add')}</Button></div>)}</div>
+      {single
+        ? <Button aria-label={t('profile.audioSheet.useAria', { name: file.name })} disabled={eventFiles?.[0]?.path === file.path} onClick={() => setEventFiles([file])}>{t('profile.audioSheet.use')}</Button>
+        : <Button aria-label={t('profile.audioSheet.addAria', { name: file.name })} disabled={(eventFiles?.length ?? 0) >= MAX_AUDIO_FILES} onClick={() => setEventFiles([...(eventFiles ?? []), file])}>{t('profile.audioSheet.add')}</Button>}</div>)}</div>
     </>}
     <div className="ki-dialog-actions"><span className="ws-note">{changed ? t('common.tag.changed') : t('profile.sheet.unchanged')}</span>
       <Button data-safe-focus disabled={unresolved} onClick={onCancel}>{t('import.cancel')}</Button>

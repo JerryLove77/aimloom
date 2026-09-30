@@ -1,9 +1,9 @@
 import type { ProfileBridge } from '../bridge/profiles'
 import { t, type Msg } from '../i18n'
 import { errorMsg } from '../section/issue-text'
-import { createTrainingProfile, parseTrainingProfile, type TrainingProfile } from './model'
+import { createProfileDraft, parseProfileDraft, parseTrainingProfile, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
 
-export type ProfileComponent = 'scheme' | 'audio'
+export type ProfileComponent = 'theme' | 'audio'
 export interface ProfileEditorState {
   library: TrainingProfile[]
   directory: string | null
@@ -101,10 +101,11 @@ export function createProfileEditor(bridge: ProfileBridge) {
         if (version === listVersion) publish({ loading: false, error: message(error) })
       }
     },
-    create(name = t('zh', 'profile.editor.defaultName')) {
+    /** A new Profile starts as what the game has now (`snapshotFromGame`); unknown parts stay unchosen. */
+    create(name = t('zh', 'profile.editor.defaultName'), start?: { theme: ProfileFileReference | null; audio: ProfileAudio }) {
       session++
       const fallback = t('zh', 'profile.editor.defaultName')
-      const draft = createTrainingProfile(newId(), nameError(name) ? fallback : name)
+      const draft = createProfileDraft(newId(), nameError(name) ? fallback : name, start)
       publish({ draft: { ...draft, name }, filePath: null, baseline: null, reading: false, nameError: nameError(name), error: null })
     },
     edit: (id: string) => open(id, null),
@@ -117,7 +118,7 @@ export function createProfileEditor(bridge: ProfileBridge) {
       if (!state.draft || state.saving) return false
       try {
         // Validate component data independently of a temporarily blank name field.
-        const parsed = parseTrainingProfile({ ...state.draft, name: 'x', [key]: value })
+        const parsed = parseProfileDraft({ ...state.draft, name: 'x', [key]: value })
         publish({ draft: { ...state.draft, [key]: parsed[key] }, error: null })
         return true
       } catch (error) { publish({ error: message(error) }); return false }

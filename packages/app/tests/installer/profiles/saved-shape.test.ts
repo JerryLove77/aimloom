@@ -5,20 +5,17 @@ import { describe, expect, it } from 'vitest'
 import { parseTrainingProfile, serializeTrainingProfile } from '../../../src/profiles/model'
 
 /**
- * A Profile is validated in three places: here, in Rust (`profiles.rs`) and in the engine
- * (`Assert-KvkProfile`). One branch removed `crosshair` from what TypeScript writes and left the
- * other two requiring it — so every save on Windows would have failed, while 1314 tests passed,
- * because Rust's tests hand-wrote a Profile *with* the key and the PowerShell fixtures did too.
- * A later branch (2026-09-21) removed `enemy` the same way: a Profile no longer manages the enemy.
+ * A Profile is validated in four places: here, in the App's Rust (`installer/profiles.rs`), and in
+ * both engines (`Assert-KvkProfile`, `engine/profiles.rs`). One branch once removed a key from what
+ * TypeScript writes and left the other layers requiring it -- every save on Windows would have
+ * failed while every test passed, because each layer's tests hand-wrote their own Profile.
  *
  * `profile.saved.fixture.json` is the cure: it must be byte-for-byte what `serializeTrainingProfile`
- * really produces (this test), Rust must accept exactly that file (`profiles.rs`), and so must the
- * engine (`profiles.test.ps1`). Change what a Profile looks like in one layer and the fixture, or
- * one of the other two, goes red.
+ * really produces (this test), and Rust and both engines must accept exactly that file. Since
+ * 2026-09-30 it is a v2 complete snapshot: the theme and all six sound events.
  *
- * `profile.legacy.fixture.json` is the other half: a Profile written before 2026-09-21 still
- * carries both `crosshair` and `enemy`, and must still open in every layer -- with both legacy
- * keys silently dropped, never validated and never written back.
+ * `profile.legacy.fixture.json` is a version 1 Profile (keep-current gaps, `scheme`, and the old
+ * `crosshair` and `enemy` records). The user chose no data migration, so every layer refuses it.
  */
 const path = fileURLToPath(new URL('./profile.saved.fixture.json', import.meta.url))
 const fixture = readFileSync(path, 'utf8').trimEnd()
@@ -30,22 +27,17 @@ describe('what TypeScript saves is what the fixture holds', () => {
     expect(serializeTrainingProfile(parseTrainingProfile(JSON.parse(fixture)))).toBe(fixture)
   })
 
-  it('the fixture exercises every component a Profile can record', () => {
-    const saved = JSON.parse(fixture) as Record<string, unknown>
-    expect(Object.keys(saved)).toEqual(['schemaVersion', 'id', 'name', 'scheme', 'audio'])
-    expect(saved.scheme).not.toBeNull()
-    expect(saved.audio).not.toBeNull()
+  it('the fixture is a complete snapshot: the theme and all six events, one silent', () => {
+    const saved = JSON.parse(fixture) as { theme: unknown; audio: Record<string, unknown[]> }
+    expect(Object.keys(saved)).toEqual(['schemaVersion', 'id', 'name', 'theme', 'audio'])
+    expect(saved.theme).not.toBeNull()
+    expect(Object.keys(saved.audio)).toEqual(['kill', 'spawn', 'mbsGood', 'mbsOkay', 'mbsBad', 'mbsChangeNow'])
+    expect(saved.audio.spawn).toEqual([])
   })
 
-  it('a legacy file carrying both crosshair and enemy still opens, with both dropped', () => {
+  it('a version 1 Profile is refused', () => {
     const legacy = JSON.parse(legacyFixture) as Record<string, unknown>
-    expect(legacy.crosshair).not.toBeNull()
-    expect(legacy.enemy).not.toBeNull()
-    const parsed = parseTrainingProfile(legacy)
-    expect(parsed).not.toHaveProperty('crosshair')
-    expect(parsed).not.toHaveProperty('enemy')
-    // Re-serializing a legacy Profile writes today's shape, not the one it was read from.
-    expect(serializeTrainingProfile(parseTrainingProfile(legacy))).not.toContain('crosshair')
-    expect(serializeTrainingProfile(parseTrainingProfile(legacy))).not.toContain('"enemy"')
+    expect(legacy.schemaVersion).toBe(1)
+    expect(() => parseTrainingProfile(legacy)).toThrow()
   })
 })

@@ -262,7 +262,7 @@ describe('acceptance flows', () => {
     fireEvent.click(await screen.findByRole('button', { name: '编辑 日常跟枪' }))
     fireEvent.click(await screen.findByRole('button', { name: /^Theme 背景/ }))
     const sheet = await screen.findByRole('dialog')
-    fireEvent.click(within(sheet).getByRole('radio', { name: /不记录背景/ }))
+    fireEvent.click(await within(sheet).findByRole('button', { name: 'Clean Dark 预览' }))
     fireEvent.click(within(sheet).getByRole('button', { name: '用于此组合' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Profile（未保存）' })).toBeVisible())
 
@@ -275,7 +275,7 @@ describe('acceptance flows', () => {
 
     // The draft survived the trip, and cancelling it writes nothing.
     fireEvent.click(screen.getByRole('button', { name: 'Profile（未保存）' }))
-    expect(await screen.findByRole('button', { name: /^Theme 背景.*保持当前/ })).toBeVisible()
+    expect(await screen.findByRole('button', { name: /^Theme 背景.*Clean Dark/ })).toBeVisible()
     fireEvent.click(screen.getByRole('button', { name: '取消编辑' }))
     await waitFor(() => expect(screen.getByRole('button', { name: 'Profile' })).toBeVisible())
     expect(JSON.stringify((await profileBridge.read('daily')).profile)).toBe(before)
@@ -291,7 +291,7 @@ describe('acceptance flows', () => {
     fireEvent.change(await screen.findByLabelText('Profile 名称'), { target: { value: '日常跟枪 精准' } })
     fireEvent.click(screen.getByRole('button', { name: /^Theme 背景/ }))
     const sheet = await screen.findByRole('dialog')
-    fireEvent.click(within(sheet).getByRole('radio', { name: /不记录背景/ }))
+    fireEvent.click(await within(sheet).findByRole('button', { name: 'Clean Dark 预览' }))
     fireEvent.keyDown(sheet, { key: 'Escape' })
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     // Only the sheet's own temporary choice is discarded.

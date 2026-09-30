@@ -6,13 +6,22 @@ export type { ProfileFileReference } from './file-reference'
 export const MAX_AUDIO_FILES = 64
 
 export type ProfileAudio = Partial<Record<AudioEvent, ProfileFileReference[]>>
+/**
+ * Profile v2 (2026-09-30): a complete snapshot of the theme and all six sound events. A saved
+ * Profile always has a theme and every event (kill and spawn may be empty: no sound; each MBS
+ * event holds one). The same type carries an unfinished draft, where `theme` may still be null
+ * and an event not yet chosen is absent; `parseTrainingProfile` refuses such a draft, so it can
+ * never be saved or applied.
+ */
 export interface TrainingProfile {
-  schemaVersion: 1
+  schemaVersion: 2
   id: string
   name: string
-  scheme: ProfileFileReference | null
-  audio: ProfileAudio | null
+  theme: ProfileFileReference | null
+  audio: ProfileAudio
 }
+/** The events that hold exactly one sound. */
+export const SINGLE_SOUND_EVENTS: readonly AudioEvent[] = ['mbsGood', 'mbsOkay', 'mbsBad', 'mbsChangeNow']
 
 const MAX_BYTES = 256 * 1024
 const own = (value: object, key: string) => Object.prototype.hasOwnProperty.call(value, key)
@@ -62,36 +71,53 @@ function checkBytes(value: string): void {
   if (new TextEncoder().encode(value).byteLength > MAX_BYTES) invalid('profile.model.jsonTooLarge')
 }
 
-/** Validate and return an independent JSON model; absent choices are never inferred. */
-export function parseTrainingProfile(value: unknown): TrainingProfile {
-  // `crosshair` and `enemy` are still ACCEPTED so a Profile written before each was removed
-  // still opens, but both are read and thrown away, and never written again: a crosshair cannot
-  // be switched from outside the game, and a Profile no longer manages the enemy (2026-09-21), so
-  // recording either promised something the App could not keep. Whatever either old field holds
-  // is discarded without being validated -- it can no longer reach anything -- so a file that is
-  // otherwise fine never fails to load over a record that no longer means anything.
-  const accepted = ['schemaVersion', 'id', 'name', 'scheme', 'audio', 'crosshair', 'enemy']
-  const required = ['schemaVersion', 'id', 'name', 'scheme', 'audio']
-  const input = object(value, accepted, required, 'profile.model.label.profile')
-  if (input.schemaVersion !== 1) invalid('profile.model.unsupportedVersion')
-  const result: TrainingProfile = { schemaVersion: 1, id: validateProfileId(input.id), name: text(input.name, 128, 'profile.model.label.name'), scheme: null, audio: null }
-  if (input.scheme !== null) result.scheme = parseFileReference(input.scheme, ['.json'])
-  if (input.audio !== null) {
-    const audio = object(input.audio, [...AUDIO_EVENTS], [], 'profile.model.label.audio')
-    result.audio = {}
-    for (const key of AUDIO_EVENTS) {
-      if (!own(audio, key)) continue
-      const files = audio[key]
-      if (!Array.isArray(files) || Object.getPrototypeOf(files) !== Array.prototype || files.length > MAX_AUDIO_FILES || Reflect.ownKeys(files).length !== files.length + 1) invalid('profile.model.audioArray', { max: MAX_AUDIO_FILES })
-      for (let index = 0; index < files.length; index++) {
-        const descriptor = Object.getOwnPropertyDescriptor(files, String(index))
-        if (!descriptor?.enumerable || !('value' in descriptor)) invalid('profile.model.audioPlainOnly')
-      }
-      result.audio[key] = Array.from(files, item => parseFileReference(item, ['.wav', '.ogg']))
+function parseAudio(value: unknown, complete: boolean): ProfileAudio {
+  const audio = object(value, [...AUDIO_EVENTS], complete ? [...AUDIO_EVENTS] : [], 'profile.model.label.audio')
+  const result: ProfileAudio = {}
+  for (const key of AUDIO_EVENTS) {
+    if (!own(audio, key)) continue
+    const files = audio[key]
+    if (!Array.isArray(files) || Object.getPrototypeOf(files) !== Array.prototype || files.length > MAX_AUDIO_FILES || Reflect.ownKeys(files).length !== files.length + 1) invalid('profile.model.audioArray', { max: MAX_AUDIO_FILES })
+    for (let index = 0; index < files.length; index++) {
+      const descriptor = Object.getOwnPropertyDescriptor(files, String(index))
+      if (!descriptor?.enumerable || !('value' in descriptor)) invalid('profile.model.audioPlainOnly')
     }
+    if (SINGLE_SOUND_EVENTS.includes(key) && files.length !== 1) invalid('profile.model.singleSound')
+    result[key] = Array.from(files, item => parseFileReference(item, ['.wav', '.ogg']))
   }
+  return result
+}
+
+function parse(value: unknown, complete: boolean): TrainingProfile {
+  // Version 1 (with "keep current" gaps and the old crosshair/enemy records) is refused: the
+  // user chose no data migration (2026-09-30). The same rule is in `installer/profiles.rs`,
+  // `protocol.schema.json` and both engines.
+  const keys = ['schemaVersion', 'id', 'name', 'theme', 'audio']
+  const input = object(value, keys, keys, 'profile.model.label.profile')
+  if (input.schemaVersion !== 2) invalid('profile.model.unsupportedVersion')
+  const id = validateProfileId(input.id)
+  const name = text(input.name, 128, 'profile.model.label.name')
+  if (complete && input.theme === null) invalid('profile.model.incomplete')
+  const theme = input.theme === null ? null : parseFileReference(input.theme, ['.json'])
+  const audio = parseAudio(input.audio, complete)
+  const result: TrainingProfile = { schemaVersion: 2, id, name, theme, audio }
   checkBytes(JSON.stringify(result))
   return result
+}
+
+/** A saved Profile: complete, or refused. Returns an independent model in the one key order. */
+export function parseTrainingProfile(value: unknown): TrainingProfile {
+  return parse(value, true)
+}
+
+/** A draft in the editor: every rule of a saved Profile except completeness. */
+export function parseProfileDraft(value: unknown): TrainingProfile {
+  return parse(value, false)
+}
+
+/** Whether a draft has everything a saved Profile needs. */
+export function isComplete(profile: TrainingProfile): boolean {
+  return profile.theme !== null && AUDIO_EVENTS.every(event => profile.audio[event] !== undefined)
 }
 
 export function deserializeTrainingProfile(value: string): TrainingProfile {
@@ -106,8 +132,9 @@ export function serializeTrainingProfile(profile: TrainingProfile): string {
   return JSON.stringify(parseTrainingProfile(profile))
 }
 
-export function createTrainingProfile(id: string, name: string): TrainingProfile {
-  return parseTrainingProfile({ schemaVersion: 1, id, name, scheme: null, audio: null })
+/** A new draft, filled from what the game has now where that is known (`snapshotFromGame`). */
+export function createProfileDraft(id: string, name: string, start: { theme: ProfileFileReference | null; audio: ProfileAudio } = { theme: null, audio: {} }): TrainingProfile {
+  return parseProfileDraft({ schemaVersion: 2, id, name, theme: start.theme, audio: start.audio })
 }
 
 export function renameTrainingProfile(profile: TrainingProfile, name: string): TrainingProfile {

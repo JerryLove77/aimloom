@@ -52,7 +52,7 @@ describe('the Theme sheet in a Profile has a search box', () => {
 
 describe('the Sounds sheet in a Profile has a search box', () => {
   const SOUNDS = ['Headshot.ogg', 'Kill Confirm.ogg', 'Spawn Bell.wav'].map(name => ({ name, path: `/game/sounds/${name}` }))
-  const sheet = () => <AudioSheet profileName="每日训练" profilePath="/profiles/p1.json" value={null}
+  const sheet = () => <AudioSheet profileName="每日训练" profilePath="/profiles/p1.json" value={{}}
     assets={bridge(SOUNDS)} isDemo={false} open defaultDirectory="/game/sounds" onConfirm={() => {}} onCancel={() => {}} />
 
   it('narrows the game\'s sounds by name', async () => {

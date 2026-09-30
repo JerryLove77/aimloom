@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { useT, type MessageKey } from '../i18n'
 
-export type TagKind = 'current' | 'pending' | 'temporary' | 'unsaved' | 'changed' | 'saved' | 'keep' | 'missing' | 'working' | 'duplicate' | 'added'
+export type TagKind = 'current' | 'pending' | 'temporary' | 'unsaved' | 'changed' | 'saved' | 'missing' | 'working' | 'duplicate' | 'added'
 const GLYPHS: Record<TagKind, string> = {
-  current: '●', pending: '◐', temporary: '◐', unsaved: '●', changed: '●', saved: '✓',
-  keep: '–', missing: '!', working: '◌', duplicate: '!', added: '+',
+  current: '●', pending: '◐', temporary: '◐', unsaved: '●', changed: '●', saved: '✓', missing: '!', working: '◌', duplicate: '!', added: '+',
 }
 const KEYS: Record<TagKind, MessageKey> = {
   current: 'common.tag.current', pending: 'common.tag.pending', temporary: 'common.tag.temporary',
   // The aria suffix and this tag share the same word; see src/i18n/zh.ts's shell.unsaved.
   unsaved: 'shell.unsaved',
-  changed: 'common.tag.changed', saved: 'common.tag.saved', keep: 'common.tag.keep', missing: 'common.tag.missing',
+  changed: 'common.tag.changed', saved: 'common.tag.saved', missing: 'common.tag.missing',
   working: 'common.tag.working', duplicate: 'common.tag.duplicate', added: 'common.tag.added',
 }
 

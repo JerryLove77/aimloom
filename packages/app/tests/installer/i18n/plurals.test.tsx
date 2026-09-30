@@ -7,7 +7,7 @@ import { SchemePage } from '../../../src/scheme/SchemePage'
 import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
 import { BackupList } from '../../../src/installer/components/BackupList'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import { createTrainingProfile } from '../../../src/profiles/model'
+import { v2Parsed } from '../profiles/v2'
 import type { ProfileBridge } from '../../../src/bridge/profiles'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
@@ -79,7 +79,7 @@ const assets: ProfileAssetBridge = {
   read: async () => new TextEncoder().encode(JSON.stringify({ themeName: 'Night', wallTint: { x: 0, y: 0, z: 0 }, enemyBodyColor: { x: 1, y: 0, z: 0 }, overrideEnemyBodyColor: true })),
 }
 function profileBridge(): ProfileBridge {
-  const stored = createTrainingProfile('profile1', 'Daily')
+  const stored = v2Parsed('profile1', 'Daily')
   return {
     list: async () => ({ directory: '/profiles', profiles: [stored], errors: [] }),
     read: async () => ({ filePath: '/profiles/profile1.json', profile: structuredClone(stored) }),

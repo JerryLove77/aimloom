@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { ProfileBridge, ProfileList, ProfileRead, ProfileSave } from '../../../src/bridge/profiles'
-import { createTrainingProfile } from '../../../src/profiles/model'
+import { ref, completeAudio, v2Parsed } from './v2'
 import { createProfileEditor } from '../../../src/profiles/editor'
 import { renderMsg, t } from '../../../src/i18n'
+
+const START = { theme: ref('D:/Game/themes/main.json'), audio: completeAudio() }
 
 function deferred<T>() {
   let resolve!: (value: T) => void
@@ -11,7 +13,7 @@ function deferred<T>() {
   return { promise, resolve, reject }
 }
 function memory() {
-  const source = createTrainingProfile('one', '原版')
+  const source = v2Parsed('one', '原版')
   const files = new Map([[source.id, source]])
   const bridge: ProfileBridge = {
     async list() { return { directory: '/profiles', profiles: [...files.values()], errors: [] } },
@@ -31,15 +33,15 @@ describe('Profile editor', () => {
     expect(editor.getState()).toBe(editor.getState())
     await editor.load()
     await editor.edit('one')
-    const audio = { kill: [{ name: '一', path: '/audio/one.wav' }], spawn: [] }
+    const audio = completeAudio({ kill: [{ name: '一', path: '/audio/one.wav' }] })
     editor.setName('修改')
     expect(editor.setComponent('audio', audio)).toBe(true)
-    audio.kill[0]!.name = '外部修改'
-    expect(editor.getState().draft?.audio).toEqual({ kill: [{ name: '一', path: '/audio/one.wav' }], spawn: [] })
+    audio.kill![0]!.name = '外部修改'
+    expect(editor.getState().draft?.audio).toEqual(completeAudio({ kill: [{ name: '一', path: '/audio/one.wav' }] }))
     editor.cancel()
     expect(editor.getState().draft).toBeNull()
     expect(source.name).toBe('原版')
-    expect(source.audio).toBeNull()
+    expect(source.audio.kill).toEqual([])
     expect(editor.getState().library[0]!.name).toBe('原版')
     expect(updates).toBeGreaterThan(0)
     unsubscribe()
@@ -50,7 +52,7 @@ describe('Profile editor', () => {
   it('validates names, keeps failed drafts and exits only after confirmed persistence', async () => {
     const { bridge, files } = memory()
     const editor = createProfileEditor(bridge)
-    editor.create()
+    editor.create(undefined, START)
     editor.setName(' ')
     expect(await editor.save()).toBe(false)
     expect(editor.getState().nameError).toBeTruthy()
@@ -78,8 +80,8 @@ describe('Profile editor', () => {
     bridge.list = () => list.promise
     const editor = createProfileEditor(bridge)
     const reading = editor.edit('one')
-    editor.create('新的草稿')
-    read.resolve({ filePath: '/profiles/one.json', profile: createTrainingProfile('one', '旧读取') })
+    editor.create('新的草稿', START)
+    read.resolve({ filePath: '/profiles/one.json', profile: v2Parsed('one', '旧读取') })
     await reading
     expect(editor.getState().draft?.name).toBe('新的草稿')
     const loading = editor.load()
@@ -93,11 +95,11 @@ describe('Profile editor', () => {
     const write = deferred<ProfileSave>()
     bridge.save = () => write.promise
     const editor = createProfileEditor(bridge)
-    editor.create('旧草稿')
+    editor.create('旧草稿', START)
     const old = editor.getState().draft!
     const saving = editor.save()
     editor.cancel()
-    editor.create('新草稿')
+    editor.create('新草稿', START)
     write.resolve({ filePath: `/profiles/${old.id}.json`, profile: old })
     await saving
     expect(editor.getState().draft?.name).toBe('新草稿')
@@ -138,9 +140,12 @@ describe('Profile editor', () => {
     editor.setName('')
     expect(editor.setComponent('audio', { kill: [] })).toBe(true)
     expect(editor.getState().draft?.audio).toEqual({ kill: [] })
-    expect(editor.setComponent('scheme', { name: '不支持', path: '/wrong.png' })).toBe(false)
-    expect(editor.getState().draft?.scheme).toBeNull()
+    expect(editor.setComponent('theme', { name: '不支持', path: '/wrong.png' })).toBe(false)
+    expect(editor.getState().draft?.theme).toBeNull()
     expect(editor.getState().error).toBeTruthy()
+    // An MBS event holds exactly one sound, so two are refused and the earlier choice stays.
+    expect(editor.setComponent('audio', { kill: [], mbsGood: [ref('a.wav'), ref('b.wav')] })).toBe(false)
+    expect(editor.getState().draft?.audio).toEqual({ kill: [] })
   })
   it('uses the newest list request and preserves the library after refresh failure', async () => {
     const { bridge } = memory()
@@ -148,7 +153,7 @@ describe('Profile editor', () => {
     bridge.list = () => first.promise
     const editor = createProfileEditor(bridge)
     const pending = editor.load()
-    const newest = createTrainingProfile('new', '最新')
+    const newest = v2Parsed('new', '最新')
     bridge.list = async () => ({ directory: '/new', profiles: [newest], errors: [] })
     await editor.load()
     first.resolve({ directory: '/old', profiles: [], errors: [] })
@@ -191,7 +196,7 @@ describe('Profile editor', () => {
     const { bridge } = memory()
     const editor = createProfileEditor(bridge)
     await editor.load()
-    editor.create('\u65b0\u7ec4\u5408')
+    editor.create('\u65b0\u7ec4\u5408', START)
     expect(editor.getState().dirty).toBe(true)
     await editor.duplicate(editor.getState().library[0]!.id)
     expect(editor.getState().dirty).toBe(true)
@@ -201,11 +206,44 @@ describe('Profile editor', () => {
     const { bridge } = memory()
     const editor = createProfileEditor(bridge)
     await editor.load()
-    editor.create('\u65b0\u7ec4\u5408')
+    editor.create('\u65b0\u7ec4\u5408', START)
     editor.cancel()
     expect(editor.getState().dirty).toBe(false)
-    editor.create('\u53e6\u4e00\u4e2a')
+    editor.create('\u53e6\u4e00\u4e2a', START)
     expect(await editor.save()).toBe(true)
     expect(editor.getState().dirty).toBe(false)
+  })
+
+  it('a new Profile starts from what it is given, and leaves unknown parts unchosen', () => {
+    const editor = createProfileEditor(memory().bridge)
+    editor.create('从游戏', START)
+    expect(editor.getState().draft).toMatchObject({ schemaVersion: 2, theme: START.theme, audio: START.audio })
+    editor.create('空白')
+    expect(editor.getState().draft).toMatchObject({ theme: null, audio: {} })
+  })
+
+  it('refuses to save an incomplete draft and says why, writing nothing', async () => {
+    const { bridge, files } = memory()
+    const editor = createProfileEditor(bridge)
+    editor.create('没选完')
+    expect(await editor.save()).toBe(false)
+    expect(renderMsg('zh', editor.getState().error!)).toContain(t('zh', 'profile.model.incomplete'))
+    expect(editor.getState().draft?.name).toBe('没选完')
+    expect(files.size).toBe(1)
+    // Choosing the theme alone is still incomplete; the six events are needed too.
+    editor.setComponent('theme', ref('D:/Game/themes/main.json'))
+    expect(await editor.save()).toBe(false)
+    editor.setComponent('audio', completeAudio())
+    expect(await editor.save()).toBe(true)
+    expect(files.size).toBe(2)
+  })
+
+  it('refuses to open a saved v1 Profile instead of migrating it', async () => {
+    const { bridge } = memory()
+    bridge.read = async () => ({ filePath: '/profiles/old.json', profile: { schemaVersion: 1, id: 'old', name: '旧', scheme: null, audio: null } as never })
+    const editor = createProfileEditor(bridge)
+    await editor.edit('old')
+    expect(editor.getState().draft).toBeNull()
+    expect(editor.getState().error).toBeTruthy()
   })
 })

@@ -5,7 +5,7 @@ import { useMsg, useT } from '../i18n'
 import { AUDIO_EVENTS } from '../bridge/contracts'
 import type { ApplyState } from './apply-controller'
 import type { CurrentGame } from './current-game'
-import { describeEvent, describeFile, eventLabel } from './describe'
+import { describeEvent, describeTheme, eventLabel } from './describe'
 
 /**
  * Applies one saved Profile to the game: locate the folder if needed, preview the write, then
@@ -42,9 +42,9 @@ export function ApplyDialog({ state, current, launching, onChooseGameRoot, onCho
     </div> : null}
     {busy ? <p role="status">{t(state.phase === 'locating' ? 'profile.apply.locating' : 'profile.apply.planning')}</p> : null}
     {profile && (state.phase === 'ready' || applying || unresolved) ? <>
-      <p>{t('profile.row.component', { label: t('profile.label.scheme'), summary: describeFile('scheme', profile.scheme, current, t) })}</p>
+      <p>{t('profile.row.component', { label: t('profile.label.scheme'), summary: describeTheme(profile.theme, t) })}</p>
       <p>{t('profile.label.audio')}</p>
-      <ul className="pr-apply-events">{AUDIO_EVENTS.map(event => <li key={event}>{t('profile.eventSounds', { event: eventLabel(event, t), names: describeEvent(event, profile.audio, current, t) })}</li>)}</ul>
+      <ul className="pr-apply-events">{AUDIO_EVENTS.map(event => <li key={event}>{t('profile.eventSounds', { event: eventLabel(event, t), names: describeEvent(event, profile.audio, t) })}</li>)}</ul>
       <p className="ws-note">{t('profile.apply.note.closeGame')}</p>
       <p className="ws-note">{t('profile.apply.note.backup')}</p>
     </> : null}

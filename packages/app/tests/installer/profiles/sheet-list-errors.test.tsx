@@ -36,7 +36,7 @@ describe('an unreadable asset file gets its own message, not the Profile one', (
 })
 
 describe('the audio sheet shows the files it could not read', () => {
-  const sheet = () => <AudioSheet profileName="每日训练" profilePath="/profiles/p1.json" value={null}
+  const sheet = () => <AudioSheet profileName="每日训练" profilePath="/profiles/p1.json" value={{}}
     assets={bridge([])} isDemo open onConfirm={() => {}} onCancel={() => {}} />
 
   it('Chinese: the unreadable file is listed under a warning', async () => {
@@ -53,7 +53,7 @@ describe('the audio sheet shows the files it could not read', () => {
   })
   it('the sheet still closes on Cancel while the warning is shown', async () => {
     const onCancel = vi.fn()
-    render_('zh', <AudioSheet profileName="每日训练" profilePath="/profiles/p1.json" value={null}
+    render_('zh', <AudioSheet profileName="每日训练" profilePath="/profiles/p1.json" value={{}}
       assets={bridge([])} isDemo open onConfirm={() => {}} onCancel={onCancel} />)
     fireEvent.click(screen.getByRole('button', { name: '浏览演示素材' }))
     await screen.findByText('1 个文件未能使用')
