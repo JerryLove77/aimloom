@@ -139,10 +139,22 @@ pub fn process_names() -> io::Result<Vec<String>> {
     Ok(names)
 }
 
+/// The path for a Win32 call, in the `\\?\` form that lifts the 260-character limit, as .NET
+/// does for its own calls (a backup path under a long profile folder passes 260 easily). The
+/// engine's paths are already full and normalized, which that form requires.
 #[cfg(windows)]
 fn wide(path: &Path) -> Vec<u16> {
-    use std::os::windows::ffi::OsStrExt;
-    path.as_os_str().encode_wide().chain(std::iter::once(0)).collect()
+    let text = path.to_string_lossy();
+    let long = if text.starts_with(r"\\?\") || text.starts_with(r"\\.\") {
+        text.into_owned()
+    } else if let Some(unc) = text.strip_prefix(r"\\") {
+        format!(r"\\?\UNC\{unc}")
+    } else if text.as_bytes().get(1) == Some(&b':') {
+        format!(r"\\?\{text}")
+    } else {
+        text.into_owned()
+    };
+    long.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
 /// A registry hive `Get-ItemProperty` reads from.
