@@ -1,0 +1,747 @@
+{
+  "fixture": "enemy-crlf.json",
+  "steps": [
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "Daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "con",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          },
+          "extra": 1
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 2,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": "1",
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "line\nbreak",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "  ",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "http://x/Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "\\\\?\\C:\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Dark.txt"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": {
+              "name": "hit",
+              "path": "C:\\hit.wav"
+            }
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              },
+              {
+                "name": "hit",
+                "path": "C:\\hit.wav"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "boom": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "daily",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\hit.mp3"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": "text"
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": 5
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "../x"
+      }
+    },
+    {
+      "request": "profileDelete",
+      "args": {
+        "id": "Upper"
+      }
+    },
+    {
+      "request": "profileList",
+      "args": {
+        "extra": 1
+      }
+    },
+    {
+      "line": "{\"v\":1,\"requestId\":\"dup\",\"op\":\"profileSave\",\"args\":{\"profile\":{\"schemaVersion\":1,\"id\":\"d\",\"id\":\"e\",\"name\":\"N\",\"scheme\":null,\"audio\":null}}}"
+    },
+    {
+      "line": "{\"v\":1,\"requestId\":\"case\",\"op\":\"profileRead\",\"args\":{\"id\":\"daily\",\"ID\":\"x\"}}"
+    },
+    {
+      "request": "profileList",
+      "args": {}
+    }
+  ]
+}

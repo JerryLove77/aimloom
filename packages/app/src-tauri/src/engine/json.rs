@@ -113,6 +113,13 @@ impl Json {
     }
 }
 
+/// How `ConvertTo-Json` (Newtonsoft) writes a double: .NET's `R` digits, with `.0` added when
+/// the result has neither a decimal point nor an exponent.
+pub fn newtonsoft_double(value: f64) -> String {
+    let text = super::text::double_r(value);
+    if value.is_finite() && !text.contains(['.', 'E', 'e']) { format!("{text}.0") } else { text }
+}
+
 /// A JSON string literal with Newtonsoft's default escaping.
 pub fn write_string(text: &str, out: &mut String) {
     out.push('"');
@@ -140,11 +147,15 @@ pub fn write_string(text: &str, out: &mut String) {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Strings { Dates, Literal }
 
-/// How object keys that differ only in letter case are treated. `ConvertFrom-Json` builds a
-/// PSCustomObject and refuses them; `-AsHashtable` keeps both. An exact repeat replaces the
-/// earlier value in place in both cases.
+/// How repeated object keys are treated. `ConvertFrom-Json` builds a PSCustomObject and refuses
+/// keys that differ only in letter case; `-AsHashtable` keeps both; in both an exact repeat
+/// replaces the earlier value in place. The Profile store (`ConvertFrom-KvkProfileElement`)
+/// refuses an exact repeat and keeps case variants.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Keys { RefuseCaseVariants, KeepCaseVariants }
+pub enum Keys { RefuseCaseVariants, KeepCaseVariants, RefuseDuplicates }
+
+/// The duplicate-key refusal of [`Keys::RefuseDuplicates`], told apart from a syntax error.
+pub const DUPLICATE_KEY: &str = "duplicate key";
 
 /// Which parser is being copied. `Newtonsoft` is `ConvertFrom-Json`: comments, trailing commas,
 /// single quotes, bare property names, `NaN`/`Infinity`/`undefined`, hex and octal integers, any
@@ -272,6 +283,7 @@ impl Parser {
             self.pos += 1;
             let value = self.value()?;
             if let Some(slot) = fields.iter_mut().find(|(k, _)| *k == key) {
+                if self.options.keys == Keys::RefuseDuplicates { return Err(ParseError(DUPLICATE_KEY.to_string())); }
                 slot.1 = value;
             } else {
                 if self.options.keys == Keys::RefuseCaseVariants && fields.iter().any(|(k, _)| k.to_lowercase() == key.to_lowercase()) {

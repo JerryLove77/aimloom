@@ -1,0 +1,83 @@
+{
+  "fixture": "enemy-crlf.json",
+  "localFiles": {
+    "Aimloom/profiles/broken.json": {
+      "text": "{\"schemaVersion\":1,"
+    },
+    "Aimloom/profiles/Upper.json": {
+      "text": "{\"schemaVersion\": 1, \"id\": \"upper\", \"name\": \"N upper\", \"scheme\": null, \"audio\": null}"
+    },
+    "Aimloom/profiles/a.b.json": {
+      "text": "{\"schemaVersion\": 1, \"id\": \"a\", \"name\": \"N a\", \"scheme\": null, \"audio\": null}"
+    },
+    "Aimloom/profiles/dir.json": {
+      "dir": true
+    },
+    "Aimloom/profiles/mismatch.json": {
+      "text": "{\"schemaVersion\": 1, \"id\": \"other\", \"name\": \"N other\", \"scheme\": null, \"audio\": null}"
+    },
+    "Aimloom/profiles/bom.json": {
+      "text": "﻿{\"schemaVersion\": 1, \"id\": \"bom\", \"name\": \"N\", \"scheme\": null, \"audio\": null}"
+    },
+    "Aimloom/profiles/dup.json": {
+      "text": "{\"schemaVersion\":1,\"id\":\"dup\",\"id\":\"dup\",\"name\":\"N\",\"scheme\":null,\"audio\":null}"
+    },
+    "Aimloom/profiles/legacy.json": {
+      "text": "{\"schemaVersion\": 1, \"id\": \"legacy\", \"name\": \"Old\", \"scheme\": null, \"audio\": null, \"crosshair\": {\"x\": 1}, \"enemy\": null}"
+    },
+    "Aimloom/profiles/ok.json": {
+      "text": "{\"schemaVersion\": 1, \"id\": \"ok\", \"name\": \"N ok\", \"scheme\": null, \"audio\": null}"
+    },
+    "Aimloom/profiles/readme.txt": {
+      "text": "x"
+    },
+    "Aimloom/profiles/trailing.json": {
+      "text": "{\"schemaVersion\":1,\"id\":\"trailing\",\"name\":\"N\",\"scheme\":null,\"audio\":null,}"
+    }
+  },
+  "steps": [
+    {
+      "request": "profileList",
+      "args": {}
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "broken"
+      }
+    },
+    {
+      "request": "profileSave",
+      "args": {
+        "profile": {
+          "schemaVersion": 1,
+          "id": "broken",
+          "name": "Daily 日常",
+          "scheme": {
+            "name": "Dark",
+            "path": "C:\\Themes\\Dark.json"
+          },
+          "audio": {
+            "kill": [
+              {
+                "name": "hit",
+                "path": "C:\\sounds\\hit.wav"
+              },
+              {
+                "name": "k",
+                "path": "D:/s/k.OGG"
+              }
+            ],
+            "spawn": []
+          }
+        }
+      }
+    },
+    {
+      "request": "profileRead",
+      "args": {
+        "id": "legacy"
+      }
+    }
+  ]
+}

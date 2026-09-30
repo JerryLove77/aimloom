@@ -1,0 +1,126 @@
+{
+  "fixture": "enemy-crlf.json",
+  "gameFiles": {
+    "FPSAimTrainer/Saved/SaveGames/Themes/b.json": {
+      "text": "{\"themeName\":\"B\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/A.JSON": {
+      "text": "{\"themeName\":\"A\"}"
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/empty.json": {
+      "text": ""
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/folder.json": {
+      "dir": true
+    },
+    "FPSAimTrainer/Saved/SaveGames/Themes/note.txt": {
+      "text": "x"
+    },
+    "FPSAimTrainer/sounds/hit.wav": {
+      "text": "RIFF"
+    },
+    "FPSAimTrainer/sounds/k.OGG": {
+      "text": "OggS"
+    }
+  },
+  "steps": [
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "scheme",
+        "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "audio",
+        "directory": "<game>/FPSAimTrainer/sounds"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "crosshair",
+        "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "model",
+        "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "scheme",
+        "directory": "relative/Themes"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "scheme",
+        "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/*"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "scheme",
+        "directory": "<game>/missing"
+      }
+    },
+    {
+      "request": "profileAssetList",
+      "args": {
+        "kind": "scheme",
+        "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/../Themes"
+      }
+    },
+    {
+      "request": "profileAssetRead",
+      "args": {
+        "kind": "scheme",
+        "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/b.json"
+      }
+    },
+    {
+      "request": "profileAssetRead",
+      "args": {
+        "kind": "audio",
+        "path": "<game>/FPSAimTrainer/sounds/k.OGG"
+      }
+    },
+    {
+      "request": "profileAssetRead",
+      "args": {
+        "kind": "audio",
+        "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/b.json"
+      }
+    },
+    {
+      "request": "profileAssetRead",
+      "args": {
+        "kind": "scheme",
+        "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/missing.json"
+      }
+    },
+    {
+      "request": "profileAssetRead",
+      "args": {
+        "kind": "scheme",
+        "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/empty.json"
+      }
+    },
+    {
+      "request": "profileAssetRead",
+      "args": {
+        "kind": "scheme",
+        "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/folder.json"
+      }
+    }
+  ]
+}

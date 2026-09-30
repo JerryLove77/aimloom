@@ -19,6 +19,8 @@ const OPERATIONS: [&str; 26] = [
     "profileAssetList", "profileAssetRead",
 ];
 
+const PROFILE_OPERATIONS: [&str; 6] = ["profileList", "profileRead", "profileSave", "profileDelete", "profileAssetList", "profileAssetRead"];
+
 enum Adapter { Enemy(enemy::EnemyPlan), Scheme(super::settings::SchemePlan), Audio(super::txn::Plan), Restore(super::txn::RestorePlan) }
 
 struct CachedPlan { id: String, kind: &'static str, context: Context, adapter: Adapter }
@@ -110,8 +112,13 @@ impl Session {
                 if code == "ENGINE_ERROR" && !error.classified {
                     code = match op.as_str() { "locate" => "INVALID_PATH", "catalog" => "INVALID_PACK", "backups" | "planRestore" => "BACKUP_INVALID", _ => "ENGINE_ERROR" }.to_string();
                 }
-                let english = english_text(&error.message, Some(&error.english()));
-                let issue = Json::object(vec![("code", Json::str(code)), ("message", Json::str(&error.message)), ("messageEn", Json::str(english)), ("path", Json::opt_str(error.path.clone()))]);
+                let mut message = error.message.clone();
+                let mut english = english_text(&error.message, Some(&error.english()));
+                if PROFILE_OPERATIONS.contains(&op.as_str()) && !error.classified {
+                    message = "Profile 存储操作失败，请检查文件和目录权限。".to_string();
+                    english = "The Profile store could not be read or written. Check the files and folder permissions.".to_string();
+                }
+                let issue = Json::object(vec![("code", Json::str(code)), ("message", Json::str(message)), ("messageEn", Json::str(english)), ("path", Json::opt_str(error.path.clone()))]);
                 Json::object(vec![("v", Json::int(1)), ("requestId", request_id), ("type", Json::str("reply")), ("ok", Json::Bool(false)), ("error", issue)])
             }
         }
@@ -123,6 +130,12 @@ impl Session {
                 assert_fields(args, &[], "args")?;
                 Ok(Json::str(self.engine.game_state()))
             }
+            "profileList" => { assert_fields(args, &[], "args")?; super::profiles::list(&self.engine, &self.local_data_root) }
+            "profileRead" => { assert_fields(args, &["id"], "args")?; super::profiles::read(&self.engine, &self.local_data_root, args.get("id")) }
+            "profileSave" => { assert_fields(args, &["profile"], "args")?; super::profiles::save(&self.engine, &self.local_data_root, args.get("profile")) }
+            "profileDelete" => { assert_fields(args, &["id"], "args")?; super::profiles::delete(&self.engine, &self.local_data_root, args.get("id")) }
+            "profileAssetList" => { assert_fields(args, &["kind", "directory"], "args")?; super::profiles::asset_list(args.get("kind"), args.get("directory")) }
+            "profileAssetRead" => { assert_fields(args, &["kind", "path"], "args")?; super::profiles::asset_read(args.get("kind"), args.get("path")) }
             "locate" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
@@ -359,6 +372,18 @@ fn parse_failure(message: &str) -> Json {
     Json::object(vec![("v", Json::int(1)), ("requestId", Json::Null), ("type", Json::str("reply")), ("ok", Json::Bool(false)), ("error", issue)])
 }
 
+/// The worker's parse of one request line: `ConvertFrom-Json`, and for a Profile operation a
+/// second, strict parse (Profile strings are literal editor data). The error is the text after
+/// "Invalid JSON request: ".
+pub fn parse_request(line: &str) -> Result<Json, String> {
+    let request = json::parse(line, REQUEST_OPTIONS).map_err(|e| e.0)?;
+    let profile_op = request.get("op").and_then(Json::as_str).is_some_and(|op| PROFILE_OPERATIONS.contains(&op));
+    if matches!(request, Json::Object(_)) && profile_op {
+        return super::profiles::parse_strict(line, 32).map_err(|e| e.map_or_else(|| "The JSON value could not be read as a Profile request.".to_string(), |coded| coded.message));
+    }
+    Ok(request)
+}
+
 /// `Start-KvkGuiWorker`: one JSON request per line in, progress lines then one reply out.
 /// Ends at end of input.
 pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Write) -> std::io::Result<()> {
@@ -366,9 +391,9 @@ pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Wr
         let line = line?;
         let mut write = |value: &Json| -> std::io::Result<()> { writeln!(output, "{}", value.to_compact())?; output.flush() };
         if line.len() > MAX_LINE_BYTES { write(&parse_failure("Request exceeds the 16 MiB limit."))?; continue; }
-        let request = match json::parse(&line, REQUEST_OPTIONS) {
+        let request = match parse_request(&line) {
             Ok(request) => request,
-            Err(error) => { write(&parse_failure(&format!("Invalid JSON request: {}", error.0)))?; continue; }
+            Err(error) => { write(&parse_failure(&format!("Invalid JSON request: {error}")))?; continue; }
         };
         let mut progress = Vec::new();
         let reply = session.handle(&request, &mut |line| progress.push(line));

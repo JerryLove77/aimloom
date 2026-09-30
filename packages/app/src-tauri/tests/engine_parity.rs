@@ -12,7 +12,7 @@ use std::path::{Path, PathBuf};
 use std::rc::Rc;
 
 use app_lib::engine::json::{self, Json};
-use app_lib::engine::session::{Session, REQUEST_OPTIONS};
+use app_lib::engine::session::{parse_request, Session};
 use app_lib::engine::store::Host;
 use app_lib::engine::text::lower_invariant;
 use app_lib::engine::{paths, platform, EngineError, EngineResult};
@@ -186,23 +186,28 @@ fn run_case(name: &str, case: &Json) -> Json {
     std::fs::copy(fixtures.join(case.get("fixture").and_then(Json::as_str).unwrap()), &primary).unwrap();
     write_files(Path::new(&game), case.get("gameFiles"), &fixtures);
     if case.get("packFiles").is_some() { std::fs::create_dir_all(&pack).unwrap(); write_files(Path::new(&pack), case.get("packFiles"), &fixtures); }
+    write_files(Path::new(&local), case.get("localFiles"), &fixtures);
     let host = Rc::new(HostState::default());
     let mut session = Session::new(Box::new(ParityHost(host.clone())), &local).unwrap();
     let mut steps: Vec<(Vec<String>, String)> = Vec::new();
     let (mut lock, mut last_plan, mut last_batch, mut number) = (None, "<plan>".to_string(), "<batch>".to_string(), 0);
     for step in case.get("steps").and_then(Json::as_array).unwrap() {
-        if step.get("request").is_some() || step.get("raw").is_some() {
+        if step.get("request").is_some() || step.get("raw").is_some() || step.get("line").is_some() {
             number += 1;
-            let value = match step.get("raw") {
-                Some(raw) => raw.clone(),
-                None => Json::object(vec![
+            let line = match (step.get("line"), step.get("raw")) {
+                (Some(line), _) => line.as_str().unwrap().to_string(),
+                (None, Some(raw)) => raw.to_compact(),
+                (None, None) => Json::object(vec![
                     ("v", Json::int(1)), ("requestId", Json::str(format!("r{number}"))),
                     ("op", step.get("request").cloned().unwrap()), ("args", resolve(step.get("args").unwrap(), &game, &pack, &last_plan, &last_batch)),
-                ]),
+                ]).to_compact(),
             };
-            let request = json::parse(&value.to_compact(), REQUEST_OPTIONS).unwrap();
             let mut progress = Vec::new();
-            let reply = session.handle(&request, &mut |line| progress.push(line.to_compact()));
+            // A line the worker cannot parse is answered by the worker loop itself.
+            let reply = match parse_request(&line) {
+                Ok(request) => session.handle(&request, &mut |line| progress.push(line.to_compact())),
+                Err(error) => parse_failure(&format!("Invalid JSON request: {error}")),
+            };
             let ok = reply.get("ok") == Some(&Json::Bool(true));
             let text = if step.get("compare").and_then(Json::as_str) == Some("code") {
                 let code = if ok { Json::Null } else { reply.get("error").and_then(|e| e.get("code")).cloned().unwrap_or(Json::Null) };
@@ -283,6 +288,13 @@ fn run_case(name: &str, case: &Json) -> Json {
         out_files.push((group.to_string(), Json::Array(entries)));
     }
     Json::object(vec![("case", Json::str(name)), ("steps", Json::Array(out_steps)), ("files", Json::Object(out_files))])
+}
+
+/// `Write-KvkGuiParseFailure`.
+fn parse_failure(message: &str) -> Json {
+    let english = app_lib::engine::english_text(message, Some(message));
+    let issue = Json::object(vec![("code", Json::str("ENGINE_ERROR")), ("message", Json::str(message)), ("messageEn", Json::str(english)), ("path", Json::Null)]);
+    Json::object(vec![("v", Json::int(1)), ("requestId", Json::Null), ("type", Json::str("reply")), ("ok", Json::Bool(false)), ("error", issue)])
 }
 
 /// The first place two records differ, for the failure message.
