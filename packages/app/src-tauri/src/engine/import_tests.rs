@@ -119,7 +119,7 @@ fn every_kind_of_drop_is_read_and_anything_else_is_listed_as_not_recognised() {
     ].map(|(k, a, r): (&str, &str, Option<&str>)| (k.to_string(), a.to_string(), r.map(str::to_string))));
     let mut not_recognised = skipped(&preview);
     not_recognised.sort();
-    assert_eq!(not_recognised, ["Other", "missing.wav", "pack.zip", "readme.txt"]);
+    assert_eq!(not_recognised, ["missing.wav", "notes.txt", "pack.zip", "readme.txt"]);
     assert_eq!(preview.get("packRoot"), Some(&Json::Null));
     assert_eq!(preview.get("kind").and_then(Json::as_str), Some("install"));
     // A source is shown where the player has it, never the staging copy.
@@ -133,6 +133,37 @@ fn every_kind_of_drop_is_read_and_anything_else_is_listed_as_not_recognised() {
     assert_eq!(std::fs::read(d.game("crosshairs/十字.png")).unwrap(), png(8));
     assert_eq!(std::fs::read(&d.fixture.target).unwrap(), original(), "settings are untouched without Advanced");
     assert_eq!(stages(&d.fixture.local), 0, "the staging folder goes once the import has run");
+}
+
+#[test]
+fn files_are_read_by_their_format_whatever_the_folders_are_called_down_to_three_levels() {
+    let mut d = Dropped::new();
+    // A folder of downloads with no pack layout at all, and a sub-folder of crosshairs in it.
+    let mine = d.drop.join("我的音效 和背景");
+    write(&mine.join("hit.wav"), b"RIFF hit");
+    write(&mine.join("kill.OGG"), b"OggS kill");
+    write(&mine.join("Night.json"), &theme("Night"));
+    write(&mine.join("准星们/dot.png"), &png(8));
+    write(&mine.join("a/b/c/deep.wav"), b"RIFF three levels down");
+    write(&mine.join("a/b/c/d/too-deep.wav"), b"RIFF four levels down");
+    // A png inside a folder called sounds is still a crosshair: the format decides.
+    write(&mine.join("sounds/plus.png"), &png(16));
+    let preview = d.plan(&[&mine], false);
+    let mut keys: Vec<String> = rows(&preview).into_iter().map(|(k, a, _)| format!("{k} {a}")).collect();
+    keys.sort();
+    assert_eq!(keys, ["crosshairs/dot.png create", "crosshairs/plus.png create", "sounds/deep.wav create", "sounds/hit.wav create", "sounds/kill.OGG create", "themes/Night.json create"]);
+    assert_eq!(skipped(&preview), ["d"], "a folder deeper than three levels is listed, not searched");
+}
+
+#[test]
+fn a_drop_with_too_many_files_is_refused_before_anything_is_staged() {
+    let mut d = Dropped::new();
+    let many = d.drop.join("many");
+    std::fs::create_dir_all(&many).unwrap();
+    for i in 0..5001 { std::fs::write(many.join(format!("{i}.txt")), b"x").unwrap(); }
+    let error = d.refusal(&[&many], false);
+    assert!(english(&error).contains("too many files"), "{}", error.to_compact());
+    assert_eq!(stages(&d.fixture.local), 0);
 }
 
 #[test]
