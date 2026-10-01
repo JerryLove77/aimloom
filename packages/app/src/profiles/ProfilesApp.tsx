@@ -202,26 +202,18 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     if (await editor.save()) { setNotice(t('profile.saved.notice', { name })); setSheet(null) }
     else if (editor.getState().nameError) nameInput.current?.focus()
   }
-  async function applyConfirm() {
+  /** Both buttons share the apply and refresh flow; the controller launches only on success. */
+  async function applyConfirm(launchGame: boolean) {
     const name = applyState.profile?.name ?? t('profile.draft.fallbackName')
-    setApplyIntent('apply')
-    const outcome = await applyController.confirm(false)
+    setApplyIntent(launchGame ? 'launch' : 'apply')
+    const outcome = await applyController.confirm(launchGame)
     setApplyIntent(null)
-    if (outcome === 'completed' || outcome === 'no-change') { setNotice(t('profile.apply.done', { name })); currentChanged() }
+    if (outcome === 'completed' || outcome === 'no-change') {
+      setNotice(t(launchGame ? 'profile.apply.doneAndLaunching' : 'profile.apply.done', { name }))
+      currentChanged()
+    }
   }
   function currentChanged() { setCurrentStamp(n => n + 1); onGameChanged?.() }
-  /**
-   * Runs the identical apply -- `confirm(true)` asks the controller to launch the game only
-   * once that apply itself finished with `completed`/`no-change`. A failed or refused apply
-   * launches nothing and shows the same error path `applyConfirm` shows.
-   */
-  async function applyConfirmAndLaunch() {
-    const name = applyState.profile?.name ?? t('profile.draft.fallbackName')
-    setApplyIntent('launch')
-    const outcome = await applyController.confirm(true)
-    setApplyIntent(null)
-    if (outcome === 'completed' || outcome === 'no-change') { setNotice(t('profile.apply.doneAndLaunching', { name })); currentChanged() }
-  }
   async function applyReconcile() {
     if (await applyController.reconcile()) { setNotice(t('profile.apply.reconciled')); currentChanged() }
   }
@@ -247,8 +239,8 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     <ApplyDialog state={applyState} current={currentGame} launching={applyIntent === 'launch'}
       onChooseGameRoot={root => void applyController.chooseGameRoot(root)}
       onChooseFolder={() => void applyController.chooseFolder(lang)}
-      onConfirm={() => void applyConfirm()}
-      onConfirmAndLaunch={() => void applyConfirmAndLaunch()}
+      onConfirm={() => void applyConfirm(false)}
+      onConfirmAndLaunch={() => void applyConfirm(true)}
       onCancel={() => applyController.close()}
       onReconcile={() => void applyReconcile()} />
     </>} active="profile" onSelect={onSelectSection ?? (() => setSheet(null))} isDemo={isDemo}

@@ -13,7 +13,7 @@
 
 use std::path::Path;
 
-use super::files::{self, MAX_PNG};
+use super::files::{self, ImportStage, MAX_PNG};
 use super::json::Json;
 use super::lists;
 use super::paths::{self, assert_safe_path, full_path, join};
@@ -78,7 +78,7 @@ pub struct Skip {
 /// A reviewed import: the staging folder (removed once the import has run), the plan of what
 /// is added (`None` when nothing is), each staged file's original path, and what is not added.
 pub struct ImportPlan {
-    pub stage: String,
+    pub stage: ImportStage,
     pub plan: Option<Plan>,
     pub include_settings: bool,
     pub sources: Vec<(String, String)>,
@@ -194,7 +194,7 @@ fn stage_file(stage: &str, relative: &str, bytes: &[u8]) -> EngineResult<String>
     Ok(staged)
 }
 
-/// Only collect previews whose owning engine no longer holds their cross-process lock.
+/// Only collect directories no longer owned by a live preview.
 pub fn remove_orphan_stages(engine: &Engine, context: &Context) { remove_orphan_stages_in(engine, &context.local_data_root) }
 
 pub fn remove_orphan_stages_in(engine: &Engine, local_data_root: &str) {
@@ -203,10 +203,7 @@ pub fn remove_orphan_stages_in(engine: &Engine, local_data_root: &str) {
     for entry in entries.flatten() {
         let name = entry.file_name().to_string_lossy().into_owned();
         if paths::is_lower_hex(&name, 32) {
-            let stage = join(&base, &name);
-            let Ok(_lock) = engine.import_stage_lock(local_data_root, &stage) else { continue };
-            // Do not call the owner cleanup path: it releases this engine's held lease.
-            if paths::assert_safe_path(&stage).is_ok() { let _ = std::fs::remove_dir_all(&stage); }
+            files::remove_orphan_import_stage(engine, local_data_root, &join(&base, &name));
         }
     }
 }
@@ -332,44 +329,34 @@ pub fn import_plan(engine: &Engine, context: &Context, paths_in: &[String], incl
     let mut found = Found { candidates: Vec::new(), unrecognized: Vec::new(), files: 0 };
     for path in paths_in { found.path(path)?; }
     remove_orphan_stages(engine, context);
-    let stage = join(&join(&engine.data_root(&context.local_data_root)?, "import-previews"), &store::new_guid());
-    let prefix = format!("{}{}", context.game_root, paths::SEP);
-    if stage.to_lowercase().starts_with(&prefix.to_lowercase()) {
-        return Err(EngineError::coded("ENGINE_ERROR", "导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory."));
+    let stage = ImportStage::new(engine, context)?;
+    let themes = lists::installed_themes(engine, context)?;
+    let (_, sounds) = lists::installed_sounds(engine, context)?;
+    let mut checker = Checker {
+        engine, context, stage: stage.path().to_string(), include_settings,
+        in_game: KIND_FOLDERS.iter().map(|(_, cat)| Ok((*cat, files_in(&game_directory(context, cat))?))).collect::<EngineResult<_>>()?,
+        installed_sounds: sounds.into_iter().map(|s| s.name).collect(),
+        installed_theme_names: themes.themes.into_iter().filter(|t| t.readable).filter_map(|t| t.name).collect(),
+        accepted: Vec::new(), accepted_theme_names: Vec::new(), skips: Vec::new(),
+    };
+    for candidate in found.candidates {
+        if SETTINGS.iter().any(|(_, cat)| *cat == candidate.category) { checker.settings(candidate)?; } else { checker.asset(candidate)?; }
     }
-    let result = (|| -> EngineResult<ImportPlan> {
-        engine.hold_import_stage(&context.local_data_root, &stage)?;
-        store::new_directory(&stage)?;
-        let themes = lists::installed_themes(engine, context)?;
-        let (_, sounds) = lists::installed_sounds(engine, context)?;
-        let mut checker = Checker {
-            engine, context, stage: stage.clone(), include_settings,
-            in_game: KIND_FOLDERS.iter().map(|(_, cat)| Ok((*cat, files_in(&game_directory(context, cat))?))).collect::<EngineResult<_>>()?,
-            installed_sounds: sounds.into_iter().map(|s| s.name).collect(),
-            installed_theme_names: themes.themes.into_iter().filter(|t| t.readable).filter_map(|t| t.name).collect(),
-            accepted: Vec::new(), accepted_theme_names: Vec::new(), skips: Vec::new(),
-        };
-        for candidate in found.candidates {
-            if SETTINGS.iter().any(|(_, cat)| *cat == candidate.category) { checker.settings(candidate)?; } else { checker.asset(candidate)?; }
+    let categories: Vec<String> = ["themes", "sounds", "crosshairs", "ui", "palette", "primary"].iter()
+        .filter(|cat| checker.accepted.iter().any(|(a, _)| a.category == **cat)).map(|c| (*c).to_string()).collect();
+    let plan = if categories.is_empty() { None } else {
+        let plan = txn::new_plan(engine, context, stage.path(), &categories)?;
+        // A theme, sound or crosshair is only ever added; anything else means the game folder
+        // changed while the plan was being made.
+        let added_only = plan.items.len() == checker.accepted.len()
+            && plan.items.iter().all(|i| SETTINGS.iter().any(|(_, cat)| *cat == i.category) || (i.action == "create" && i.before.is_none()));
+        if !added_only {
+            return Err(EngineError::coded("PLAN_STALE", "准备导入时，游戏文件夹里的文件发生了变化，这次没有写入。请重新拖入。", "The game folder changed while the import was being prepared, so nothing was written. Drop the files again."));
         }
-        let categories: Vec<String> = ["themes", "sounds", "crosshairs", "ui", "palette", "primary"].iter()
-            .filter(|cat| checker.accepted.iter().any(|(a, _)| a.category == **cat)).map(|c| (*c).to_string()).collect();
-        let plan = if categories.is_empty() { None } else {
-            let plan = txn::new_plan(engine, context, &stage, &categories)?;
-            // A theme, sound or crosshair is only ever added; anything else means the game folder
-            // changed while the plan was being made.
-            let added_only = plan.items.len() == checker.accepted.len()
-                && plan.items.iter().all(|i| SETTINGS.iter().any(|(_, cat)| *cat == i.category) || (i.action == "create" && i.before.is_none()));
-            if !added_only {
-                return Err(EngineError::coded("PLAN_STALE", "准备导入时，游戏文件夹里的文件发生了变化，这次没有写入。请重新拖入。", "The game folder changed while the import was being prepared, so nothing was written. Drop the files again."));
-            }
-            Some(plan)
-        };
-        let sources = checker.accepted.iter().map(|(c, staged)| (staged.clone(), c.source.clone())).collect();
-        Ok(ImportPlan { stage: stage.clone(), plan, include_settings, sources, skips: checker.skips, unrecognized: found.unrecognized })
-    })();
-    if result.is_err() { files::remove_import_stage(engine, context, &stage); }
-    result
+        Some(plan)
+    };
+    let sources = checker.accepted.iter().map(|(c, staged)| (staged.clone(), c.source.clone())).collect();
+    Ok(ImportPlan { stage, plan, include_settings, sources, skips: checker.skips, unrecognized: found.unrecognized })
 }
 
 /// Runs a reviewed import; the staging folder goes either way.
@@ -381,6 +368,6 @@ pub fn import_execute(engine: &Engine, context: &Context, import: &ImportPlan, o
             Ok(txn::Report::new("no-change", None, Vec::new(), Vec::new(), None))
         }
     };
-    files::remove_import_stage(engine, context, &import.stage);
+    import.stage.remove();
     result
 }
