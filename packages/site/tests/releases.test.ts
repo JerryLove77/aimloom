@@ -168,6 +168,27 @@ describe('the committed releases.json', () => {
     expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
     expect(r?.knownIssues.zh.length).toBeGreaterThan(0)
   })
+  it('offers 0.1.6-beta.1 as the beta: Rust only, no PowerShell, the Setup on R2 and the ZIP on GitHub', () => {
+    // Built once from c876e60 (main after PR #25); the Setup is not byte-reproducible, so these
+    // facts name the one file that exists. Change them only together.
+    expect(releases.beta).toBe('0.1.6-beta.1')
+    const r = releases.releases.find(x => x.version === '0.1.6-beta.1')
+    expect(r).toMatchObject({
+      status: 'beta', bytes: 4_652_876, mirrorUrl: null,
+      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.6-beta.1/Aimloom-v0.1.6-beta.1.zip',
+      sha256: '44fb9ed03fb04a64c5bd219408f9816833b1f65d807819e5bc736ce4b3194e66',
+      setup: {
+        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.1.exe', bytes: 3_348_047,
+        sha256: '0d7a0c4dfc9b7fc963fe8cf1b17c0353ffcfdd267d7c201a3fa3b8e6f82d3658',
+      },
+    })
+    expect(r?.contents).toEqual(['Aimloom.exe', '使用说明.txt', 'README.txt', 'VERSION.txt'])
+    expect(r?.requires).toEqual(['WebView2'])
+    // A player who skips the notes still has to learn that 0.1.5 Profiles are not read.
+    expect(r?.knownIssues.zh.join('')).toContain('重新创建')
+    expect(r?.knownIssues.en.join(' ')).toMatch(/created again/)
+    expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
+  })
   it('keeps 0.1.4 as a stable record, served by the site itself', () => {
     const r = releases.releases.find(x => x.version === '0.1.4')
     expect(r).toMatchObject({
@@ -179,8 +200,7 @@ describe('the committed releases.json', () => {
   it('lists no release that was never published', () => {
     expect(releases.releases.map(r => r.version)).not.toContain('0.1.0')
   })
-  it('carries no beta yet', () => {
-    expect(releases.beta).toBeNull()
-    expect(betaRelease(releases)).toBeNull()
+  it('names 0.1.6-beta.1 as the beta, newer than the stable recommendation', () => {
+    expect(betaRelease(releases)?.version).toBe('0.1.6-beta.1')
   })
 })

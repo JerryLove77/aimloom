@@ -1,8 +1,50 @@
 {
   "schemaVersion": 1,
   "recommended": "0.1.5",
-  "beta": null,
+  "beta": "0.1.6-beta.1",
   "releases": [
+    {
+      "version": "0.1.6-beta.1",
+      "status": "beta",
+      "date": "2026-09-30",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "WebView2"
+      ],
+      "bytes": 4652876,
+      "sha256": "44fb9ed03fb04a64c5bd219408f9816833b1f65d807819e5bc736ce4b3194e66",
+      "primaryUrl": "https://github.com/JerryLove77/aimloom/releases/download/v0.1.6-beta.1/Aimloom-v0.1.6-beta.1.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "Aimloom 改用 Rust 写的引擎读写游戏文件，不再需要 PowerShell 7，安装程序只有约 3 MB。左侧导航改成两页：「探索」（一键拖入、官网探索页）和「更改配置」（Profile、背景、音效、准星、敌人）；把配置包文件夹拖到探索页就会打开一键拖入。Profile 改成完整快照：记录背景和全部 6 个音效事件，新建时默认就是游戏当前的设置，正在使用的那套会标出「当前使用」。",
+        "en": "Aimloom now reads and writes the game's files with an engine written in Rust, so PowerShell 7 is no longer needed and the installer is about 3 MB. The sidebar becomes two pages: Explore (Quick import and the website's explorer) and Customize (Profile, Theme, Sounds, Crosshair, Enemy); dropping a config pack folder on Explore opens Quick import. A Profile is now a complete snapshot of the theme and all six sound events, a new one starts as the game is, and the one in use is marked In use."
+      },
+      "knownIssues": {
+        "zh": [
+          "请先在 Windows 设置里卸载旧版本的 Aimloom，再安装这个测试版。卸载不会删除你的备份。",
+          "0.1.5 及更早版本存的 Profile 这个版本读不出来，需要重新创建；在这个测试版里新建的 Profile，装回 0.1.5 后也打不开。",
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。"
+        ],
+        "en": [
+          "Uninstall the older Aimloom in Windows Settings first, then install this beta. Uninstalling keeps your backups.",
+          "Profiles saved by 0.1.5 or earlier cannot be read by this version and must be created again; Profiles made in this beta cannot be opened after going back to 0.1.5.",
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice."
+        ]
+      },
+      "setup": {
+        "url": "https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.1.exe",
+        "bytes": 3348047,
+        "sha256": "0d7a0c4dfc9b7fc963fe8cf1b17c0353ffcfdd267d7c201a3fa3b8e6f82d3658"
+      }
+    },
     {
       "version": "0.1.5",
       "status": "stable",

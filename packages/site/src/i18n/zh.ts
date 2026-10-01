@@ -55,7 +55,7 @@ export const zh = {
   'download.preparing.body': '当前版本正在完成 Windows 实机验收。发布后这里会出现下载链接、文件大小和 SHA-256 校验值。在此之前没有可用的安装包。',
   'download.preparing.links': '你可以先阅读使用帮助，或查看更新记录。',
   'download.beta.title': '测试版（Beta）',
-  'download.beta.notice': '这是测试版，可能不够稳定。测试版和正式版共用同一份 Profile 与备份；装回正式版安装程序即可随时切回。',
+  'download.beta.notice': '这是测试版，可能不够稳定。测试版和正式版共用同一份备份；有些改动（比如 Profile 的格式）正式版可能读不了，安装前请先看下面的已知问题。',
   'download.facts.version': '版本',
   'download.facts.date': '发布日期',
   'download.facts.size': '文件大小',
