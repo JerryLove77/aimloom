@@ -176,6 +176,28 @@ fn asset_response(op: &str, args: &Value, value: &Value) -> Result<(), Fault> {
     Ok(())
 }
 
+/// The favourite themes and sounds: `{theme, audio}`, each at most 500 distinct safe file names of
+/// its kind (the same rule as `engine/favorites.rs`).
+pub const MAX_FAVORITES: usize = 500;
+
+fn favorites(value: &Value) -> Result<(), Fault> {
+    let map=object(value,&["theme","audio"],&[])?;
+    for (key,extensions) in [("theme",&[".json"][..]),("audio",&[".wav",".ogg"][..])] {
+        let names=map[key].as_array().ok_or_else(|| fault("收藏列表必须是数组", "A favourites list must be an array."))?;
+        if names.len()>MAX_FAVORITES {return Err(fault("收藏太多：每类最多 500 个", "Too many favourites: at most 500 of each kind."));}
+        let mut seen=HashSet::new();
+        for name in names {
+            let name=name.as_str().ok_or_else(|| fault("收藏必须是文件名", "A favourite must be a file name."))?;
+            let lower=name.to_lowercase();
+            let stem=lower.split('.').next().unwrap_or("");
+            let bad=name.trim().is_empty() || name.encode_utf16().count()>128 || name.chars().any(|c| matches!(c,'<'|'>'|':'|'"'|'/'|'\\'|'|'|'?'|'*') || c.is_control())
+                || name.starts_with(' ') || name.ends_with(['.',' ']) || reserved_device_name(stem) || !extensions.iter().any(|e| lower.ends_with(e)) || !seen.insert(lower.clone());
+            if bad {return Err(fault("收藏的文件名无效或重复", "A favourite file name is not valid or is repeated."));}
+        }
+    }
+    Ok(())
+}
+
 pub fn validate_profile_request(op: &str, args: Value) -> Result<Value, Issue> {
     let invalid=|fault: Fault|Issue::new(ErrorCode::EngineError,fault.zh,fault.en);
     match op {
@@ -186,7 +208,11 @@ pub fn validate_profile_request(op: &str, args: Value) -> Result<Value, Issue> {
             asset_path(&map[key]).map_err(invalid)?;
             if op=="profileAssetRead" {asset_file(&map["kind"],&map[key]).map_err(invalid)?;}
         }
-        "profileList" => {object(&args,&[],&[]).map_err(invalid)?;}
+        "profileList" | "profileFavoritesRead" => {object(&args,&[],&[]).map_err(invalid)?;}
+        "profileFavoritesSave" => {
+            let map=object(&args,&["favorites"],&[]).map_err(invalid)?;
+            favorites(&map["favorites"]).map_err(invalid)?;
+        }
         "profileRead"|"profileDelete" => {
             let map=object(&args,&["id"],&[]).map_err(invalid)?;
             safe_id(&map["id"]).map_err(|fault|Issue::new(ErrorCode::InvalidPath,fault.zh,fault.en))?;
@@ -230,6 +256,11 @@ fn response(op: &str, args: &Value, value: &Value) -> Result<(), Fault> {
             }
         }
         "profileDelete" => {let map=object(value,&["deleted"],&[])?;if !map["deleted"].is_boolean(){return Err(fault("删除结果无效", "The delete result is not valid."));}}
+        "profileFavoritesRead" | "profileFavoritesSave" => {
+            let map=object(value,&["favorites"],&[])?;
+            favorites(&map["favorites"])?;
+            if op=="profileFavoritesSave" && map["favorites"]!=args["favorites"] {return Err(fault("保存的收藏与请求不一致", "The saved favourites do not match the request."));}
+        }
         _ => return Err(fault("不支持此 Profile 响应", "This Profile response is not supported.")),
     }
     Ok(())
@@ -367,4 +398,29 @@ mod tests {
         assert!(!has_cjk(&issue.message_en));
     }
 
+    #[test]
+    fn favourites_are_two_lists_of_distinct_safe_file_names_of_their_kind() {
+        let ok = json!({"favorites":{"theme":["Clean Dark.json","蓝色训练室.json"],"audio":["hit.wav","Bell5.ogg"]}});
+        assert_eq!(validate_profile_request("profileFavoritesSave", ok.clone()).unwrap(), ok);
+        validate_profile_request("profileFavoritesRead", json!({})).unwrap();
+        assert!(validate_profile_request("profileFavoritesRead", json!({"x":1})).is_err());
+        let five_hundred: Vec<String> = (0..500).map(|i| format!("{i}.wav")).collect();
+        validate_profile_request("profileFavoritesSave", json!({"favorites":{"theme":[],"audio":five_hundred}})).unwrap();
+        let mut over = five_hundred.clone();
+        over.push("500.wav".into());
+        for bad in [
+            json!({"theme":[],"audio":over}), json!({"theme":["a.wav"],"audio":[]}), json!({"theme":[],"audio":["a.json"]}),
+            json!({"theme":["../a.json"],"audio":[]}), json!({"theme":["a\\b.json"],"audio":[]}), json!({"theme":["A.json","a.JSON"],"audio":[]}),
+            json!({"theme":[""],"audio":[]}), json!({"theme":["con.json"],"audio":[]}), json!({"theme":[1],"audio":[]}),
+            json!({"theme":[]}), json!({"theme":[],"audio":[],"crosshair":[]}),
+        ] {
+            let issue = validate_profile_request("profileFavoritesSave", json!({"favorites":bad.clone()})).unwrap_err();
+            assert!(!has_cjk(&issue.message_en), "{bad}");
+        }
+        // A save answers exactly what it was asked to keep.
+        let args = json!({"favorites":{"theme":["a.json"],"audio":[]}});
+        validate_profile_response("profileFavoritesSave", &args, json!({"favorites":{"theme":["a.json"],"audio":[]}})).unwrap();
+        assert!(validate_profile_response("profileFavoritesSave", &args, json!({"favorites":{"theme":[],"audio":[]}})).is_err());
+        assert!(validate_profile_response("profileFavoritesRead", &json!({}), json!({"favorites":{"theme":[],"audio":[]},"extra":1})).is_err());
+    }
 }

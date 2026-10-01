@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { invoke } from '@tauri-apps/api/core'
 import { createNativeProfileBridge } from '../../../src/bridge/profiles'
+import { createDemoProfileBridge } from '../../../src/bridge/profiles-demo'
 import { v2Parsed } from '../profiles/v2'
 import { InstallerFailure } from '../../../src/bridge/contracts'
 
@@ -82,5 +83,30 @@ describe('ProfileBridge', () => {
     await expect(bridge.read('a')).rejects.toBeInstanceOf(InstallerFailure)
     native.mockResolvedValueOnce({ filePath: 'C:\\profiles\\b.json', profile: v2Parsed('a', 'A') })
     await expect(bridge.save(v2Parsed('a', 'A'))).rejects.toBeInstanceOf(InstallerFailure)
+  })
+  it('reads and saves the favourites through the Profile route, checking what comes back', async () => {
+    const bridge = createNativeProfileBridge()
+    const favorites = { theme: ['Clean Dark.json', '蓝色训练室.json'], audio: ['hit.wav'] }
+    native.mockResolvedValueOnce({ favorites })
+    expect(await bridge.favoritesRead()).toEqual(favorites)
+    expect(native).toHaveBeenLastCalledWith('installer_profile', { op: 'profileFavoritesRead', args: {} })
+    native.mockResolvedValueOnce({ favorites })
+    expect(await bridge.favoritesSave(favorites)).toEqual(favorites)
+    expect(native).toHaveBeenLastCalledWith('installer_profile', { op: 'profileFavoritesSave', args: { favorites } })
+    for (const bad of [{ favorites: { theme: ['a.wav'], audio: [] } }, { favorites: { theme: [], audio: [], extra: [] } }, { favorites: { theme: ['A.json', 'a.json'], audio: [] } }, { theme: [], audio: [] }]) {
+      native.mockResolvedValueOnce(bad)
+      await expect(bridge.favoritesRead()).rejects.toBeInstanceOf(InstallerFailure)
+    }
+    native.mockReset()
+    await expect(bridge.favoritesSave({ theme: ['../x.json'], audio: [] })).rejects.toBeInstanceOf(InstallerFailure)
+    expect(native).not.toHaveBeenCalled()
+  })
+  it('the demo keeps favourites in its own storage key', async () => {
+    const store = new Map<string, string>()
+    const storage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v) } }
+    const bridge = createDemoProfileBridge(storage)
+    expect(await bridge.favoritesRead()).toEqual({ theme: [], audio: [] })
+    await bridge.favoritesSave({ theme: ['Blue-room.json'], audio: [] })
+    expect(await createDemoProfileBridge(storage).favoritesRead()).toEqual({ theme: ['Blue-room.json'], audio: [] })
   })
 })

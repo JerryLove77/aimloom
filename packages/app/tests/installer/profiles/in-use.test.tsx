@@ -88,6 +88,7 @@ function setup(profiles: TrainingProfile[]) {
     read: async (id: string) => ({ filePath: `/profiles/${id}.json`, profile: structuredClone(profiles.find(p => p.id === id) ?? null) }),
     save: async p => { saved.push(p); return { filePath: `/profiles/${p.id}.json`, profile: p } },
     delete: async () => ({ deleted: true }),
+    favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites,
   }
   const assets: ProfileAssetBridge = { chooseDirectory: async () => null, list: async () => ({ directory: '', files: [], errors: [] }), read: async () => new Uint8Array() }
   const refuse = async (): Promise<never> => { throw new Error('refused') }

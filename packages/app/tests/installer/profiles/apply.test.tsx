@@ -41,6 +41,7 @@ function fixtures(profiles: TrainingProfile[] = [fullProfile()]) {
     read: async (id: string) => ({ filePath: `/profiles/${id}.json`, profile: structuredClone(library.find(p => p.id === id) ?? null) }),
     save: async profile => { library = [...library.filter(p => p.id !== profile.id), profile]; return { filePath: `/profiles/${profile.id}.json`, profile } },
     delete: async () => ({ deleted: true }),
+    favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites,
   }
   const assets: ProfileAssetBridge = { chooseDirectory: async () => null, list: async () => ({ directory: '', files: [], errors: [] }), read: async () => new Uint8Array() }
   const planCalls: { gameRoot: string; id: string; revision: number }[] = []

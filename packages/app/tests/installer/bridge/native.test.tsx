@@ -61,6 +61,12 @@ describe('native bridge file import', () => {
     expect(invoke).toHaveBeenCalledWith('installer_read', { op: 'planFileAdd', args: input })
   })
 
+  it('plans a Quick import by the dropped paths, which the worker reads', async () => {
+    const input = { gameRoot: 'D:/Game', paths: ['C:/Users/Player1/Downloads/Pack', 'C:/Users/Player1/Downloads/hit.wav'], includeSettings: false, revision: 3 }
+    await createNativeBridge().planImport(input)
+    expect(invoke).toHaveBeenCalledWith('installer_read', { op: 'planImport', args: input })
+  })
+
   it('opens the native pickers for the kind being added, in the page language', async () => {
     invoke.mockResolvedValue('C:/Users/p/Downloads/hit.wav')
     expect(await createNativeBridge().pickFile('sound', 'en')).toBe('C:/Users/p/Downloads/hit.wav')

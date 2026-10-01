@@ -22,6 +22,7 @@ export function createNativeBridge():InstallerBridge {
     crosshairList:gameRoot=>read('crosshairList',{gameRoot}),planCrosshair:input=>read('planCrosshair',{...input}),
     planCrosshairAdd:input=>read('planCrosshairAdd',{...input}),
     planFileAdd:input=>read('planFileAdd',{...input}),
+    planImport:input=>read('planImport',{...input}),
     exportFile:input=>read('exportFile',{...input}),
     enemyList:gameRoot=>read('enemyList',{gameRoot}),planEnemy:input=>read('planEnemy',{...input}),
     planProfileApply:input=>read('planProfileApply',{...input}),

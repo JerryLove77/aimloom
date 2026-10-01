@@ -28,7 +28,7 @@ pub fn name_order(a: &str, b: &str) -> std::cmp::Ordering {
     upper(a).cmp(&upper(b)).then_with(|| a.encode_utf16().cmp(b.encode_utf16()))
 }
 
-fn sorted_entries(dir: &str) -> EngineResult<Vec<(String, bool)>> {
+pub(super) fn sorted_entries(dir: &str) -> EngineResult<Vec<(String, bool)>> {
     let mut entries = Vec::new();
     for entry in std::fs::read_dir(dir).map_err(|e| EngineError::io(&e))? {
         let entry = entry.map_err(|e| EngineError::io(&e))?;

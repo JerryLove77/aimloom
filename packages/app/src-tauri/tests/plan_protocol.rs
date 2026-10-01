@@ -145,3 +145,28 @@ fn a_plain_issue_accepts_os_localized_text_without_panicking() {
     assert_eq!(issue.message, "系统找不到指定的路径。");
     assert_eq!(issue.message_en, "系统找不到指定的路径。");
 }
+
+fn import(paths: serde_json::Value) -> serde_json::Value {
+    json!({"gameRoot":"D:/Game","paths":paths,"includeSettings":false,"revision":1})
+}
+
+#[test]
+fn quick_import_names_one_to_sixty_four_distinct_full_paths_and_nothing_else() {
+    let ok = import(json!(["C:\\Users\\Player1\\Downloads\\Pack", "D:/Packs/loose 主题.json", "\\\\server\\share\\Pack"]));
+    assert_eq!(validate_read("planImport", ok.clone()).unwrap(), ok, "the paths pass through unchanged for the engine to read");
+    let sixty_four: Vec<String> = (0..64).map(|i| format!("C:/Packs/{i}.wav")).collect();
+    assert!(validate_read("planImport", import(json!(sixty_four))).is_ok());
+    let sixty_five: Vec<String> = (0..65).map(|i| format!("C:/Packs/{i}.wav")).collect();
+    assert!(validate_read("planImport", import(json!(sixty_five))).is_err());
+    assert!(validate_read("planImport", import(json!([]))).is_err());
+    for bad in ["relative\\Pack", "Pack", "", "  ", "C:/a\nb"] {
+        assert!(validate_read("planImport", import(json!([bad]))).is_err(), "{bad:?}");
+    }
+    assert!(validate_read("planImport", import(json!(["C:/Packs/A", "c:/packs/a"]))).is_err(), "the same path twice");
+    let mut extra = import(json!(["C:/Packs/A"]));
+    extra["categories"] = json!(["themes"]);
+    assert!(validate_read("planImport", extra).is_err(), "the engine decides what a drop holds");
+    let mut flag = import(json!(["C:/Packs/A"]));
+    flag["includeSettings"] = json!("yes");
+    assert!(validate_read("planImport", flag).is_err());
+}
