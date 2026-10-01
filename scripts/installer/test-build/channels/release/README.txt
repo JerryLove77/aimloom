@@ -16,7 +16,7 @@ KovaaK setup manager: background, sounds, crosshair, enemy look, and training Pr
 
 [Before you use it]
 - Close KovaaK before writing to the game files.
-- Every write is backed up first; open Quick import from the Explore page ("Open Quick import") to undo it.
+- Every write is backed up first; open "Backup and restore" from the Explore page to undo it.
 - Backups and Profiles are kept in %LOCALAPPDATA%\Aimloom, apart from the game folder.
 - Which crosshair you use is chosen in the game.
 - The language follows Windows; change it in Settings at the bottom left.
