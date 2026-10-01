@@ -60,6 +60,13 @@ export function validateProfileId(value: unknown): string {
   return value
 }
 
+/** The Profile id a file name stands for, only when it is exactly a valid id and `.json`: what Delete may be offered for. */
+export function profileIdOfFile(fileName: string): string | null {
+  if (!fileName.endsWith('.json')) return null
+  const id = fileName.slice(0, -'.json'.length)
+  try { return validateProfileId(id) } catch { return null }
+}
+
 function fileReference(value: unknown): string {
   const file = text(value, 4096, 'profile.model.label.filePath')
   const normalized = file.replace(/\\/g, '/')

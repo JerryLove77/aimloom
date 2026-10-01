@@ -38,7 +38,7 @@ function countList(t: ReturnType<typeof useT>, lang: Lang, rows: FileRow[]): str
  * summary of what will be added before 加进游戏. The website's explorer opens in the browser, and
  * 备份与恢复 opens the restore page.
  */
-export function ExplorePage({ bridge, storage, isDemo = false, isActive = true, section, onSelect, onOpenRestore, fileDrops = noFileDrops }: {
+export function ExplorePage({ bridge, storage, isDemo = false, isActive = true, section, onSelect, onOpenRestore, onGameChanged, fileDrops = noFileDrops }: {
   bridge: ImportBridge
   storage: GameRootStorage
   isDemo?: boolean
@@ -47,11 +47,14 @@ export function ExplorePage({ bridge, storage, isDemo = false, isActive = true, 
   onSelect: (section: WorkspaceSection) => void
   /** Opens the backup and restore page. */
   onOpenRestore: () => void
+  /** The game's files changed (an add completed, or an unknown one was checked): other pages' lists are stale. */
+  onGameChanged?: (() => void) | undefined
   /** Files dragged in from outside the app: every drop on this page goes to Quick import. */
   fileDrops?: FileDropSource
 }) {
   const t = useT()
   const { lang } = useLang()
+  const msg = useMsg()
   const { openExplore } = useContext(SettingsState)
   const { toast, tone, hide, show } = useToast(null)
   // One controller for the page's life: it holds the lock on an unresolved add, which a cache
@@ -59,6 +62,9 @@ export function ExplorePage({ bridge, storage, isDemo = false, isActive = true, 
   const [controller] = useState(() => createImportController(bridge, storage))
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)
   const locked = state.phase === 'adding' || state.unresolved
+  // Each completed add (a fresh outcome object) and each checked unknown result tells the workspace.
+  useEffect(() => { if (state.outcome?.status === 'completed') onGameChanged?.() }, [state.outcome]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (state.message && 'key' in state.message && state.message.key === 'quick.reconciled') onGameChanged?.() }, [state.message]) // eslint-disable-line react-hooks/exhaustive-deps
   const heading = useRef<HTMLHeadingElement>(null)
   const importing = state.phase !== 'idle'
   useEffect(() => { if (isActive) heading.current?.focus({ preventScroll: true }) }, [importing, isActive])
@@ -69,6 +75,7 @@ export function ExplorePage({ bridge, storage, isDemo = false, isActive = true, 
   if (!isActive) return null
   const shell = { overlays: <Toast message={toast} tone={tone} onDone={hide} />, dropHint, active: section, onSelect, isDemo, headingRef: heading }
   if (!importing) return <WorkspaceShell {...shell} eyebrow={t('explore.eyebrow')} title={t('explore.title')} scope={t('explore.scope')}>
+    {state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}
     <div className="ws-explore">
       <section className="ws-explore-card ws-explore-wide" aria-labelledby="ws-explore-quick">
         <h2 id="ws-explore-quick">{t('explore.quick.title')}</h2>
@@ -166,7 +173,7 @@ function ImportView({ state, controller, onSelect, onOpenRestore }: { state: Imp
       {issue}{message}
       {state.unresolved ? <Notice tone="warning" title={t('quick.unresolved.title')}><p>{t('quick.unresolved.body')}</p><Button onClick={() => void controller.reconcile()}>{t('quick.checkResult')}</Button></Notice> : null}
       {state.outcome ? <Notice tone="success" title={t(plural(state.outcome.added.length, 'quick.done.title'), { count: state.outcome.added.length })}>
-        <p>{t('quick.done.body', { list: countList(t, lang, state.outcome.added) })}</p>
+        <p>{t(plural(state.outcome.added.length, 'quick.done.body'), { list: countList(t, lang, state.outcome.added) })}</p>
       </Notice> : null}
       {state.outcome ? <div className="ws-quick-links">
         {(['theme', 'audio', 'crosshair'] as const).map(section => <button type="button" key={section} className="ws-quick-link" onClick={() => onSelect(section)}>{t(`quick.goto.${section}`)}</button>)}

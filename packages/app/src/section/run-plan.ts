@@ -21,15 +21,27 @@ export type PlanOutcome =
 
 const TERMINAL = ['finished', 'failed', 'unknown', 'reconciled']
 
-/** Executes a plan as an install, never with conflict permission, and polls its job (250 ms, at most 60 s). */
+/**
+ * Executes a plan as an install, never with conflict permission, and polls its job (250 ms)
+ * until it is terminal. There is no time cap: the worker may still be writing, and giving up
+ * while the job is `running` would unlock a page the worker is still changing.
+ *
+ * A refused `execute` throws, as it proves nothing was written. Once execute was accepted, a
+ * failed poll no longer proves anything, so it answers an `unknown` job (never a throw that a
+ * caller could read as a plain failure) and the caller locks until reconciliation.
+ */
 export async function waitForJob(bridge: PlanRunner, operationId: string, planId: string): Promise<PlanJob> {
   await bridge.execute({ operationId, planId, confirmation: 'install', allowConflicts: false })
-  let job = await bridge.job(operationId)
-  for (let attempt = 0; !TERMINAL.includes(job.state) && attempt < 240; attempt++) {
-    await new Promise(resolve => setTimeout(resolve, 250))
-    job = await bridge.job(operationId)
+  try {
+    let job = await bridge.job(operationId)
+    while (!TERMINAL.includes(job.state)) {
+      await new Promise(resolve => setTimeout(resolve, 250))
+      job = await bridge.job(operationId)
+    }
+    return job
+  } catch {
+    return { state: 'unknown', result: null, error: null }
   }
-  return job
 }
 
 /** Executes a plan and waits for its job to end. Any final state other than `finished` is unknown. */

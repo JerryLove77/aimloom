@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useSyncExternalStore } from 'react'
+import { useReloadOnChange } from '../section/use-reload-on-change'
 import { Button } from '../ui/Button'
 import { Notice } from '../ui/Notice'
 import { WorkspaceShell, type WorkspaceSection } from '../workspace/WorkspaceShell'
@@ -16,10 +17,12 @@ function choiceLabel(choice: EnemySkinChoice, skins: EnemySkin[]): string {
   return row ? row.label : `${choice.model} · ${choice.skin}`
 }
 
-export function EnemyPage({ bridge, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+export function EnemyPage({ bridge, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops, changeStamp = 0 }: {
   bridge: EnemyBridge
   isDemo?: boolean
   isActive?: boolean
+  /** Bumped by the workspace when Quick import or a restore changed the game; the list is read again when this page is next shown. */
+  changeStamp?: number
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
   /** Files dragged in from outside the app. The Enemy section never accepts one. */
@@ -31,6 +34,7 @@ export function EnemyPage({ bridge, isDemo = false, isActive = true, section, on
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)
   const { toast, tone, hide, show } = useToast(state.message ? msg(state.message) : null)
   useEffect(() => { if (isActive && state.phase === 'idle') void controller.load() }, [isActive, controller, state.phase])
+  useReloadOnChange(changeStamp, isActive, state, controller.load)
   const locked = state.applying || state.unresolved || state.phase === 'locating' || state.phase === 'loading'
   const dropHint = useFileDrop(fileDrops, { section: 'enemy', active: isActive, busy: locked, onRefused: show, onFile: () => show(t('enemy.dropRefused')) })
   if (!isActive) return null

@@ -20,7 +20,7 @@ import type { TileChoice } from '../ui/Tiles'
 import { AUDIO_EVENTS, type AudioList, type ThemeList } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
 import { plural, useLang, useMsg, useT, type Lang, type MessageKey } from '../i18n'
-import { resolveProfileAssetPath, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
+import { profileIdOfFile, resolveProfileAssetPath, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
 import { profileInUse, readCurrentGame, snapshotFromGame, type CurrentGame } from './current-game'
 import { describeAudio, describeEvent, describeTheme, eventLabel } from './describe'
 import { AssetPreview } from './AssetPreview'
@@ -65,7 +65,7 @@ const unavailableApplyBridge: ApplyBridge = {
   launchGame: async () => { throw new Error('no game bridge') },
 }
 
-export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage() }: {
+export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage(), changeStamp = 0 }: {
   bridge: ProfileBridge; assets: ProfileAssetBridge; isDemo?: boolean; isActive?: boolean; onSelectSection?: ((section: WorkspaceSection) => void) | undefined; onDirtyChange?: ((dirty: boolean) => void) | undefined
   /**
    * Reads what is installed in the game, so a sheet shows the same previewed choices the
@@ -78,6 +78,8 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
   favorites?: FavoritesStore | undefined
   /** Profile adds nothing to the game, so a dropped file only gets told which section takes it. */
   fileDrops?: FileDropSource
+  /** Bumped by the workspace when Quick import or a restore changed the game: what the sheets cached is read again. */
+  changeStamp?: number
 }) {
   const t = useT()
   const msg = useMsg()
@@ -87,7 +89,8 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
   const applyController = useMemo(() => createApplyController(locate ?? unavailableApplyBridge, storage), [locate, storage])
   const applyState = useSyncExternalStore(applyController.subscribe, applyController.getState, applyController.getState)
   const [sheet, setSheet] = useState<ProfileComponent | null>(null)
-  const [deleting, setDeleting] = useState<TrainingProfile | null>(null)
+  /** The Profile being deleted, or an unreadable file (`file` set): the same confirmation serves both. */
+  const [deleting, setDeleting] = useState<{ id: string; name: string; file?: string } | null>(null)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(0)
   const [notice, setNotice] = useState('')
@@ -129,6 +132,8 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     void readCurrentGame(locate, gameRoot).then(found => { if (live) setCurrentGame(found) }).catch(() => {})
     return () => { live = false }
   }, [isActive, gameRoot, locate, currentStamp])
+  // The installed list is cached per sheet kind; what Quick import or a restore changed makes it stale.
+  useEffect(() => { setInstalled(null) }, [changeStamp])
   useEffect(() => {
     const kind = sheet === 'theme' ? 'theme' as const : null
     if (!kind || !gameRoot || !locate || installed?.kind === kind) return
@@ -219,7 +224,7 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
   }
   return (<WorkspaceShell dropHint={dropHint} overlays={<>
     <Toast message={toast} tone={tone} onDone={hide} />
-    <Dialog open={deleting !== null} title={t('profile.delete.title')} onClose={() => { if (!state.busyId) setDeleting(null) }}><p>{t('profile.delete.confirm', { name: deleting?.name ?? '' })}</p>{state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}<div className="ki-dialog-actions"><Button data-safe-focus disabled={!!state.busyId} onClick={() => setDeleting(null)}>{t('import.cancel')}</Button><Button variant="danger" disabled={!!state.busyId} onClick={() => { if (deleting) void editor.deleteProfile(deleting.id).then(ok => { if (ok) { setDeleting(null); setNotice(t('profile.delete.done')) } }) }}>{state.busyId ? t('profile.delete.working') : t('profile.delete.button')}</Button></div></Dialog>
+    <Dialog open={deleting !== null} title={t('profile.delete.title')} onClose={() => { if (!state.busyId) setDeleting(null) }}><p>{deleting?.file !== undefined ? t('profile.delete.confirmUnreadable', { file: deleting.file }) : t('profile.delete.confirm', { name: deleting?.name ?? '' })}</p>{state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}<div className="ki-dialog-actions"><Button data-safe-focus disabled={!!state.busyId} onClick={() => setDeleting(null)}>{t('import.cancel')}</Button><Button variant="danger" disabled={!!state.busyId} onClick={() => { if (deleting) { const unreadable = deleting.file !== undefined; void editor.deleteProfile(deleting.id).then(ok => { if (ok) { setDeleting(null); setNotice(t(unreadable ? 'profile.delete.doneUnreadable' : 'profile.delete.done')); if (unreadable) void editor.load() } }) } }}>{state.busyId ? t('profile.delete.working') : t('profile.delete.button')}</Button></div></Dialog>
     {state.draft && sheet === 'audio' ? <AudioSheet open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
       value={state.draft.audio} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('audio', gameRoot) : null} favorites={favorites}
       onAddFile={locate && gameRoot ? input => addFile('sound', input) : undefined}
@@ -266,7 +271,11 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
           <p className="ws-note">{t('profile.draft.persistNote')}</p>
         </form> : <>
           <div className="pr-library-toolbar"><div className="pr-search"><label className="pr-sr-only" htmlFor="profile-search">{t('profile.search.label')}</label><input id="profile-search" ref={searchInput} type="search" placeholder={t('profile.search.label')} value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} />{search ? <Button variant="ghost" aria-label={t('crosshair.clearSearch')} onClick={() => { setSearch(''); setPage(0); searchInput.current?.focus() }}>×</Button> : null}</div><Button onClick={() => void editor.load()} disabled={locked || state.loading}>{t('theme.refresh')}</Button><Button variant="primary" disabled={locked || state.loading} onClick={() => { setNotice(''); editor.create(t('profile.editor.defaultName'), snapshotFromGame(currentGame)) }}>{t('profile.new')}</Button></div>
-          {state.listErrors.length ? <Notice tone="warning"><p>{t(plural(state.listErrors.length, 'profile.listErrors.summary'), { count: state.listErrors.length })}</p><details><summary>{t('profile.listErrors.viewFiles')}</summary>{state.listErrors.map((e, i) => <p key={i}>{t('profile.listErrors.item', { file: e.fileName, message: msg(e.message) })}</p>)}</details></Notice> : null}
+          {state.listErrors.length ? <Notice tone="warning"><p>{t(plural(state.listErrors.length, 'profile.listErrors.summary'), { count: state.listErrors.length })}</p><p>{t('profile.listErrors.oldNote')}</p><details><summary>{t('profile.listErrors.viewFiles')}</summary>{state.listErrors.map((e, i) => {
+            // Only a file named exactly like a Profile id can be deleted by id.
+            const id = profileIdOfFile(e.fileName)
+            return <p key={i}>{t('profile.listErrors.item', { file: e.fileName, message: msg(e.message) })}{id ? <> <Button variant="ghost" disabled={locked} aria-label={t('profile.delete.aria', { name: e.fileName })} onClick={() => setDeleting({ id, name: e.fileName, file: e.fileName })}>{t('profile.delete.button')}</Button></> : null}</p>
+          })}</details></Notice> : null}
           {state.loading ? <p role="status">{t('profile.library.loading')}</p> : null}
           <div className="pr-library" aria-busy={state.loading}>{matches.slice(activePage * 12, activePage * 12 + 12).map(profile => {
             const inUse = profileInUse(profile, currentGame)
