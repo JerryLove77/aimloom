@@ -35,7 +35,7 @@ describe('Quick import and Backup and restore in English', () => {
     await user.click(screen.getByRole('button', { name: 'Choose files' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Quick import' })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: /^Adds / })).toBeInTheDocument()
-    await user.click(screen.getByText('Already in the game or repeated — skipped'))
+    await user.click(screen.getByText('Not added'))
     expect(screen.getAllByText('Already in the game, same content').length).toBeGreaterThan(0)
     expect(uiText(container)).not.toMatch(CJK)
 
