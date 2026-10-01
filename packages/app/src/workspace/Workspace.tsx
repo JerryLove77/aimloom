@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InstallerApp } from '../installer/InstallerApp'
 import { ProfilesApp } from '../profiles/ProfilesApp'
-import { SchemePage } from '../scheme/SchemePage'
+import { ThemePage } from '../theme/ThemePage'
 import { AudioPage } from '../audio/AudioPage'
 import { CrosshairPage } from '../crosshair/CrosshairPage'
 import { EnemyPage } from '../enemy/EnemyPage'
@@ -120,7 +120,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
       <ProfilesApp bridge={profileBridge} assets={assetBridge} favorites={favorites} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
-      <SchemePage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'scheme'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <ThemePage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'theme'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <AudioPage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <EnemyPage bridge={bridge} isDemo={isDemo} isActive={installer === null && section === 'enemy'} section={section} onSelect={setSection} fileDrops={fileDrops} />

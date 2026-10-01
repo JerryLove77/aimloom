@@ -133,7 +133,7 @@ describe('enemy controller', () => {
 
 // The friend's bug: four sections each discovered the game on their own and told each other
 // nothing, so a folder found by hand in one section meant nothing in the next. These prove this
-// section reads the shared folder -- the scheme suite proves the same for Theme.
+// section reads the shared folder -- the theme suite proves the same for Theme.
 describe('enemy and the remembered game folder', () => {
   beforeEach(() => { try { window.localStorage.clear() } catch { /* nothing remembered either way */ } })
 

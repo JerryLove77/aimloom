@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { createSchemeController } from '../../../src/scheme/controller'
+import { createThemeController } from '../../../src/theme/controller'
 import { createAudioController } from '../../../src/audio/controller'
-import type { AudioBindings, InstalledSound, PlanFileAddRequest, SchemeTheme } from '../../../src/bridge/contracts'
+import type { AudioBindings, InstalledSound, PlanFileAddRequest, ThemeEntry } from '../../../src/bridge/contracts'
 import { renderMsg } from '../../../src/i18n'
 
 type Job = { state: string; result?: { status: string }; error?: { code: string; message: string } }
@@ -36,13 +36,13 @@ function shared(options: { job?: Job; planError?: unknown; hold?: Promise<void> 
   }
 }
 
-const schemeTheme = (file: string): SchemeTheme => ({ name: file.replace(/\.json$/, ''), file, path: `D:/Game/Themes/${file}`, readable: true, duplicateName: false })
-function schemeBridge(options: Parameters<typeof shared>[0] = {}) {
+const themeEntry = (file: string): ThemeEntry => ({ name: file.replace(/\.json$/, ''), file, path: `D:/Game/Themes/${file}`, readable: true, duplicateName: false })
+function themeBridge(options: Parameters<typeof shared>[0] = {}) {
   const base = shared(options)
   return {
     ...base,
-    schemeList: async (root: string) => { base.calls.push('schemeList'); return { directory: `${root}/Themes`, current: 'Old Theme', themes: [schemeTheme('Blue.json'), ...base.added.map(schemeTheme)] } },
-    planScheme: async () => { base.calls.push('planScheme'); return { planId: 'plan-apply' } },
+    themeList: async (root: string) => { base.calls.push('themeList'); return { directory: `${root}/Themes`, current: 'Old Theme', themes: [themeEntry('Blue.json'), ...base.added.map(themeEntry)] } },
+    planTheme: async () => { base.calls.push('planTheme'); return { planId: 'plan-apply' } },
   }
 }
 
@@ -57,27 +57,27 @@ function audioBridge(options: Parameters<typeof shared>[0] = {}) {
   }
 }
 
-describe('Scheme: adding a theme from outside the game', () => {
+describe('Theme: adding a theme from outside the game', () => {
   it('plans a byte-for-byte add, then refreshes and selects the new theme without applying it', async () => {
-    const b = schemeBridge()
-    const controller = createSchemeController(b)
+    const b = themeBridge()
+    const controller = createThemeController(b)
     await controller.load()
     expect(await controller.importFile(themeInput)).toBe(true)
     expect(b.adds).toEqual([{ gameRoot: 'D:/Game', kind: 'theme', ...themeInput, revision: 1 }])
     expect(b.calls).toContain('execute:plan-add:install:false')
-    expect(b.calls).not.toContain('planScheme')
+    expect(b.calls).not.toContain('planTheme')
     const state = controller.getState()
     expect(state.themes.map(theme => theme.file)).toEqual(['Blue.json', 'Night.json'])
     expect(state.selected?.file).toBe('Night.json')
     expect(state.current).toBe('Old Theme')
-    expect(state.message).toEqual({ key: 'scheme.import.selected', params: { file: 'Night.json' } })
+    expect(state.message).toEqual({ key: 'theme.import.selected', params: { file: 'Night.json' } })
     expect(state.message ? renderMsg('zh', state.message) : '').toMatch(/已添加「Night\.json」并选中/)
     expect(state.importing || state.applying).toBe(false)
   })
 
   it('shows an engine refusal in the sheet, not as a page error, and selects nothing', async () => {
-    const b = schemeBridge({ planError: new Error('这个主题的内部名称是「Blue」，而游戏里的「Blue.json」已经叫这个名字。') })
-    const controller = createSchemeController(b)
+    const b = themeBridge({ planError: new Error('这个主题的内部名称是「Blue」，而游戏里的「Blue.json」已经叫这个名字。') })
+    const controller = createThemeController(b)
     await controller.load()
     expect(await controller.importFile(themeInput)).toBe(false)
     const state = controller.getState()
@@ -90,24 +90,24 @@ describe('Scheme: adding a theme from outside the game', () => {
   })
 
   it('never shows a coded English refusal as it is', async () => {
-    const b = schemeBridge({ planError: Object.assign(new Error('Source changed after preview'), { issue: { code: 'PLAN_STALE', message: 'Source changed after preview' } }) })
-    const controller = createSchemeController(b)
+    const b = themeBridge({ planError: Object.assign(new Error('Source changed after preview'), { issue: { code: 'PLAN_STALE', message: 'Source changed after preview' } }) })
+    const controller = createThemeController(b)
     await controller.load()
     await controller.importFile(themeInput)
     expect(renderMsg('zh', controller.getState().importError!)).toMatch(/预览之后发生了改变/)
   })
 
   it('reports a failed job with the engine message', async () => {
-    const b = schemeBridge({ job: { state: 'failed', error: { code: 'WRITE_FAILED', message: '磁盘已满，文件没有添加。' } } })
-    const controller = createSchemeController(b)
+    const b = themeBridge({ job: { state: 'failed', error: { code: 'WRITE_FAILED', message: '磁盘已满，文件没有添加。' } } })
+    const controller = createThemeController(b)
     await controller.load()
     expect(await controller.importFile(themeInput)).toBe(false)
     expect(renderMsg('zh', controller.getState().importError!)).toBe('磁盘已满，文件没有添加。')
   })
 
   it('treats an unknown result as unknown: the page locks until it is reconciled', async () => {
-    const b = schemeBridge({ job: { state: 'unknown' } })
-    const controller = createSchemeController(b)
+    const b = themeBridge({ job: { state: 'unknown' } })
+    const controller = createThemeController(b)
     await controller.load()
     expect(await controller.importFile(themeInput)).toBe(false)
     expect(controller.getState().unresolved).toBe(true)
@@ -121,8 +121,8 @@ describe('Scheme: adding a theme from outside the game', () => {
 
   it('holds every existing guard while the add is running', async () => {
     let release = () => {}
-    const b = schemeBridge({ hold: new Promise<void>(resolve => { release = resolve }) })
-    const controller = createSchemeController(b)
+    const b = themeBridge({ hold: new Promise<void>(resolve => { release = resolve }) })
+    const controller = createThemeController(b)
     await controller.load()
     const running = controller.importFile(themeInput)
     expect(controller.getState().applying).toBe(true)
@@ -136,12 +136,12 @@ describe('Scheme: adding a theme from outside the game', () => {
   })
 
   it('opens the file picker for themes and survives a picker failure', async () => {
-    const b = schemeBridge()
-    const controller = createSchemeController(b)
+    const b = themeBridge()
+    const controller = createThemeController(b)
     await controller.load()
     expect(await controller.pickImport('zh')).toBe('C:/Users/me/Downloads/picked')
     expect(b.calls).toContain('pickFile:theme')
-    const failing = createSchemeController({ ...b, pickFile: async () => { throw new Error('dialog failed') } })
+    const failing = createThemeController({ ...b, pickFile: async () => { throw new Error('dialog failed') } })
     await failing.load()
     expect(await failing.pickImport('zh')).toBeNull()
     const failingError = failing.getState().error

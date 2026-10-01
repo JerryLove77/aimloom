@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { parseScheme, renderSchemePreview } from '@kvk/theme'
+import { parseThemeDocument, renderThemePreview } from '@kvk/theme'
 import { useLang, useMsg, useT, type Msg } from '../i18n'
 import { errorMsg } from '../section/issue-text'
 import { resolveProfileAssetPath, type ProfileFileReference } from './model'
@@ -7,7 +7,7 @@ import { assetMime, type AssetKind, type ProfileAssetBridge } from '../bridge/as
 
 type Status = 'loading' | 'ready' | 'error'
 export interface AssetPreviewProps {
-  /** The Profile sheets pass scheme and audio; the preview lifecycle tests drive it with a PNG. */
+  /** The Profile sheets pass theme and audio; the preview lifecycle tests drive it with a PNG. */
   kind: Exclude<AssetKind, 'enemy'>
   reference: ProfileFileReference | null
   profilePath: string
@@ -76,8 +76,8 @@ export function AssetPreview({ kind, reference, profilePath, assets, onStatus, e
         if (current.current !== token || failed) return
         if (!bytes.length || bytes.length > 8 * 1024 * 1024) { update('error', { key: 'profile.preview.error.tooLarge' }); return }
         let blob: Blob
-        if (kind === 'scheme') {
-          const svg = renderSchemePreview(parseScheme(bytes), lang)
+        if (kind === 'theme') {
+          const svg = renderThemePreview(parseThemeDocument(bytes), lang)
           mime = 'image/svg+xml'
           blob = new Blob([svg], { type: mime })
         } else {
@@ -104,6 +104,6 @@ export function AssetPreview({ kind, reference, profilePath, assets, onStatus, e
         const image = event.currentTarget
         finish.current(image.naturalWidth > 0 && image.naturalHeight > 0 && image.naturalWidth <= 8192 && image.naturalHeight <= 8192 ? 'ready' : 'error', { key: 'profile.preview.error.imageDimensions' })
       }} onError={() => { if (active(preview.token)) finish.current('error', { key: 'profile.preview.error.imageDecode' }) }} />)}
-    {kind === 'scheme' && <p className="pr-preview-caption">{t('profile.preview.caption.scheme')}</p>}
+    {kind === 'theme' && <p className="pr-preview-caption">{t('profile.preview.caption.theme')}</p>}
   </div>
 }

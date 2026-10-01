@@ -32,7 +32,7 @@ describe('the Profile section in English', () => {
     const row = await screen.findByRole('button', { name: /Edit 日常跟枪/ })
     expect(row.textContent).toContain('Theme · Blue-room.json')
     expect(row.textContent).toContain('Sounds · ')
-    expect(row.textContent).not.toMatch(/Scheme|Audio|Enemy/)
+    expect(row.textContent).not.toMatch(/Audio|Enemy/)
     expect(stripDemoNames(main.textContent ?? '')).not.toMatch(CJK)
   })
 
@@ -73,10 +73,10 @@ describe('the Profile browser demo', () => {
       issue: { message: '浏览器演示数据格式无效。', messageEn: 'The browser demo data is in an invalid format.' },
     })
     const assets = createDemoAssetBridge()
-    await expect(assets.list('scheme', '/elsewhere')).rejects.toMatchObject({
+    await expect(assets.list('theme', '/elsewhere')).rejects.toMatchObject({
       issue: { message: '演示模式仅提供演示素材，请点击“浏览演示素材”。', messageEn: 'Demo mode offers only demo assets. Click "Browse demo assets".' },
     })
-    await expect(assets.read('scheme', '/demo/scheme/Missing.json')).rejects.toMatchObject({
+    await expect(assets.read('theme', '/demo/theme/Missing.json')).rejects.toMatchObject({
       issue: { message: '演示素材不存在。', messageEn: "This demo asset doesn't exist." },
     })
   })

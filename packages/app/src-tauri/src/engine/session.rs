@@ -13,7 +13,7 @@ use crate::installer::protocol::MAX_LINE_BYTES;
 /// Every operation of protocol v=1. The ones this engine does not implement yet answer
 /// ENGINE_ERROR; the App never sends them here.
 const OPERATIONS: [&str; 27] = [
-    "discover", "locate", "backups", "gameState", "planImport", "planRestore", "schemeList", "planScheme",
+    "discover", "locate", "backups", "gameState", "planImport", "planRestore", "themeList", "planTheme",
     "audioList", "planAudio", "crosshairList", "planCrosshair", "planCrosshairAdd", "exportFile", "enemyList", "planEnemy",
     "planProfileApply", "planFileAdd", "execute", "profileList", "profileRead", "profileSave", "profileDelete",
     "profileAssetList", "profileAssetRead", "profileFavoritesRead", "profileFavoritesSave",
@@ -23,7 +23,7 @@ const PROFILE_OPERATIONS: [&str; 8] = ["profileList", "profileRead", "profileSav
 
 enum Adapter {
     Enemy(enemy::EnemyPlan),
-    Scheme(super::settings::SchemePlan),
+    Theme(super::settings::ThemePlan),
     Audio(super::txn::Plan),
     Crosshair(super::files::CrosshairReplacement),
     CrosshairAdd(super::txn::Plan),
@@ -159,10 +159,10 @@ impl Session {
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
                 Ok(self.location(&context))
             }
-            "schemeList" => {
+            "themeList" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
-                Ok(super::lists::scheme_list_json(&super::lists::installed_themes(&self.engine, &context)?))
+                Ok(super::lists::theme_list_json(&super::lists::installed_themes(&self.engine, &context)?))
             }
             "audioList" => {
                 assert_fields(args, &["gameRoot"], "args")?;
@@ -261,7 +261,7 @@ impl Session {
                 let apply = super::settings::profile_apply_plan(&self.engine, &context, id)?;
                 Ok(self.record_plan(context, &apply.plan.clone(), revision, Adapter::ProfileApply(apply)))
             }
-            "planScheme" => {
+            "planTheme" => {
                 assert_fields(args, &["gameRoot", "file", "revision"], "args")?;
                 self.plan = None;
                 let (game_root, file) = (string_arg(args, "gameRoot")?, string_arg(args, "file")?);
@@ -269,10 +269,10 @@ impl Session {
                 let context = self.engine.context(game_root, &self.local_data_root)?;
                 self.engine.assert_game_closed()?;
                 if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
-                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能更换背景。", "An unfinished operation must be recovered before changing the scheme."));
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能更换背景。", "An unfinished operation must be recovered before changing the theme."));
                 }
-                let planned = super::settings::scheme_plan(&self.engine, &context, file)?;
-                Ok(self.record_plan(context, &planned.plan.clone(), revision, Adapter::Scheme(planned)))
+                let planned = super::settings::theme_plan(&self.engine, &context, file)?;
+                Ok(self.record_plan(context, &planned.plan.clone(), revision, Adapter::Theme(planned)))
             }
             "planAudio" => {
                 assert_fields(args, &["gameRoot", "event", "names", "revision"], "args")?;
@@ -372,7 +372,7 @@ impl Session {
                 if *allow { return Err(EngineError::coded("CONFLICT", "安装清单不接受冲突覆盖许可。", "Install plans do not accept conflict permission.")); }
                 let report = match &cached.adapter {
                     Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
-                    Adapter::Scheme(plan) => super::settings::scheme_execute(&self.engine, &cached.context, plan, observer)?,
+                    Adapter::Theme(plan) => super::settings::theme_execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Audio(plan) => super::txn::install(&self.engine, &cached.context, plan, false, observer)?,
                     Adapter::Crosshair(plan) => super::files::image_execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::CrosshairAdd(plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,

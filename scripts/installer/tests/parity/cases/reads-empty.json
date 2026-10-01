@@ -2,7 +2,7 @@
   "fixture": "enemy-crlf.json",
   "steps": [
     {
-      "request": "schemeList",
+      "request": "themeList",
       "args": {
         "gameRoot": "<game>"
       }

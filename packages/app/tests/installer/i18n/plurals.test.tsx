@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { LangProvider, plural, t, type MessageKey } from '../../../src/i18n'
 import { zh } from '../../../src/i18n/zh'
 import { en } from '../../../src/i18n/en'
-import { SchemePage } from '../../../src/scheme/SchemePage'
+import { ThemePage } from '../../../src/theme/ThemePage'
 import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
 import { BackupList } from '../../../src/installer/components/BackupList'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
@@ -20,7 +20,7 @@ vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:plu
  * a number ("Game sounds folder · 1", "Per-file results (1)") have no twin, by design.
  */
 const PAIRS: readonly MessageKey[] = [
-  'scheme.pagination.count', 'profile.pagination.count',
+  'theme.pagination.count', 'profile.pagination.count',
   'profile.summary.audioFiles', 'profile.resource.fileErrorsSummary', 'profile.listErrors.summary',
   'profile.audioSheet.filesHeading', 'installer.fileCount',
   'installer.restore.recordCount', 'installer.review.skipped',
@@ -43,7 +43,7 @@ describe('every counted sentence has a singular twin', () => {
   })
   it('no English singular says "1 <plural>"', () => {
     const ENGLISH_SINGULARS: Record<string, string> = {
-      'scheme.pagination.count': '1 theme',
+      'theme.pagination.count': '1 theme',
       'profile.pagination.count': '1 Profile',
       'profile.summary.audioFiles': '1 audio file',
       'profile.resource.fileErrorsSummary': "1 file couldn't be used",
@@ -99,8 +99,8 @@ function profileBridge(): ProfileBridge {
 /** One rendered surface per area, so a call site that forgot `plural()` fails here. */
 describe('a count of 1 reads correctly on the page', () => {
   it('Theme pagination: "1 theme"', async () => {
-    const bridge = { ...located, schemeList: async () => ({ directory: 'D:/Game/Themes', current: 'Night', themes: [{ name: 'Night', file: 'Night.json', path: 'D:/Game/Themes/Night.json', readable: true, duplicateName: false }] }), planScheme: async () => ({ planId: 'p' }) }
-    inEnglish(<SchemePage bridge={bridge} assets={assets} section={'scheme' as WorkspaceSection} onSelect={() => {}} />)
+    const bridge = { ...located, themeList: async () => ({ directory: 'D:/Game/Themes', current: 'Night', themes: [{ name: 'Night', file: 'Night.json', path: 'D:/Game/Themes/Night.json', readable: true, duplicateName: false }] }), planTheme: async () => ({ planId: 'p' }) }
+    inEnglish(<ThemePage bridge={bridge} assets={assets} section={'theme' as WorkspaceSection} onSelect={() => {}} />)
     expect(await screen.findByText('1 theme')).toBeVisible()
   })
 

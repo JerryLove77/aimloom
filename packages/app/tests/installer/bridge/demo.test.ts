@@ -17,10 +17,10 @@ it('an imported theme or sound joins the listings only after its job completes',
  const plan=await bridge.planFileAdd({gameRoot,kind:'theme',sourcePath:source,sourceSha256:'a'.repeat(64),file:'Blue-room.json',revision:0})
  expect(plan.rows).toHaveLength(1)
  expect(plan.rows[0]).toMatchObject({key:'themes/Blue-room.json',action:'create'})
- // Planning adds nothing: Scheme still shows only what the game had.
- expect((await bridge.schemeList(gameRoot)).themes.map(t=>t.file)).not.toContain('Blue-room.json')
+ // Planning adds nothing: Theme still shows only what the game had.
+ expect((await bridge.themeList(gameRoot)).themes.map(t=>t.file)).not.toContain('Blue-room.json')
  await bridge.execute({operationId:'import-theme',planId:plan.planId,confirmation:'install',allowConflicts:false})
- expect((await bridge.schemeList(gameRoot)).themes.map(t=>t.file)).toContain('Blue-room.json')
+ expect((await bridge.themeList(gameRoot)).themes.map(t=>t.file)).toContain('Blue-room.json')
  // Never overwrite: the same name is refused, whatever the letter case.
  await expect(bridge.planFileAdd({gameRoot,kind:'theme',sourcePath:source,sourceSha256:'a'.repeat(64),file:'BLUE-ROOM.json',revision:1})).rejects.toThrow(/已经有/)
  const sound=await bridge.planFileAdd({gameRoot,kind:'sound',sourcePath:(await bridge.pickFile('sound', 'zh'))!,sourceSha256:'a'.repeat(64),file:'Soft-hit.wav',revision:2})
@@ -55,7 +55,7 @@ it('the demo Quick import adds new files, skips what the game has and plans sett
  expect(plan.packRoot).toBeNull()
  expect(plan.rows.some(r=>r.action==='replace')).toBe(false)
  await bridge.execute({operationId:'quick-import',planId:plan.planId,confirmation:'install',allowConflicts:false})
- expect((await bridge.schemeList(gameRoot)).themes.map(t=>t.file)).toContain('Aimloom Demo.json')
+ expect((await bridge.themeList(gameRoot)).themes.map(t=>t.file)).toContain('Aimloom Demo.json')
  const again=await bridge.planImport({gameRoot,paths:[pack],includeSettings:true,revision:1})
  expect(again.rows.find(r=>r.key==='themes/Aimloom Demo.json')?.reason).toBe('exists-different')
  expect(again.rows.find(r=>r.key==='primary/PrimaryUserSettings.json')?.action).toBe('replace')

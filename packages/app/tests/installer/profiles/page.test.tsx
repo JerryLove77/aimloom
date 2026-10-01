@@ -68,7 +68,7 @@ describe('Profile page', () => {
     render(<ProfilesApp bridge={f.bridge} assets={f.assets} />)
     fireEvent.click(await screen.findByRole('button', { name: '编辑 每日训练' }))
     fireEvent.click(await screen.findByRole('button', { name: /^Theme 背景/ }))
-    await waitFor(() => expect(list).toHaveBeenCalledWith('scheme', 'C:/'))
+    await waitFor(() => expect(list).toHaveBeenCalledWith('theme', 'C:/'))
   })
   it('stages a decoded file in the draft, and cancelling the edit leaves the saved file unchanged', async () => {
     const f = fixtures(); render(<ProfilesApp bridge={f.bridge} assets={f.assets} />)
@@ -205,8 +205,8 @@ describe('a resource sheet shows what the game already has', () => {
       seen,
       discover: async () => ({ candidates: options.candidates ?? ['D:/Game'] }),
       locate: async (gameRoot: string) => ({ gameRoot }),
-      schemeList: async (gameRoot: string) => {
-        seen.push(`schemeList:${gameRoot}`)
+      themeList: async (gameRoot: string) => {
+        seen.push(`themeList:${gameRoot}`)
         if (options.fails) throw new Error('the engine refused')
         return { directory: `${gameRoot}/Themes`, current: 'Blue Room', themes }
       },
@@ -233,7 +233,7 @@ describe('a resource sheet shows what the game already has', () => {
     await within(dialog).findByRole('button', { name: /Blue Room/ })
     await within(dialog).findByRole('button', { name: /Night/ })
     // The page also reads the game's current theme and sounds (for 新建组合 and 当前使用); every read is of this game.
-    expect(new Set(game.seen)).toEqual(new Set(['schemeList:D:/Game']))
+    expect(new Set(game.seen)).toEqual(new Set(['themeList:D:/Game']))
     // The folder prompt that started all this is gone from this sheet.
     expect(dialog.textContent).not.toMatch(/\u5148\u9009\u62e9\u5b58\u653e\u6587\u4ef6\u7684\u6587\u4ef6\u5939/)
   })
@@ -279,7 +279,7 @@ describe('adding a file to a Profile sheet from my computer', () => {
     const game = {
       discover: async () => ({ candidates: ['D:/Game'] }),
       locate: async (gameRoot: string) => ({ gameRoot }),
-      schemeList: async (gameRoot: string) => ({ directory: `${gameRoot}/Themes`, current: 'Blue Room', themes: added ? [...initialThemes, addedTheme] : initialThemes }),
+      themeList: async (gameRoot: string) => ({ directory: `${gameRoot}/Themes`, current: 'Blue Room', themes: added ? [...initialThemes, addedTheme] : initialThemes }),
       audioList: async () => ({ directory: '', sounds: [], bindings: { kill: [], spawn: [], mbsGood: [], mbsOkay: [], mbsBad: [], mbsChangeNow: [] } }),
       pickFolder: async () => null,
       planProfileApply: async () => { throw new Error('not used by these tests') },
@@ -442,7 +442,7 @@ describe('a new Profile starts from the game, and cannot be saved incomplete', (
     const refuse = async (): Promise<never> => { throw new Error('not used by these tests') }
     return {
       discover: async () => ({ candidates: ['D:/Game'] }), locate: async (gameRoot: string) => ({ gameRoot }),
-      schemeList: async () => { reads++; if (!readable) throw new Error('unreadable'); return { directory: '', current: 'Night', themes } },
+      themeList: async () => { reads++; if (!readable) throw new Error('unreadable'); return { directory: '', current: 'Night', themes } },
       audioList: async () => { reads++; if (!readable) throw new Error('unreadable'); return { directory: '', sounds, bindings } },
       pickFolder: async () => null, planProfileApply: refuse, execute: refuse, job: refuse, reconcile: refuse, planFileAdd: refuse, pickFile: async () => null, launchGame: refuse,
     }

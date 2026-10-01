@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { encodePng } from '@kvk/crosshair'
-import { SchemePage } from '../../../src/scheme/SchemePage'
+import { ThemePage } from '../../../src/theme/ThemePage'
 import { AudioPage } from '../../../src/audio/AudioPage'
 import { CrosshairPage } from '../../../src/crosshair/CrosshairPage'
 import { createManualFileDropSource } from '../../../src/workspace/file-drop'
@@ -54,10 +54,10 @@ describe('Theme page: adding a theme', () => {
     const theme = (file: string) => ({ name: file.replace(/\.json$/, ''), file, path: `D:/Game/Themes/${file}`, readable: true, duplicateName: false })
     const bridge = {
       ...f.base,
-      schemeList: async (root: string) => ({ directory: `${root}/Themes`, current: 'Clean Dark', themes: empty ? [] : [theme('Clean Dark.json'), ...addedThemes(f.adds).map(theme)] }),
-      planScheme: async (input: { file: string }) => { f.applied.push(input.file); return { planId: 'plan-1' } },
+      themeList: async (root: string) => ({ directory: `${root}/Themes`, current: 'Clean Dark', themes: empty ? [] : [theme('Clean Dark.json'), ...addedThemes(f.adds).map(theme)] }),
+      planTheme: async (input: { file: string }) => { f.applied.push(input.file); return { planId: 'plan-1' } },
     }
-    render(<SchemePage bridge={bridge} assets={f.assets} section="scheme" onSelect={() => {}} fileDrops={drops} />)
+    render(<ThemePage bridge={bridge} assets={f.assets} section="theme" onSelect={() => {}} fileDrops={drops} />)
     return { ...f, drops }
   }
 

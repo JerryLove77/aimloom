@@ -101,7 +101,7 @@ const MAX_ASSET_BYTES: usize = 8 * 1024 * 1024;
 
 fn asset_extensions(kind: &Value) -> Result<&'static [&'static str], Fault> {
     match kind.as_str() {
-        Some("scheme" | "enemy") => Ok(&[".json"]),
+        Some("theme" | "enemy") => Ok(&[".json"]),
         Some("crosshair") => Ok(&[".png"]),
         Some("audio") => Ok(&[".wav", ".ogg"]),
         _ => Err(fault("资源类型无效", "The asset kind is not valid.")),
@@ -323,9 +323,9 @@ mod tests {
             ("profileSave", with(&[("enemy", json!({"name":"b.json","path":"C:/b.json"}))])),
             ("profileSave", json!({"profile":"x"})),
             ("profileAssetList", json!({"kind":"video","directory":"C:/a"})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"relative/dir"})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a/con"})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.png"})),
+            ("profileAssetList", json!({"kind":"theme","directory":"relative/dir"})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a/con"})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.png"})),
             ("profileNope", json!({})),
         ];
         let mut refused = 0;
@@ -345,19 +345,19 @@ mod tests {
             ("profileRead", json!({"id":"p1"}), json!({"filePath":"C:/P/p1.json","profile":with(&[("id", json!("p2"))])["profile"].clone()})),
             ("profileSave", json!({"profile":good_profile()}), json!({"filePath":"C:/P/p1.json","profile":null})),
             ("profileDelete", json!({"id":"p1"}), json!({"deleted":"yes"})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/c.json","mimeType":"application/json","base64":"AAAA"})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"image/png","base64":"AAAA"})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":"A==="})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":"AB=="})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":"A!AA"})),
-            ("profileAssetRead", json!({"kind":"scheme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":""})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/b","files":[],"errors":[]})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/a","files":{},"errors":[]})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":{}})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/a","files":[{"name":"b.json","path":"C:/x/b.json"}],"errors":[]})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":[{"fileName":"a/b","message":"x","messageEn":"x"}]})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":[{"fileName":"b.json","message":"坏了"}]})),
-            ("profileAssetList", json!({"kind":"scheme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":[{"fileName":"b.json","message":"坏了","messageEn":"  "}]})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.json"}), json!({"path":"C:/a/c.json","mimeType":"application/json","base64":"AAAA"})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"image/png","base64":"AAAA"})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":"A==="})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":"AB=="})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":"A!AA"})),
+            ("profileAssetRead", json!({"kind":"theme","path":"C:/a/b.json"}), json!({"path":"C:/a/b.json","mimeType":"application/json","base64":""})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/b","files":[],"errors":[]})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/a","files":{},"errors":[]})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":{}})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/a","files":[{"name":"b.json","path":"C:/x/b.json"}],"errors":[]})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":[{"fileName":"a/b","message":"x","messageEn":"x"}]})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":[{"fileName":"b.json","message":"坏了"}]})),
+            ("profileAssetList", json!({"kind":"theme","directory":"C:/a"}), json!({"directory":"C:/a","files":[],"errors":[{"fileName":"b.json","message":"坏了","messageEn":"  "}]})),
             ("profileNope", json!({}), json!({})),
         ];
         for (op, args, value) in responses {
@@ -371,7 +371,7 @@ mod tests {
 
     #[test]
     fn every_file_add_source_refusal_is_bilingual() {
-        for (kind, path) in [("video", "C:/a.json"), ("scheme", "C:/a.txt"), ("scheme", "relative.json"), ("audio", "C:/con/a.wav")] {
+        for (kind, path) in [("video", "C:/a.json"), ("theme", "C:/a.txt"), ("theme", "relative.json"), ("audio", "C:/con/a.wav")] {
             let fault = asset_file(&Value::from(kind), &Value::from(path)).unwrap_err();
             assert!(has_cjk(&fault.zh) && !fault.en.is_empty() && !has_cjk(&fault.en), "{kind} {path}: {fault:?}");
         }

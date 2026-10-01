@@ -41,10 +41,10 @@ The semantic keyboard baseline includes visible focus, native checkbox/radio beh
 ## Workspace — 2026-09-17
 
 Supersedes "Profile workspace — 2026-09-15". All five sections are implemented: Profile owns
-saved combinations, and Scheme / Audio / Crosshair / Enemy each own one part of the game's
+saved combinations, and Theme / Audio / Crosshair / Enemy each own one part of the game's
 current configuration. **2026-09-19:** a player sees those four named Theme, Sounds, Crosshair
 and Enemy (Enemy look in English), after the game's own words; this document keeps the code
-names Scheme and Audio, which are also the folder, key and wire names.
+names Theme and Audio, which are also the folder, key and wire names.
 
 ### Navigation — APP-NAV, 2026-10-01
 
@@ -111,7 +111,7 @@ words, never colour alone.
 
 ### Sheets
 
-Scheme, crosshair, enemy and audio choices for a Profile open a `Dialog variant="sheet"` — modal,
+Theme, crosshair, enemy and audio choices for a Profile open a `Dialog variant="sheet"` — modal,
 with the same focus trap, Escape handling and focus restore as any dialog, presented sliding in
 from the right. The crosshair section additionally uses sheets for 粘贴准星代码, 添加准星图片
 and each installed file. A Profile sheet writes nothing on its own: 用于此组合 hands the value to the draft,
@@ -120,11 +120,11 @@ differs from the draft's current value, and for a file choice until its preview 
 
 ### Adding a file from outside the app — 2026-09-18
 
-Scheme and Enemy (主题 `.json`), Audio (音效 `.wav` / `.ogg`) and Crosshair (`.png`) can take a
+Theme and Enemy (主题 `.json`), Audio (音效 `.wav` / `.ogg`) and Crosshair (`.png`) can take a
 file that is not in the game yet. There are two routes to the same confirmation sheet, and the
 sheet is the only thing that writes:
 
-- **The button** — 「添加主题…」 on Scheme and Enemy, 「添加音效…」 on Audio, the 「拖入或选择 PNG」
+- **The button** — 「添加主题…」 on Theme and Enemy, 「添加音效…」 on Audio, the 「拖入或选择 PNG」
   card on Crosshair. It opens the native file picker, filtered to that kind. This
   is the keyboard and screen-reader route.
 - **Drag and drop from Explorer.** Tauri intercepts the drop and hands over a real path; HTML5
@@ -155,7 +155,7 @@ Rules:
   that is not a theme. The engine checks all of them again and is the authority. A file that
   cannot be read blocks the add; a preview that cannot be rendered does not.
 - **Adding changes which files are installed, never what is in effect** (state 1 is untouched).
-  Scheme and Enemy select the new theme as the pending choice (state 4), so 应用背景 / 应用外观
+  Theme and Enemy select the new theme as the pending choice (state 4), so 应用背景 / 应用外观
   is still required; Enemy selects it only when it has enemy settings. Audio marks the new row
   「新添加」 and keeps every pending draft. Crosshair opens its existing add sheet with the name
   taken from the file.
@@ -165,7 +165,7 @@ Rules:
 
 - **Audio: the row is the control.** Clicking a sound's row means "use this one": it replaces
   the event's draft with that single sound (state 4), exactly as clicking a tile does on
-  Scheme. The row is a button with `aria-pressed`; ▶试听 is a separate button beside it and
+  Theme. The row is a button with `aria-pressed`; ▶试听 is a separate button beside it and
   never selects. 应用音效 is still what writes. Rows carry 「当前使用」 and 「已选，未应用」 tags.
 - **One sound is the default model.** 击杀音效 and 生成音效 can hold several sounds, but that
   editor (加入列表, ↑ ↓ 移除, 清空) sits under the disclosure 「高级：绑定多个音效」, folded by
@@ -236,7 +236,7 @@ resource listings are nonrecursive and limited to 1000 candidates.
 
 AssetPreview owns blob and media cleanup and decode readiness. No audio autoplay anywhere:
 auditioning is started explicitly by ▶试听 and stopped by leaving the event or the section.
-Scheme, enemy and crosshair previews disclose that they are approximations. Native reads are
+Theme, enemy and crosshair previews disclose that they are approximations. Native reads are
 bounded, read-only, and separate from current settings and from the game plan. Browser mode is
 explicitly a demo with browser-only Profile persistence and sample resource bytes; native mode
 does not fall back to it on errors.

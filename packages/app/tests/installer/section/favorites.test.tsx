@@ -68,7 +68,7 @@ describe('favourites', () => {
   it('a tile star is its own button: it never selects the tile, and says whether it is on', () => {
     const choices: TileChoice[] = [{ file: 'Blue.json', label: 'Blue', detail: 'Blue.json', path: '/t/Blue.json', selectable: true }]
     const onChoose = vi.fn(); const onToggle = vi.fn()
-    render(<Tiles choices={choices} page={0} pageSize={6} countKey="scheme.pagination.count" ariaLabel={c => `${c.label} 预览`}
+    render(<Tiles choices={choices} page={0} pageSize={6} countKey="theme.pagination.count" ariaLabel={c => `${c.label} 预览`}
       thumb={() => <span />} onPage={vi.fn()} onChoose={onChoose}
       favorites={{ isFavorite: () => true, onToggle, label: c => `收藏「${c.label}」` }} />)
     const star = screen.getByRole('button', { name: '收藏「Blue」' })
@@ -107,7 +107,7 @@ describe('favourites', () => {
   it('the Profile theme sheet lists the starred game themes first, with the same star', async () => {
     const store = createFavoritesStore(memoryBridge({ theme: ['Red.json'], audio: [] }))
     const item = (name: string) => ({ file: `${name}.json`, label: name, detail: `${name}.json`, path: `D:/Game/Themes/${name}.json`, selectable: true })
-    render(<ResourceSheet kind="scheme" open profileName="日常" profilePath="C:/profiles/a.json" value={null} assets={createDemoAssetBridge()} isDemo
+    render(<ResourceSheet kind="theme" open profileName="日常" profilePath="C:/profiles/a.json" value={null} assets={createDemoAssetBridge()} isDemo
       installed={[item('Blue'), item('Red')]} favorites={store} onConfirm={vi.fn()} onCancel={vi.fn()} />)
     await waitFor(() => expect(screen.getAllByRole('button', { name: / 预览$/ })[0]).toHaveAccessibleName('Red 预览'))
     expect(screen.getByRole('button', { name: '收藏「Red」' })).toHaveAttribute('aria-pressed', 'true')

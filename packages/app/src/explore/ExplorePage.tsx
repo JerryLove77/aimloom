@@ -169,7 +169,7 @@ function ImportView({ state, controller, onSelect, onOpenRestore }: { state: Imp
         <p>{t('quick.done.body', { list: countList(t, lang, state.outcome.added) })}</p>
       </Notice> : null}
       {state.outcome ? <div className="ws-quick-links">
-        {(['scheme', 'audio', 'crosshair'] as const).map(section => <button type="button" key={section} className="ws-quick-link" onClick={() => onSelect(section)}>{t(`quick.goto.${section}`)}</button>)}
+        {(['theme', 'audio', 'crosshair'] as const).map(section => <button type="button" key={section} className="ws-quick-link" onClick={() => onSelect(section)}>{t(`quick.goto.${section}`)}</button>)}
       </div> : null}
       {state.preview ? <SkippedList preview={state.preview} open={false} /> : null}
     </div>

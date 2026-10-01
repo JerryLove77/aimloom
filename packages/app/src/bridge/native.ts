@@ -17,7 +17,7 @@ export function createNativeBridge():InstallerBridge {
     discover:()=>read('discover'),locate:gameRoot=>read('locate',{gameRoot}),
     backups:gameRoot=>read('backups',{gameRoot}),gameState:()=>read('gameState'),
     planRestore:input=>read('planRestore',input),
-    schemeList:gameRoot=>read('schemeList',{gameRoot}),planScheme:input=>read('planScheme',{...input}),
+    themeList:gameRoot=>read('themeList',{gameRoot}),planTheme:input=>read('planTheme',{...input}),
     audioList:gameRoot=>read('audioList',{gameRoot}),planAudio:input=>read('planAudio',{...input}),
     crosshairList:gameRoot=>read('crosshairList',{gameRoot}),planCrosshair:input=>read('planCrosshair',{...input}),
     planCrosshairAdd:input=>read('planCrosshairAdd',{...input}),

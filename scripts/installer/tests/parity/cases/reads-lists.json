@@ -82,7 +82,7 @@
   },
   "steps": [
     {
-      "request": "schemeList",
+      "request": "themeList",
       "args": {
         "gameRoot": "<game>"
       }

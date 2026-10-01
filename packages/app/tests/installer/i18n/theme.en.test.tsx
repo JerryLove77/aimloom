@@ -1,23 +1,23 @@
 import { render, screen, within } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { LangProvider } from '../../../src/i18n'
-import { renderSchemePreview, parseScheme } from '@kvk/theme'
-import { SchemePage } from '../../../src/scheme/SchemePage'
-import { SchemePreview } from '../../../src/scheme/SchemePreview'
+import { renderThemePreview, parseThemeDocument } from '@kvk/theme'
+import { ThemePage } from '../../../src/theme/ThemePage'
+import { ThemePreview } from '../../../src/theme/ThemePreview'
 import { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
 import { createDemoBridge } from '../../../src/bridge/demo'
 import { createDemoAssetBridge } from '../../../src/bridge/profiles-demo'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
-vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:scheme-en'), revokeObjectURL: vi.fn() }))
+vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:theme-en'), revokeObjectURL: vi.fn() }))
 
 const CJK = /[　-〿㐀-鿿＀-￯]/
 
-describe('the Theme (Scheme) page in English', () => {
+describe('the Theme (Theme) page in English', () => {
   it('shows its heading, eyebrow and Apply action in English, with no Chinese in the page body', async () => {
     render(
       <LangProvider storage={null} languages={['en-US']}>
-        <SchemePage bridge={createDemoBridge()} assets={createDemoAssetBridge()} section={'scheme' as WorkspaceSection} onSelect={() => {}} />
+        <ThemePage bridge={createDemoBridge()} assets={createDemoAssetBridge()} section={'theme' as WorkspaceSection} onSelect={() => {}} />
       </LangProvider>,
     )
     const heading = await screen.findByRole('heading', { name: 'Theme', level: 1 })
@@ -30,9 +30,9 @@ describe('the Theme (Scheme) page in English', () => {
   })
 })
 
-describe('renderSchemePreview in English', () => {
+describe('renderThemePreview in English', () => {
   it('produces an SVG string with no CJK', () => {
-    const doc = parseScheme(new TextEncoder().encode(JSON.stringify({
+    const doc = parseThemeDocument(new TextEncoder().encode(JSON.stringify({
       themeName: 'Night Range',
       wallMaterial: 'DRYWALL', wallRoughness: 1, wallMetallic: 0, wallFullBright: 0.5, wallTint: { x: 0.1, y: 0.2, z: 0.3 }, wallTextureScale: 1,
       floorMaterial: 'DRYWALL', floorRoughness: 1, floorMetallic: 0, floorFullBright: 0.5, floorTint: { x: 0.1, y: 0.2, z: 0.3 }, floorTextureScale: 1,
@@ -40,15 +40,15 @@ describe('renderSchemePreview in English', () => {
       rampMaterial: 'DRYWALL', rampRoughness: 1, rampMetallic: 0, rampFullBright: 0.5, rampTint: { x: 0.1, y: 0.2, z: 0.3 }, rampTextureScale: 1,
       skyPresetId: 0, cloudCoverId: 0, solidSkyColor: false, sunVisible: true, skyColor: { r: 1, g: 2, b: 3, a: 255 },
     })))
-    const svg = renderSchemePreview(doc, 'en')
+    const svg = renderThemePreview(doc, 'en')
     expect(svg).toContain('Night Range')
     expect(svg).not.toMatch(CJK)
   })
 })
 
-describe('SchemePreview shows a core validation detail in the page\'s own language', () => {
-  // `environment: null` fails validateScheme's `object()` check on the environment field, so
-  // parseScheme throws a LocalizedError instead of the size/empty-file fallback.
+describe('ThemePreview shows a core validation detail in the page\'s own language', () => {
+  // `environment: null` fails validateThemeDocument's `object()` check on the environment field, so
+  // parseThemeDocument throws a LocalizedError instead of the size/empty-file fallback.
   const invalidBytes = new TextEncoder().encode(JSON.stringify({ schemaVersion: 1, name: 'Test Scene', environment: null, warnings: [] }))
   const assets: ProfileAssetBridge = {
     chooseDirectory: async () => null,
@@ -59,7 +59,7 @@ describe('SchemePreview shows a core validation detail in the page\'s own langua
   it('shows the English detail in English', async () => {
     render(
       <LangProvider storage={null} languages={['en-US']}>
-        <SchemePreview path="C:\\Game\\Themes\\Broken.json" name="Broken" assets={assets} />
+        <ThemePreview path="C:\\Game\\Themes\\Broken.json" name="Broken" assets={assets} />
       </LangProvider>,
     )
     const alert = await screen.findByRole('alert')
@@ -70,7 +70,7 @@ describe('SchemePreview shows a core validation detail in the page\'s own langua
   it('shows the Chinese detail in Chinese', async () => {
     render(
       <LangProvider storage={null} languages={['zh-CN']}>
-        <SchemePreview path="C:\\Game\\Themes\\Broken.json" name="Broken" assets={assets} />
+        <ThemePreview path="C:\\Game\\Themes\\Broken.json" name="Broken" assets={assets} />
       </LangProvider>,
     )
     const alert = await screen.findByRole('alert')

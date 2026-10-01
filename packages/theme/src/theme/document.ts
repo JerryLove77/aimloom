@@ -1,7 +1,7 @@
 import { decodeText } from "../theme/decode.js"
-import { parseTheme } from "../theme/parse.js"
+import { parseTheme } from "./parse.js"
 import { LocalizedError } from "../types.js"
-import { SURFACE_SLOTS, type SchemeDocument } from "./types.js"
+import { SURFACE_SLOTS, type ThemeDocument } from "./types.js"
 import { equalJson, nativeEnvironmentFields } from "./native-fields.js"
 
 export function object(value: unknown, path: string): Record<string, unknown> {
@@ -34,11 +34,11 @@ function number(value: unknown, path: string, min: number, max: number, integer 
 }
 
 /** Strict for authored/generated documents. Unsupported fields never vanish silently. */
-export function validateScheme(value: unknown): SchemeDocument {
-  const doc = object(value, "scheme")
-  keys(doc, ["schemaVersion", "name", "environment", "provenance", "warnings"], "scheme")
-  if (doc.schemaVersion !== 1) throw new LocalizedError("不支持的 scheme schemaVersion", "Unsupported scheme schemaVersion")
-  nonempty(doc.name, "scheme.name")
+export function validateThemeDocument(value: unknown): ThemeDocument {
+  const doc = object(value, "theme")
+  keys(doc, ["schemaVersion", "name", "environment", "provenance", "warnings"], "theme")
+  if (doc.schemaVersion !== 1) throw new LocalizedError("不支持的 theme schemaVersion", "Unsupported theme schemaVersion")
+  nonempty(doc.name, "theme.name")
   const env = object(doc.environment, "environment")
   keys(env, [...SURFACE_SLOTS, "sky"], "environment")
   for (const slot of SURFACE_SLOTS) {
@@ -62,7 +62,7 @@ export function validateScheme(value: unknown): SchemeDocument {
   keys(color, ["r", "g", "b", "a"], "sky.color")
   for (const channel of ["r", "g", "b", "a"]) number(color[channel], `sky.color.${channel}`, 0, 255, true)
   if (!Array.isArray(doc.warnings) || doc.warnings.some((warning) => typeof warning !== "string")) {
-    throw new LocalizedError("scheme.warnings 必须是文本数组", "scheme.warnings must be an array of text")
+    throw new LocalizedError("theme.warnings 必须是文本数组", "theme.warnings must be an array of text")
   }
   if (doc.provenance !== undefined) {
     const provenance = object(doc.provenance, "provenance")
@@ -70,11 +70,11 @@ export function validateScheme(value: unknown): SchemeDocument {
     if (!["imported", "local", "generated"].includes(provenance.kind as string)) throw new LocalizedError("不支持的 provenance.kind", "Unsupported provenance.kind")
     if (provenance.generator !== undefined) nonempty(provenance.generator, "provenance.generator")
   }
-  return structuredClone(doc) as SchemeDocument
+  return structuredClone(doc) as ThemeDocument
 }
 
 // Diagnostic notes attached to a parsed document's `warnings`. Only the Chinese half is used
-// today (the App only counts them, in `renderSchemePreview`'s own language); the English half
+// today (the App only counts them, in `renderThemePreview`'s own language); the English half
 // is kept alongside it so a future bilingual surface has it ready.
 const COMPAT_NOTE = {
   zh: (field: string) => `${field} 已使用兼容值修正，请检查预览与导出结果`,
@@ -86,10 +86,10 @@ const MISSING_NOTE = {
 }
 
 /** Native files retain the legacy parser's documented fallback/color-clamping behavior. */
-export function parseScheme(bytes: Uint8Array): SchemeDocument {
-  const raw = object(JSON.parse(decodeText(bytes).text), "scheme")
-  if ("schemaVersion" in raw) return validateScheme(raw)
-  const parsed = parseTheme(bytes, "scheme")
+export function parseThemeDocument(bytes: Uint8Array): ThemeDocument {
+  const raw = object(JSON.parse(decodeText(bytes).text), "theme")
+  if ("schemaVersion" in raw) return validateThemeDocument(raw)
+  const parsed = parseTheme(bytes, "theme")
   if (!parsed.ok) throw new Error(parsed.error)
   const theme = parsed.theme
   const environment = { wall: theme.wall, floor: theme.floor, ceiling: theme.ceiling, ramp: theme.ramp, sky: theme.sky }
@@ -98,7 +98,7 @@ export function parseScheme(bytes: Uint8Array): SchemeDocument {
   const warnings = Object.entries(nativeEnvironmentFields(environment))
     .filter(([field, value]) => !equalJson(raw[field], value))
     .map(([field]) => Object.hasOwn(raw, field) ? COMPAT_NOTE.zh(field) : MISSING_NOTE.zh(field))
-  return validateScheme({
+  return validateThemeDocument({
     schemaVersion: 1,
     name: theme.name,
     environment,
@@ -107,6 +107,6 @@ export function parseScheme(bytes: Uint8Array): SchemeDocument {
   })
 }
 
-export function serializeScheme(document: SchemeDocument): Uint8Array {
-  return new TextEncoder().encode(JSON.stringify(validateScheme(document), null, 2) + "\n")
+export function serializeThemeDocument(document: ThemeDocument): Uint8Array {
+  return new TextEncoder().encode(JSON.stringify(validateThemeDocument(document), null, 2) + "\n")
 }

@@ -11,8 +11,8 @@ const CJK = /[　-〿㐀-鿿＀-￯]/
  * core module may still carry Chinese error text; only these are scanned.
  */
 const SCANNED = [
-  "src/scheme/document.ts",
-  "src/scheme/preview.ts",
+  "src/theme/document.ts",
+  "src/theme/preview.ts",
   "src/theme/decode.ts",
   "src/types.ts",
 ]
@@ -90,7 +90,7 @@ describe("core i18n messages", () => {
   })
 
   it("finds at least one CJK literal in document.ts and preview.ts, so the rule is exercised", () => {
-    expect(scan(root + "src/scheme/document.ts").length).toBeGreaterThan(0)
-    expect(scan(root + "src/scheme/preview.ts").length).toBeGreaterThan(0)
+    expect(scan(root + "src/theme/document.ts").length).toBeGreaterThan(0)
+    expect(scan(root + "src/theme/preview.ts").length).toBeGreaterThan(0)
   })
 })

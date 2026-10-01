@@ -45,19 +45,19 @@ it('handles large valid base64 without regex stack overflow', async () => {
 })
 it('accepts equivalent Windows slash spelling returned by the native filesystem', async () => {
   call.mockResolvedValueOnce({ directory: 'C:\\Assets', files: [], errors: [] })
-  expect((await createNativeAssetBridge().list('scheme', 'C:/Assets')).directory).toBe('C:\\Assets')
+  expect((await createNativeAssetBridge().list('theme', 'C:/Assets')).directory).toBe('C:\\Assets')
   call.mockResolvedValueOnce({ path: 'C:\\Assets\\a.png', mimeType: 'image/png', base64: 'AQID' })
   expect(await createNativeAssetBridge().read('crosshair', 'C:/Assets/a.png')).toEqual(new Uint8Array([1,2,3]))
 })
 it('preserves actionable native error guidance without accepting arbitrary shapes', async () => {
   call.mockRejectedValueOnce({ code: 'ENGINE_ERROR', message: '资源目录超过 1000 个候选文件，请选择更小的目录。', path: null })
-  await expect(createNativeAssetBridge().list('scheme', 'C:/Assets')).rejects.toThrow('请选择更小的目录')
+  await expect(createNativeAssetBridge().list('theme', 'C:/Assets')).rejects.toThrow('请选择更小的目录')
 })
 it('gives a Chinese-only native issue the English fallback, never the Chinese text, as its English side', async () => {
   call.mockRejectedValueOnce({ code: 'ENGINE_ERROR', message: '资源目录超过 1000 个候选文件，请选择更小的目录。', path: null })
-  await expect(createNativeAssetBridge().list('scheme', 'C:/Assets')).rejects.toMatchObject({
+  await expect(createNativeAssetBridge().list('theme', 'C:/Assets')).rejects.toMatchObject({
     issue: { message: '资源目录超过 1000 个候选文件，请选择更小的目录。', messageEn: 'Could not read the local asset. Check the file and folder, then try again.' },
   })
   call.mockRejectedValueOnce({ code: 'ENGINE_ERROR', message: '资源目录无效。', messageEn: 'The asset folder is invalid.', path: null })
-  await expect(createNativeAssetBridge().list('scheme', 'C:/Assets')).rejects.toMatchObject({ issue: { messageEn: 'The asset folder is invalid.' } })
+  await expect(createNativeAssetBridge().list('theme', 'C:/Assets')).rejects.toMatchObject({ issue: { messageEn: 'The asset folder is invalid.' } })
 })

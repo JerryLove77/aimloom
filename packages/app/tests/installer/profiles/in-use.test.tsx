@@ -95,7 +95,7 @@ function setup(profiles: TrainingProfile[]) {
   const locate: ProfileGameBridge = {
     discover: async () => ({ candidates: ['D:\\Game'] }),
     locate: async (root: string) => ({ gameRoot: root }),
-    schemeList: async () => ({ directory: '', current: 'clover', themes }),
+    themeList: async () => ({ directory: '', current: 'clover', themes }),
     audioList: async () => ({ directory: '', sounds, bindings }),
     pickFolder: async () => null,
     planProfileApply: refuse, execute: refuse, job: refuse, reconcile: refuse, planFileAdd: refuse, pickFile: async () => null, launchGame: refuse,

@@ -48,7 +48,7 @@ export function ImportSheet({ kind, sourcePath, directory, installed, assets, bu
     setSource({ status: 'reading' })
     void (async () => {
       try {
-        const bytes = await assets.read(kind === 'theme' ? 'scheme' : 'audio', sourcePath)
+        const bytes = await assets.read(kind === 'theme' ? 'theme' : 'audio', sourcePath)
         const sha256 = await sha256Hex(bytes)
         let themeName: string | null = null
         let contentIssue: Msg | null = null

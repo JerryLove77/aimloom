@@ -23,7 +23,7 @@ const THEMES = ['Aqua', 'Blue', 'Coral', 'Dusk', 'Ember', 'Forest', 'Glacier', '
 }))
 
 describe('the Theme sheet in a Profile has a search box', () => {
-  const sheet = (onConfirm = vi.fn()) => <ResourceSheet kind="scheme" profileName="每日训练" profilePath="/profiles/p1.json"
+  const sheet = (onConfirm = vi.fn()) => <ResourceSheet kind="theme" profileName="每日训练" profilePath="/profiles/p1.json"
     value={null} assets={bridge([])} isDemo={false} open installed={THEMES} onConfirm={onConfirm} onCancel={() => {}} />
 
   it('finds a theme on a later page without paging', () => {

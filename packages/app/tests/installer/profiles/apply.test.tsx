@@ -8,7 +8,7 @@ import type { Job, Preview } from '../../../src/bridge/contracts'
 import { InstallerFailure } from '../../../src/bridge/contracts'
 
 const GAME_ROOT = 'D:\\Game'
-const scheme = { name: 'Blue Room', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\Blue Room.json' }
+const theme = { name: 'Blue Room', path: 'D:\\Game\\FPSAimTrainer\\Saved\\SaveGames\\Themes\\Blue Room.json' }
 const killSound = { name: 'Bell5.wav', path: 'D:\\Game\\FPSAimTrainer\\sounds\\Bell5.wav' }
 
 const noSound = { name: 'none.ogg', path: 'D:\\Game\\FPSAimTrainer\\sounds\\none.ogg' }
@@ -16,10 +16,10 @@ const silentMbs = { mbsGood: [noSound], mbsOkay: [noSound], mbsBad: [noSound], m
 
 // Profile v2 is a complete snapshot: a theme and all six events.
 function fullProfile(overrides: Partial<TrainingProfile> = {}): TrainingProfile {
-  return { schemaVersion: 2, id: 'profile1', name: '每日训练', theme: scheme, audio: { kill: [killSound], spawn: [], ...silentMbs }, ...overrides }
+  return { schemaVersion: 2, id: 'profile1', name: '每日训练', theme: theme, audio: { kill: [killSound], spawn: [], ...silentMbs }, ...overrides }
 }
 function silentProfile(): TrainingProfile {
-  return { schemaVersion: 2, id: 'profile2', name: '全静音', theme: scheme, audio: { kill: [], spawn: [], ...silentMbs } }
+  return { schemaVersion: 2, id: 'profile2', name: '全静音', theme: theme, audio: { kill: [], spawn: [], ...silentMbs } }
 }
 
 const finishedJob = (status: 'completed' | 'no-change'): Job => ({
@@ -54,7 +54,7 @@ function fixtures(profiles: TrainingProfile[] = [fullProfile()]) {
   const game: ProfileGameBridge = {
     discover: async () => ({ candidates: [GAME_ROOT] }),
     locate: async (root: string) => ({ gameRoot: root }),
-    schemeList: async () => ({ directory: '', current: null, themes: [] }),
+    themeList: async () => ({ directory: '', current: null, themes: [] }),
     audioList: async () => ({ directory: '', sounds: [], bindings: { kill: [], spawn: [], mbsGood: [], mbsOkay: [], mbsBad: [], mbsChangeNow: [] } }),
     pickFolder: async () => GAME_ROOT,
     planProfileApply: async input => { planCalls.push(input); return planImpl(input) },

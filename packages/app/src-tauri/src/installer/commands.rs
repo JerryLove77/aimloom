@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use super::jobs::JobManager;
 use super::protocol::{
     validate_read, BackupIndex, Confirmation, Discovery, ErrorCode, ExecuteRequest,
-    AudioList, Category, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, Location, Preview, PreviewKind, Reconciliation, SchemeList, SkipReason, is_english,
+    AudioList, Category, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, Location, Preview, PreviewKind, Reconciliation, ThemeList, SkipReason, is_english,
 };
 use super::report::Prepared;
 use super::worker::{WorkerClient, WorkerConfig};
@@ -102,14 +102,14 @@ impl InstallerRuntime {
             "locate" => round_trip::<Location>(value),
             "backups" => round_trip::<BackupIndex>(value),
             "gameState" => round_trip::<GameState>(value),
-            "schemeList" => round_trip::<SchemeList>(value),
+            "themeList" => round_trip::<ThemeList>(value),
             "audioList" => round_trip::<AudioList>(value),
             "crosshairList" => round_trip::<CrosshairList>(value),
             "exportFile" => round_trip::<ExportedFile>(value),
             "enemyList" => round_trip::<EnemyList>(value),
-            // A scheme preview is an ordinary single-file install preview of the settings
+            // A theme preview is an ordinary single-file install preview of the settings
             // file, so it reuses the install plan and execute path unchanged.
-            "planImport" | "planRestore" | "planScheme" | "planAudio" | "planCrosshair" | "planCrosshairAdd" | "planEnemy" | "planFileAdd" | "planProfileApply" => {
+            "planImport" | "planRestore" | "planTheme" | "planAudio" | "planCrosshair" | "planCrosshairAdd" | "planEnemy" | "planFileAdd" | "planProfileApply" => {
                 let preview: Preview = decode(value)?;
                 let expected = if op == "planRestore" { PreviewKind::Restore } else { PreviewKind::Install };
                 if preview.kind != expected {

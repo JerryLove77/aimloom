@@ -49,7 +49,7 @@
   },
   "steps": [
     {
-      "request": "planScheme",
+      "request": "planTheme",
       "args": {
         "gameRoot": "<game>",
         "file": "Default.json",

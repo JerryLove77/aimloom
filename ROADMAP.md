@@ -25,7 +25,7 @@ It does not try to change a running game. Consequences:
 - The way to change a whole setup quickly is to launch the game from a Profile (PF-LAUNCH).
 
 The App has five sections, named **Profile, Theme, Sounds, Crosshair, Enemy** where a player sees
-them (Enemy look in English) while the code keeps `scheme` / `audio`. Profile manages reusable
+them (Enemy look in English) while the code says `theme` / `audio` (it said `scheme` until THEME-RENAME). Profile manages reusable
 combinations (Theme and Sounds); each other section manages one part of the game's current
 configuration. Quick import (一键拖入; code and routes keep `installer`) stays a utility outside
 the five.
@@ -251,7 +251,7 @@ Deleting game files from the App is a later idea, not part of beta2 (user, 2026-
 | ID | Deliverable | Status |
 |---|---|---|
 | INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; in 0.1.6-beta.2 (below) |
-| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS and the Rust engine, across the wire mirrors. The Profile JSON already says `theme` (format v2). Players see no change | After v0.1.6 (user, 2026-09-30); ENGINE-RUST step 5 is done, so it touches one engine |
+| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS and the Rust engine, across the wire mirrors. The Profile JSON already says `theme` (format v2). Players see no change | Renamed in the code 2026-10-01, in no release yet: wire ops `themeList` / `planTheme`, asset kind `theme`, `@kvk/theme`'s `parseThemeDocument` / `renderThemePreview`. Kept: the data folder's `scheme-previews` staging folder (a name on disk) and the version 1 Profile key `scheme` that every layer refuses |
 | APP-EXPLORE | **The App's Explore page reads the website's catalog and downloads in place**, adding a file through the existing add-file plan | Decided by the user 2026-10-01 (「先入口，下一版再做 App 内下载」): after v0.1.6; not designed |
 | SLIM-2 | **The code slim-down, step 2: features and interaction** — fewer and simpler pages, buttons and flows; the behaviour differences step 1 recorded (for example, a job still running after 60 s locks the file-add flow but not a section apply); and **Profile apply speed** (user, 2026-09-29: 「profile 应用速度有点慢」), measured phase by phase on the tester's PC before anything changes, without weakening a safety check | Step 1 (code only, no behaviour change) shipped in v0.1.5; step 2 after v0.1.6 (user, 2026-09-30) |
 
@@ -307,7 +307,7 @@ Deleting game files from the App is a later idea, not part of beta2 (user, 2026-
     it is;
   - the App calling an AI service with the player's own key;
   - a local model.
-- Whatever generates it, the output is an ordinary theme file that must pass `parseScheme` and
+- Whatever generates it, the output is an ordinary theme file that must pass `parseThemeDocument` and
   include the fields 应用背景 needs. It enters the game through the existing `planFileAdd`
   path, with its duplicate-name refusal.
 - Needs a brainstorm and a spec before a plan.

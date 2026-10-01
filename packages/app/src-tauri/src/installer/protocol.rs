@@ -167,7 +167,7 @@ pub struct Preview {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct SchemeTheme {
+pub struct ThemeEntry {
     pub name: Option<String>,
     pub file: String,
     pub path: String,
@@ -177,10 +177,10 @@ pub struct SchemeTheme {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct SchemeList {
+pub struct ThemeList {
     pub directory: String,
     pub current: Option<String>,
-    pub themes: Vec<SchemeTheme>,
+    pub themes: Vec<ThemeEntry>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -473,7 +473,7 @@ fn validate_import_paths(paths: &[String]) -> Result<(), Issue> {
 struct PlanRestoreArgs { game_root: String, source_id: String, revision: u64 }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct PlanSchemeArgs { game_root: String, file: String, revision: u64 }
+struct PlanThemeArgs { game_root: String, file: String, revision: u64 }
 
 /// A skin is addressed by shape plus the catalog pair; the engine refuses a pair that is not
 /// in the catalog for that shape, or already equipped.
@@ -495,7 +495,7 @@ fn validate_enemy_skin_string(value: &str) -> Result<(), Issue> {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlanCrosshairArgs { game_root: String, file: String, png_base64: String, revision: u64 }
 
-/// Applies the saved Profile named by `id`: its scheme, audio and enemy references are resolved
+/// Applies the saved Profile named by `id`: its theme, audio and enemy references are resolved
 /// against what is installed and merged into one settings-file edit. Never the open editor's
 /// draft -- the id is all the UI sends.
 #[derive(Debug, Deserialize, Serialize)]
@@ -606,7 +606,7 @@ where T: for<'de> Deserialize<'de> + Serialize {
 pub fn validate_read(op: &str, args: Value) -> Result<Value, Issue> {
     match op {
         "discover" | "gameState" => normalize::<EmptyArgs>(args),
-        "locate" | "backups" | "schemeList" => normalize::<GameRootArgs>(args),
+        "locate" | "backups" | "themeList" => normalize::<GameRootArgs>(args),
         "planImport" => {
             let args = normalize::<PlanImportArgs>(args)?;
             let paths: Vec<String> = serde_json::from_value(args["paths"].clone())
@@ -615,8 +615,8 @@ pub fn validate_read(op: &str, args: Value) -> Result<Value, Issue> {
             Ok(args)
         }
         "planRestore" => normalize::<PlanRestoreArgs>(args),
-        "planScheme" => {
-            let args = normalize::<PlanSchemeArgs>(args)?;
+        "planTheme" => {
+            let args = normalize::<PlanThemeArgs>(args)?;
             validate_theme_file_name(args["file"].as_str().unwrap_or_default())?;
             Ok(args)
         }
@@ -649,7 +649,7 @@ pub fn validate_read(op: &str, args: Value) -> Result<Value, Issue> {
             let kind: FileAddKind = serde_json::from_value(args["kind"].clone())
                 .map_err(|_| Issue::plain(ErrorCode::EngineError, "invalid request arguments"))?;
             let asset_kind = match kind {
-                FileAddKind::Theme => { validate_theme_file_name(file)?; "scheme" }
+                FileAddKind::Theme => { validate_theme_file_name(file)?; "theme" }
                 FileAddKind::Sound => { validate_sound_file_name(file)?; "audio" }
             };
             // The engine measures the whole name in characters, as it does for crosshairs.

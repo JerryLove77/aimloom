@@ -182,7 +182,7 @@ private records, never here. A folder holds `item.json` and exactly one file:
     npm run site:publish -w @kvk/site -- <folder> --env production     # backs up to backups/ first
 
 Every check runs before anything is uploaded, and uploads through the site run the same ones
-(`src/lib/item-checks.ts`): the App's own file-name rules; `parseScheme` for a theme; a crosshair PNG
+(`src/lib/item-checks.ts`): the App's own file-name rules; `parseThemeDocument` for a theme; a crosshair PNG
 walked chunk by chunk, fully decoded and stored re-encoded (≤ 512 px); a WAV or Ogg file whose every
 chunk or page is accounted for, with nothing after the end (≤ 5 MiB). Uploads also need a Cloudflare
 Turnstile pass: set `TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET` as secrets in both environments, or

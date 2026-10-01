@@ -1,8 +1,8 @@
 import type { JsonValue } from "../types.js"
-import { SURFACE_SLOTS, type SchemeEnvironment } from "./types.js"
+import { SURFACE_SLOTS, type ThemeEnvironment } from "./types.js"
 
 /** One environment mapping for import diagnostics and native-theme composition. */
-export function nativeEnvironmentFields(env: SchemeEnvironment): Record<string, JsonValue> {
+export function nativeEnvironmentFields(env: ThemeEnvironment): Record<string, JsonValue> {
   const fields: Record<string, JsonValue> = {}
   for (const slot of SURFACE_SLOTS) {
     const surface = env[slot]

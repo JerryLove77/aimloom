@@ -53,7 +53,7 @@
       "gameRunningFrom": null
     },
     {
-      "request": "schemeList",
+      "request": "themeList",
       "args": {
         "gameRoot": "<game>"
       }

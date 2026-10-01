@@ -49,10 +49,10 @@
   },
   "steps": [
     {
-      "request": "planScheme",
+      "request": "planTheme",
       "args": {
         "gameRoot": "<game>",
-        "file": "Smári-ctrl.json",
+        "file": "numbers.json",
         "revision": 1
       }
     },
@@ -63,12 +63,6 @@
         "planId": "<plan>",
         "confirmation": "install",
         "allowConflicts": false
-      }
-    },
-    {
-      "request": "schemeList",
-      "args": {
-        "gameRoot": "<game>"
       }
     }
   ]
