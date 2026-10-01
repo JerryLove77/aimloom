@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use super::jobs::JobManager;
 use super::protocol::{
     validate_read, BackupIndex, Confirmation, Discovery, ErrorCode, ExecuteRequest,
-    AudioList, Category, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, Location, Preview, PreviewKind, Reconciliation, ThemeList, SkipReason, is_english,
+    AudioList, Category, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, JobState, Location, Preview, PreviewKind, Reconciliation, ThemeList, SkipReason, is_english,
 };
 use super::report::Prepared;
 use super::worker::{WorkerClient, WorkerConfig};
@@ -293,8 +293,16 @@ fn installer_reconcile_blocking(
     let game_root = {
         let jobs = state.jobs.lock().unwrap();
         let job = jobs.get(&operation_id)?;
-        if job.state != super::protocol::JobState::Unknown {
-            return Err(Issue::plain(ErrorCode::Busy, "only an unknown operation can be reconciled"));
+        match job.state {
+            // A failed IPC query can leave only the frontend uncertain. Return the known
+            // result without restarting the worker, rescanning, or changing the job state.
+            JobState::Finished | JobState::Failed | JobState::Reconciled => {
+                return Ok(Reconciliation { job, backups: None });
+            }
+            JobState::Running => {
+                return Err(Issue::plain(ErrorCode::Busy, "the operation may still be writing"));
+            }
+            JobState::Unknown => {}
         }
         jobs.game_root_for_operation(&operation_id)
             .ok_or_else(|| Issue::plain(ErrorCode::PlanMissing, "the operation has no native game root"))?
@@ -464,6 +472,40 @@ mod tests {
         let job = installer_execute_blocking(&runtime, request).unwrap();
         assert_eq!(job.operation_id, "op-cached");
         assert_eq!(job.result.unwrap().batch_id.as_deref(), Some("batch-1"));
+    }
+
+    #[test]
+    fn reconcile_recovers_a_finished_job_after_the_frontend_lost_its_status() {
+        let (runtime, request) = cached_runtime();
+        // The old plan is no longer current and no worker is available. The native result
+        // still settles the frontend's uncertainty without another write or worker restart.
+        let result = installer_reconcile_blocking(&runtime, request.operation_id.clone()).unwrap();
+        assert_eq!(result.job.state, super::super::protocol::JobState::Finished);
+        assert_eq!(result.job.result.unwrap().batch_id.as_deref(), Some("batch-1"));
+        assert!(result.backups.is_none());
+        assert!(runtime.can_close());
+        assert!(installer_reconcile_blocking(&runtime, request.operation_id).is_ok());
+    }
+
+    #[test]
+    fn reconcile_returns_a_known_failure_without_discarding_its_error() {
+        let (runtime, request) = cached_runtime();
+        runtime.jobs.lock().unwrap().mark_failed(&request.operation_id,
+            Issue::plain(ErrorCode::PlanStale, "Settings changed."));
+        let result = installer_reconcile_blocking(&runtime, request.operation_id).unwrap();
+        assert_eq!(result.job.state, super::super::protocol::JobState::Failed);
+        assert_eq!(result.job.error.unwrap().code, ErrorCode::PlanStale);
+    }
+
+    #[test]
+    fn reconcile_does_not_unlock_a_native_job_that_is_still_running() {
+        let (runtime, mut request) = cached_runtime();
+        request.operation_id = "op-running".into();
+        request.plan_id = "plan-new".into();
+        runtime.jobs.lock().unwrap().reserve(request.clone()).unwrap();
+        let issue = installer_reconcile_blocking(&runtime, request.operation_id).unwrap_err();
+        assert_eq!(issue.code, ErrorCode::Busy);
+        assert!(!runtime.can_close());
     }
 
     #[test]

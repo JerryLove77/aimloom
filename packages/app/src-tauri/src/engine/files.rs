@@ -248,6 +248,8 @@ pub fn remove_import_stage_in(engine: &Engine, local_data_root: &str, stage: &st
     let Ok(base) = engine.data_root(local_data_root).map(|d| join(&d, "import-previews")) else { return };
     let (Ok(base), Ok(full)) = (paths::full_path(&base), paths::full_path(stage)) else { return };
     if paths::directory_name(&full).is_some_and(|p| eq_ignore_case(&p, &base)) && paths::is_lower_hex(&paths::file_name(&full), 32) {
+        engine.release_import_stage(&full);
+        let Ok(_lock) = engine.import_stage_lock(local_data_root, &full) else { return };
         let _ = std::fs::remove_dir_all(&full);
     }
 }
@@ -294,6 +296,7 @@ pub fn file_add_plan(engine: &Engine, context: &Context, kind: &str, source_path
     let prefix = format!("{}{}", context.game_root, paths::SEP);
     if stage.to_lowercase().starts_with(&prefix.to_lowercase()) { return Err(fail("导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory.")); }
     let result = (|| -> EngineResult<Plan> {
+        engine.hold_import_stage(&context.local_data_root, &stage)?;
         store::new_directory(&join(&stage, folder))?;
         let staged = join(&join(&stage, folder), file);
         store::write_durable(&staged, &bytes)?;

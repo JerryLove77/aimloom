@@ -78,6 +78,7 @@ pub struct Engine {
     pub host: Box<dyn Host>,
     data_roots: RefCell<HashMap<String, String>>,
     holds: RefCell<Vec<File>>,
+    import_stages: RefCell<HashMap<String, File>>,
 }
 
 /// `New-KvkContext`: where a game's backups and locks live.
@@ -91,7 +92,28 @@ pub struct Context {
 
 impl Engine {
     pub fn new(host: Box<dyn Host>) -> Self {
-        Self { host, data_roots: RefCell::new(HashMap::new()), holds: RefCell::new(Vec::new()) }
+        Self { host, data_roots: RefCell::new(HashMap::new()), holds: RefCell::new(Vec::new()), import_stages: RefCell::new(HashMap::new()) }
+    }
+
+    /// Lock before publishing the directory so another session's orphan sweep cannot race
+    /// its creation. Lock files stay in `locks`, like the game's write locks: unlinking an
+    /// in-use lock file on Unix would let two processes lock different inodes for one stage.
+    pub fn import_stage_lock(&self, local: &str, stage: &str) -> EngineResult<File> {
+        let locks = join(&self.data_root(local)?, "locks");
+        new_directory(&locks)?;
+        let lock = join(&locks, &format!("import-{}.lock", paths::text_hash(&lower_invariant(stage))));
+        assert_safe_path(&lock)?;
+        platform::open_exclusive(Path::new(&lock)).map_err(|e| EngineError::io(&e))
+    }
+
+    pub fn hold_import_stage(&self, local: &str, stage: &str) -> EngineResult<()> {
+        let lock = self.import_stage_lock(local, stage)?;
+        self.import_stages.borrow_mut().insert(lower_invariant(stage), lock);
+        Ok(())
+    }
+
+    pub fn release_import_stage(&self, stage: &str) {
+        self.import_stages.borrow_mut().remove(&lower_invariant(stage));
     }
 
     /// `Assert-KvkGameClosed`.

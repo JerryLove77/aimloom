@@ -142,7 +142,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
       storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge), openExplore: bridge.openExplore.bind(bridge),
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
-      <ProfilesApp bridge={profileBridge} assets={assetBridge} favorites={favorites} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} changeStamp={changeStamp} />
+      <ProfilesApp bridge={profileBridge} assets={assetBridge} favorites={favorites} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} onGameChanged={gameChanged} fileDrops={fileDrops} changeStamp={changeStamp} />
       <ThemePage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'theme'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />
       <AudioPage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />
       <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />

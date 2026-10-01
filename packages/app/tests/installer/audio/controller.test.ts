@@ -36,6 +36,29 @@ function bridge(options: { job?: { state: string; result?: { status: string }; e
 }
 
 describe('audio controller', () => {
+  it('refreshes the open event from the game when the player has no pending edit', async () => {
+    const b = bridge()
+    const controller = createAudioController(b)
+    await controller.load()
+    controller.open('kill')
+    b.audioList = async () => ({ directory: 'D:/Game/sounds', sounds, bindings: { ...bindings, kill: ['hit'] } })
+    await controller.load()
+    expect(controller.getState().draft).toEqual(['hit'])
+    expect(controller.pendingEvents()).toEqual([])
+  })
+
+  it('preserves an unsaved edit while refreshing other bindings', async () => {
+    const b = bridge()
+    const controller = createAudioController(b)
+    await controller.load()
+    controller.open('kill')
+    controller.add('hit')
+    b.audioList = async () => ({ directory: 'D:/Game/sounds', sounds, bindings: { ...bindings, kill: [] } })
+    await controller.load()
+    expect(controller.getState().draft).toEqual(['Bell5', 'hit'])
+    expect(controller.getState().bindings?.kill).toEqual([])
+    expect(controller.pendingEvents()).toEqual(['kill'])
+  })
   it('loads the installed sounds and the current binding of every event', async () => {
     const controller = createAudioController(bridge())
     await controller.load()
