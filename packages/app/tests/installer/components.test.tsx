@@ -3,20 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { Dialog } from '../../src/ui/Dialog';
-import { CategoryCard } from '../../src/installer/components/CategoryCard';
 import { ConflictDialog } from '../../src/installer/components/ConflictDialog';
 import type { FileRow } from '../../src/bridge/contracts';
 const row: FileRow = { key: '1', category: 'themes', source: null, target: '/game/config/edited.ini', action: 'restore', conflict: true, unowned: false };
 describe('installer controls', () => {
-    it('selects categories with native checkbox keyboard semantics', async () => {
-        const onChange = vi.fn();
-        render(<CategoryCard category="themes" count={12} checked={false} onChange={onChange}/>);
-        const input = screen.getByRole('checkbox', { name: /主题/ });
-        input.focus();
-        await userEvent.setup().keyboard('[Space]');
-        expect(onChange).toHaveBeenCalledWith(true);
-    });
-    it('does not offer missing categories', () => { render(<CategoryCard category="sounds" count={0} checked={false} onChange={vi.fn()}/>); expect(screen.getByRole('checkbox')).toBeDisabled(); });
     it('focuses safe action, traps focus, and restores focus after closing', async () => {
         const user = userEvent.setup();
         const close = vi.fn();

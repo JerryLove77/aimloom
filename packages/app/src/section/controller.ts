@@ -39,7 +39,7 @@ export const IDLE_SECTION: SectionState = {
 export interface SectionBridge extends PlanRunner {
   discover(): Promise<{ candidates: string[] }>
   locate(gameRoot: string): Promise<{ gameRoot: string }>
-  pickFolder(kind: 'game' | 'pack', lang: Lang): Promise<string | null>
+  pickFolder(kind: 'game', lang: Lang): Promise<string | null>
   reconcile(operationId: string): Promise<unknown>
 }
 

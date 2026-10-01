@@ -2,9 +2,8 @@ import demoData from './demo-data.json'
 import { InstallerFailure, localIssue, MAX_IMPORT_PATHS, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme, type SkipReason } from './contracts'
 const gameRoot='D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'
 const packRoot='C:\\Users\\Player\\Downloads\\KVK Settings 2025'
-const categories:Category[]=['themes','sounds','crosshairs','ui','palette','primary']
-const counts:Record<Category,number>={themes:139,sounds:480,crosshairs:73,ui:1,palette:1,primary:1}
-const labels:Record<Category,string[]>={themes:['clover-alternate.json','Clean Dark.json','snowi clarity.json'],sounds:['Bell5.ogg','Q3Railgun.wav',demoData.chineseSound],crosshairs:['dot.png','01_plus.png',demoData.chineseCrosshair],ui:['UI.json'],palette:['Palette.ini'],primary:['PrimaryUserSettings.json']}
+// The personal settings files a demo game starts with, so a restore puts them back.
+const SETTINGS_FILES:Record<'ui'|'palette'|'primary',string>={ui:'UI.json',palette:'Palette.ini',primary:'PrimaryUserSettings.json'}
 const clone=<T,>(v:T):T=>structuredClone(v)
 // The game's own Skin Browser catalog (docs/research/kovaak-skin-browser.md), for the demo
 // only: the real catalog's single source is the engine (src-tauri/src/engine/enemy.rs).
@@ -31,8 +30,8 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
   let sequence=0
   const records:Backup[]=[]
   const original=new Map<string,FileRow>()
-  for(const category of ['ui','palette','primary'] as Category[]){
-    const name=labels[category][0]!
+  for(const category of ['ui','palette','primary'] as const){
+    const name=SETTINGS_FILES[category]
     original.set(`${category}/${name}`,{key:`${category}/${name}`,category,source:null,target:`${gameRoot}\\FPSAimTrainer\\Saved\\SaveGames\\${name}`,action:'restore',conflict:false,unowned:false})
   }
   const installed=new Map<string,FileRow>(original)
@@ -84,24 +83,8 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
   const bridge:InstallerBridge={
     async discover(){return {candidates:[gameRoot],defaultPack:packRoot}},
     async locate(root){if(!root.trim())throw error('INVALID_PATH','installer.demo.selectGame');return location(root)},
-    async catalog(root){if(!root.trim())throw error('INVALID_PACK','installer.demo.selectPack');return {packRoot:root,categories:categories.map(category=>({category,count:counts[category]})),skipped:['sounds/Bell5.ogg.sfk','crosshairs/dot.png~']}},
     async backups(root){if(!root.trim())throw error('INVALID_PATH','installer.error.selectGameFirst');return {location:location(root),records:clone(records),hasPristine:records.length>0}},
     async gameState(){return 'closed'},
-    async planInstall(input){
-      if(!input.categories.length)throw error('INVALID_PACK','installer.demo.selectOne')
-      const rows:FileRow[]=[]
-      for(const category of input.categories){
-        for(let i=0;i<counts[category];i++){
-          const name=labels[category][i]??`${category}-${String(i+1).padStart(3,'0')}.${category==='themes'?'json':category==='sounds'?'ogg':'png'}`
-          const folder=category==='themes'?'Saved\\SaveGames\\Themes':category==='ui'||category==='primary'?'Saved\\SaveGames':category
-          const key=`${category}/${name}`
-          const source=category==='ui'||category==='palette'||category==='primary'?`${input.packRoot}\\${name}`:`${input.packRoot}\\${category==='themes'?'Themes':category}\\${name}`
-          rows.push({key,category,source,target:category==='palette'?`C:\\Users\\Player\\AppData\\Local\\FPSAimTrainer\\Saved\\Config\\WindowsNoEditor\\${name}`:`${input.gameRoot}\\FPSAimTrainer\\${folder}\\${name}`,action:installed.get(key)?.source===source?'skip':installed.has(key)?'replace':'create',conflict:false,unowned:false})
-        }
-      }
-      currentPlan={planId:crypto.randomUUID(),revision:input.revision,kind:'install',location:location(input.gameRoot),packRoot:input.packRoot,categories:clone(input.categories),sourceId:null,rows,skipped:[]}
-      return clone(currentPlan)
-    },
     async schemeList(root){
       if(!root.trim())throw error('INVALID_PATH','installer.error.selectGameFirst')
       const folder=`${root}\\FPSAimTrainer\\Saved\\SaveGames\\Themes`
@@ -257,6 +240,7 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
     async job(id){const entry=jobs.get(id);if(!entry)throw error('WORKER_UNAVAILABLE','installer.demo.noJob');return complete(entry)},
     async reconcile(id){return {job:await bridge.job(id),backups:await bridge.backups(gameRoot)}},
     async pickFolder(kind){return kind==='game'?gameRoot:kind==='export'?'C:\\Users\\Player\\Pictures\\Crosshairs':packRoot},
+    async pickFiles(){return ['C:\\Users\\Player\\Downloads\\Soft-hit.wav','C:\\Users\\Player\\Downloads\\Blue-room.json']},
     async pickFile(kind){return kind==='theme'?'/demo/downloads/Night-arena.json':kind==='crosshair'?'/demo/crosshair/Green-cross.png':'/demo/downloads/Soft-click.wav'},
     async openBackup(){/* Demo intentionally has no OS/file effect. */},
     // The browser demo never reaches the network and never touches a file: a report is built

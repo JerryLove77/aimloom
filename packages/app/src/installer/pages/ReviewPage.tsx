@@ -1,10 +1,11 @@
 import { plural, useT } from '../../i18n';
 import type { Preview } from '../../bridge/contracts';
+import { categoryNames } from '../category-names';
 import { FileTable, actionNames } from '../components/FileTable';
-import { categoryNames } from '../components/CategoryCard';
 import { Button } from '../../ui/Button';
 import { Icon } from '../../ui/Icon';
 import { Notice } from '../../ui/Notice';
+/** A restore preview: what each recorded file goes back to. */
 export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, onRefresh }: {
   preview: Preview;
   busy: boolean;
@@ -14,9 +15,7 @@ export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, 
   onRefresh: () => void;
 }) {
   const t = useT();
-  const restore = preview.kind === 'restore';
-  const actions = restore ? (['restore', 'delete', 'skip'] as const) : (['replace', 'create', 'skip'] as const);
-  const primary = preview.categories.includes('primary');
+  const actions = ['restore', 'delete', 'skip'] as const;
   const unowned = preview.rows.some(r => r.unowned);
   return <><div className="ki-review-layout">
     <div className="ki-review-main">
@@ -37,7 +36,7 @@ export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, 
         </dl>
       </details>
       <div className="ki-file-counts">
-        {actions.map(action => <div key={action} className={action === 'replace' ? 'is-emphasized' : ''}>
+        {actions.map(action => <div key={action}>
           <strong>
             {preview.rows.filter(r => r.action === action).length}
           </strong>
@@ -47,7 +46,7 @@ export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, 
         </div>)}
         <span className="ki-muted">{t('installer.files.aria')}</span>
       </div>
-      <FileTable key={preview.planId} rows={preview.rows} restore={restore} />
+      <FileTable key={preview.planId} rows={preview.rows} restore />
       {preview.skipped.length ? <details className="ki-skipped">
         <summary>{t(plural(preview.skipped.length, 'installer.review.skipped'), { count: preview.skipped.length })}</summary>
         <ul>
@@ -61,20 +60,20 @@ export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, 
     </div>
     <aside className="ki-review-summary">
       <span className="ki-panel-label">
-        {t(restore ? 'installer.review.willRestore' : 'installer.review.willInstall')}
+        {t('installer.review.willRestore')}
       </span>
       <h2>
         {preview.categories.map(c => t(categoryNames[c])).join(' / ') || t('installer.review.recordedFiles')}
       </h2>
       <div className="ki-summary-rule" />
       <div className="ki-setting-summary">
-        <Icon name={primary ? 'warning' : 'shield'} />
+        <Icon name="shield" />
         <div>
           <strong>
-            {t(primary ? 'installer.review.primaryTitle' : restore ? 'installer.review.restoreTitle' : 'installer.review.keptTitle')}
+            {t('installer.review.restoreTitle')}
           </strong>
           <p>
-            {t(primary ? 'installer.review.primaryBody' : restore ? 'installer.review.restoreBody' : 'installer.review.keptBody')}
+            {t('installer.review.restoreBody')}
           </p>
         </div>
       </div>
@@ -86,22 +85,22 @@ export function ReviewPage({ preview, busy, blocked = false, onBack, onConfirm, 
       </div>
       <p className="ki-summary-footnote">
         <Icon name="shield" size={17} />
-        {t(restore ? 'installer.review.protectFirst' : 'installer.review.backupFirst')}
+        {t('installer.review.protectFirst')}
       </p>
       {unowned ? <Notice tone="error">
         <p>{t('installer.review.unowned')}</p>
       </Notice> : null}
       <Button variant="primary" disabled={busy || blocked || unowned} onClick={onConfirm}>
-        {t(busy ? 'installer.checking' : restore ? 'installer.review.confirmRestore' : 'installer.review.confirmInstall')}
-        <Icon name={restore ? 'restore' : 'install'} size={18} />
+        {t(busy ? 'installer.checking' : 'installer.review.confirmRestore')}
+        <Icon name="restore" size={18} />
       </Button>
       {blocked ? <Button onClick={onRefresh} disabled={busy}>{t('installer.refreshPlan')}</Button> : null}
       <span className="ki-summary-caption">
-        {t(restore ? 'installer.review.restoreCaption' : 'installer.review.installCaption')}
+        {t('installer.review.restoreCaption')}
       </span>
     </aside>
   </div><footer className="ki-footer">
-      <Button onClick={onBack} disabled={busy}>{t(restore ? 'installer.review.backRestore' : 'installer.review.backInstall')}</Button>
+      <Button onClick={onBack} disabled={busy}>{t('installer.review.backRestore')}</Button>
       <span>{t('installer.review.footer')}</span>
     </footer></>;
 }

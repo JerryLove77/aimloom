@@ -6,7 +6,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 use super::jobs::JobManager;
 use super::protocol::{
-    validate_read, BackupIndex, Catalog, Confirmation, Discovery, ErrorCode, ExecuteRequest,
+    validate_read, BackupIndex, Confirmation, Discovery, ErrorCode, ExecuteRequest,
     AudioList, Category, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, Location, Preview, PreviewKind, Reconciliation, SchemeList, SkipReason, is_english,
 };
 use super::report::Prepared;
@@ -100,7 +100,6 @@ impl InstallerRuntime {
         match op {
             "discover" => round_trip::<Discovery>(value),
             "locate" => round_trip::<Location>(value),
-            "catalog" => round_trip::<Catalog>(value),
             "backups" => round_trip::<BackupIndex>(value),
             "gameState" => round_trip::<GameState>(value),
             "schemeList" => round_trip::<SchemeList>(value),
@@ -110,7 +109,7 @@ impl InstallerRuntime {
             "enemyList" => round_trip::<EnemyList>(value),
             // A scheme preview is an ordinary single-file install preview of the settings
             // file, so it reuses the install plan and execute path unchanged.
-            "planInstall" | "planImport" | "planRestore" | "planScheme" | "planAudio" | "planCrosshair" | "planCrosshairAdd" | "planEnemy" | "planFileAdd" | "planProfileApply" => {
+            "planImport" | "planRestore" | "planScheme" | "planAudio" | "planCrosshair" | "planCrosshairAdd" | "planEnemy" | "planFileAdd" | "planProfileApply" => {
                 let preview: Preview = decode(value)?;
                 let expected = if op == "planRestore" { PreviewKind::Restore } else { PreviewKind::Install };
                 if preview.kind != expected {
@@ -370,6 +369,7 @@ pub fn run() {
             installer_reconcile,
             super::dialogs::installer_pick_folder,
             super::dialogs::installer_pick_file,
+            super::dialogs::installer_pick_files,
             super::shell::installer_open_backup,
             super::reporting::installer_report_preview,
             super::reporting::installer_report_send,

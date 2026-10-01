@@ -8,10 +8,10 @@ use super::protocol::{ErrorCode, Issue};
 fn folder_title(kind: &str, lang: &str) -> Result<&'static str, Issue> {
     let (zh, en) = match kind {
         "game" => ("选择 KovaaK 游戏目录", "Choose the KovaaK game folder"),
-        "pack" => ("选择配置素材包目录", "Choose the settings pack folder"),
+        "import" => ("选择要快速导入的文件夹", "Choose a folder to import"),
         "profile-assets" => ("选择预览配置文件的目录", "Choose a folder of files to preview"),
         "export" => ("选择要保存到的文件夹", "Choose a folder to save to"),
-        _ => return Err(Issue::plain(ErrorCode::InvalidPath, "folder kind must be game, pack, profile-assets or export")),
+        _ => return Err(Issue::plain(ErrorCode::InvalidPath, "folder kind must be game, import, profile-assets or export")),
     };
     pick_lang(lang, zh, en)
 }
@@ -57,6 +57,25 @@ pub async fn installer_pick_file(app: AppHandle, kind: String, lang: String) -> 
         .transpose()
 }
 
+/// Title and filter for Quick import's multi-file picker: every kind it reads at once.
+fn pick_files_filter(kind: &str, lang: &str) -> Result<(&'static str, &'static str, &'static [&'static str]), Issue> {
+    if kind != "import" { return Err(Issue::plain(ErrorCode::InvalidPath, "files kind must be import")); }
+    Ok((pick_lang(lang, "选择要快速导入的文件", "Choose files to import")?,
+        pick_lang(lang, "背景、音效、准星", "Themes, sounds, crosshairs")?,
+        &["json", "wav", "ogg", "png"]))
+}
+
+/// Several files at once; `None` when the player cancels. The engine reads and classifies them.
+#[tauri::command]
+pub async fn installer_pick_files(app: AppHandle, kind: String, lang: String) -> Result<Option<Vec<String>>, Issue> {
+    let (title, name, extensions) = pick_files_filter(&kind, &lang)?;
+    let Some(selected) = app.dialog().file().set_title(title).add_filter(name, extensions).blocking_pick_files() else { return Ok(None) };
+    selected.into_iter().map(|path| path.into_path()
+        .map(|p| p.to_string_lossy().into_owned())
+        .map_err(|e| Issue::plain(ErrorCode::InvalidPath, e.to_string())))
+        .collect::<Result<Vec<_>, _>>().map(Some)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -79,11 +98,17 @@ mod tests {
             assert!(!has_cjk(title) && !has_cjk(name), "{kind}");
         }
         assert_eq!(pick_file_filter("theme", "fr").unwrap_err().code, ErrorCode::InvalidPath);
-        for kind in ["game", "pack", "profile-assets", "export"] {
+        for kind in ["game", "import", "profile-assets", "export"] {
             assert!(has_cjk(folder_title(kind, "zh").unwrap()), "{kind}");
             assert!(!has_cjk(folder_title(kind, "en").unwrap()), "{kind}");
         }
         assert_eq!(folder_title("game", "de").unwrap_err().code, ErrorCode::InvalidPath);
         assert_eq!(folder_title("other", "en").unwrap_err().code, ErrorCode::InvalidPath);
+        assert_eq!(folder_title("pack", "en").unwrap_err().code, ErrorCode::InvalidPath, "the pack folder field is gone");
+        let (title, name, extensions) = pick_files_filter("import", "en").unwrap();
+        assert!(!has_cjk(title) && !has_cjk(name));
+        assert_eq!(extensions, &["json", "wav", "ogg", "png"]);
+        assert!(has_cjk(pick_files_filter("import", "zh").unwrap().0));
+        assert_eq!(pick_files_filter("theme", "en").unwrap_err().code, ErrorCode::InvalidPath);
     }
 }
