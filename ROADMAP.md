@@ -231,9 +231,10 @@ switch); on 2026-09-30 the user chose a takeover instead:
   import or a restore; a blocked window close that showed nothing outside 备份与恢复; an execute
   that failed before its job existed, and a write longer than 60 s, each of which could leave a
   page locked or unlocked wrongly; a JSON file with tens of thousands of keys stalling the
-  worker; an abandoned import preview left in the data folder; and Quick import refusing
-  everything dropped from a folder that OneDrive syncs (its folders and files are reparse points,
-  seen on the test PC; a read-only source now refuses only symbolic links and junctions).
+  worker; and an abandoned import preview left in the data folder. Found and left as it is
+  (user, 2026-10-01): Quick import and adding a file refuse anything inside a folder that OneDrive
+  syncs, whose folders and files are reparse points
+  ([#30](https://github.com/JerryLove77/aimloom/issues/30)).
 - **The Setup now stops the engine too.** Its running-app check ends every `Aimloom.exe`, the
   worker included, so running the Setup while a write is in progress leaves that batch for
   recovery (the engine's recovery path handles it; it is on the test checklist).

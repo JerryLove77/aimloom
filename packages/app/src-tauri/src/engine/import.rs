@@ -16,7 +16,7 @@ use std::path::Path;
 use super::files::{self, MAX_PNG};
 use super::json::Json;
 use super::lists;
-use super::paths::{self, assert_safe_path, assert_safe_source, full_path, join};
+use super::paths::{self, assert_safe_path, full_path, join};
 use super::store::{self, Context, Engine};
 use super::text::eq_ignore_case;
 use super::txn::{self, Plan};
@@ -135,7 +135,7 @@ impl Found {
     fn folder(&mut self, dir: &str, depth: usize) -> EngineResult<()> {
         for (name, is_dir) in txn::sorted_entries(dir)? {
             let full = join(dir, &name);
-            assert_safe_source(&full)?;
+            assert_safe_path(&full)?;
             if !is_dir { self.file(full)?; } else if depth < MAX_DEPTH { self.folder(&full, depth + 1)?; } else { self.unrecognized.push(full); }
         }
         Ok(())
@@ -144,7 +144,7 @@ impl Found {
     /// One dropped path. A link anywhere refuses the whole import, as every other plan does.
     fn path(&mut self, path: &str) -> EngineResult<()> {
         let full = full_path(path)?;
-        assert_safe_source(&full)?;
+        assert_safe_path(&full)?;
         let p = Path::new(&full);
         if p.is_file() { return self.file(full); }
         if !p.is_dir() { self.unrecognized.push(full); return Ok(()); }
@@ -266,9 +266,7 @@ impl Checker<'_> {
                 self.skip(&c, target, Reason::Invalid, Some(&error));
                 return Ok(());
             }
-            // The source was checked as a source (a OneDrive folder passes); `store::hash` would refuse it.
-            let source_hash = std::fs::read(&c.source).map(|bytes| paths::sha256_hex(&bytes)).map_err(|e| EngineError::io(&e))?;
-            let same = store::hash(&existing_target)?.as_deref() == Some(source_hash.as_str());
+            let same = store::hash(&existing_target)? == store::hash(&c.source)?;
             self.skip(&c, existing_target, if same { Reason::ExistsSame } else { Reason::ExistsDifferent }, None);
             return Ok(());
         }
