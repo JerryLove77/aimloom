@@ -242,8 +242,10 @@ pub(super) fn assert_import_name(kind: &str, file: &str) -> EngineResult<()> {
 pub struct FileAdd { pub stage: String, pub plan: Plan }
 
 /// `Remove-KvkImportStage`: only ever `<data root>/import-previews/<32 hex>`, best effort.
-pub fn remove_import_stage(engine: &Engine, context: &Context, stage: &str) {
-    let Ok(base) = engine.data_root(&context.local_data_root).map(|d| join(&d, "import-previews")) else { return };
+pub fn remove_import_stage(engine: &Engine, context: &Context, stage: &str) { remove_import_stage_in(engine, &context.local_data_root, stage) }
+
+pub fn remove_import_stage_in(engine: &Engine, local_data_root: &str, stage: &str) {
+    let Ok(base) = engine.data_root(local_data_root).map(|d| join(&d, "import-previews")) else { return };
     let (Ok(base), Ok(full)) = (paths::full_path(&base), paths::full_path(stage)) else { return };
     if paths::directory_name(&full).is_some_and(|p| eq_ignore_case(&p, &base)) && paths::is_lower_hex(&paths::file_name(&full), 32) {
         let _ = std::fs::remove_dir_all(&full);

@@ -71,12 +71,19 @@ pub fn extension(name: &str) -> String {
 }
 
 /// `Assert-KvkSafePath`: neither the path nor any ancestor may be a link or junction.
-pub fn assert_safe_path(path: &str) -> EngineResult<()> {
+pub fn assert_safe_path(path: &str) -> EngineResult<()> { assert_unlinked(path, platform::is_reparse_point) }
+
+/// The rule for a path that is only read (what a player drops on Quick import): a symbolic link
+/// or a junction is refused, and other reparse points pass, so a folder that OneDrive syncs can be
+/// imported from. Everything the engine writes keeps `assert_safe_path`.
+pub fn assert_safe_source(path: &str) -> EngineResult<()> { assert_unlinked(path, platform::is_link) }
+
+fn assert_unlinked(path: &str, linked: fn(&Path) -> std::io::Result<Option<bool>>) -> EngineResult<()> {
     let mut current = full_path(path)?;
     loop {
         // Only a missing entry passes unchecked; any other failure to read it stops here, as
         // GetAttributes' other exceptions do in Assert-KvkSafePath.
-        if platform::is_reparse_point(Path::new(&current)).map_err(|e| EngineError::io(&e))? == Some(true) {
+        if linked(Path::new(&current)).map_err(|e| EngineError::io(&e))? == Some(true) {
             return Err(EngineError::plain(format!("Links and junctions are not allowed: \"{current}\"")));
         }
         match directory_name(&current) {
@@ -162,6 +169,8 @@ mod tests {
         std::os::unix::fs::symlink(dir.join("real"), dir.join("link")).unwrap();
         assert!(assert_safe_path(&dir.join("real/x").to_string_lossy()).is_ok());
         assert!(assert_safe_path(&dir.join("link/x").to_string_lossy()).is_err());
+        assert!(assert_safe_source(&dir.join("real/x").to_string_lossy()).is_ok());
+        assert!(assert_safe_source(&dir.join("link/x").to_string_lossy()).is_err());
         std::fs::remove_dir_all(&dir).unwrap();
     }
 }

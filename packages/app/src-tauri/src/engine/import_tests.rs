@@ -393,3 +393,35 @@ fn recovering_an_interrupted_import_removes_the_batch_s_unrecorded_temporary_cop
     assert!(!orphan.exists(), "the batch's own unrecorded temp copy is removed");
     assert!(other_batch.exists() && not_ours.exists(), "nothing that is not this batch's is touched");
 }
+
+#[test]
+fn a_theme_the_plan_would_refuse_for_case_variant_keys_is_one_invalid_row_not_a_failed_import() {
+    let mut d = Dropped::new();
+    write(&d.drop.join("Twin.json"), b"{\"themeName\": \"Twin\", \"wallColor\": 1, \"WALLCOLOR\": 2}");
+    write(&d.drop.join("Fine.json"), &theme("Fine"));
+    let preview = d.plan(&[&d.drop.join("Twin.json"), &d.drop.join("Fine.json")], false);
+    assert_eq!(reason(&preview, "themes/Twin.json").as_deref(), Some("invalid"));
+    assert_eq!(action(&preview, "themes/Fine.json"), "create");
+    let detail = row(&preview, "themes/Twin.json").get("detail").unwrap();
+    let en = detail.get("messageEn").and_then(Json::as_str).unwrap();
+    assert!(is_english(en) && en.contains("\"Twin.json\""), "{en}");
+    assert!(detail.get("message").and_then(Json::as_str).unwrap().contains("Twin.json"));
+    assert_eq!(stages(&d.fixture.local), 1);
+}
+
+#[test]
+fn an_oversized_settings_file_or_duplicate_is_an_invalid_skip_before_it_is_read() {
+    let mut d = Dropped::new();
+    let mut big = b"{\"a\":\"".to_vec();
+    big.resize(8 * 1024 * 1024 + 1, b'x');
+    write(&d.drop.join("UI.json"), &big);
+    write(&d.game("sounds/dup.wav"), b"RIFF in game");
+    let mut dup = b"RIFF".to_vec();
+    dup.resize(8 * 1024 * 1024 + 1, 0);
+    write(&d.drop.join("dup.wav"), &dup);
+    let preview = d.plan(&[&d.drop.join("UI.json"), &d.drop.join("dup.wav")], true);
+    assert_eq!(reason(&preview, "ui/UI.json").as_deref(), Some("invalid"));
+    assert_eq!(reason(&preview, "sounds/dup.wav").as_deref(), Some("invalid"));
+    let en = row(&preview, "ui/UI.json").get("detail").unwrap().get("messageEn").and_then(Json::as_str).unwrap().to_string();
+    assert!(en.contains("8 MiB"), "{en}");
+}

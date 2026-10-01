@@ -465,7 +465,8 @@ impl RestoreItem {
 /// `[datetime]` order of a manifest's `CreatedAt`.
 pub fn created_key(manifest: &Json) -> (String, String) {
     let text = manifest.get("CreatedAt").and_then(Json::as_str).unwrap_or_default();
-    let (head, tail) = text.split_at(text.len().min(19));
+    let cut = (0..=text.len().min(19)).rev().find(|&i| text.is_char_boundary(i)).unwrap_or(0);
+    let (head, tail) = text.split_at(cut);
     let fraction: String = tail.strip_prefix('.').unwrap_or("").chars().take_while(char::is_ascii_digit).collect();
     (head.to_string(), format!("{fraction:0<7}"))
 }

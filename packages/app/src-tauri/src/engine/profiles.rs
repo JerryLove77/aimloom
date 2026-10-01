@@ -145,6 +145,11 @@ pub fn assert_profile(profile: &Json) -> EngineResult<()> {
     Ok(())
 }
 
+/// An asset is only read, so it follows the source rule: a OneDrive folder passes, a link does not.
+fn assert_safe_asset(path: &str) -> EngineResult<()> {
+    paths::assert_safe_source(path).map_err(|_| invalid_path("资源路径不安全，不允许链接。", "The asset path is not safe; links are not allowed."))
+}
+
 fn assert_safe(path: &str) -> EngineResult<()> {
     paths::assert_safe_path(path).map_err(|_| invalid_path("Profile 路径不安全，不允许链接或重解析点。", "The Profile path is not safe; links and reparse points are not allowed."))
 }
@@ -294,7 +299,7 @@ pub fn asset_path(path: Option<&Json>) -> EngineResult<String> {
         }
     }
     let full = paths::get_full_path(&text)?;
-    assert_safe(&full)?;
+    assert_safe_asset(&full)?;
     Ok(full)
 }
 
@@ -313,7 +318,7 @@ fn asset_info(kind: Option<&Json>, path: Option<&Json>) -> EngineResult<String> 
 /// `Read-KvkProfileAssetBytes`.
 pub fn asset_bytes(kind: Option<&Json>, path: Option<&Json>) -> EngineResult<(String, Vec<u8>)> {
     let full = asset_info(kind, path)?;
-    assert_safe(&full)?;
+    assert_safe_asset(&full)?;
     let bytes = std::fs::read(&full).map_err(|e| EngineError::io(&e))?;
     if bytes.is_empty() || bytes.len() as u64 > MAX_ASSET_BYTES { return Err(fail("资源文件必须非空且不超过 8 MiB。", "The asset file must not be empty and must be 8 MiB or smaller.")); }
     Ok((full, bytes))

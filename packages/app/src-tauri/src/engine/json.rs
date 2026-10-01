@@ -10,6 +10,7 @@
 //!   round-trip form with trailing zeros of the fraction removed (probed on the test PC,
 //!   2026-09-30: `2026-09-30T08:09:10.1230000Z` comes back as `2026-09-30T08:09:10.123Z`).
 
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write as _;
 
 /// A JSON value with its object keys in document order. Numbers keep their literal text.
@@ -170,7 +171,7 @@ pub struct ReadOptions { pub strings: Strings, pub keys: Keys, pub max_depth: us
 
 impl ReadOptions {
     /// `ConvertFrom-Json` with no switches.
-    pub const CONVERT_FROM_JSON: ReadOptions = ReadOptions { strings: Strings::Dates, keys: Keys::RefuseCaseVariants, max_depth: 1024 };
+    pub const CONVERT_FROM_JSON: ReadOptions = ReadOptions { strings: Strings::Dates, keys: Keys::RefuseCaseVariants, max_depth: 64 };
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -274,6 +275,8 @@ impl Parser {
         self.enter()?;
         self.pos += 1;
         let mut fields: Vec<(String, Json)> = Vec::new();
+        let mut index: HashMap<String, usize> = HashMap::new();
+        let mut lowered: HashSet<String> = HashSet::new();
         loop {
             self.skip_ws()?;
             if self.peek() == Some('}') && (fields.is_empty() || self.lenient()) { self.pos += 1; self.depth -= 1; return Ok(Json::Object(fields)); }
@@ -282,13 +285,16 @@ impl Parser {
             if self.peek() != Some(':') { return Err(self.error("Invalid character after parsing property name")); }
             self.pos += 1;
             let value = self.value()?;
-            if let Some(slot) = fields.iter_mut().find(|(k, _)| *k == key) {
+            if let Some(&at) = index.get(&key) {
                 if self.options.keys == Keys::RefuseDuplicates { return Err(ParseError(DUPLICATE_KEY.to_string())); }
-                slot.1 = value;
+                if let Some(slot) = fields.get_mut(at) { slot.1 = value; }
             } else {
-                if self.options.keys == Keys::RefuseCaseVariants && fields.iter().any(|(k, _)| k.to_lowercase() == key.to_lowercase()) {
+                let refuse = self.options.keys == Keys::RefuseCaseVariants;
+                if refuse && lowered.contains(&key.to_lowercase()) {
                     return Err(ParseError(format!("keys with different casing: \"{key}\"")));
                 }
+                if refuse { lowered.insert(key.to_lowercase()); }
+                index.insert(key.clone(), fields.len());
                 fields.push((key, value));
             }
             self.skip_ws()?;
@@ -536,5 +542,35 @@ mod tests {
         }
         assert_eq!(read(""), Json::Null);
         assert_eq!(read("\"\\u0041\\ud83d\\ude00\""), Json::str("A😀"));
+    }
+
+    #[test]
+    fn many_keys_parse_in_linear_time_and_keep_their_order() {
+        let body: Vec<String> = (0..60_000).map(|i| format!("\"key{i}\":{i}")).collect();
+        let text = format!("{{{}}}", body.join(","));
+        let started = std::time::Instant::now();
+        for options in [ReadOptions::CONVERT_FROM_JSON, ReadOptions { keys: Keys::KeepCaseVariants, ..ReadOptions::CONVERT_FROM_JSON }, ReadOptions { keys: Keys::RefuseDuplicates, ..ReadOptions::CONVERT_FROM_JSON }] {
+            let Json::Object(fields) = parse(&text, options).unwrap() else { panic!("not an object") };
+            assert_eq!(fields.len(), 60_000);
+            assert_eq!((fields[0].0.as_str(), fields[59_999].0.as_str()), ("key0", "key59999"));
+        }
+        assert!(started.elapsed().as_secs() < 10, "{:?}", started.elapsed());
+    }
+
+    #[test]
+    fn duplicate_and_case_variant_keys_are_refused_or_merged_by_mode() {
+        let with = |text: &str, keys| parse(text, ReadOptions { keys, ..ReadOptions::CONVERT_FROM_JSON });
+        assert_eq!(with(r#"{"a":1,"A":2}"#, Keys::RefuseCaseVariants).unwrap_err().0, "keys with different casing: \"A\"");
+        assert_eq!(with(r#"{"a":1,"a":2}"#, Keys::RefuseDuplicates).unwrap_err().0, DUPLICATE_KEY);
+        assert_eq!(with(r#"{"a":1,"b":2,"a":3}"#, Keys::KeepCaseVariants).unwrap().to_compact(), r#"{"a":3,"b":2}"#);
+        assert_eq!(with(r#"{"a":1,"A":2}"#, Keys::KeepCaseVariants).unwrap().to_compact(), r#"{"a":1,"A":2}"#);
+        assert_eq!(with(r#"{"a":1,"A":2}"#, Keys::RefuseDuplicates).unwrap().to_compact(), r#"{"a":1,"A":2}"#);
+    }
+
+    #[test]
+    fn untrusted_json_nests_at_most_64_deep() {
+        let nested = |n: usize| format!("{}1{}", "[".repeat(n), "]".repeat(n));
+        assert!(parse(&nested(64), ReadOptions::CONVERT_FROM_JSON).is_ok());
+        assert!(parse(&nested(65), ReadOptions::CONVERT_FROM_JSON).is_err());
     }
 }

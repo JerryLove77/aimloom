@@ -36,7 +36,7 @@ enum Adapter {
 struct CachedPlan { id: String, kind: &'static str, context: Context, adapter: Adapter }
 
 /// `New-KvkGuiSession`: one engine, one data folder, at most one executable plan.
-pub struct Session { engine: Engine, local_data_root: String, runtime_root: String, plan: Option<CachedPlan> }
+pub struct Session { engine: Engine, local_data_root: String, runtime_root: String, plan: Option<CachedPlan>, swept: bool }
 
 fn field_error(message: String) -> EngineError { EngineError::coded("ENGINE_ERROR", message.clone(), format!("{message}.")) }
 
@@ -79,10 +79,17 @@ impl Session {
     /// `runtime_root` is the folder holding the scripts (`<install>\scripts`), beside which the
     /// sample pack is looked for.
     pub fn new(host: Box<dyn Host>, local_data_root: &str, runtime_root: &str) -> EngineResult<Self> {
-        Ok(Self { engine: Engine::new(host), local_data_root: paths::get_full_path(local_data_root)?, runtime_root: paths::get_full_path(runtime_root)?, plan: None })
+        Ok(Self { engine: Engine::new(host), local_data_root: paths::get_full_path(local_data_root)?, runtime_root: paths::get_full_path(runtime_root)?, plan: None, swept: false })
     }
 
     pub fn engine(&self) -> &Engine { &self.engine }
+
+    /// Drops the held plan; an Import or FileAdd plan takes its staging folder with it.
+    pub fn discard_plan(&mut self) {
+        let Some(cached) = self.plan.take() else { return };
+        let stage = match &cached.adapter { Adapter::Import(import) => &import.stage, Adapter::FileAdd(add) => &add.stage, _ => return };
+        super::files::remove_import_stage_in(&self.engine, &self.local_data_root, stage);
+    }
 
     fn location(&self, context: &Context) -> Json {
         Json::object(vec![("gameRoot", Json::str(&context.game_root)), ("backupRoot", Json::str(&context.backup_root)), ("gameState", Json::str(self.engine.game_state()))])
@@ -90,6 +97,12 @@ impl Session {
 
     /// `Invoke-KvkGuiRequest`: one request to one reply. Progress lines go to `emit` first.
     pub fn handle(&mut self, request: &Json, emit: &mut dyn FnMut(Json)) -> Json {
+        // Staging folders an earlier session abandoned: swept once, on the first request, when no
+        // plan is held. The data folder is resolved here, as the request itself would.
+        if !self.swept {
+            self.swept = true;
+            if self.plan.is_none() { super::import::remove_orphan_stages_in(&self.engine, &self.local_data_root); }
+        }
         let mut request_id = Json::Null;
         let mut op = String::new();
         let result = (|| -> EngineResult<Json> {
@@ -176,7 +189,7 @@ impl Session {
             }
             "planCrosshair" | "planCrosshairAdd" => {
                 assert_fields(args, &["gameRoot", "file", "pngBase64", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, file, encoded) = (string_arg(args, "gameRoot")?, string_arg(args, "file")?, string_arg(args, "pngBase64")?);
                 let revision = revision_arg(args)?;
                 let png = super::files::decode_base64(encoded,
@@ -202,7 +215,7 @@ impl Session {
             }
             "planFileAdd" => {
                 assert_fields(args, &["gameRoot", "kind", "sourcePath", "sourceSha256", "file", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, kind, file) = (string_arg(args, "gameRoot")?, string_arg(args, "kind")?, string_arg(args, "file")?);
                 let (source_path, source_sha) = (string_arg(args, "sourcePath")?, string_arg(args, "sourceSha256")?);
                 let revision = revision_arg(args)?;
@@ -215,7 +228,7 @@ impl Session {
             }
             "planImport" => {
                 assert_fields(args, &["gameRoot", "paths", "includeSettings", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let game_root = string_arg(args, "gameRoot")?;
                 let Some(Json::Array(paths)) = args.get("paths") else {
                     return Err(EngineError::coded("ENGINE_ERROR", "paths 必须是数组。", "paths must be an array."));
@@ -250,7 +263,7 @@ impl Session {
             }
             "planProfileApply" => {
                 assert_fields(args, &["gameRoot", "id", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, id) = (string_arg(args, "gameRoot")?, string_arg(args, "id")?);
                 let revision = revision_arg(args)?;
                 let context = self.engine.context(game_root, &self.local_data_root)?;
@@ -263,7 +276,7 @@ impl Session {
             }
             "planTheme" => {
                 assert_fields(args, &["gameRoot", "file", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, file) = (string_arg(args, "gameRoot")?, string_arg(args, "file")?);
                 let revision = revision_arg(args)?;
                 let context = self.engine.context(game_root, &self.local_data_root)?;
@@ -276,7 +289,7 @@ impl Session {
             }
             "planAudio" => {
                 assert_fields(args, &["gameRoot", "event", "names", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, event) = (string_arg(args, "gameRoot")?, string_arg(args, "event")?);
                 let Some(Json::Array(names)) = args.get("names") else {
                     return Err(EngineError::coded("ENGINE_ERROR", "names must be an array.", "names must be an array."));
@@ -293,7 +306,7 @@ impl Session {
             }
             "planRestore" => {
                 assert_fields(args, &["gameRoot", "sourceId", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, source_id) = (string_arg(args, "gameRoot")?, string_arg(args, "sourceId")?);
                 let revision = revision_arg(args)?;
                 let context = self.engine.context(game_root, &self.local_data_root)?;
@@ -316,7 +329,7 @@ impl Session {
             }
             "planEnemy" => {
                 assert_fields(args, &["gameRoot", "shape", "model", "skin", "revision"], "args")?;
-                self.plan = None;
+                self.discard_plan();
                 let (game_root, shape) = (string_arg(args, "gameRoot")?, string_arg(args, "shape")?);
                 let (model, skin) = (string_arg(args, "model")?, string_arg(args, "skin")?);
                 let revision = revision_arg(args)?;
@@ -363,13 +376,21 @@ impl Session {
                         return Err(EngineError::coded("PLAN_MISSING", "预览已失效，请重新生成。", "The preview is no longer available. Create a new preview."));
                     }
                 };
-                if confirmation != cached.kind { return Err(EngineError::coded("PLAN_STALE", "确认内容与缓存的清单不一致。", "Confirmation does not match the cached plan.")); }
+                if confirmation != cached.kind {
+                    self.plan = Some(cached);
+                    self.discard_plan();
+                    return Err(EngineError::coded("PLAN_STALE", "确认内容与缓存的清单不一致。", "Confirmation does not match the cached plan."));
+                }
                 if let Adapter::Restore(plan) = &cached.adapter {
                     if plan.items.iter().any(|i| i.unowned) { return Err(EngineError::coded("UNOWNED_FILE", "无法确认文件由本工具创建，不能删除。", "Cannot delete a file without proof that this installer created it.")); }
                     if plan.items.iter().any(|i| i.conflict) && !*allow { return Err(EngineError::coded("CONFLICT", "恢复冲突需要明确确认。", "Restore conflicts require explicit confirmation.")); }
                     return Ok(execution(&super::txn::restore(&self.engine, &cached.context, plan, *allow, observer)?));
                 }
-                if *allow { return Err(EngineError::coded("CONFLICT", "安装清单不接受冲突覆盖许可。", "Install plans do not accept conflict permission.")); }
+                if *allow {
+                    self.plan = Some(cached);
+                    self.discard_plan();
+                    return Err(EngineError::coded("CONFLICT", "安装清单不接受冲突覆盖许可。", "Install plans do not accept conflict permission."));
+                }
                 let report = match &cached.adapter {
                     Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Theme(plan) => super::settings::theme_execute(&self.engine, &cached.context, plan, observer)?,
@@ -545,7 +566,7 @@ pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Wr
                     if failed.is_none() { if let Err(e) = writeln!(output, "{}", progress.to_compact()).and_then(|_| output.flush()) { failed = Some(e); } }
                 }));
                 // A plan made before an engine bug is not trusted afterwards.
-                if panicked { session.plan = None; }
+                if panicked { session.discard_plan(); }
                 if let Some(error) = failed { return Err(error); }
                 reply
             }
@@ -553,5 +574,6 @@ pub fn run_jsonl(session: &mut Session, input: impl BufRead, mut output: impl Wr
         writeln!(output, "{}", reply.to_compact())?;
         output.flush()?;
     }
+    session.discard_plan();
     Ok(())
 }
