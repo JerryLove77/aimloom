@@ -529,6 +529,27 @@ fn complete_restore(engine: &Engine, context: &Context, m: &mut Json) -> EngineR
 }
 
 /// `Invoke-KvkRestore`.
+/// The temporary copies an install batch may leave beside its targets when the worker stops
+/// while copying one (`<target>.kvk-<batch id>-<32 hex>.tmp`, see `file_change`): a copy that was
+/// still being written was never recorded, so recovery finds them by that name, which only this
+/// batch can have made. Best effort; anything else in the folder is left alone.
+fn remove_batch_temps(batch: &Json) {
+    let Some(id) = text(batch, "Id") else { return };
+    let items = batch.get("Items").and_then(Json::as_array).cloned().unwrap_or_default();
+    for item in items {
+        let Some(target) = text(&item, "Target") else { continue };
+        let Some(dir) = paths::directory_name(&target) else { continue };
+        let prefix = format!("{}.kvk-{id}-", paths::file_name(&target));
+        let Ok(entries) = std::fs::read_dir(&dir) else { continue };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            let Some(rest) = name.strip_prefix(&prefix).and_then(|r| r.strip_suffix(".tmp")) else { continue };
+            let full = join(&dir, &name);
+            if paths::is_lower_hex(rest, 32) && assert_safe_path(&full).is_ok() && Path::new(&full).is_file() { let _ = std::fs::remove_file(&full); }
+        }
+    }
+}
+
 pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_conflicts: bool, observer: Observer) -> EngineResult<Report> {
     let _locks = engine.enter_lock(context)?;
     engine.assert_game_closed()?;
@@ -547,6 +568,8 @@ pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_con
     }
     let source = manifest::read(engine, context, &plan.id)?;
     let source_unfinished = text(&source, "Status").is_some_and(|s| manifest::UNFINISHED.contains(&s.as_str()));
+    // An interrupted install may have left a temporary copy no record names (`remove_batch_temps`).
+    let interrupted_install = (text(&source, "Kind").as_deref() == Some("install") && source_unfinished).then(|| source.clone());
     let mut m;
     if text(&source, "Kind").as_deref() == Some("restore") && source_unfinished {
         // Retrying an interrupted restore: files changed since are preserved before their
@@ -579,6 +602,7 @@ pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_con
         if todo.is_empty() {
             let mut source = source;
             if text(&source, "Kind").as_deref() == Some("install") && source_unfinished { settle(&mut source); manifest::save(context, &source)?; }
+            if let Some(batch) = &interrupted_install { remove_batch_temps(batch); }
             let report = Report::new("restored", Some(&plan.id), fresh.items.iter().map(RestoreItem::row).collect(), Vec::new(), None);
             observer(&Observation { name: "report", phase: "restoring", completed: Some(0), total: 0, current_file: None, batch_id: Some(plan.id.clone()) });
             return Ok(report);
@@ -625,6 +649,7 @@ pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_con
             observer(&Observation { name: "file-verified", phase: "verifying", completed: Some(completed), total, current_file: text(&x, "Key"), batch_id: Some(id.clone()) });
         }
         complete_restore(engine, context, &mut m)?;
+        if let Some(batch) = &interrupted_install { remove_batch_temps(batch); }
         let report = Report::new("restored", Some(&id), items_mut(&mut m).clone(), Vec::new(), None);
         observer(&Observation { name: "report", phase: "verifying", completed: Some(total), total, current_file: None, batch_id: Some(id.clone()) });
         Ok(report)

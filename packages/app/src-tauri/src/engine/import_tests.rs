@@ -357,3 +357,39 @@ fn a_link_in_the_drop_refuses_the_whole_import() {
     let error = d.refusal(&[&link], false);
     assert!(english(&error).contains("Links and junctions"), "{}", error.to_compact());
 }
+
+/// The worker stopped while copying a file into the game: the copy sits beside its target under
+/// the batch's own temporary name, and no record names it. Recovering the batch removes it, and
+/// only it.
+#[test]
+fn recovering_an_interrupted_import_removes_the_batch_s_unrecorded_temporary_copy() {
+    let mut d = Dropped::new();
+    for i in 0..3 { write(&d.drop.join(format!("s{i}.wav")), format!("RIFF {i}").as_bytes()); }
+    let paths: Vec<PathBuf> = (0..3).map(|i| d.drop.join(format!("s{i}.wav"))).collect();
+    let refs: Vec<&Path> = paths.iter().map(PathBuf::as_path).collect();
+    let preview = d.plan(&refs, false);
+    // The game "starts" after the first file: the batch stops part-way.
+    let calls = d.fixture.host.calls.get();
+    d.fixture.host.running_from_call.set(Some(calls + 4));
+    let report = d.execute(&preview);
+    d.fixture.host.running_from_call.set(None);
+    let batch = report.get("batchId").and_then(Json::as_str).unwrap().to_string();
+    assert_ne!(report.get("status").and_then(Json::as_str), Some("completed"), "{}", report.to_compact());
+    // What a stop in the middle of a copy leaves: this batch's temp name, never recorded.
+    let sounds = d.game("sounds");
+    let orphan = sounds.join(format!("s2.wav.kvk-{batch}-{}.tmp", "a".repeat(32)));
+    let other_batch = sounds.join(format!("s2.wav.kvk-{}-{}.tmp", "b".repeat(32), "c".repeat(32)));
+    let not_ours = sounds.join("s2.wav.backup.tmp");
+    for file in [&orphan, &other_batch, &not_ours] { write(file, b"partial"); }
+
+    let game = d.fixture.game.clone();
+    let restore = d.fixture.ok("planRestore", Json::object(vec![("gameRoot", Json::str(&game)), ("sourceId", Json::str(&batch)), ("revision", Json::int(2))]));
+    let plan_id = restore.get("planId").and_then(Json::as_str).unwrap().to_string();
+    let conflicts = restore.get("rows").and_then(Json::as_array).unwrap().iter().any(|r| r.get("conflict") == Some(&Json::Bool(true)));
+    let execute = Json::object(vec![("operationId", Json::str("op-recover")), ("planId", Json::str(plan_id)), ("confirmation", Json::str("restore")), ("allowConflicts", Json::Bool(conflicts))]);
+    let restored = d.fixture.ok("execute", execute);
+    assert_eq!(restored.get("status").and_then(Json::as_str), Some("restored"), "{}", restored.to_compact());
+    for i in 0..3 { assert!(!sounds.join(format!("s{i}.wav")).exists(), "s{i}.wav"); }
+    assert!(!orphan.exists(), "the batch's own unrecorded temp copy is removed");
+    assert!(other_batch.exists() && not_ours.exists(), "nothing that is not this batch's is touched");
+}
