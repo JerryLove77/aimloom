@@ -125,17 +125,6 @@ pub fn is_reparse_point(path: &Path) -> io::Result<Option<bool>> {
     }
 }
 
-/// True when the entry itself is a symbolic link or a junction, the reparse points that lead
-/// somewhere else. A cloud placeholder (a OneDrive folder or file) is a reparse point too and is
-/// not one of these.
-pub fn is_link(path: &Path) -> io::Result<Option<bool>> {
-    match std::fs::symlink_metadata(path) {
-        Ok(meta) => Ok(Some(meta.file_type().is_symlink())),
-        Err(e) if matches!(e.kind(), io::ErrorKind::NotFound | io::ErrorKind::NotADirectory) => Ok(None),
-        Err(e) => Err(e),
-    }
-}
-
 /// The names (without `.exe`) of running processes, as `Get-Process` reports `ProcessName`.
 #[cfg(windows)]
 pub fn process_names() -> io::Result<Vec<String>> {
