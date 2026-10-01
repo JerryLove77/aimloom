@@ -57,7 +57,7 @@ export const en: Record<keyof typeof zh, string> = {
   'download.preparing.body': 'The current version is completing acceptance on real Windows machines. Once released, the download link, file size and SHA-256 appear here. Until then there is nothing to download.',
   'download.preparing.links': 'In the meantime, read the guide or the changelog.',
   'download.beta.title': 'Beta',
-  'download.beta.notice': 'This is a beta and can be rough. It shares Profiles and backups with the stable App; installing the stable Setup takes you back to it at any time.',
+  'download.beta.notice': 'This is a beta and can be rough. It shares backups with the stable App, but some changes (such as the Profile format) may not be readable by the stable App; read the known issues below before installing.',
   'download.facts.version': 'Version',
   'download.facts.date': 'Released',
   'download.facts.size': 'Size',
