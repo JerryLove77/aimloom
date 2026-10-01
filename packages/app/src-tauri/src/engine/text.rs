@@ -134,12 +134,22 @@ pub fn find_value(text: &[u16], key: &str) -> Result<Option<Span>, EngineError> 
     }
 }
 
-/// `ConvertTo-KvkJsonScalar` for a string: only `\`, `"`, backspace, form feed, newline,
-/// carriage return and tab are escaped.
+/// `ConvertTo-KvkJsonScalar` for a string: `\`, `"`, backspace, form feed, newline, carriage
+/// return and tab are escaped as the PowerShell did; every other character below U+0020 is
+/// written `\u00xx` (the PowerShell wrote it raw, which is not valid JSON).
 pub fn json_scalar_string(value: &str) -> String {
-    let escaped = value.replace('\\', "\\\\").replace('"', "\\\"").replace('\u{8}', "\\b").replace('\u{c}', "\\f")
-        .replace('\n', "\\n").replace('\r', "\\r").replace('\t', "\\t");
-    format!("\"{escaped}\"")
+    let mut out = String::with_capacity(value.len() + 2);
+    out.push('"');
+    for c in value.chars() {
+        match c {
+            '\\' => out.push_str("\\\\"), '"' => out.push_str("\\\""), '\u{8}' => out.push_str("\\b"), '\u{c}' => out.push_str("\\f"),
+            '\n' => out.push_str("\\n"), '\r' => out.push_str("\\r"), '\t' => out.push_str("\\t"),
+            c if c < ' ' => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
 }
 
 /// `double.ToString("R", InvariantCulture)` on .NET Core 3.0 and later: the shortest digits that
@@ -248,7 +258,7 @@ mod tests {
 
     #[test]
     fn scalar_and_case_rules() {
-        assert_eq!(json_scalar_string("a\"b\\c\n\u{1}/"), "\"a\\\"b\\\\c\\n\u{1}/\"");
+        assert_eq!(json_scalar_string("a\"b\\c\n\u{1}\u{1f}/\u{7f}"), "\"a\\\"b\\\\c\\n\\u0001\\u001f/\u{7f}\"");
         // Probe results from the test PC (2026-09-30).
         assert_eq!(lower_invariant("İ"), "İ");
         assert_eq!(lower_invariant("ΑΣ"), "ασ");

@@ -16,7 +16,7 @@ use std::path::Path;
 use super::files::{self, MAX_PNG};
 use super::json::Json;
 use super::lists;
-use super::paths::{self, assert_safe_path, full_path, join};
+use super::paths::{self, assert_safe_path, assert_safe_source, full_path, join};
 use super::store::{self, Context, Engine};
 use super::text::eq_ignore_case;
 use super::txn::{self, Plan};
@@ -135,7 +135,7 @@ impl Found {
     fn folder(&mut self, dir: &str, depth: usize) -> EngineResult<()> {
         for (name, is_dir) in txn::sorted_entries(dir)? {
             let full = join(dir, &name);
-            assert_safe_path(&full)?;
+            assert_safe_source(&full)?;
             if !is_dir { self.file(full)?; } else if depth < MAX_DEPTH { self.folder(&full, depth + 1)?; } else { self.unrecognized.push(full); }
         }
         Ok(())
@@ -144,7 +144,7 @@ impl Found {
     /// One dropped path. A link anywhere refuses the whole import, as every other plan does.
     fn path(&mut self, path: &str) -> EngineResult<()> {
         let full = full_path(path)?;
-        assert_safe_path(&full)?;
+        assert_safe_source(&full)?;
         let p = Path::new(&full);
         if p.is_file() { return self.file(full); }
         if !p.is_dir() { self.unrecognized.push(full); return Ok(()); }
@@ -170,10 +170,17 @@ fn files_in(directory: &str) -> EngineResult<Vec<String>> {
 
 fn stem(name: &str) -> &str { &name[..name.len() - paths::extension(name).len()] }
 
+fn oversized(path: &str, limit: usize) -> bool { std::fs::metadata(path).is_ok_and(|m| m.len() > limit as u64) }
+
 fn read_bounded(path: &str, limit: usize) -> EngineResult<Option<Vec<u8>>> {
     let size = std::fs::metadata(path).map_err(|e| EngineError::io(&e))?.len();
     if size > limit as u64 { return Ok(None); }
     std::fs::read(path).map(Some).map_err(|e| EngineError::io(&e))
+}
+
+fn theme_refusal(name: &str) -> EngineError {
+    EngineError::coded("ENGINE_ERROR", format!("主题文件无法被游戏读取，例如有只差大小写的重复键：\"{name}\"。"),
+        format!("The theme file cannot be read the way the game reads it, for example two keys that differ only in case: \"{name}\"."))
 }
 
 /// Writes `bytes` into the stage and checks them back.
@@ -188,12 +195,14 @@ fn stage_file(stage: &str, relative: &str, bytes: &[u8]) -> EngineResult<String>
 }
 
 /// Every `<data root>/import-previews/<32 hex>` folder: a plan the session no longer holds.
-pub fn remove_orphan_stages(engine: &Engine, context: &Context) {
-    let Ok(base) = engine.data_root(&context.local_data_root).map(|d| join(&d, "import-previews")) else { return };
+pub fn remove_orphan_stages(engine: &Engine, context: &Context) { remove_orphan_stages_in(engine, &context.local_data_root) }
+
+pub fn remove_orphan_stages_in(engine: &Engine, local_data_root: &str) {
+    let Ok(base) = engine.data_root(local_data_root).map(|d| join(&d, "import-previews")) else { return };
     let Ok(entries) = std::fs::read_dir(&base) else { return };
     for entry in entries.flatten() {
         let name = entry.file_name().to_string_lossy().into_owned();
-        if paths::is_lower_hex(&name, 32) { files::remove_import_stage(engine, context, &join(&base, &name)); }
+        if paths::is_lower_hex(&name, 32) { files::remove_import_stage_in(engine, local_data_root, &join(&base, &name)); }
     }
 }
 
@@ -226,6 +235,7 @@ impl Checker<'_> {
         let target = self.engine.target(self.context, &format!("{}/{}", c.category, c.name))?;
         if !self.include_settings { self.skip(&c, target, Reason::SettingsNotIncluded, None); return Ok(()); }
         if self.already_accepted(&c) { self.skip(&c, target, Reason::DuplicateInDrop, None); return Ok(()); }
+        if oversized(&c.source, MAX_FILE) { let error = size_refusal(); self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
         if c.category != "palette" {
             if let Err(error) = txn::assert_json_object(&c.source) { self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
         }
@@ -251,7 +261,14 @@ impl Checker<'_> {
         let existing = self.in_game.iter().find(|(cat, _)| *cat == c.category).and_then(|(_, names)| names.iter().find(|n| eq_ignore_case(n, &c.name)).cloned());
         if let Some(existing) = existing {
             let existing_target = join(&directory, &existing);
-            let same = store::hash(&existing_target)? == store::hash(&c.source)?;
+            if oversized(&c.source, if c.category == "crosshairs" { MAX_PNG } else { MAX_FILE }) {
+                let error = if c.category == "crosshairs" { files::assert_crosshair_image(&[]).unwrap_err() } else { size_refusal() };
+                self.skip(&c, target, Reason::Invalid, Some(&error));
+                return Ok(());
+            }
+            // The source was checked as a source (a OneDrive folder passes); `store::hash` would refuse it.
+            let source_hash = std::fs::read(&c.source).map(|bytes| paths::sha256_hex(&bytes)).map_err(|e| EngineError::io(&e))?;
+            let same = store::hash(&existing_target)?.as_deref() == Some(source_hash.as_str());
             self.skip(&c, existing_target, if same { Reason::ExistsSame } else { Reason::ExistsDifferent }, None);
             return Ok(());
         }
@@ -282,9 +299,16 @@ impl Checker<'_> {
         let staged = stage_file(&self.stage, &format!("{folder}/{}", c.name), &bytes)?;
         if c.category == "themes" {
             // Checked on the staged copy: what is checked is what is added.
-            let theme_name = match lists::read_theme(&staged) {
+            let readable = lists::read_theme(&staged).and_then(|theme| txn::assert_json_object(&staged).map(|()| theme));
+            let theme_name = match readable {
                 Ok(theme) => theme.get("themeName").and_then(Json::as_str).unwrap_or_default().to_string(),
-                Err(error) => { let _ = std::fs::remove_file(&staged); self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
+                Err(error) => {
+                    let _ = std::fs::remove_file(&staged);
+                    // The plan's own check names the staged path; the player named the file.
+                    let error = if error.message.contains(&staged) { theme_refusal(&c.name) } else { error };
+                    self.skip(&c, target, Reason::Invalid, Some(&error));
+                    return Ok(());
+                }
             };
             let taken = if self.installed_theme_names.iter().any(|n| eq_ignore_case(n, &theme_name)) { Some(Reason::ThemeNameTaken) }
                 else if self.accepted_theme_names.iter().any(|n| eq_ignore_case(n, &theme_name)) { Some(Reason::DuplicateInDrop) } else { None };

@@ -442,3 +442,42 @@ fn favourites_are_read_and_saved_through_the_worker_boundary() {
     assert_eq!(f.bytes(), original(), "the game is untouched");
     assert!(!Path::new(&f.local).join("Aimloom/backups").exists(), "no backup is made");
 }
+
+#[test]
+fn a_manifest_timestamp_with_a_wide_character_at_the_cut_does_not_panic() {
+    let key = |text: &str| super::txn::created_key(&Json::object(vec![("CreatedAt", Json::str(text))]));
+    assert_eq!(key("2026-09-30T08:09:10.123Z"), ("2026-09-30T08:09:10".to_string(), "1230000".to_string()));
+    // Byte 19 falls inside the three-byte character.
+    let wide = format!("{}日.5", "x".repeat(18));
+    assert_eq!(key(&wide).0.len(), 18);
+    assert_eq!(key("2026-09-30T08:09:1日").0, "2026-09-30T08:09:1");
+    assert_eq!(key("").0, "");
+}
+
+#[test]
+fn an_abandoned_import_preview_is_swept_when_a_session_starts_and_when_the_plan_is_dropped() {
+    let mut fixture = Fixture::new(&original());
+    let previews = Path::new(&fixture.local).join("Aimloom/import-previews");
+    let orphan = previews.join("0123456789abcdef0123456789abcdef");
+    std::fs::create_dir_all(orphan.join("themes")).unwrap();
+    std::fs::write(orphan.join("PrimaryUserSettings.json"), b"{}").unwrap();
+    let other = previews.join("keep-me");
+    std::fs::create_dir_all(&other).unwrap();
+    fixture.ok("gameState", Json::object(vec![]));
+    assert!(!orphan.exists(), "the first request sweeps what an earlier session left");
+    assert!(other.exists(), "only 32-hex staging folders are touched");
+
+    let drop = fixture.root.join("drop");
+    std::fs::create_dir_all(&drop).unwrap();
+    std::fs::write(drop.join("a.wav"), b"RIFF a").unwrap();
+    let args = Json::object(vec![("gameRoot", Json::str(&fixture.game)), ("paths", Json::Array(vec![Json::str(drop.join("a.wav").to_string_lossy())])), ("includeSettings", Json::Bool(false)), ("revision", Json::int(1))]);
+    let count = || std::fs::read_dir(&previews).unwrap().filter(|e| e.as_ref().unwrap().file_name().to_string_lossy().len() == 32).count();
+    let preview = fixture.ok("planImport", args);
+    assert_eq!(count(), 1);
+    // A plan of another kind replaces it: the held stage goes, and executing the new one still works.
+    let enemy = Json::object(vec![("gameRoot", Json::str(&fixture.game)), ("shape", Json::str("Cylindrical")), ("model", Json::str("Ghost")), ("skin", Json::str("Default")), ("revision", Json::int(1))]);
+    let _ = fixture.request("planEnemy", enemy);
+    assert_eq!(count(), 0, "a dropped Import plan takes its staging folder with it");
+    let stale = fixture.error("execute", Fixture::execute_args(preview.get("planId").and_then(Json::as_str).unwrap()));
+    assert_eq!(code(&stale), "PLAN_MISSING");
+}
