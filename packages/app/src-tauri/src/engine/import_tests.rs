@@ -112,7 +112,20 @@ fn another_session_cannot_sweep_a_live_import_preview() {
 }
 
 #[test]
-fn orphan_cleanup_skips_live_plans_and_collects_them_after_the_owner_exits() {
+fn dropping_a_preview_cleans_its_stage_while_the_engine_stays_alive() {
+    let d = Dropped::new();
+    let a = d.drop.join("a.wav");
+    write(&a, b"RIFF previewed");
+    let engine = super::store::Engine::new(Box::new(super::tests::TestHost(d.fixture.host.clone())));
+    let context = engine.context(&d.fixture.game, &d.fixture.local).unwrap();
+    let plan = super::import::import_plan(&engine, &context, &[a.to_string_lossy().into_owned()], false).unwrap();
+    let stage = plan.stage.path().to_string();
+    drop(plan);
+    assert!(!Path::new(&stage).exists(), "the preview owns its temporary files, not the engine");
+}
+
+#[test]
+fn orphan_cleanup_skips_live_previews_and_dropping_them_cleans_up() {
     for single_file in [false, true] {
         let d = Dropped::new();
         let a = d.drop.join("a.wav");
@@ -127,10 +140,10 @@ fn orphan_cleanup_skips_live_plans_and_collects_them_after_the_owner_exits() {
         };
         let cleaner = super::store::Engine::new(Box::new(super::tests::TestHost(d.fixture.host.clone())));
         super::import::remove_orphan_stages(&cleaner, &context);
-        assert!(Path::new(&stage).is_dir());
-        drop(owner);
-        super::import::remove_orphan_stages(&cleaner, &context);
-        assert!(!Path::new(&stage).exists());
+        assert!(Path::new(stage.path()).is_dir());
+        let path = stage.path().to_string();
+        drop(stage);
+        assert!(!Path::new(&path).exists());
     }
 }
 

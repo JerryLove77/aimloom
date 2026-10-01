@@ -86,9 +86,7 @@ impl Session {
 
     /// Drops the held plan; an Import or FileAdd plan takes its staging folder with it.
     pub fn discard_plan(&mut self) {
-        let Some(cached) = self.plan.take() else { return };
-        let stage = match &cached.adapter { Adapter::Import(import) => &import.stage, Adapter::FileAdd(add) => &add.stage, _ => return };
-        super::files::remove_import_stage_in(&self.engine, &self.local_data_root, stage);
+        self.plan = None;
     }
 
     fn location(&self, context: &Context) -> Json {
