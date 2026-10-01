@@ -1,6 +1,7 @@
 //! Quick import (`planImport`): one add-only plan for whatever the player dropped or picked —
-//! pack folders, a `Themes` / `sounds` / `crosshairs` folder, a folder whose only entry is a pack
-//! (what Explorer's "Extract All" makes), and loose files. A theme, sound or crosshair already in
+//! files and folders. Every file is read by its format wherever it sits (`.json` a theme, `.wav` /
+//! `.ogg` a sound, `.png` a crosshair, the personal settings files by name), down to three folder
+//! levels, so a pack, a folder of loose files and what Explorer's "Extract All" makes all work. A theme, sound or crosshair already in
 //! the game is never overwritten: it becomes a skip row with its reason. Personal settings
 //! (`UI.json`, `PrimaryUserSettings.json`, `Palette.ini`) are planned only when the player asks
 //! for them, and are then the only rows that may replace a file.
@@ -31,8 +32,15 @@ fn size_refusal() -> EngineError {
     EngineError::coded("ENGINE_ERROR", "文件是空的，或者超过 8 MiB，游戏用不了。", "The file is empty or larger than 8 MiB, so the game cannot use it.")
 }
 
-/// The game's kind folders, as a pack names them, and their plan categories.
+/// The game's kind folders, as the staging folder names them, and their plan categories.
 const KIND_FOLDERS: [(&str, &str); 3] = [("Themes", "themes"), ("sounds", "sounds"), ("crosshairs", "crosshairs")];
+
+/// How many folder levels below a dropped folder are read (a pack inside an extracted folder
+/// inside the dropped one is two).
+const MAX_DEPTH: usize = 3;
+
+/// The most files one drop may hold, so a drop of a whole Downloads folder stops early.
+const MAX_FILES: usize = 5000;
 
 /// The personal settings files, by their canonical names, and their plan categories.
 const SETTINGS: [(&str, &str); 3] = [("UI.json", "ui"), ("PrimaryUserSettings.json", "primary"), ("Palette.ini", "palette")];
@@ -88,8 +96,6 @@ impl ImportPlan {
 /// One file the drop offers: its category, its name in the game and where it is now.
 struct Candidate { category: &'static str, name: String, source: String }
 
-fn kind_folder(name: &str) -> Option<&'static str> { KIND_FOLDERS.iter().find(|(f, _)| eq_ignore_case(f, name)).map(|(_, c)| *c) }
-
 fn settings_file(name: &str) -> Option<(&'static str, &'static str)> { SETTINGS.iter().find(|(f, _)| eq_ignore_case(f, name)).copied() }
 
 fn wanted(category: &str, name: &str) -> bool {
@@ -102,46 +108,37 @@ fn wanted(category: &str, name: &str) -> bool {
     }
 }
 
-/// A pack is a folder holding a kind folder or a settings file.
-fn is_pack(dir: &str) -> EngineResult<bool> {
-    Ok(txn::sorted_entries(dir)?.iter().any(|(name, is_dir)| if *is_dir { kind_folder(name).is_some() } else { settings_file(name).is_some() }))
-}
-
-struct Found { candidates: Vec<Candidate>, unrecognized: Vec<String> }
+struct Found { candidates: Vec<Candidate>, unrecognized: Vec<String>, files: usize }
 
 impl Found {
-    fn kind_folder(&mut self, category: &'static str, dir: &str) -> EngineResult<()> {
-        for (name, is_dir) in txn::sorted_entries(dir)? {
-            let full = join(dir, &name);
-            assert_safe_path(&full)?;
-            if !is_dir && wanted(category, &name) { self.candidates.push(Candidate { category, name, source: full }); } else { self.unrecognized.push(full); }
+    /// A file is read by its format, wherever it sits: `.json` a theme, `.wav` / `.ogg` a sound,
+    /// `.png` a crosshair, and the three personal settings files by name.
+    fn file(&mut self, full: String) -> EngineResult<()> {
+        self.files += 1;
+        if self.files > MAX_FILES {
+            return Err(EngineError::coded("ENGINE_ERROR", format!("选中的文件夹里文件太多（超过 {MAX_FILES} 个），请选小一点的文件夹。"), format!("The chosen folders hold too many files (over {MAX_FILES}). Choose a smaller folder.")));
         }
-        Ok(())
-    }
-
-    fn pack(&mut self, root: &str) -> EngineResult<()> {
-        for (name, is_dir) in txn::sorted_entries(root)? {
-            let full = join(root, &name);
-            assert_safe_path(&full)?;
-            match (is_dir, kind_folder(&name), settings_file(&name)) {
-                (true, Some(category), _) => self.kind_folder(category, &full)?,
-                (false, _, Some((canonical, category))) => self.candidates.push(Candidate { category, name: canonical.to_string(), source: full }),
-                _ => self.unrecognized.push(full),
-            }
-        }
-        Ok(())
-    }
-
-    fn loose(&mut self, full: String) {
         let name = paths::file_name(&full);
         if let Some((canonical, category)) = settings_file(&name) {
             self.candidates.push(Candidate { category, name: canonical.to_string(), source: full });
-            return;
+            return Ok(());
         }
         match ["themes", "sounds", "crosshairs"].into_iter().find(|c| wanted(c, &name)) {
             Some(category) => self.candidates.push(Candidate { category, name, source: full }),
             None => self.unrecognized.push(full),
         }
+        Ok(())
+    }
+
+    /// A folder's files, and its folders' files down to `MAX_DEPTH` levels; a folder deeper than
+    /// that is listed as not recognised rather than searched.
+    fn folder(&mut self, dir: &str, depth: usize) -> EngineResult<()> {
+        for (name, is_dir) in txn::sorted_entries(dir)? {
+            let full = join(dir, &name);
+            assert_safe_path(&full)?;
+            if !is_dir { self.file(full)?; } else if depth < MAX_DEPTH { self.folder(&full, depth + 1)?; } else { self.unrecognized.push(full); }
+        }
+        Ok(())
     }
 
     /// One dropped path. A link anywhere refuses the whole import, as every other plan does.
@@ -149,18 +146,9 @@ impl Found {
         let full = full_path(path)?;
         assert_safe_path(&full)?;
         let p = Path::new(&full);
-        if p.is_file() { self.loose(full); return Ok(()); }
+        if p.is_file() { return self.file(full); }
         if !p.is_dir() { self.unrecognized.push(full); return Ok(()); }
-        if let Some(category) = kind_folder(&paths::file_name(&full)) { return self.kind_folder(category, &full); }
-        if is_pack(&full)? { return self.pack(&full); }
-        // Explorer's "Extract All" puts the pack inside a folder of the same name.
-        if let [(only, true)] = txn::sorted_entries(&full)?.as_slice() {
-            let inner = join(&full, only);
-            assert_safe_path(&inner)?;
-            if is_pack(&inner)? { return self.pack(&inner); }
-        }
-        self.unrecognized.push(full);
-        Ok(())
+        self.folder(&full, 0)
     }
 }
 
@@ -314,7 +302,7 @@ pub fn import_plan(engine: &Engine, context: &Context, paths_in: &[String], incl
     if paths_in.is_empty() || paths_in.len() > MAX_PATHS {
         return Err(EngineError::coded("ENGINE_ERROR", format!("一次只能导入 1 到 {MAX_PATHS} 个文件或文件夹。"), format!("Import 1 to {MAX_PATHS} files or folders at a time.")));
     }
-    let mut found = Found { candidates: Vec::new(), unrecognized: Vec::new() };
+    let mut found = Found { candidates: Vec::new(), unrecognized: Vec::new(), files: 0 };
     for path in paths_in { found.path(path)?; }
     remove_orphan_stages(engine, context);
     let stage = join(&join(&engine.data_root(&context.local_data_root)?, "import-previews"), &store::new_guid());

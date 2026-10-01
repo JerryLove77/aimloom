@@ -230,8 +230,9 @@ ten-case parity table: `is_english` (`protocol.rs`, which the Rust engine also c
   is already installed. A code-generated crosshair goes into the game the same way, through
   `planCrosshairAdd`.
 - **Quick import adds and never overwrites.** `planImport` (`engine/import.rs`) reads up to 64
-  dropped or picked paths (pack folders, kind folders, one level of extraction nesting, loose
-  files), stages every accepted file in the data folder at plan time and plans that staging folder
+  dropped or picked paths and reads every file by its format wherever it sits (`.json` a theme,
+  `.wav`/`.ogg` a sound, `.png` a crosshair, the settings files by name), three folder levels deep
+  and at most 5000 files, then stages every accepted file in the data folder at plan time and plans that staging folder
   as an ordinary pack, so execute re-checks every hash. A theme, sound or crosshair already in the
   game, an installed `themeName`, a sound stem twin, a repeat in the drop or an unusable file is a
   `skip` row with its `reason` (and, for `invalid`, a bilingual `detail`). Personal settings
