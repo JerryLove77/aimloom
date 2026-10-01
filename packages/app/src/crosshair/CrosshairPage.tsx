@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useReloadOnChange } from '../section/use-reload-on-change'
 import { Button } from '../ui/Button'
 import { Dialog } from '../ui/Dialog'
 import { Notice } from '../ui/Notice'
@@ -49,11 +50,13 @@ function SourceImage({ base64, alt }: { base64: string; alt: string }) {
   return url ? <img className="cx-compare-image" src={url} alt={alt} /> : null
 }
 
-export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops, changeStamp = 0 }: {
   bridge: CrosshairBridge & CrosshairExportBridge
   assets: ProfileAssetBridge
   isDemo?: boolean
   isActive?: boolean
+  /** Bumped by the workspace when Quick import or a restore changed the game; the list is read again when this page is next shown. */
+  changeStamp?: number
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
   /** Files dragged in from outside the app. Only the active section reacts. */
@@ -69,6 +72,7 @@ export function CrosshairPage({ bridge, assets, isDemo = false, isActive = true,
   const [query, setQuery] = useState('')
   const { toast, tone, hide, show } = useToast(state.message ? msg(state.message) : null)
   useEffect(() => { if (isActive && state.phase === 'idle') void controller.load() }, [isActive, controller, state.phase])
+  useReloadOnChange(changeStamp, isActive, state, controller.load)
   // Leaving the section closes whichever sheet is open (decision A). Each sheet follows the
   // controller's choice, so the choice itself is cleared rather than left to reopen it.
   useEffect(() => {

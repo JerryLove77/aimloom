@@ -6,7 +6,8 @@ import { AudioPage } from '../audio/AudioPage'
 import { CrosshairPage } from '../crosshair/CrosshairPage'
 import { EnemyPage } from '../enemy/EnemyPage'
 import { ExplorePage } from '../explore/ExplorePage'
-import { isAnyDialogOpen } from '../ui/Dialog'
+import { Dialog, isAnyDialogOpen } from '../ui/Dialog'
+import { Button } from '../ui/Button'
 import { SettingsState, WorkspaceStatus, type CustomizeSection, type SettingsStorage, type WorkspaceSection } from './WorkspaceShell'
 import { ReportSheet } from './ReportSheet'
 import { createReportController } from './report-controller'
@@ -14,7 +15,7 @@ import { readAccount } from './account'
 import { resolveGameRoot } from '../section/game-root'
 import { createFavoritesStore } from '../section/favorites'
 import { noFileDrops, type FileDropSource } from './file-drop'
-import { browserStorage, useLang } from '../i18n'
+import { browserStorage, useLang, useT } from '../i18n'
 import { readUpdatesEnabled } from './updates'
 import { readBetaEnabled, writeBetaEnabled } from './beta'
 import type { AppInfo, InstallerBridge, UpdateCheck } from '../bridge/contracts'
@@ -37,6 +38,22 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
     setSectionState(next)
     if (next !== 'explore') setLastCustomize(next)
   }, [])
+  const t = useT()
+  // Quick import and a restore change the game under pages that already listed it. Each bump makes
+  // the sections read again the next time they are shown, and Profile forget its cached theme list.
+  const [changeStamp, setChangeStamp] = useState(0)
+  const gameChanged = useCallback(() => setChangeStamp(n => n + 1), [])
+  // The native shell refuses to close the window while a job runs or its result is unknown, and
+  // says so with this event. 备份与恢复 answers it with its own dialog (it can check the result);
+  // every other page is answered here.
+  const [closeWarning, setCloseWarning] = useState(false)
+  const restoreOpen = installer !== null
+  useEffect(() => {
+    if (restoreOpen) return
+    const blocked = () => setCloseWarning(true)
+    window.addEventListener('kvk-close-blocked', blocked)
+    return () => { window.removeEventListener('kvk-close-blocked', blocked); setCloseWarning(false) }
+  }, [restoreOpen])
   const [profileUnsaved, setProfileUnsaved] = useState(false)
   const [anchor, setAnchor] = useState<HTMLElement | null>(null)
   const [update, setUpdate] = useState<UpdateCheck | null>(null)
@@ -104,28 +121,34 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
     checkGame()
   }
   const updateDot = update?.newer === true && !everOpened
-  const rootOverlay = reportOpen ? <ReportSheet
-    controller={reportController}
-    account={readAccount(storage)}
-    langChoice={choice}
-    lang={lang}
-    gameFound={gameFound}
-    onOpenLogs={bridge.openLogs.bind(bridge)}
-    onClose={() => setReportOpen(false)}
-  /> : null
+  const rootOverlay = <>
+    {reportOpen ? <ReportSheet
+      controller={reportController}
+      account={readAccount(storage)}
+      langChoice={choice}
+      lang={lang}
+      gameFound={gameFound}
+      onOpenLogs={bridge.openLogs.bind(bridge)}
+      onClose={() => setReportOpen(false)}
+    /> : null}
+    <Dialog open={closeWarning} title={t('installer.closeWarning.title')} onClose={() => setCloseWarning(false)}>
+      <p>{t('installer.closeWarning.body')}</p>
+      <div className="ki-dialog-actions"><Button data-safe-focus variant="primary" onClick={() => setCloseWarning(false)}>{t('installer.closeWarning.keepOpen')}</Button></div>
+    </Dialog>
+  </>
   return <WorkspaceStatus.Provider value={{ profileUnsaved, lastCustomize }}>
     <SettingsState.Provider value={{
       anchor, open: (a: HTMLElement) => { setAnchor(a); setEverOpened(true) }, close: () => { const a = anchor; setAnchor(null); a?.focus() },
       storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge), openExplore: bridge.openExplore.bind(bridge),
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
-      <ProfilesApp bridge={profileBridge} assets={assetBridge} favorites={favorites} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
-      <ThemePage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'theme'} section={section} onSelect={setSection} fileDrops={fileDrops} />
-      <AudioPage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} />
-      <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} />
-      <EnemyPage bridge={bridge} isDemo={isDemo} isActive={installer === null && section === 'enemy'} section={section} onSelect={setSection} fileDrops={fileDrops} />
-      <ExplorePage bridge={bridge} storage={storage} isDemo={isDemo} isActive={installer === null && section === 'explore'} section={section} onSelect={setSection} onOpenRestore={openRestore} fileDrops={fileDrops} />
-      {installer ? <InstallerApp bridge={bridge} isDemo={isDemo} onBack={() => setInstaller(null)} onSendReport={openReport} onOpenLogs={bridge.openLogs.bind(bridge)} overlays={rootOverlay} /> : null}
+      <ProfilesApp bridge={profileBridge} assets={assetBridge} favorites={favorites} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} changeStamp={changeStamp} />
+      <ThemePage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'theme'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />
+      <AudioPage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />
+      <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />
+      <EnemyPage bridge={bridge} isDemo={isDemo} isActive={installer === null && section === 'enemy'} section={section} onSelect={setSection} fileDrops={fileDrops} changeStamp={changeStamp} />
+      <ExplorePage bridge={bridge} storage={storage} isDemo={isDemo} isActive={installer === null && section === 'explore'} section={section} onSelect={setSection} onOpenRestore={openRestore} onGameChanged={gameChanged} fileDrops={fileDrops} />
+      {installer ? <InstallerApp bridge={bridge} isDemo={isDemo} onBack={() => setInstaller(null)} onGameChanged={gameChanged} onSendReport={openReport} onOpenLogs={bridge.openLogs.bind(bridge)} overlays={rootOverlay} /> : null}
     </SettingsState.Provider>
   </WorkspaceStatus.Provider>
 }

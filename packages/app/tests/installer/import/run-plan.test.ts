@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { runPlan } from '../../../src/section/run-plan'
+import { runPlan, waitForJob } from '../../../src/section/run-plan'
 
 const bridge = (jobs: { state: string; result?: { status: string } | null; error?: { code: string; message: string } | null }[]) => {
   const executed: unknown[] = []
@@ -28,5 +28,24 @@ describe('runPlan', () => {
     const error = { code: 'PLAN_STALE', message: 'changed' }
     expect(await runPlan(bridge([{ state: 'failed', error }]), 'op', 'plan')).toEqual({ kind: 'failed', error })
     expect(await runPlan(bridge([{ state: 'finished', result: { status: 'recovery-required' } }]), 'op', 'plan')).toEqual({ kind: 'incomplete', status: 'recovery-required' })
+  })
+
+  it('keeps polling past one minute until the job is terminal', async () => {
+    vi.useFakeTimers()
+    let polls = 0
+    const b = { execute: async () => ({}), job: async () => (++polls < 400 ? { state: 'running' } : { state: 'finished', result: { status: 'completed' } }) }
+    const outcome = runPlan(b, 'op', 'plan')
+    await vi.advanceTimersByTimeAsync(400 * 250)
+    expect(await outcome).toEqual({ kind: 'completed' })
+    expect(polls).toBe(400)
+    vi.useRealTimers()
+  })
+
+  it('treats a failed poll after an accepted execute as unknown, but a refused execute still throws', async () => {
+    const polling = { execute: async () => ({}), job: async (): Promise<never> => { throw new Error('ipc down') } }
+    expect(await waitForJob(polling, 'op', 'plan')).toMatchObject({ state: 'unknown' })
+    expect(await runPlan(polling, 'op', 'plan')).toEqual({ kind: 'unknown' })
+    const refused = { execute: async (): Promise<never> => { throw new Error('refused') }, job: async () => ({ state: 'running' }) }
+    await expect(waitForJob(refused, 'op', 'plan')).rejects.toThrow('refused')
   })
 })

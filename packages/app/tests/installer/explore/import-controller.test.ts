@@ -144,4 +144,20 @@ describe('Quick import controller after a failed add', () => {
     await ctl.add()
     expect(ctl.getState()).toMatchObject({ phase: 'done', unresolved: true })
   })
+
+  it('caps picked paths at 64 like a drop, keeping the idle state and saying why', async () => {
+    const { bridge, ctl } = setup()
+    const plan = vi.spyOn(bridge, 'planImport')
+    await ctl.choose(Array.from({ length: 65 }, (_, i) => `C:\\Pack\\${i}.json`))
+    expect(plan).not.toHaveBeenCalled()
+    expect(ctl.getState()).toMatchObject({ phase: 'idle', paths: [], error: { key: 'import.drop.tooManyImport', params: { max: 64 } } })
+  })
+
+  it('a failed pick keeps the idle phase and publishes the error for the page to show', async () => {
+    const { bridge, ctl } = setup()
+    bridge.pickFiles = async () => { throw new Error('dialog failed') }
+    await ctl.pick('files', 'en')
+    expect(ctl.getState()).toMatchObject({ phase: 'idle' })
+    expect(ctl.getState().error).not.toBeNull()
+  })
 })

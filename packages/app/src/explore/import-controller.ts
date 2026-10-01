@@ -1,4 +1,4 @@
-import type { FileRow, InstallerBridge, Preview, Progress } from '../bridge/contracts'
+import { MAX_IMPORT_PATHS, type FileRow, type InstallerBridge, type Preview, type Progress } from '../bridge/contracts'
 import type { Lang, Msg } from '../i18n'
 import { createStore } from '../section/controller'
 import { errorMsg } from '../section/issue-text'
@@ -115,6 +115,8 @@ export function createImportController(bridge: ImportBridge, storage: GameRootSt
     /** New paths from a drop or a picker: a new choice, planned from scratch. */
     async choose(paths: string[]): Promise<void> {
       if (locked() || !paths.length) return
+      // The same cap a drop gets (`routeDrop`); the choice stays as it was, with the reason shown.
+      if (paths.length > MAX_IMPORT_PATHS) { publish({ error: { key: 'import.drop.tooManyImport', params: { max: MAX_IMPORT_PATHS } } }); return }
       publish({ ...IDLE_IMPORT, gameRoot: getState().gameRoot, candidates: getState().candidates, phase: 'locating', paths })
       await locateThenPlan()
     },

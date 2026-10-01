@@ -226,7 +226,6 @@ fn installer_execute_blocking(
             return jobs.reserve(input);
         }
     }
-    let worker = state.worker()?;
     let (root, kind) = {
         let jobs = state.jobs.lock().unwrap();
         (
@@ -257,6 +256,16 @@ fn installer_execute_blocking(
     }
     // The root is deliberately recovered from the validated preview rather than the UI request.
     debug_assert!(!root.is_empty());
+    // The worker is obtained only after the job is reserved. If it cannot be had, nothing was
+    // sent, so the job is a plain failure (never `unknown`, which would lock the UI until a
+    // reconcile that cannot answer) and the caller reads it like any other failed job.
+    let worker = match state.worker() {
+        Ok(worker) => worker,
+        Err(issue) => {
+            state.jobs.lock().unwrap().mark_failed(&input.operation_id, issue);
+            return state.jobs.lock().unwrap().get(&input.operation_id);
+        }
+    };
     if let Err(issue) = worker.execute(&input) {
         state.jobs.lock().unwrap().mark_unknown(&input.operation_id, issue);
     }
@@ -463,6 +472,26 @@ mod tests {
         request.plan_id = "different-plan".into();
         let issue = installer_execute_blocking(&runtime, request).unwrap_err();
         assert_eq!(issue.code, ErrorCode::PlanStale);
+    }
+
+    #[test]
+    fn an_execute_whose_worker_cannot_be_obtained_is_a_failed_job_not_an_unknown_one() {
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
+        runtime.jobs.lock().unwrap().record_plan("plan-1".into(), "C:\\Game".into(), PreviewKind::Install);
+        let request = ExecuteRequest {
+            operation_id: "op-1".into(), plan_id: "plan-1".into(),
+            confirmation: Confirmation::Install, allow_conflicts: false,
+        };
+        // Nothing reached a worker, so the answer is a settled failure that unlocks the page.
+        let job = installer_execute_blocking(&runtime, request.clone()).unwrap();
+        assert_eq!(job.state, super::super::protocol::JobState::Failed);
+        assert!(job.error.is_some());
+        assert!(runtime.can_close(), "a job that never started must not hold the window open");
+        // A repeat returns the same job; a changed repeat is still PLAN_STALE.
+        assert_eq!(installer_execute_blocking(&runtime, request.clone()).unwrap().state, super::super::protocol::JobState::Failed);
+        let mut changed = request;
+        changed.allow_conflicts = true;
+        assert_eq!(installer_execute_blocking(&runtime, changed).unwrap_err().code, ErrorCode::PlanStale);
     }
 
     fn add_preview(rows: serde_json::Value) -> Value {

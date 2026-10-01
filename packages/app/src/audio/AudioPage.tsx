@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useReloadOnChange } from '../section/use-reload-on-change'
 import { Button } from '../ui/Button'
 import { Notice } from '../ui/Notice'
 import { WorkspaceShell, type WorkspaceSection } from '../workspace/WorkspaceShell'
@@ -20,13 +21,15 @@ import './audio.css'
 
 const LIST_EVENTS: AudioEvent[] = ['kill', 'spawn']
 
-export function AudioPage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+export function AudioPage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops, changeStamp = 0 }: {
   bridge: AudioBridge
   assets: ProfileAssetBridge
   /** The starred sounds, listed first; absent: no stars. */
   favorites?: FavoritesStore | undefined
   isDemo?: boolean
   isActive?: boolean
+  /** Bumped by the workspace when Quick import or a restore changed the game; the list is read again when this page is next shown. */
+  changeStamp?: number
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
   /** Files dragged in from outside the app. Only the active section reacts. */
@@ -55,6 +58,7 @@ export function AudioPage({ bridge, assets, favorites, isDemo = false, isActive 
   // and useSyncExternalStore drops its own subscription on unmount.
   useEffect(() => () => preview.stop(), [preview])
   useEffect(() => { if (isActive && state.phase === 'idle') void controller.load() }, [isActive, controller, state.phase])
+  useReloadOnChange(changeStamp, isActive, state, controller.load)
   // The page always has an event open, so the editor column is never empty.
   useEffect(() => { if (state.phase === 'ready' && !state.event) controller.open('kill') }, [state.phase, state.event, controller])
   // Auditioning is local and temporary: leaving the event or the section stops it.

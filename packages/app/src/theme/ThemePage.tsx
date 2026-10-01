@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
+import { useReloadOnChange } from '../section/use-reload-on-change'
 import { Button } from '../ui/Button'
 import { Notice } from '../ui/Notice'
 import { WorkspaceShell, type WorkspaceSection } from '../workspace/WorkspaceShell'
@@ -19,13 +20,15 @@ import './theme.css'
 
 const PER_PAGE = 12
 
-export function ThemePage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+export function ThemePage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops, changeStamp = 0 }: {
   bridge: ThemeBridge
   assets: ProfileAssetBridge
   /** The starred themes, shown first; absent: no stars. */
   favorites?: FavoritesStore | undefined
   isDemo?: boolean
   isActive?: boolean
+  /** Bumped by the workspace when Quick import or a restore changed the game; the list is read again when this page is next shown. */
+  changeStamp?: number
   section: WorkspaceSection
   onSelect: (section: WorkspaceSection) => void
   /** Files dragged in from outside the app. Only the active section reacts. */
@@ -45,6 +48,7 @@ export function ThemePage({ bridge, assets, favorites, isDemo = false, isActive 
   // Favourites first, then the engine's order; the search, the pages and the added-theme jump all read this order.
   const themes = useMemo(() => sortFavoritesFirst(state.themes, theme => theme.file, fav.names), [fav.names, state.themes])
   useEffect(() => { if (isActive && state.phase === 'idle') void controller.load() }, [isActive, controller, state.phase])
+  useReloadOnChange(changeStamp, isActive, state, controller.load)
   useEffect(() => { setPage(0) }, [state.themes, query])
   // A theme that was just added is selected; turn to the page it landed on.
   useEffect(() => {

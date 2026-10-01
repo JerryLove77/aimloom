@@ -86,6 +86,17 @@ describe('the product is named Aimloom wherever a player can see it', () => {
     expect(en).toMatch(/cannot be opened by 0\.1\.5/)
   })
 
+  it('the release pair says to uninstall 0.1.5 first and that its Profiles are not read', () => {
+    const zh = read(repo, 'scripts/installer/test-build/channels/release/使用说明.txt')
+    const en = read(repo, 'scripts/installer/test-build/channels/release/README.txt')
+    expect(zh).toMatch(/0\.1\.5[^\n]*先卸载旧版/)
+    expect(zh).toMatch(/0\.1\.5[^\n]*读不了[^\n]*删除后重新创建/)
+    expect(zh).toMatch(/0\.1\.5 也打不开/)
+    expect(en).toMatch(/0\.1\.5 or earlier: uninstall the old version first/)
+    expect(en).toMatch(/Profiles saved by 0\.1\.5[\s\S]*not read\s+by this version[\s\S]*recreate them/)
+    expect(en).toMatch(/cannot be opened by 0\.1\.5/)
+  })
+
   it('only the test readme calls the build a test', () => {
     expect(read(repo, 'scripts/installer/test-build/channels/test/使用说明.txt')).toContain('测试版')
     expect(read(repo, 'scripts/installer/test-build/channels/release/使用说明.txt')).not.toContain('测试')

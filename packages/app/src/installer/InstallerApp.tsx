@@ -20,11 +20,13 @@ import './styles.css';
  * 备份与恢复 and its help, opened from Explore's third card (beta2). The install wizard that
  * lived here was replaced by Quick import on Explore (`explore/`).
  */
-export function InstallerApp({ bridge, isDemo = false, onBack, onSendReport, onOpenLogs, overlays }: {
+export function InstallerApp({ bridge, isDemo = false, onBack, onGameChanged, onSendReport, onOpenLogs, overlays }: {
   bridge: InstallerBridge;
   isDemo?: boolean;
   /** Returns to Explore, where this page is opened from. */
   onBack?: () => void;
+  /** A restore completed or its unknown result was checked: the sections' lists are stale. */
+  onGameChanged?: () => void;
   /**
    * Help page Feedback block (spec §2.3): Quick import has no Settings button, so `Workspace`
    * hands these down directly instead of through `SettingsState`. Absent in a standalone render
@@ -75,6 +77,8 @@ export function InstallerApp({ bridge, isDemo = false, onBack, onSendReport, onO
       document.querySelector<HTMLInputElement>('.kvk-installer input[aria-invalid="true"]')?.focus();
   }, [state.issue]);
   useEffect(() => { const blocked = () => setCloseWarning(true); window.addEventListener('kvk-close-blocked', blocked); return () => window.removeEventListener('kvk-close-blocked', blocked); }, []);
+  const finishedJob = state.job && (state.job.state === 'reconciled' || (state.job.state === 'finished' && state.job.result?.status === 'completed')) ? state.job.operationId : null;
+  useEffect(() => { if (finishedJob) onGameChanged?.(); }, [finishedJob]); // eslint-disable-line react-hooks/exhaustive-deps
   const locked = !canLeaveOperation(state.job);
   const preview = state.preview;
   const execution = state.route !== 'help' && state.step === 4 && state.job !== null;
