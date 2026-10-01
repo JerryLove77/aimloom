@@ -14,8 +14,8 @@ Aimloom test build {{VERSION}}
 
 [Before you use it]
 - Close KovaaK before applying a background, sounds, a crosshair or an enemy look.
-- Every write to the game files is backed up first; open Quick import from the Explore
-  page ("Open Quick import") to undo it.
+- Every write to the game files is backed up first; open "Backup and restore" from the
+  Explore page to undo it.
 
 [Please report problems]
 Include these three things:

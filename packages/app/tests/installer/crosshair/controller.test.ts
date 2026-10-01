@@ -237,7 +237,7 @@ describe('crosshair controller', () => {
     atJob.setNewName('mine')
     expect(await atJob.addGenerated({ label: '准星代码', pngBase64: wire(), width: 3, height: 2 })).toBe(false)
     const atJobError = atJob.getState().error
-    expect(atJobError ? renderMsg('zh', atJobError) : null).toMatch(/一键拖入/)
+    expect(atJobError ? renderMsg('zh', atJobError) : null).toMatch(/备份与恢复/)
   })
 })
 

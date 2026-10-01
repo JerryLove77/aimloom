@@ -36,7 +36,10 @@ Setup and the portable ZIP are both attached to the
   game's Skin Browser does.
 - **Profile** — save a theme and a set of sounds as one named combination, apply it in one
   step, or apply it and start the game through Steam.
-- **Quick import** — bring a whole pack of files into the game at once.
+- **Quick import** — on the Explore page, drop packs, folders or single files at once, see what
+  will be added, then add it to the game; nothing already in the game is overwritten, and personal
+  settings are imported only when ticked under Advanced (from 0.1.6-beta.2; in 0.1.5 it installs a
+  pack by category).
 
 Every change is backed up before it is written and can be undone. Aimloom never touches your
 sensitivity, DPI or FOV, and it only changes the game while the game is closed: KovaaK rewrites its
@@ -60,22 +63,27 @@ settings when it exits, so a change made while it runs would be lost.
 ## Requirements
 
 - Windows 10 or 11, x64.
-- **PowerShell 7** — included in Aimloom (its `pwsh` folder): nothing to install, and the
-  PowerShell on your system is left alone.
-- WebView2, which Windows 10/11 normally has.
+- **WebView2** — built into Windows 11; on Windows 10 the installer downloads and installs it if
+  it is missing (the portable ZIP does not: if its window does not open, install the Microsoft
+  Edge WebView2 Runtime).
+- v0.1.5 includes PowerShell 7 (its `pwsh` folder), so there is nothing to install; from 0.1.6
+  no PowerShell is needed.
 
 Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose *More info* →
 *Run anyway*. The download page gives each file's SHA-256 so you can check what you got.
 
 ## Status
 
-- **In development (not released):** v0.1.6 — the sidebar becomes two big pages, Customize
-  (Profile, Theme, Sounds, Crosshair, Enemy) and Explore; Quick import moves into Explore, and a
-  config pack folder dropped on Explore opens it with the folder filled in; Explore also opens the
-  website's explorer. A new engine written in Rust reads and writes the game's files, so the download
-  no longer carries PowerShell 7 and is a few MB; a Profile becomes a complete snapshot (the theme
-  and every sound) and a new one starts as the game is. None of this is released yet; it ships as
-  0.1.6-beta.1 first.
+- **In development (not released):** 0.1.6-beta.2 — Quick import becomes drop, look, add: drop
+  several packs, folders or files at once; whatever the game already has is skipped with the
+  reason, and personal settings sit under a collapsed Advanced. Backup and restore becomes Explore's
+  third card, and themes and sounds can be starred, with favourites listed first. So far this has
+  run only in tests, not in the real game.
+- **Beta:** 0.1.6-beta.1 (2026-09-30) — the sidebar becomes two big pages, Customize (Profile,
+  Theme, Sounds, Crosshair, Enemy) and Explore; a new engine written in Rust reads and writes the
+  game's files, so the download no longer carries PowerShell 7 and is a few MB; a Profile becomes a
+  complete snapshot (the theme and every sound). A pre-release on GitHub, offered as the beta on
+  the website's download page.
 - **Released:** v0.1.5 (2026-09-30) — PowerShell 7 comes with Aimloom, so nothing else needs
   installing (the installer is about 81 MB, the portable ZIP about 114 MB); Theme, Sounds and
   Crosshair open the website's Explore page; a linked Steam account's display name can be changed.

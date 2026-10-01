@@ -208,7 +208,7 @@ impl Session {
                 let revision = revision_arg(args)?;
                 let context = self.engine.context(game_root, &self.local_data_root)?;
                 if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
-                    return Err(EngineError::coded("RECOVERY_REQUIRED", "上一次操作没有完成，请先到「一键拖入」处理，再添加文件 (an unfinished operation must be recovered first)。", "The last operation did not finish. Resolve it in Quick import before adding files."));
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "上一次操作没有完成，请先到「备份与恢复」处理，再添加文件 (an unfinished operation must be recovered first)。", "The last operation did not finish. Resolve it in Backup and restore before adding files."));
                 }
                 let add = super::files::file_add_plan(&self.engine, &context, kind, source_path, source_sha, file)?;
                 Ok(self.record_plan(context, &add.plan.clone(), revision, Adapter::FileAdd(add)))

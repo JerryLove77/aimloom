@@ -239,10 +239,10 @@ Set by the user on 2026-09-30 (「beta2主要做修改一键拖入和fav系统�
 | ID | Deliverable | Status |
 |---|---|---|
 | ENGINE-RUST 5 | PowerShell removed from `main` (above) | **Done** on `feat/beta2` |
-| INSTALL-REDESIGN | **Quick import becomes drag, look, add** on Explore: drop or pick any mix of pack folders, kind folders and loose files; one summary of what will be added; names already in the game are **skipped and the player is told** (Quick import never overwrites a theme, sound or crosshair); personal settings (`UI.json`, `Palette.ini`, `PrimaryUserSettings.json`) only under a collapsed 「高级」, off by default; the game must be closed (rules unchanged); a ZIP is still refused | Decided by the user 2026-09-30; Figma before UI |
-| RESTORE-CARD | The existing restore page becomes the third card on Explore (备份与恢复); no new restore | Decided by the user 2026-09-30 |
-| FAVORITES | **A star on Theme and Sounds**, starred items first, also in the Profile sheets; kept in the data folder so an uninstall does not lose them | Decided by the user 2026-09-30; Figma before UI |
-| SITE-COPY | The website stops saying PowerShell is included and describes WebView2 truthfully | Ships with the beta2 release |
+| INSTALL-REDESIGN | **Quick import becomes drag, look, add** on Explore: drop or pick any mix of pack folders, kind folders and loose files; one summary of what will be added; names already in the game are **skipped and the player is told** (Quick import never overwrites a theme, sound or crosshair); personal settings (`UI.json`, `Palette.ini`, `PrimaryUserSettings.json`) only under a collapsed 「高级」, off by default; the game must be closed (rules unchanged); a ZIP is still refused. The Chinese name becomes 快速导入 (user, 2026-09-30) | Figma approved 2026-09-30; **built** on `feat/beta2` (engine `planImport`, Explore view); tests only, not yet seen in the real game |
+| RESTORE-CARD | The existing restore page becomes the third card on Explore (备份与恢复); no new restore | **Built** on `feat/beta2` |
+| FAVORITES | **A star on Theme and Sounds**, starred items first, also in the Profile sheets; kept in the data folder so an uninstall does not lose them | Figma approved 2026-09-30; **built** on `feat/beta2`; tests only |
+| SITE-COPY | The website stops saying PowerShell is included and describes WebView2 truthfully; restore is described for both 0.1.5 and 0.1.6 | Written on `feat/beta2`; deployed only with the beta2 release |
 
 Deleting game files from the App is a later idea, not part of beta2 (user, 2026-09-30).
 

@@ -19,7 +19,7 @@ a beta build, opted into from Settings; it can be rough, so please report anythi
 - The Profile format changed: Profiles saved by 0.1.5 (the old format) are not read by this
   version, so recreate them; Profiles made in this beta cannot be opened by 0.1.5.
 - Close KovaaK before writing to the game files.
-- Every write is backed up first; open Quick import from the Explore page ("Open Quick import") to undo it.
+- Every write is backed up first; open "Backup and restore" from the Explore page to undo it.
 - Backups and Profiles are kept in %LOCALAPPDATA%\Aimloom, shared with the stable App.
 - Which crosshair you use is chosen in the game.
 - The language follows Windows; change it in Settings at the bottom left.

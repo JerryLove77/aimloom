@@ -20,7 +20,7 @@ describe('errorMsg', () => {
     expect(rendered.zh).toMatch(/预览之后发生了改变/)
     expect(rendered.en).toMatch(/changed after preview/)
     // A job error is a plain object, not an InstallerFailure.
-    expect(render(errorMsg({ code: 'RECOVERY_REQUIRED', message: 'An unfinished operation must be recovered.' }, fallback)).zh).toMatch(/一键拖入/)
+    expect(render(errorMsg({ code: 'RECOVERY_REQUIRED', message: 'An unfinished operation must be recovered.' }, fallback)).zh).toMatch(/备份与恢复/)
     expect(render(errorMsg({ code: 'BUSY', message: 'an installer operation is still unresolved' }, fallback)).zh).toMatch(/还没有结束/)
   })
 

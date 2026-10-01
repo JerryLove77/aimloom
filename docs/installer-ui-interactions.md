@@ -1,32 +1,30 @@
 # Installer UI interaction contract
 
-Scope: Profile workspace and legacy React installer utility; Chinese (`zh-CN`), offline desktop tool. The shared workspace product contract owns section/state boundaries. Installer contracts live in `bridge/contracts.ts`, `installer/state.ts`, and `installer/controller.ts`; Profile contracts live in `profiles/model.ts`, `bridge/profiles.ts`, and `profiles/editor.ts`. Visual intent and exact runtime token ownership are in [DESIGN.md](../DESIGN.md#6-installer-workspace--approved-2026-09-06-evolution).
+Scope: the workspace, Quick import on Explore and the backup and restore page; bilingual (`zh-CN` / English), offline desktop tool. The shared workspace product contract owns section/state boundaries. Quick import's contracts live in `bridge/contracts.ts` and `explore/import-controller.ts`; the restore page's in `installer/state.ts` and `installer/controller.ts`; Profile contracts live in `profiles/model.ts`, `bridge/profiles.ts`, and `profiles/editor.ts`. Visual intent and exact runtime token ownership are in [DESIGN.md](../DESIGN.md#6-installer-workspace--approved-2026-09-06-evolution).
 
 ## Canonical UI map
 
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
-| CRUD | `controller.ts`, `profiles/editor.ts` and the engine worker | v0.1.x file-operation design and shared DTO | Preview / confirmed installation / confirmed recovery; no row-level edits or implicit deletion | Controller, GUI protocol and full distribution fixtures |
-| Form | `components/PathField.tsx` | This interaction contract and UI design spec | Native labelled text field, direct edit plus native folder picker; invalid text linked with `aria-describedby`, first invalid field focused; cancel preserves path | Root flow tests, `LocationPage` |
+| CRUD | `explore/import-controller.ts`, `installer/controller.ts`, `profiles/editor.ts` and the engine worker | v0.1.x file-operation design and shared DTO | Preview / confirmed import / confirmed recovery; no row-level edits or implicit deletion | Controller tests, the Rust import and protocol tests |
+| Form | `components/PathField.tsx` (restore page), `section/LocatePanel.tsx` (Quick import and the sections) | This interaction contract and UI design spec | Native labelled text field, direct edit plus native folder picker; invalid text linked with `aria-describedby`, first invalid field focused; cancel preserves path | Root flow tests |
 | Select/Listbox | Native `<select>` in Profile audio component editor | Profile workspace section below | Six fixed audio events; OS-owned popup; real label and keyboard semantics | `page.test.tsx` and browser audio-event checks |
-| Selection | `components/CategoryCard.tsx` | This interaction contract and UI design spec | Native checkbox over whole card; empty categories disabled; no implicit Primary opt-in | `components.test.tsx`, `views.test.tsx` |
+| Selection | Quick import's 高级 checkbox (`explore/ExplorePage.tsx`) | This interaction contract | Collapsed by default; one native checkbox names the personal settings files; ticking re-plans; no implicit opt-in | `workspace.test.tsx`, `import-controller.test.ts` |
 | Search and table | `components/FileTable.tsx`, `file-query.ts` | This interaction contract and UI design spec | Local immediate substring search, clear returns focus, 30 rows/page, overwrite-first sorting, full paths accessible; filter changes view, not plan | `file-query.test.tsx` |
 | Dialog | `ui/Dialog.tsx` | This interaction contract and UI design spec | App-owned modal, safe initial focus, Tab/Shift-Tab wrap, Escape closes, focus returns to trigger | `components.test.tsx` |
 | Conflict | `components/ConflictDialog.tsx` | This interaction contract and UI design spec | Explicit separate permission, no remembered checkbox; unowned files never offer overwrite | `components.test.tsx` |
 | Feedback | `ui/Notice.tsx`, `installer/pages/ExecutionPage.tsx` | This interaction contract and UI design spec | Persistent inline notices with icon/text; final outcomes from execution result; no critical toast-only state | `views.test.tsx` |
 | Scrollbar | `styles.css` | This interaction contract and UI design spec | Global installer baseline; main scroll owner on desktop, bounded table scroll, natural narrow document flow | Browser desktop/narrow inspection |
-| Navigation | `ProfilesApp.tsx`, `InstallerApp.tsx`, `components/StepRail.tsx` | This interaction contract and UI design spec | Two top-level pages: 更改配置 / Customize (the five sections) and 探索 / Explore; Quick import, opened from Explore, retains three routes and four install steps; heading focus on transition; preserve choices; running/unknown locks navigation | Root flow tests and browser |
+| Navigation | `WorkspaceShell.tsx`, `explore/ExplorePage.tsx`, `InstallerApp.tsx` | This interaction contract and UI design spec | Two top-level pages: 更改配置 / Customize (the five sections) and 探索 / Explore; Quick import is a view of Explore; 备份与恢复, opened from Explore, has two routes (restore, help); heading focus on transition; preserve choices; running/unknown locks navigation | Root flow tests and browser |
 | Window lifecycle | `window-lifecycle.ts`, native shell | This interaction contract and UI design spec | Running/unknown block departure; browser final unload guard; native blocked-close event opens app-owned dialog; reconciliation uses bridge | `window-lifecycle.test.tsx`, native tests |
 
 ## Operations and states
 
-Location → validate game/backup ownership → validate pack → choose content. No writes occur on discovery, folder selection, navigation, or preview. Changing game, pack, or categories invalidates the plan. Discovery with multiple candidates requires an explicit radio choice.
+Quick import: choose (drop or pick) → find the game → one summary → 加进游戏. No writes occur on discovery, folder selection, navigation, or preview. A new choice, another game folder or the Advanced switch plans again, and an older plan's answer never overwrites a newer one. Discovery with multiple candidates requires an explicit choice. Themes, sounds and crosshairs are added only when the game does not have them; personal settings are an explicit opt-in under 高级, with the sensitivity/DPI/FOV replacement warning beside the checkbox.
 
-Themes, sounds, and crosshairs are independently selected. UI, palette, and Primary are explicit opt-ins. Primary shows its sensitivity/DPI/FOV replacement warning at selection and review. Pack counts and skipped files come from the catalog.
+The restore preview displays the full engine plan and aggregate counts. Search, filtering, and pagination are local session state, not URL state, because local paths are private and the app is not a shareable browser workflow. Native text input preserves IME composition; there is no Enter-to-execute shortcut.
 
-Preview displays the full engine plan and aggregate counts. Search, filtering, and pagination are local session state, not URL state, because local paths are private and the app is not a shareable browser workflow. Native text input preserves IME composition; there is no Enter-to-execute shortcut.
-
-Install confirmation sends the reviewed plan once. Stale plans preserve input and require new review. Running operations show named real stages, and numeric progress only when both completed and total are reported. The controller prevents duplicate execution and keeps uncertain completion locked until reconciliation. React StrictMode effect replay cannot permanently dispose the live controller; actual unmount disposes subscriptions and polling after a microtask remount check, without terminating a worker.
+Confirmation sends the reviewed plan once. Stale plans preserve input and require new review. Running operations show named real stages, and numeric progress only when both completed and total are reported. The controller prevents duplicate execution and keeps uncertain completion locked until reconciliation. React StrictMode effect replay cannot permanently dispose the live controller; actual unmount disposes subscriptions and polling after a microtask remount check, without terminating a worker.
 
 Recovery is independent of the configuration pack. Records are newest first with interrupted batches first, 30 records per page. The first-protection entry means each recorded file’s state before its first tool modification. Empty, missing first-protection, damaged-backup, conflict, and unowned-file states have distinct guidance. Recovery results return to the backup route; the result batch ID remains available for the new restore record.
 
@@ -55,13 +53,44 @@ names Scheme and Audio, which are also the folder, key and wire names.
   Profile first and set off by a rule. While one of them is active the five are listed under the
   heading; on Explore they collapse to one 更改配置 entry that returns to the section last used
   and carries Profile's 未保存 marker.
-- **探索 / Explore** has two cards. 打开一键拖入 opens Quick import unchanged; its return action
-  (← 返回探索) goes back to Explore and is blocked during unresolved operations. 在官网浏览 opens
-  aimloom.dev's explorer in the browser, best effort, like the explore links under each list.
+- **探索 / Explore** has three cards (beta2, 2026-09-30). **快速导入 / Quick import** is the drop
+  zone with 选择文件 and 选择文件夹. **社区配置** opens aimloom.dev's explorer in the browser, best
+  effort, like the explore links under each list. **备份与恢复** opens the restore page, whose
+  return action (← 返回探索) goes back to Explore and is blocked during unresolved operations.
   Browsing and downloading inside the App come later (ROADMAP APP-EXPLORE).
-- A **config pack folder dropped on Explore** opens Quick import with that folder in the pack
-  field and checks it at once; the player still confirms every step, and nothing is written
-  before the install is confirmed.
+- **Anything dropped on Explore** (1 to 64 paths) opens Quick import's summary for them; see
+  "Quick import — beta2" below.
+
+### Quick import — beta2, 2026-09-30
+
+Designed in Figma (APP-NAV file, page "beta2", approved 2026-09-30). Quick import is a view of
+Explore inside the workspace shell, titled 快速导入 with ← 返回探索 beside the title.
+
+- **Choose.** A drop anywhere on Explore, 选择文件 (several theme, sound and PNG files) or 选择文件夹.
+  A new choice replaces the current one; while an add runs or an outcome is unresolved, a drop is
+  refused and the pickers are disabled.
+- **Find the game** with `resolveGameRoot`, as every section does; only when that fails does the
+  view ask for the folder (`LocatePanel`).
+- **Summary** (`planImport`): 「将加入 …」 counts by kind; 已在游戏里或重复，跳过 lists each skipped
+  file with its reason (the engine's own words for an unusable file); 无法识别 lists the rest,
+  with 先解压 for a ZIP. Both lists are `<details>`, open only when nothing would be added.
+  高级：也导入个人设置 appears only when the choice carries settings files, collapsed, and its
+  checkbox re-plans. The one primary action, 加进游戏, is disabled when nothing would be added.
+- **Refusals before the summary** have their own notices: the game is running (我已退出，重新检查
+  plans again) and an unfinished batch (打开备份与恢复).
+- **Adding** shows the engine's progress; the result names what was added, links to Theme,
+  Sounds and Crosshair, and says that crosshairs are switched in the game. An unknown outcome is
+  never success: the view stays locked with 检查结果 until reconciled. A refused execute returns
+  to the summary with the reason; nothing was written.
+
+### Favourites — beta2, 2026-09-30
+
+A star (`FavoriteStar`, `aria-pressed`, named 收藏「…」 / Favourite "…") on each readable Theme tile,
+each Sounds row, the Profile theme sheet's tiles and the game sounds in the Profile sound sheet.
+It is its own button beside the tile or row, never inside it, and never changes a selection or a
+draft (state 4 and 5 are untouched). Starred files are listed first, before search and pages; the
+rest keep the engine's order. A star changes at once and is put back with a message if the save
+fails. The list lives in the data folder (`favorites.json`), so it survives an uninstall.
 
 ### The five kinds of state
 
@@ -106,10 +135,10 @@ Rules:
 
 - **Only the active section reacts.** A file of another section's kind is refused with a toast
   that names the section that takes it; more than one file, or an unsupported type, is refused
-  the same way. Profile and Quick import never take a file. Explore takes one config pack
-  folder: a path is not a folder for certain, so Explore takes anything that is not a theme,
-  sound or crosshair file and lets Quick import's catalog check refuse what is not a pack. A
-  `.zip` is refused everywhere with 先解压, since Quick import reads folders only. While a section is applying
+  the same way. Profile and the restore page never take a file. Explore takes up to 64
+  paths of any kind and hands them to Quick import, whose engine tells folders from files and
+  lists what it does not recognise. A `.zip` dropped alone is refused everywhere with 先解压;
+  among other paths it is listed as not recognised. While a section is applying
   or unresolved, a drop is refused rather than queued.
 - **While the file hovers**, a decorative overlay (`.ws-drop-overlay`, `aria-hidden`, no pointer
   events, no animation under reduced motion) says whether the drop will be accepted.
@@ -118,7 +147,7 @@ Rules:
   own folder and is never chosen by the player. 取消 and Escape write nothing; Escape is blocked
   while the add is running.
 - **Only 添加到游戏 writes**, through the engine's `planFileAdd`: a byte-for-byte copy that never
-  overwrites, is backed up as a batch and can be undone from 安装与恢复. The sheet sends the
+  overwrites, is backed up as a batch and can be undone from 备份与恢复. The sheet sends the
   SHA-256 of the bytes it previewed, and a source that changed since is refused.
 - **Refusals are shown before anything is sent** where the UI can know them: a taken file name
   (case-insensitive), a sound whose name exists under the other extension, a theme whose

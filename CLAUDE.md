@@ -8,7 +8,8 @@ keep an untracked `CLAUDE.local.md` beside it with notes that are not part of th
 **Aimloom** is a Windows-only, bilingual (中文 / English) Tauri App for KovaaK's players, served
 from https://aimloom.dev. Its sidebar has two top-level pages: **更改配置 / Customize**, which holds
 five sections — **Profile, Theme, Sounds, Crosshair, Enemy** as a player sees them — and
-**探索 / Explore**, which opens **Quick import** (「一键拖入」) and the website's explorer. Every write to the game goes
+**探索 / Explore**, which holds **Quick import** (「快速导入」, 「一键拖入」 before 0.1.6-beta.2), **备份与恢复 / Backup
+and restore** and a way into the website's explorer. Every write to the game goes
 through the engine: the Rust engine in `packages/app/src-tauri/src/engine/`, which the App runs as
 `Aimloom.exe --worker` (from 0.1.6; 0.1.5 and earlier ran PowerShell). What ships next, in order, is in `ROADMAP.md`. Aimloom does not try
 to change a running game: KovaaK keeps its settings in memory and rewrites
@@ -23,7 +24,8 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
 - **Sections.** Code, folders (`src/scheme`, `src/audio`), dictionary keys, CSS classes, wire ops
   and Profile JSON fields say `scheme` / `audio`, while the player sees Theme / Sounds. The Chinese
   page titles 「背景」 and 「音效」 and the sentences about what a page changes (应用背景 / "Apply
-  background") keep their wording. Code, routes and file names for Quick import say `installer`.
+  background") keep their wording. Quick import's code lives in `explore/` (`import-controller.ts`)
+  and the wire op is `planImport`; the restore page's code, routes and file names say `installer`.
 - **Profile** owns saved combinations and its draft. The other sections own the game's current
   configuration. A Profile is a **complete snapshot** (format v2, 2026-09-30): `theme` and all six
   sound events as {name, path} records, kill and spawn possibly empty (no sound), each MBS event
@@ -139,7 +141,7 @@ on the Windows runner's own PowerShell 7. If `cargo` is missing from a non-inter
 React  packages/app/src/
   <page>/controller.ts   single owner of that page's state transitions; pages are presentation only
   bridge/native.ts       @tauri-apps/api invoke      bridge/demo.ts   browser fake, no filesystem
-        │  8 engine commands: installer_read / _profile / _execute / _job / _reconcile / _pick_folder / _pick_file / _open_backup
+        │  9 engine commands: installer_read / _profile / _execute / _job / _reconcile / _pick_folder / _pick_file / _pick_files / _open_backup
         │  + 9 that never touch the engine: _report_preview / _report_send / _account_resolve / _update_check / _open_logs / _open_download / _open_explore / _launch_game / _app_info
 Rust   packages/app/src-tauri/src/installer/
   commands.rs     validates every op in AND out; owns plan→gameRoot ownership and operationId idempotency
@@ -157,7 +159,7 @@ The front end is split by who the code is for: `main.tsx` (entry), `bridge/` (ev
 the wire types in `contracts.ts`, and the browser fakes), `ui/` (domain-free components and
 `tokens.css`), `section/` (what several pages share: game-folder lookup, the plan runner, adding
 an outside file, failure text), `workspace/` (the shell: window, sidebar, Settings, reports),
-`installer/` (Quick import only), `explore/` (the Explore page), `profiles/`, `scheme/`,
+`installer/` (备份与恢复 and its help), `explore/` (the Explore page and Quick import), `profiles/`, `scheme/`,
 `audio/`, `enemy/`, `crosshair/` (one folder per section) and `i18n/` (dictionaries only).
 
 **The engine is Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST). It implements
@@ -227,6 +229,19 @@ ten-case parity table: `is_english` (`protocol.rs`, which the Rust engine also c
   existing target, a sound stem already present under the other extension, and a `themeName` that
   is already installed. A code-generated crosshair goes into the game the same way, through
   `planCrosshairAdd`.
+- **Quick import adds and never overwrites.** `planImport` (`engine/import.rs`) reads up to 64
+  dropped or picked paths (pack folders, kind folders, one level of extraction nesting, loose
+  files), stages every accepted file in the data folder at plan time and plans that staging folder
+  as an ordinary pack, so execute re-checks every hash. A theme, sound or crosshair already in the
+  game, an installed `themeName`, a sound stem twin, a repeat in the drop or an unusable file is a
+  `skip` row with its `reason` (and, for `invalid`, a bilingual `detail`). Personal settings
+  (`UI.json`, `Palette.ini`, `PrimaryUserSettings.json`) are planned only with `includeSettings`
+  and are the only rows that may `replace`; `commands.rs` (`check_import_preview`) refuses any
+  other shape before the plan is recorded. It requires the game closed, at preview and at write.
+- **Favourites** (`profileFavoritesRead` / `profileFavoritesSave`, `engine/favorites.rs`) are the
+  starred Theme and Sounds file names in `<data root>/favorites.json`: strict JSON, at most 500
+  distinct names each, written through a checked temporary file. A damaged file is reported and
+  never overwritten. They ride `installer_profile` and touch neither the game nor the backups.
 - **One write bypasses the plan path, deliberately.** `exportFile` (`export` in `engine/files.rs`) is the secondary "save a
   copy elsewhere" for a code-generated PNG: it writes to a user-chosen folder. It must stay
   `CreateNew` (never overwrite), refuse any target inside the game directory, enforce safe names
@@ -279,7 +294,7 @@ UTF-16LE. The refusal prints only the rule and a hit count, never the matched te
 
 ## Conventions
 
-- **UI:** `packages/app/src/ui/tokens.css` owns the Quick import page's tokens (DESIGN.md
+- **UI:** `packages/app/src/ui/tokens.css` owns the restore page's tokens (DESIGN.md
   §6 mirrors the values; legacy `index.css` is not imported). They are light and carry the
   workspace's colours: `tests/installer/theme.test.tsx` fails if a colour differs between the two
   roots, so change a colour in both files. The **workspace** redeclares the same `--ki-*` names in
