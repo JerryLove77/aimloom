@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useContext, useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { Button } from '../ui/Button'
 import { Notice } from '../ui/Notice'
 import { Toast, useToast } from '../ui/status'
@@ -54,9 +54,9 @@ export function ExplorePage({ bridge, storage, isDemo = false, isActive = true, 
   const { lang } = useLang()
   const { openExplore } = useContext(SettingsState)
   const { toast, tone, hide, show } = useToast(null)
-  // The storage is read when the controller is made; a new accessor object each render must not reset the page.
-  const storageRef = useRef(storage)
-  const controller = useMemo(() => createImportController(bridge, storageRef.current), [bridge])
+  // One controller for the page's life: it holds the lock on an unresolved add, which a cache
+  // (useMemo) may not keep. The storage is read when it is made.
+  const [controller] = useState(() => createImportController(bridge, storage))
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)
   const locked = state.phase === 'adding' || state.unresolved
   const heading = useRef<HTMLHeadingElement>(null)

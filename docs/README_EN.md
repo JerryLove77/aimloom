@@ -42,7 +42,8 @@ Setup and the portable ZIP are both attached to the
   pack by category).
 
 Every change is backed up before it is written and can be undone. Aimloom never touches your
-sensitivity, DPI or FOV, and it only changes the game while the game is closed: KovaaK rewrites its
+sensitivity, DPI or FOV (unless you tick personal settings under Advanced in Quick import, which
+are backed up first too), and it only changes the game while the game is closed: KovaaK rewrites its
 settings when it exits, so a change made while it runs would be lost.
 
 ## The website, aimloom.dev
