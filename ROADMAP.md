@@ -140,7 +140,15 @@ user on 2026-09-22 and written down in
 | **Releases over 25 MiB on R2**; the site offers **only the Setup**, the portable ZIP stays on GitHub (user, 2026-09-24) | **Built** 2026-09-24 (`release:upload`, the deploy's live check, the Download page) |
 | **Feedback tickets on the site**: a side panel from a fixed button and the footer; the changelog moves to the footer (user, 2026-09-24) | **Built** 2026-09-24: `/api/tickets`, migration 0004, workerd tests, checked in a browser with Turnstile's test key. Ships with 0.1.5. Not designed in Figma |
 
-## Next: v0.1.6 — APP-NAV and the Rust engine
+## Released: v0.1.6 — APP-NAV, the Rust engine, drag-and-add Quick import (2026-10-01)
+
+Stable 0.1.6 was built once from `03be57d` (main after PR #31): the Setup (3,388,455 bytes) on
+dl.aimloom.dev, the Setup and the portable ZIP (4,718,595 bytes) on the GitHub release. The site
+recommends 0.1.6 and offers no beta. Observed: the suites on the Mac and on the test PC at that
+commit, the packaged `Aimloom.exe --worker` answering its probes, and the served files' SHA-256.
+Not observed: the release build opened or used in the real game; the fixes made after beta.2
+have run only in tests (the list under "The review before stable" below).
+
 
 Set by the user on 2026-09-30 (「v016就先做app-nav和rust。瘦身，一键拖入和later都后面再说」): v0.1.6 is the
 new App shell and Rust's first release. **Rust takes over** (user, 2026-09-30: 「接管是指只有rust」):
@@ -247,7 +255,7 @@ switch); on 2026-09-30 the user chose a takeover instead:
 | 4 | **Rust takes over (v0.1.6)**: the App runs only Rust; no PowerShell in the Setup or ZIP; the Setup's PowerShell detection and winget offer go; reports send `engine: "rust"` and no PowerShell version; 0.1.6-beta.1 first, then stable | **0.1.6-beta.1 released** 2026-09-30 |
 | 5 | **PowerShell removed from the repository**: the PowerShell engine and its suites, the GUI worker and its request schema, CI's pinned PowerShell and the pin, the cross-engine test and its example worker, the legacy Python builders, the console wizard (`安装配置.cmd` / `恢复配置.cmd`, deleted), and the mentions that described them as live. The goldens stay, frozen, as the Rust engine's regression tests (the one-PR rule retires). The engine is kept on the maintainer's local branch `archive/powershell-engine` and in the history | Moved up by the user into 0.1.6-beta.2 (2026-09-30); **done** on `feat/beta2` |
 
-## v0.1.6-beta.2 — drag-and-add Quick import, favourites
+## Released in v0.1.6: 0.1.6-beta.2 — drag-and-add Quick import, favourites
 
 Set by the user on 2026-09-30 (「beta2主要做修改一键拖入和fav系统」). One branch, `feat/beta2`, one PR.
 
@@ -261,7 +269,7 @@ Set by the user on 2026-09-30 (「beta2主要做修改一键拖入和fav系统�
 
 Deleting game files from the App is a later idea, not part of beta2 (user, 2026-09-30).
 
-## v0.1.7 — the patch after 0.1.6
+## Next: v0.1.7 — the patch after 0.1.6
 
 Set by the user on 2026-10-01 (「beta3当成016的补丁去发」): there is no 0.1.6-beta.3; what would have
 been in it ships as a patch after stable 0.1.6. The version is 0.1.7, because the version rules

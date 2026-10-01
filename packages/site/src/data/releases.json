@@ -1,8 +1,54 @@
 {
   "schemaVersion": 1,
-  "recommended": "0.1.5",
-  "beta": "0.1.6-beta.2",
+  "recommended": "0.1.6",
+  "beta": null,
   "releases": [
+    {
+      "version": "0.1.6",
+      "status": "stable",
+      "date": "2026-10-01",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "WebView2"
+      ],
+      "bytes": 4718595,
+      "sha256": "768b506017a8e9d272b6a1afe89f1052309dcc31e7613f1fb7425fb12b688ba7",
+      "primaryUrl": "https://github.com/JerryLove77/aimloom/releases/download/v0.1.6/Aimloom-v0.1.6.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "Aimloom 改用 Rust 写的引擎读写游戏文件，不再需要 PowerShell 7，安装程序只有约 3 MB。左侧导航改成两页：「探索」（快速导入、备份与恢复、官网探索页）和「更改配置」（Profile、背景、音效、准星、敌人）。快速导入（原「一键拖入」）改成「拖入、看一眼、加进游戏」：一次可以拖入或选择多个配置包、文件夹和文件，按文件格式识别背景、音效和准星；已经在游戏里的不会被覆盖，跳过的每个文件都写明原因；个人设置（灵敏度、DPI、FOV 等）放在默认收起的「高级」里，勾选才导入。Profile 改成完整快照：记录背景和全部 6 个音效事件，新建时默认就是游戏当前的设置。背景和音效可以收藏，收藏的排在最前。相比测试版的修复：快速导入或恢复之后，各页的列表会重新读取；写入进行中关闭窗口，每个页面都会给出提示；Profile 页会说明旧版本保存的 Profile 读不了，并可以直接删除。",
+        "en": "Aimloom now reads and writes the game's files with an engine written in Rust, so PowerShell 7 is no longer needed and the installer is about 3 MB. The sidebar becomes two pages: Explore (Quick import, Backup and restore, and the website's explorer) and Customize (Profile, Theme, Sounds, Crosshair, Enemy). Quick import becomes drop, look, add: drop or choose several packs, folders and files at once; themes, sounds and crosshairs are recognised by their file format. Nothing already in the game is overwritten, and each skipped file says why. Personal settings (sensitivity, DPI, FOV and more) sit under a collapsed Advanced and are imported only when ticked. A Profile is now a complete snapshot of the theme and all six sound events, and a new one starts as the game is. Themes and sounds can be starred; favourites are listed first. Fixed since the betas: lists are read again after Quick import or a restore; closing the window during a write shows a notice on every page; the Profile page says that a Profile saved by an older version cannot be read and lets you delete it."
+      },
+      "knownIssues": {
+        "zh": [
+          "从 0.1.5 或更早版本升级：请先在 Windows 设置里卸载旧版本的 Aimloom，再安装这个版本。卸载不会删除你的备份。已经装了 0.1.6 测试版的，直接运行这个安装程序即可。",
+          "0.1.5 及更早版本存的 Profile 这个版本读不出来，需要在 Profile 页删除后重新创建；在 0.1.6 里新建的 Profile，装回 0.1.5 后也打不开。",
+          "同一次导入里如果有同名的音效（比如同时有 .wav 和 .ogg）或内部名称相同的主题，只加入第一个：游戏按名字识别它们，两个都放进去哪个都用不了。",
+          "如果你的桌面或下载文件夹由 OneDrive 同步，从那里拖入或添加的文件会被拒绝（提示不允许链接）：先把文件复制到不在 OneDrive 里的文件夹再导入。",
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。"
+        ],
+        "en": [
+          "Coming from 0.1.5 or earlier: uninstall the older Aimloom in Windows Settings first, then install this version. Uninstalling keeps your backups. If you have a 0.1.6 beta installed, just run this installer.",
+          "Profiles saved by 0.1.5 or earlier cannot be read by this version: delete them on the Profile page and create them again. Profiles made in 0.1.6 cannot be opened after going back to 0.1.5.",
+          "If one import holds two sounds with the same name (a .wav and an .ogg, say) or two themes with the same internal name, only the first is added: the game tells them apart by name, so with both neither would work.",
+          "If OneDrive syncs your Desktop or Downloads folder, files dropped or added from there are refused (\"Links and junctions are not allowed\"): copy them to a folder outside OneDrive first.",
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice."
+        ]
+      },
+      "setup": {
+        "url": "https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6.exe",
+        "bytes": 3388455,
+        "sha256": "cc08d2579103632140d49b2b53d17b45e49562a3226e954edc1c6521a4595cf7"
+      }
+    },
     {
       "version": "0.1.6-beta.2",
       "status": "beta",
