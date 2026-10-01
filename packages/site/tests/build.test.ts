@@ -66,31 +66,29 @@ describe('build output', () => {
   it('home hides the showcase while showcase.json is empty', () => {
     expect(page('zh')).not.toContain('id="showcase"')
   })
-  it('home offers the 0.1.5 Setup from the site\'s R2 bucket, in the hero and the closing block, and no ZIP', () => {
+  it('home offers the 0.1.6 Setup from the site\'s R2 bucket, in the hero and the closing block, and no ZIP', () => {
     for (const r of ['zh', 'en']) {
       const html = page(r)
       expect(html.match(/data-download-state="stable"/g)?.length, r).toBe(2)
-      expect(html.match(/<a[^>]+href="https:\/\/dl\.aimloom\.dev\/releases\/Aimloom-Setup-v0\.1\.5\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
+      expect(html.match(/<a[^>]+href="https:\/\/dl\.aimloom\.dev\/releases\/Aimloom-Setup-v0\.1\.6\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
       expect(html, r).not.toMatch(/href="[^"]+\.zip"/)
     }
     expect(page('en')).toContain('One setup for each way you train.')
   })
-  it('download page offers only Setups (the stable one and the beta), with their hashes, and no ZIP', () => {
+  it('download page offers only the stable Setup, with its hash, and no ZIP; no beta section while there is no beta', () => {
     // The portable ZIP is on the GitHub release only (user, 2026-09-24): two download buttons made
-    // it it easy to take the wrong one. The beta (0.1.6-beta.2) has its own section.
+    // it it easy to take the wrong one.
     for (const r of ['zh/download', 'en/download']) {
       const html = page(r)
       expect(html, r).toContain('data-download-state="stable"')
       expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual([
-        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.5.exe"',
-        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.2.exe"',
+        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6.exe"',
       ])
-      expect(html, r).toContain('dc7fcab8cddbca172c9a5c6d3969b85bc49c5fcc236703b8e9e8ab95efca0901')
-      expect(html, r).toContain('ae57706f9b51e9275db91fa083745d9350aec133825e7683463d95fb188740cd')
-      expect(html, r).not.toContain('cb34187ef962fb56d0a383acbf58fce7baa32728e38debfba13c329dd1e8d5b8')
+      expect(html, r).toContain('cc08d2579103632140d49b2b53d17b45e49562a3226e954edc1c6521a4595cf7')
+      expect(html, r).not.toContain('768b506017a8e9d272b6a1afe89f1052309dcc31e7613f1fb7425fb12b688ba7')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')
-      expect(html, r).toContain('id="beta"')
+      expect(html, r).not.toContain('id="beta"')
       expect(html, r).not.toMatch(/github\.com/)
     }
   })

@@ -146,11 +146,32 @@ describe('the committed releases.json', () => {
       expect(releases.releases.find(x => x.version === version)?.status, version).toBe('withdrawn')
     }
   })
-  it('recommends 0.1.5, stable, with the Setup on the site\'s R2 bucket and the portable ZIP on GitHub', () => {
-    // Both files were built once from fe2a80e with the path-remapping build; the Setup was then
-    // installed in a clean Windows Sandbox on the tester's PC. The Setup is not byte-reproducible,
-    // so these facts name the one file that exists. Change them only together.
+  it('recommends 0.1.6, stable, with the Setup on the site\'s R2 bucket and the portable ZIP on GitHub', () => {
+    // Both files were built once from 03be57d (main after PR #31) with the path-remapping build.
+    // The Setup is not byte-reproducible, so these facts name the one file that exists. Change
+    // them only together.
+    expect(releases.beta).toBeNull()
     const r = recommendedRelease(releases)
+    expect(r).toMatchObject({
+      version: '0.1.6', status: 'stable', bytes: 4_718_595, mirrorUrl: null,
+      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.6/Aimloom-v0.1.6.zip',
+      sha256: '768b506017a8e9d272b6a1afe89f1052309dcc31e7613f1fb7425fb12b688ba7',
+      setup: {
+        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6.exe', bytes: 3_388_455,
+        sha256: 'cc08d2579103632140d49b2b53d17b45e49562a3226e954edc1c6521a4595cf7',
+      },
+    })
+    expect(r?.contents).toEqual(['Aimloom.exe', '使用说明.txt', 'README.txt', 'VERSION.txt'])
+    expect(r?.requires).toEqual(['WebView2'])
+    // A player who skips the notes still has to learn that 0.1.5 goes first and its Profiles are not read.
+    expect(r?.knownIssues.zh.join('')).toMatch(/卸载旧版本[\s\S]*重新创建/)
+    expect(r?.knownIssues.en.join(' ')).toMatch(/uninstall the older Aimloom[\s\S]*create them again/)
+    expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
+  })
+  it('keeps 0.1.5 as a stable record: the last release with PowerShell 7 inside', () => {
+    // Both files were built once from fe2a80e with the path-remapping build; the Setup was then
+    // installed in a clean Windows Sandbox on the tester's PC.
+    const r = releases.releases.find(x => x.version === '0.1.5')
     expect(r).toMatchObject({
       version: '0.1.5', status: 'stable', bytes: 114_017_809, mirrorUrl: null,
       primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.5/Aimloom-v0.1.5.zip',
@@ -168,10 +189,8 @@ describe('the committed releases.json', () => {
     expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
     expect(r?.knownIssues.zh.length).toBeGreaterThan(0)
   })
-  it('offers 0.1.6-beta.2 as the beta: the Setup on R2 and the ZIP on GitHub', () => {
-    // Built once from 36e06f1 (main after PR #27); the Setup is not byte-reproducible, so these
-    // facts name the one file that exists. Change them only together.
-    expect(releases.beta).toBe('0.1.6-beta.2')
+  it('keeps 0.1.6-beta.2 as a record of the second beta: the Setup on R2 and the ZIP on GitHub', () => {
+    // Built once from 36e06f1 (main after PR #27).
     const r = releases.releases.find(x => x.version === '0.1.6-beta.2')
     expect(r).toMatchObject({
       status: 'beta', bytes: 4_703_591, mirrorUrl: null,
@@ -205,7 +224,7 @@ describe('the committed releases.json', () => {
   it('lists no release that was never published', () => {
     expect(releases.releases.map(r => r.version)).not.toContain('0.1.0')
   })
-  it('names 0.1.6-beta.2 as the beta, newer than the stable recommendation', () => {
-    expect(betaRelease(releases)?.version).toBe('0.1.6-beta.2')
+  it('offers no beta once 0.1.6 is stable', () => {
+    expect(betaRelease(releases)).toBeNull()
   })
 })
