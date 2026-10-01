@@ -14,7 +14,7 @@ const files = (dir: string): string[] => readdirSync(dir).flatMap(name => {
 
 /**
  * The product is Aimloom. What the player sees — the window, the EXE, the app identifier and the
- * data folder — says so. Code identifiers (`kvk-engine.ps1`, `@kvk/app`, `.kvk-installer`) stay:
+ * data folder — says so. Code identifiers (`@kvk/app`, `.kvk-installer`, `Get-Kvk…`) stay:
  * a repo-wide rename is deliberately not done.
  */
 describe('the product is named Aimloom wherever a player can see it', () => {
@@ -117,10 +117,5 @@ describe('the product is named Aimloom wherever a player can see it', () => {
 
   it('the packagers name the EXE Aimloom.exe', () => {
     expect(read(repo, 'scripts/installer/test-build/package-test-build.ps1')).toContain("'Aimloom.exe'")
-    expect(read(repo, 'scripts/installer/build-gui-release.py')).toContain("'Aimloom.exe'")
-  })
-
-  it('the v0.1 readme points at the Aimloom data folder', () => {
-    expect(read(repo, 'scripts/installer/使用说明.txt')).toContain('%LOCALAPPDATA%\\Aimloom\\backups')
   })
 })

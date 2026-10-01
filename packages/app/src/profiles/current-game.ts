@@ -73,7 +73,7 @@ export function snapshotFromGame(current: CurrentGame | null): { theme: ProfileF
 
 /**
  * Whether the game is set to exactly what this Profile records, so its row says 「当前使用」.
- * The same resolution `planProfileApply` performs (`kvk-profile-apply.ps1`): each recorded path
+ * The same resolution `planProfileApply` performs (`engine/settings.rs`): each recorded path
  * is matched to an installed file by full path, case-insensitive, and that file's name is what
  * the game would hold. Every part is compared, the theme and all six events, an empty list
  * included. Unknown parts of the game (a list that could not be read, a path no longer

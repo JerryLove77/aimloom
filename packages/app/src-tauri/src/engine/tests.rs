@@ -1,8 +1,9 @@
 //! End-to-end cases for the Rust engine, run through the same request boundary the worker
-//! uses. They port `scripts/installer/tests/enemy.test.ps1` and the Enemy block of
-//! `gui-protocol.test.ps1`, plus the write-core cases of `engine.test.ps1` that the Enemy path
-//! reaches (rollback, recovery-required, the lock). Exact parity with PowerShell is the job of
-//! the goldens (`tests/engine_parity.rs`); these pin behaviour on any host, the Mac included.
+//! uses. They were ported from the retired PowerShell suites (`enemy.test.ps1`, the Enemy block
+//! of `gui-protocol.test.ps1`, and the write-core cases of `engine.test.ps1` that the Enemy path
+//! reaches: rollback, recovery-required, the lock). Parity with the retired PowerShell engine is
+//! the job of the frozen goldens (`tests/engine_parity.rs`); these pin behaviour on any host, the
+//! Mac included.
 
 use std::cell::{Cell, RefCell};
 use std::path::{Path, PathBuf};
@@ -392,3 +393,35 @@ fn a_panicking_request_gets_an_engine_error_reply_and_a_normal_one_passes_throug
     assert_eq!(fine, Json::str("ok"));
 }
 
+
+/// The engine's half of "one data folder, never two" (`Engine::data_root`; the App's half is
+/// `data_root` in `installer/worker.rs`): `Aimloom` wins when it exists, an old
+/// `KovaaKConfigInstaller` is adopted by one rename when it does not, and a fresh machine gets
+/// `Aimloom` without anything being created by the lookup.
+#[test]
+fn the_engine_adopts_the_old_data_folder_once_and_never_splits_the_data() {
+    let base = super::paths::temp_dir_without_links().join(format!("kvk-data-root-{}", super::store::new_guid()));
+    let engine = |local: &Path| super::store::Engine::new(Box::new(TestHost(Rc::new(HostState::default())))).data_root(&local.to_string_lossy()).unwrap();
+
+    let fresh = base.join("fresh");
+    std::fs::create_dir_all(&fresh).unwrap();
+    assert!(engine(&fresh).ends_with("Aimloom"));
+    assert_eq!(std::fs::read_dir(&fresh).unwrap().count(), 0, "resolving creates nothing");
+
+    let old = base.join("old");
+    std::fs::create_dir_all(old.join("KovaaKConfigInstaller/backups")).unwrap();
+    std::fs::write(old.join("KovaaKConfigInstaller/backups/marker.txt"), b"first protection").unwrap();
+    assert!(engine(&old).ends_with("Aimloom"));
+    assert_eq!(std::fs::read(old.join("Aimloom/backups/marker.txt")).unwrap(), b"first protection");
+    assert!(!old.join("KovaaKConfigInstaller").exists(), "the old folder was renamed, not copied");
+
+    let both = base.join("both");
+    std::fs::create_dir_all(both.join("Aimloom")).unwrap();
+    std::fs::create_dir_all(both.join("KovaaKConfigInstaller")).unwrap();
+    std::fs::write(both.join("KovaaKConfigInstaller/marker.txt"), b"left alone").unwrap();
+    assert!(engine(&both).ends_with("Aimloom"));
+    assert_eq!(std::fs::read(both.join("KovaaKConfigInstaller/marker.txt")).unwrap(), b"left alone");
+    assert!(!both.join("Aimloom/marker.txt").exists());
+
+    let _ = std::fs::remove_dir_all(&base);
+}

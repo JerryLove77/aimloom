@@ -1,6 +1,6 @@
-//! The typed request boundary (`gui/kvk-gui-service.ps1`) and the JSONL loop
-//! (`gui/kvk-gui-worker.ps1`). Replies are built in the PowerShell service's exact shape and key
-//! order, since the parity goldens compare them as written.
+//! The typed request boundary and the JSONL loop (ported from the PowerShell `gui/kvk-gui-service.ps1`
+//! and `gui/kvk-gui-worker.ps1`). Replies keep that service's exact shape and key order, since
+//! the frozen parity goldens compare them as written.
 
 use std::io::{BufRead, Write};
 

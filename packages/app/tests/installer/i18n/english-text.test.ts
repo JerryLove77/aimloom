@@ -8,11 +8,10 @@ import { errorMsg } from '../../../src/section/issue-text'
  * The shared parity table (ROADMAP I18N-NAMES). "English-safe" means: no CJK outside
  * double-quoted spans, where a span is `"…"` (ASCII double quotes, no nesting) and an odd
  * number of quotes leaves the unclosed tail *outside*. The same ten cases, in the same
- * order and with the same verdicts, are asserted on all three layers:
- *   PowerShell  scripts/installer/tests/engine.test.ps1  ('the English-safe parity table …')
+ * order and with the same verdicts, are asserted on both layers:
  *   Rust        packages/app/src-tauri/src/installer/protocol.rs  (english_parity_table)
  *   TypeScript  this file
- * Changing one row means changing all three.
+ * Changing one row means changing both.
  */
 export const PARITY: readonly (readonly [name: string, text: string, english: boolean])[] = [
   ['plain English', 'The source file was not found.', true],

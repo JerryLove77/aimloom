@@ -6,7 +6,7 @@
 #   scripts/dev/check.sh ts --project installer controller   # that vitest filter, then typecheck
 #   scripts/dev/check.sh rust [cargo test filter]    # cargo test --features installer-ui
 #   scripts/dev/check.sh site                        # npm run test:site (Node + workerd suites)
-#   scripts/dev/check.sh py                          # the installer and privacy unittest suites
+#   scripts/dev/check.sh py                          # the privacy unittest suites
 #   scripts/dev/check.sh privacy                     # denyscan --tree and gitleaks, as CI runs them
 #   scripts/dev/check.sh all                         # ts rust site py privacy
 #
@@ -68,8 +68,6 @@ step_site() {
 }
 
 step_py() {
-  run "py installer" '^Ran |^OK|^FAILED' \
-    python3 -m unittest discover -s scripts/installer/tests -p 'test_*.py'
   run "py privacy" '^Ran |^OK|^FAILED' \
     python3 -m unittest discover -s scripts/privacy -p 'test_*.py'
 }

@@ -99,7 +99,7 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 | Path | What it is |
 |---|---|
 | `packages/app` | The App: React front end, Tauri (Rust) shell |
-| `scripts/installer` | The PowerShell reference engine (what the Rust engine's parity goldens come from) and the console wizard; the App does not run it from 0.1.6 |
+| `scripts/installer` | The Windows build and packaging scripts, and the parity goldens the Rust engine is held to (left by the old PowerShell engine, now frozen) |
 | `packages/app/src-tauri/src/engine` | The Rust engine — every write to the game goes through it (`Aimloom.exe --worker`, from 0.1.6) |
 | `packages/crosshair` | CS2 / VALORANT crosshair code parser and PNG renderer |
 | `packages/theme` | Theme parsing and the background preview (shared by the App and site) |
@@ -122,15 +122,11 @@ cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installe
 npm run test:site                         # the website: page build + the Worker (D1, R2, sign-in, uploads)
 ```
 
-The PowerShell suites need PowerShell 7 and run on Windows (CI runs all seventeen on every push):
+The packagers' suite needs PowerShell 7 and runs on Windows (CI runs it on every push):
 
 ```powershell
-pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
+pwsh -NoProfile -File scripts/installer/tests/package-build.test.ps1
 ```
-
-The release packages cannot be built from a Git checkout: the sound and crosshair assets they
-ship are not in the repository, and `scripts/installer/release-inventory.json` stops a build that
-lacks any of them.
 
 Enable the privacy pre-commit hook once per checkout (it scans staged changes for known
 identifiers and secrets before every commit; see `.githooks/pre-commit`):

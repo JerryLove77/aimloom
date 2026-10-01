@@ -46,9 +46,8 @@ pub fn has_cjk(text: &str) -> bool {
 /// may well be Chinese. An odd number of quotes leaves the unclosed tail outside, so a broken
 /// message can never smuggle an untranslated Chinese sentence through.
 ///
-/// `Test-KvkEnglishSafe` in `scripts/installer/kvk-engine.ps1` and `isEnglishText` in
-/// `packages/app/src/i18n/index.ts` implement the same rule; a shared ten-case parity table
-/// pins the three together.
+/// `isEnglishText` in `packages/app/src/i18n/index.ts` implements the same rule; a shared
+/// ten-case parity table pins the two together.
 pub fn is_english(text: &str) -> bool {
     if text.trim().is_empty() {
         return false;
@@ -456,7 +455,7 @@ struct PlanSchemeArgs { game_root: String, file: String, revision: u64 }
 struct PlanEnemyArgs { game_root: String, shape: EnemyShape, model: String, skin: String, revision: u64 }
 
 /// `model`/`skin` are game content (the Skin Browser's own strings), never a path: bounded and
-/// control-character-free, matching how the catalog rows in `kvk-enemy.ps1` are written.
+/// control-character-free, matching how the engine's catalog rows (`engine/enemy.rs`) are written.
 fn validate_enemy_skin_string(value: &str) -> Result<(), Issue> {
     let invalid = value.is_empty() || value.chars().count() > 64 || value.chars().any(|c| c.is_control());
     if invalid {
@@ -662,9 +661,8 @@ mod tests {
     use super::*;
 
     /// The shared parity table (ROADMAP I18N-NAMES): the same ten cases, in the same order and
-    /// with the same verdicts, as `packages/app/tests/installer/i18n/english-text.test.ts` and
-    /// `scripts/installer/tests/engine.test.ps1` ("the English-safe parity table …"). Changing one
-    /// row means changing all three.
+    /// with the same verdicts, as `packages/app/tests/installer/i18n/english-text.test.ts`.
+    /// Changing one row means changing both.
     const PARITY: &[(&str, &str, bool)] = &[
         ("plain English", "The source file was not found.", true),
         ("Chinese sentence", "找不到来源文件。", false),

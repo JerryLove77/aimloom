@@ -90,8 +90,8 @@ function parseAudio(value: unknown, complete: boolean): ProfileAudio {
 
 function parse(value: unknown, complete: boolean): TrainingProfile {
   // Version 1 (with "keep current" gaps and the old crosshair/enemy records) is refused: the
-  // user chose no data migration (2026-09-30). The same rule is in `installer/profiles.rs`,
-  // `protocol.schema.json` and both engines.
+  // user chose no data migration (2026-09-30). The same rule is in `installer/profiles.rs`
+  // and the engine (`engine/profiles.rs`).
   const keys = ['schemaVersion', 'id', 'name', 'theme', 'audio']
   const input = object(value, keys, keys, 'profile.model.label.profile')
   if (input.schemaVersion !== 2) invalid('profile.model.unsupportedVersion')
