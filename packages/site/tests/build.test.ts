@@ -77,16 +77,16 @@ describe('build output', () => {
   })
   it('download page offers only Setups (the stable one and the beta), with their hashes, and no ZIP', () => {
     // The portable ZIP is on the GitHub release only (user, 2026-09-24): two download buttons made
-    // it easy to take the wrong one. The beta (0.1.6-beta.1) has its own section.
+    // it it easy to take the wrong one. The beta (0.1.6-beta.2) has its own section.
     for (const r of ['zh/download', 'en/download']) {
       const html = page(r)
       expect(html, r).toContain('data-download-state="stable"')
       expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual([
         'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.5.exe"',
-        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.1.exe"',
+        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.2.exe"',
       ])
       expect(html, r).toContain('dc7fcab8cddbca172c9a5c6d3969b85bc49c5fcc236703b8e9e8ab95efca0901')
-      expect(html, r).toContain('0d7a0c4dfc9b7fc963fe8cf1b17c0353ffcfdd267d7c201a3fa3b8e6f82d3658')
+      expect(html, r).toContain('ae57706f9b51e9275db91fa083745d9350aec133825e7683463d95fb188740cd')
       expect(html, r).not.toContain('cb34187ef962fb56d0a383acbf58fce7baa32728e38debfba13c329dd1e8d5b8')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')

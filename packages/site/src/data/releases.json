@@ -1,8 +1,52 @@
 {
   "schemaVersion": 1,
   "recommended": "0.1.5",
-  "beta": "0.1.6-beta.1",
+  "beta": "0.1.6-beta.2",
   "releases": [
+    {
+      "version": "0.1.6-beta.2",
+      "status": "beta",
+      "date": "2026-10-01",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "WebView2"
+      ],
+      "bytes": 4703591,
+      "sha256": "a4581b3e6479a583ea2a0411913f88a2f37d8da1d653ac1f8bbb23e5496f11a6",
+      "primaryUrl": "https://github.com/JerryLove77/aimloom/releases/download/v0.1.6-beta.2/Aimloom-v0.1.6-beta.2.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "快速导入（原「一键拖入」）改成「拖入、看一眼、加进游戏」：在「探索」页一次可以拖入或选择多个配置包、文件夹和文件，按文件格式识别背景、音效和准星；已经在游戏里的不会被覆盖，跳过的每个文件都写明原因；个人设置（灵敏度、DPI、FOV 等）放在默认收起的「高级」里，勾选才导入。「备份与恢复」成为探索页的第三张卡。背景和音效可以收藏，收藏的排在最前，在 Profile 里选择时也一样。修复：导入中途被打断后，恢复会清掉留下的临时文件。",
+        "en": "Quick import becomes drop, look, add: on Explore, drop or choose several packs, folders and files at once; themes, sounds and crosshairs are recognised by their file format. Nothing already in the game is overwritten, and each skipped file says why. Personal settings (sensitivity, DPI, FOV and more) sit under a collapsed Advanced and are imported only when ticked. Backup and restore is Explore's third card. Themes and sounds can be starred; favourites are listed first, also when choosing in a Profile. Fixed: restoring an import that was interrupted now removes the temporary copy it left."
+      },
+      "knownIssues": {
+        "zh": [
+          "请先在 Windows 设置里卸载旧版本的 Aimloom，再安装这个测试版。卸载不会删除你的备份。",
+          "0.1.5 及更早版本存的 Profile 这个版本读不出来，需要重新创建；在 0.1.6 测试版里新建的 Profile，装回 0.1.5 后也打不开。",
+          "同一次导入里如果有同名的音效（比如同时有 .wav 和 .ogg）或内部名称相同的主题，只加入第一个：游戏按名字识别它们，两个都放进去哪个都用不了。",
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。"
+        ],
+        "en": [
+          "Uninstall the older Aimloom in Windows Settings first, then install this beta. Uninstalling keeps your backups.",
+          "Profiles saved by 0.1.5 or earlier cannot be read by this version and must be created again; Profiles made in a 0.1.6 beta cannot be opened after going back to 0.1.5.",
+          "If one import holds two sounds with the same name (a .wav and an .ogg, say) or two themes with the same internal name, only the first is added: the game tells them apart by name, so with both neither would work.",
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice."
+        ]
+      },
+      "setup": {
+        "url": "https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.2.exe",
+        "bytes": 3378366,
+        "sha256": "ae57706f9b51e9275db91fa083745d9350aec133825e7683463d95fb188740cd"
+      }
+    },
     {
       "version": "0.1.6-beta.1",
       "status": "beta",

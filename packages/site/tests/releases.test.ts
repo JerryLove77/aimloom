@@ -168,18 +168,18 @@ describe('the committed releases.json', () => {
     expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
     expect(r?.knownIssues.zh.length).toBeGreaterThan(0)
   })
-  it('offers 0.1.6-beta.1 as the beta: Rust only, no PowerShell, the Setup on R2 and the ZIP on GitHub', () => {
-    // Built once from c876e60 (main after PR #25); the Setup is not byte-reproducible, so these
+  it('offers 0.1.6-beta.2 as the beta: the Setup on R2 and the ZIP on GitHub', () => {
+    // Built once from 36e06f1 (main after PR #27); the Setup is not byte-reproducible, so these
     // facts name the one file that exists. Change them only together.
-    expect(releases.beta).toBe('0.1.6-beta.1')
-    const r = releases.releases.find(x => x.version === '0.1.6-beta.1')
+    expect(releases.beta).toBe('0.1.6-beta.2')
+    const r = releases.releases.find(x => x.version === '0.1.6-beta.2')
     expect(r).toMatchObject({
-      status: 'beta', bytes: 4_652_876, mirrorUrl: null,
-      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.6-beta.1/Aimloom-v0.1.6-beta.1.zip',
-      sha256: '44fb9ed03fb04a64c5bd219408f9816833b1f65d807819e5bc736ce4b3194e66',
+      status: 'beta', bytes: 4_703_591, mirrorUrl: null,
+      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.6-beta.2/Aimloom-v0.1.6-beta.2.zip',
+      sha256: 'a4581b3e6479a583ea2a0411913f88a2f37d8da1d653ac1f8bbb23e5496f11a6',
       setup: {
-        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.1.exe', bytes: 3_348_047,
-        sha256: '0d7a0c4dfc9b7fc963fe8cf1b17c0353ffcfdd267d7c201a3fa3b8e6f82d3658',
+        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6-beta.2.exe', bytes: 3_378_366,
+        sha256: 'ae57706f9b51e9275db91fa083745d9350aec133825e7683463d95fb188740cd',
       },
     })
     expect(r?.contents).toEqual(['Aimloom.exe', '使用说明.txt', 'README.txt', 'VERSION.txt'])
@@ -188,6 +188,11 @@ describe('the committed releases.json', () => {
     expect(r?.knownIssues.zh.join('')).toContain('重新创建')
     expect(r?.knownIssues.en.join(' ')).toMatch(/created again/)
     expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
+  })
+  it('keeps 0.1.6-beta.1 as a record of the first Rust-only beta', () => {
+    const r = releases.releases.find(x => x.version === '0.1.6-beta.1')
+    expect(r).toMatchObject({ bytes: 4_652_876, sha256: '44fb9ed03fb04a64c5bd219408f9816833b1f65d807819e5bc736ce4b3194e66' })
+    expect(r?.setup?.sha256).toBe('0d7a0c4dfc9b7fc963fe8cf1b17c0353ffcfdd267d7c201a3fa3b8e6f82d3658')
   })
   it('keeps 0.1.4 as a stable record, served by the site itself', () => {
     const r = releases.releases.find(x => x.version === '0.1.4')
@@ -200,7 +205,7 @@ describe('the committed releases.json', () => {
   it('lists no release that was never published', () => {
     expect(releases.releases.map(r => r.version)).not.toContain('0.1.0')
   })
-  it('names 0.1.6-beta.1 as the beta, newer than the stable recommendation', () => {
-    expect(betaRelease(releases)?.version).toBe('0.1.6-beta.1')
+  it('names 0.1.6-beta.2 as the beta, newer than the stable recommendation', () => {
+    expect(betaRelease(releases)?.version).toBe('0.1.6-beta.2')
   })
 })
