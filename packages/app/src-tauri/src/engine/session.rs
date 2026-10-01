@@ -12,8 +12,8 @@ use crate::installer::protocol::MAX_LINE_BYTES;
 
 /// Every operation of protocol v=1. The ones this engine does not implement yet answer
 /// ENGINE_ERROR; the App never sends them here.
-const OPERATIONS: [&str; 29] = [
-    "discover", "locate", "catalog", "backups", "gameState", "planInstall", "planImport", "planRestore", "schemeList", "planScheme",
+const OPERATIONS: [&str; 27] = [
+    "discover", "locate", "backups", "gameState", "planImport", "planRestore", "schemeList", "planScheme",
     "audioList", "planAudio", "crosshairList", "planCrosshair", "planCrosshairAdd", "exportFile", "enemyList", "planEnemy",
     "planProfileApply", "planFileAdd", "execute", "profileList", "profileRead", "profileSave", "profileDelete",
     "profileAssetList", "profileAssetRead", "profileFavoritesRead", "profileFavoritesSave",
@@ -22,7 +22,6 @@ const OPERATIONS: [&str; 29] = [
 const PROFILE_OPERATIONS: [&str; 8] = ["profileList", "profileRead", "profileSave", "profileDelete", "profileAssetList", "profileAssetRead", "profileFavoritesRead", "profileFavoritesSave"];
 
 enum Adapter {
-    Install(super::txn::Plan),
     Enemy(enemy::EnemyPlan),
     Scheme(super::settings::SchemePlan),
     Audio(super::txn::Plan),
@@ -123,7 +122,7 @@ impl Session {
             Err(error) => {
                 let mut code = error.code.clone();
                 if code == "ENGINE_ERROR" && !error.classified {
-                    code = match op.as_str() { "locate" => "INVALID_PATH", "catalog" => "INVALID_PACK", "backups" | "planRestore" => "BACKUP_INVALID", _ => "ENGINE_ERROR" }.to_string();
+                    code = match op.as_str() { "locate" => "INVALID_PATH", "backups" | "planRestore" => "BACKUP_INVALID", _ => "ENGINE_ERROR" }.to_string();
                 }
                 let mut message = error.message.clone();
                 let mut english = english_text(&error.message, Some(&error.english()));
@@ -160,21 +159,6 @@ impl Session {
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
                 Ok(self.location(&context))
             }
-            "catalog" => {
-                assert_fields(args, &["packRoot"], "args")?;
-                let files = super::txn::pack_files(string_arg(args, "packRoot")?)?;
-                // Group-Object then Sort-Object Name: the fixed category names, alphabetically.
-                let mut categories: Vec<(String, i64)> = Vec::new();
-                for item in &files.items {
-                    match categories.iter_mut().find(|(c, _)| *c == item.category) { Some(entry) => entry.1 += 1, None => categories.push((item.category.clone(), 1)) }
-                }
-                categories.sort();
-                Ok(Json::object(vec![
-                    ("packRoot", Json::str(&files.root)),
-                    ("categories", Json::Array(categories.into_iter().map(|(c, n)| Json::object(vec![("category", Json::str(c)), ("count", Json::int(n))])).collect())),
-                    ("skipped", Json::Array(files.skipped.iter().map(Json::str).collect())),
-                ]))
-            }
             "schemeList" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
@@ -189,28 +173,6 @@ impl Session {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
                 super::lists::crosshair_list_json(&self.engine, &context)
-            }
-            "planInstall" => {
-                assert_fields(args, &["gameRoot", "packRoot", "categories", "revision"], "args")?;
-                self.plan = None;
-                let (game_root, pack_root) = (string_arg(args, "gameRoot")?, string_arg(args, "packRoot")?);
-                let Some(Json::Array(categories)) = args.get("categories") else {
-                    return Err(EngineError::coded("INVALID_PACK", "categories must be an array.", "categories must be an array."));
-                };
-                let revision = revision_arg(args)?;
-                let mut seen: Vec<String> = Vec::new();
-                for category in categories {
-                    let known = category.as_str().filter(|c| ["themes", "sounds", "crosshairs", "ui", "palette", "primary"].contains(c));
-                    let Some(category) = known else { return Err(EngineError::coded("INVALID_PACK", "categories contains an unknown value.", "categories contains an unknown value.")) };
-                    if seen.iter().any(|s| s == category) { return Err(EngineError::coded("INVALID_PACK", "categories must not contain duplicates.", "categories must not contain duplicates.")); }
-                    seen.push(category.to_string());
-                }
-                let context = self.engine.context(game_root, &self.local_data_root)?;
-                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
-                    return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能安装。", "An unfinished operation must be recovered before installing."));
-                }
-                let plan = super::txn::new_plan(&self.engine, &context, pack_root, &seen)?;
-                Ok(self.record_plan(context, &plan.clone(), revision, Adapter::Install(plan)))
             }
             "planCrosshair" | "planCrosshairAdd" => {
                 assert_fields(args, &["gameRoot", "file", "pngBase64", "revision"], "args")?;
@@ -411,7 +373,7 @@ impl Session {
                 let report = match &cached.adapter {
                     Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Scheme(plan) => super::settings::scheme_execute(&self.engine, &cached.context, plan, observer)?,
-                    Adapter::Audio(plan) | Adapter::Install(plan) => super::txn::install(&self.engine, &cached.context, plan, false, observer)?,
+                    Adapter::Audio(plan) => super::txn::install(&self.engine, &cached.context, plan, false, observer)?,
                     Adapter::Crosshair(plan) => super::files::image_execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::CrosshairAdd(plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,
                     Adapter::FileAdd(add) => super::files::file_add_execute(&self.engine, &cached.context, add, observer)?,

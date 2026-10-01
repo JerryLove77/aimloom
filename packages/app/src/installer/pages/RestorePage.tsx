@@ -6,9 +6,11 @@ import { Button } from '../../ui/Button';
 import { PathField } from '../components/PathField';
 import { Notice } from '../../ui/Notice';
 import { Icon } from '../../ui/Icon';
-export function RestorePage({ state, controller }: {
+export function RestorePage({ state, controller, onGoImport }: {
   state: InstallerState;
   controller: InstallerController;
+  /** The empty list's way to Quick import, on Explore; absent in a standalone render. */
+  onGoImport?: (() => void) | undefined;
 }) {
   const t = useT();
   const { lang } = useLang()
@@ -31,7 +33,7 @@ export function RestorePage({ state, controller }: {
         <Icon name="restore" size={30} />
         <strong>{t('installer.restore.emptyTitle')}</strong>
         <p>{t('installer.restore.emptyBody')}</p>
-        <Button onClick={() => controller.goTo('install', 1)}>{t('installer.restore.goInstall')}</Button>
+        {onGoImport ? <Button onClick={onGoImport}>{t('installer.restore.goInstall')}</Button> : null}
       </div>}
     </section>
     <aside className="ki-pristine ki-panel">

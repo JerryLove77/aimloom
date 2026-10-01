@@ -23,13 +23,13 @@ import type { ProfileAssetBridge } from '../bridge/assets'
 /** The workspace: 更改配置's five sections and Explore. Every page stays mounted so drafts and pending choices survive switching. */
 export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrops = noFileDrops, storage = browserStorage() }: {
   bridge: InstallerBridge; profileBridge: ProfileBridge; assetBridge: ProfileAssetBridge; isDemo: boolean
-  /** Files dragged in from outside. Every page gets the one source; only the active page reacts (Explore takes a config pack folder), and Quick import takes none. */
+  /** Files dragged in from outside. Every page gets the one source; only the active page reacts (Explore hands them to Quick import), and 备份与恢复 takes none. */
   fileDrops?: FileDropSource
   /** The Settings popover's storage for the remembered account and the updates switch. Injectable for tests, browserStorage() otherwise. */
   storage?: SettingsStorage
 }) {
-  // Quick import, open or not; `pack` is the config pack folder dropped on Explore, if any.
-  const [installer, setInstaller] = useState<{ pack: string | null } | null>(null)
+  // 备份与恢复, open or not (beta2: opened from Explore's third card).
+  const [installer, setInstaller] = useState<{ route: 'restore' } | null>(null)
   const [section, setSectionState] = useState<WorkspaceSection>('profile')
   const [lastCustomize, setLastCustomize] = useState<CustomizeSection>('profile')
   const setSection = useCallback((next: WorkspaceSection) => {
@@ -91,7 +91,7 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
     checkGame()
     return () => { gameCheck.current++ }
   }, [checkGame])
-  const open = (pack?: string) => setInstaller({ pack: pack ?? null })
+  const openRestore = () => setInstaller({ route: 'restore' })
   // Refuses over another sheet (a page's own ImportSheet/ResourceSheet/etc., or this one already
   // open) rather than stacking dialogs; the Settings button is already unreachable in that case
   // (WorkspaceShell disables it via `useAnyDialogOpen`), so this is a second, defensive guard.
@@ -121,8 +121,8 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
       <AudioPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <EnemyPage bridge={bridge} isDemo={isDemo} isActive={installer === null && section === 'enemy'} section={section} onSelect={setSection} fileDrops={fileDrops} />
-      <ExplorePage isDemo={isDemo} isActive={installer === null && section === 'explore'} section={section} onSelect={setSection} onOpenInstaller={open} fileDrops={fileDrops} />
-      {installer ? <InstallerApp bridge={bridge} isDemo={isDemo} initialPack={installer.pack} onBack={() => setInstaller(null)} onSendReport={openReport} onOpenLogs={bridge.openLogs.bind(bridge)} overlays={rootOverlay} /> : null}
+      <ExplorePage bridge={bridge} storage={storage} isDemo={isDemo} isActive={installer === null && section === 'explore'} section={section} onSelect={setSection} onOpenRestore={openRestore} fileDrops={fileDrops} />
+      {installer ? <InstallerApp bridge={bridge} isDemo={isDemo} onBack={() => setInstaller(null)} onSendReport={openReport} onOpenLogs={bridge.openLogs.bind(bridge)} overlays={rootOverlay} /> : null}
     </SettingsState.Provider>
   </WorkspaceStatus.Provider>
 }

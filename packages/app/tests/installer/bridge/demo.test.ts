@@ -4,8 +4,8 @@ it('the demonstration restores original personal settings rather than deleting t
  const bridge=createDemoBridge({durationMs:0})
  const found=await bridge.discover()
  const gameRoot=found.candidates[0]!
- const plan=await bridge.planInstall({gameRoot,packRoot:found.defaultPack!,categories:['primary'],revision:0})
- expect(plan.rows[0]?.action).toBe('replace')
+ const plan=await bridge.planImport({gameRoot,paths:[found.defaultPack!],includeSettings:true,revision:0})
+ expect(plan.rows.find(r=>r.category==='primary')?.action).toBe('replace')
  await bridge.execute({operationId:'test-install',planId:plan.planId,confirmation:'install',allowConflicts:false})
  const restore=await bridge.planRestore({gameRoot,sourceId:'pristine',revision:0})
  expect(restore.rows.find(r=>r.category==='primary')?.action).toBe('restore')

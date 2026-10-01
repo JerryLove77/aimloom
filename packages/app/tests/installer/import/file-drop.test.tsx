@@ -6,10 +6,10 @@ import { renderMsg } from '../../../src/i18n'
 
 describe('routeDrop', () => {
   it('accepts the one kind of file a section can add', () => {
-    expect(routeDrop('scheme', ['C:/d/Blue.JSON'])).toEqual({ ok: true, path: 'C:/d/Blue.JSON' })
-    expect(routeDrop('audio', ['C:/d/hit.ogg'])).toEqual({ ok: true, path: 'C:/d/hit.ogg' })
-    expect(routeDrop('audio', ['C:/d/hit.WAV'])).toEqual({ ok: true, path: 'C:/d/hit.WAV' })
-    expect(routeDrop('crosshair', ['C:/d/dot.png'])).toEqual({ ok: true, path: 'C:/d/dot.png' })
+    expect(routeDrop('scheme', ['C:/d/Blue.JSON'])).toEqual({ ok: true, paths: ['C:/d/Blue.JSON'] })
+    expect(routeDrop('audio', ['C:/d/hit.ogg'])).toEqual({ ok: true, paths: ['C:/d/hit.ogg'] })
+    expect(routeDrop('audio', ['C:/d/hit.WAV'])).toEqual({ ok: true, paths: ['C:/d/hit.WAV'] })
+    expect(routeDrop('crosshair', ['C:/d/dot.png'])).toEqual({ ok: true, paths: ['C:/d/dot.png'] })
   })
 
   it('names the section that accepts a file dropped on the wrong one', () => {
@@ -23,16 +23,17 @@ describe('routeDrop', () => {
     expect(routeDrop('enemy', ['C:/d/Blue.json'])).toEqual({ ok: false, message: { key: 'import.drop.whereTheme' } })
   })
 
-  it('Explore takes a config pack folder and sends a single file to its section', () => {
-    expect(routeDrop('explore', ['D:/Downloads/KVK Settings 2025'])).toEqual({ ok: true, path: 'D:/Downloads/KVK Settings 2025' })
-    // A folder's name may hold a dot; the catalog check, not the path, decides whether it is a pack.
-    expect(routeDrop('explore', ['D:/Downloads/pack v1.2'])).toEqual({ ok: true, path: 'D:/Downloads/pack v1.2' })
-    expect(routeDrop('explore', ['D:/d/Blue.json'])).toEqual({ ok: false, message: { key: 'import.drop.whereTheme' } })
-    expect(routeDrop('explore', ['D:/d/hit.ogg'])).toEqual({ ok: false, message: { key: 'import.drop.whereSound' } })
-    expect(routeDrop('explore', ['D:/a', 'D:/b'])).toEqual({ ok: false, message: { key: 'import.drop.tooMany' } })
+  it('Explore hands Quick import everything dropped, up to the limit, and lets the engine sort it', () => {
+    expect(routeDrop('explore', ['D:/Downloads/KVK Settings 2025'])).toEqual({ ok: true, paths: ['D:/Downloads/KVK Settings 2025'] })
+    const mixed = ['D:/Downloads/pack v1.2', 'D:/d/Blue.json', 'D:/d/hit.ogg', 'D:/d/dot.png', 'D:/d/old.zip']
+    expect(routeDrop('explore', mixed)).toEqual({ ok: true, paths: mixed })
+    const many = Array.from({ length: 64 }, (_, i) => `D:/d/${i}.wav`)
+    expect(routeDrop('explore', many)).toEqual({ ok: true, paths: many })
+    expect(routeDrop('explore', [...many, 'D:/d/64.wav'])).toEqual({ ok: false, message: { key: 'import.drop.tooManyImport', params: { max: 64 } } })
+    expect(routeDrop('explore', ['D:/a.zip', 'D:/b.ZIP'])).toEqual({ ok: false, message: { key: 'import.drop.unzipFirst' } })
   })
 
-  it('refuses a ZIP everywhere: Quick import reads folders only', () => {
+  it('refuses a ZIP dropped alone everywhere: Quick import reads folders and files only', () => {
     for (const section of ['explore', 'scheme', 'profile'] as const) {
       expect(routeDrop(section, ['D:/Downloads/pack.ZIP'])).toEqual({ ok: false, message: { key: 'import.drop.unzipFirst' } })
     }

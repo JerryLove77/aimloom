@@ -11,7 +11,7 @@ history before that release; the App's engine is the Rust one in
   `package-setup.ps1` bundles the Setup; `assert-no-local-paths.ps1` refuses an EXE that still
   carries the builder's user name, PC name or `C:\Users\`. See `CLAUDE.md`, "Release packaging".
 - `tests/package-build.test.ps1`: the packagers' suite (Windows, PowerShell 7; CI runs it).
-- `tests/parity/`: the 52 cases and the goldens the PowerShell engine wrote, now frozen. The
+- `tests/parity/`: the 48 cases and the goldens the PowerShell engine wrote, now frozen. The
   Rust test `tests/engine_parity.rs` runs every case through the Rust engine and must observe the
   same thing. See that folder's README.
 

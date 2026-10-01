@@ -13,9 +13,7 @@ export interface Issue { code: ErrorCode; message: string; messageEn: string; pa
 export interface Location {
   gameRoot: string; backupRoot: string; gameState: GameState
 }
-export interface CatalogEntry { category: Category; count: number }
 export interface Discovery { candidates: string[]; defaultPack: string|null }
-export interface Catalog { packRoot: string; categories: CatalogEntry[]; skipped: string[] }
 /** Why Quick import does not add a file. Only a `planImport` row carries one. */
 export type SkipReason = 'exists-same'|'exists-different'|'theme-name-taken'|'sound-stem-taken'|'invalid'|'duplicate-in-drop'|'settings-not-included'
 /** The engine's own words for an `invalid` file, in both languages. */
@@ -146,10 +144,8 @@ export interface UpdateCheck { latest: string | null; newer: boolean; channel: '
 export interface InstallerBridge {
   discover(): Promise<Discovery>
   locate(gameRoot: string): Promise<Location>
-  catalog(packRoot: string): Promise<Catalog>
   backups(gameRoot: string): Promise<BackupIndex>
   gameState(): Promise<GameState>
-  planInstall(input: {gameRoot: string; packRoot: string; categories: Category[]; revision: number}): Promise<Preview>
   planRestore(input: {gameRoot: string; sourceId: string; revision: number}): Promise<Preview>
   schemeList(gameRoot: string): Promise<SchemeList>
   planScheme(input: PlanSchemeRequest): Promise<Preview>
@@ -164,7 +160,9 @@ export interface InstallerBridge {
   job(operationId: string): Promise<Job>
   reconcile(operationId: string): Promise<Reconciliation>
   /** The native dialog's title and filter follow `lang`. */
-  pickFolder(kind: 'game'|'pack'|'export', lang: Lang): Promise<string|null>
+  pickFolder(kind: 'game'|'import'|'export', lang: Lang): Promise<string|null>
+  /** Quick import's multi-file picker (themes, sounds, crosshairs); null when cancelled. */
+  pickFiles(kind: 'import', lang: Lang): Promise<string[]|null>
   pickFile(kind: PickFileKind, lang: Lang): Promise<string|null>
   exportFile(input: ExportFileRequest): Promise<ExportedFile>
   enemyList(gameRoot: string): Promise<EnemyList>

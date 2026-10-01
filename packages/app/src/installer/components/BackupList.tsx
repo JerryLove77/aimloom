@@ -1,7 +1,7 @@
 import { plural, useLang, useT, type MessageKey } from '../../i18n';
 import { useState } from 'react';
 import type { Backup } from '../../bridge/contracts';
-import { categoryNames } from './CategoryCard';
+import { categoryNames } from '../category-names';
 import { Button } from '../../ui/Button';
 import { Icon } from '../../ui/Icon';
 const statusNames: Record<Backup['status'], MessageKey> = { prepared: 'installer.backup.status.prepared', applying: 'installer.backup.status.applying', completed: 'installer.backup.status.completed', 'rolled-back': 'installer.backup.status.rolledBack', 'recovery-required': 'installer.backup.status.recoveryRequired' };

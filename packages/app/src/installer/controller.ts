@@ -1,4 +1,4 @@
-import { InstallerFailure, localIssue, type Category, type InstallerBridge, type Issue, type Job, type Preview } from '../bridge/contracts'
+import { InstallerFailure, localIssue, type InstallerBridge, type Issue, type Job, type Preview } from '../bridge/contracts'
 import type { Lang } from '../i18n'
 import { browserStorage } from '../i18n'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'
@@ -28,16 +28,7 @@ export function createInstallerController(bridge:InstallerBridge,initialState:In
       return {location,gameRoot:location.gameRoot,backupIndex,...(hasPendingBackup(backupIndex)?{route:'restore' as const,preview:null}:{})}
     })
   }
-  async function loadCatalog() {
-    const root=state.packRoot
-    await read(async()=>{
-      if(!root.trim())throw fail('INVALID_PACK','installer.error.selectPackFirst')
-      const catalog=await bridge.catalog(root)
-      const available=new Set(catalog.categories.filter(c=>c.count>0).map(c=>c.category))
-      return {catalog,packRoot:catalog.packRoot,categories:state.categories.filter(c=>available.has(c))}
-    })
-  }
-  function acceptPreview(preview:Preview):Partial<InstallerState>{return {preview,location:preview.location,selectedBackupId:preview.sourceId,step:3,route:preview.kind==='install'?'install':'restore'}}
+  function acceptPreview(preview:Preview):Partial<InstallerState>{return {preview,location:preview.location,selectedBackupId:preview.sourceId,step:3,route:'restore'}}
   const controller={
     getState:()=>state,
     subscribe:(listener:()=>void)=>{listeners.add(listener);return ()=>{listeners.delete(listener)}},
@@ -46,7 +37,6 @@ export function createInstallerController(bridge:InstallerBridge,initialState:In
       if(discoveryPromise)return discoveryPromise
       discoveryPromise=read(async()=>{
         const discovery=await bridge.discover()
-        const packRoot=state.packRoot||discovery.defaultPack||''
         if(!state.gameRoot){
           // The game is found by the one method Theme, Sounds, Crosshair, Enemy and Profile use
           // (`resolveGameRoot`: the remembered folder first, then discovery), so a "cannot find
@@ -57,39 +47,23 @@ export function createInstallerController(bridge:InstallerBridge,initialState:In
           const location=seen.location
           if(found?.gameRoot&&location){
             const backupIndex=await bridge.backups(found.gameRoot)
-            return {discovery,gameRoot:found.gameRoot,packRoot,location,backupIndex,...(hasPendingBackup(backupIndex)?{route:'restore' as const,preview:null}:{})}
+            return {discovery,gameRoot:found.gameRoot,location,backupIndex,...(hasPendingBackup(backupIndex)?{route:'restore' as const,preview:null}:{})}
           }
         }
-        return {discovery,gameRoot:state.gameRoot,packRoot}
+        return {discovery,gameRoot:state.gameRoot}
       }).finally(()=>{discoveryPromise=null})
       return discoveryPromise
-    },locate,loadCatalog,
+    },locate,
     setGameRoot:(value:string)=>changed({type:'game-changed',value}),
-    setPackRoot:(value:string)=>changed({type:'pack-changed',value}),
-    setCategories:(categories:Category[])=>changed({type:'categories-changed',categories}),
-    chooseFolder:async(kind:'game'|'pack',lang:Lang)=>{
+    chooseFolder:async(kind:'game',lang:Lang)=>{
       if(operationBlocksNavigation(state.job))return
-      try{const value=await bridge.pickFolder(kind,lang);if(value!==null){if(kind==='game'){controller.setGameRoot(value);await locate()}else{controller.setPackRoot(value);await loadCatalog()}}}
+      try{const value=await bridge.pickFolder(kind,lang);if(value!==null){controller.setGameRoot(value);await locate()}}
       catch(e){publish({issue:issueOf(e)})}
     },
     goTo:(route:Route,step?:Step)=>{
       if(operationBlocksNavigation(state.job))return
-      if(route==='install'&&hasPendingBackup(state.backupIndex)){publish({route:'restore',issue:localIssue('RECOVERY_REQUIRED','installer.error.unfinishedFound')});return}
       const next=step??state.step
-      if(route==='install'&&next===2&&(!state.location||!state.catalog))return
-      if(route==='install'&&next===3&&state.preview?.kind!=='install')return
       publish({route,step:next,issue:null,...(route!==state.route||(route==='restore'&&next===1)?{preview:null}:{}),...(next<4&&state.job?.state!=='running'?{job:null}:{})})
-    },
-    previewInstall:async()=>{
-      if(operationBlocksNavigation(state.job))return
-      const {gameRoot,packRoot,categories}=state
-      publish({preview:null})
-      await read(async revision=>{
-        if(!state.location||!state.catalog)throw fail('INVALID_PATH','installer.error.confirmLocations')
-        if(hasPendingBackup(state.backupIndex))throw fail('RECOVERY_REQUIRED','installer.error.recoverFirst')
-        if(!categories.length)throw fail('INVALID_PACK','installer.error.selectCategory')
-        return acceptPreview(await bridge.planInstall({gameRoot,packRoot,categories,revision}))
-      })
     },
     previewRestore:async(sourceId:string)=>{
       if(operationBlocksNavigation(state.job))return

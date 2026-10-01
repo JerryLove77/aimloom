@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { createInstallerController } from '../../src/installer/controller'
 import { createInitialState } from '../../src/installer/state'
 import { createDemoBridge } from '../../src/bridge/demo'
-import type { Location, Preview } from '../../src/bridge/contracts'
+import type { InstallerBridge, Location, Preview } from '../../src/bridge/contracts'
 import { GAME_ROOT_STORAGE_KEY } from '../../src/section/game-root'
 
-/** A minimal store that behaves like localStorage, for proving what Quick import remembers. */
+/** A minimal store that behaves like localStorage, for proving what the restore page remembers. */
 function fakeStorage(initial: Record<string, string> = {}) {
   const map = new Map(Object.entries(initial))
   return {
@@ -16,34 +16,37 @@ function fakeStorage(initial: Record<string, string> = {}) {
   }
 }
 
+/** One Quick import through the bridge, so the demo game has a batch to restore. */
+async function importOnce(bridge: InstallerBridge, gameRoot: string, pack: string) {
+  const plan = await bridge.planImport({ gameRoot, paths: [pack], includeSettings: true, revision: 0 })
+  await bridge.execute({ operationId: crypto.randomUUID(), planId: plan.planId, confirmation: 'install', allowConflicts: false })
+}
+
 async function ready() {
   const bridge = createDemoBridge({durationMs:0})
   const ctl = createInstallerController(bridge)
-  await ctl.discover(); await ctl.locate(); await ctl.loadCatalog()
+  await ctl.discover(); await ctl.locate()
+  await importOnce(bridge, ctl.getState().gameRoot, (await bridge.discover()).defaultPack!)
+  await ctl.refreshBackups()
   return {bridge,ctl}
 }
 
-describe('installer session', () => {
-  it('defaults to assets and invalidates a reviewed plan after changing selection', async () => {
-    const {ctl}=await ready()
-    expect(ctl.getState().categories).toEqual(['themes','sounds','crosshairs'])
-    await ctl.previewInstall()
-    const revision=ctl.getState().revision
-    expect(ctl.getState().preview?.rows.length).toBeGreaterThan(0)
-    ctl.setCategories(['sounds'])
-    expect(ctl.getState().preview).toBeNull()
-    expect(ctl.getState().revision).toBe(revision+1)
-    expect(ctl.getState().categories).not.toContain('primary')
+describe('the restore page', () => {
+  it('starts on the restore route with no plan, job or hidden write request', () => {
+    const state=createInitialState()
+    expect(state.route).toBe('restore')
+    expect(state.preview).toBeNull(); expect(state.job).toBeNull(); expect(state.step).toBe(1)
   })
-  it('never writes while previewing, and double confirm creates only one backup', async () => {
+  it('never writes while previewing, and a double confirm restores once', async () => {
     const {bridge,ctl}=await ready()
-    await ctl.previewInstall()
     const game=ctl.getState().gameRoot
     const before=(await bridge.backups(game)).records.length
+    await ctl.previewRestore('pristine')
+    expect(ctl.getState().preview?.kind).toBe('restore')
+    expect((await bridge.backups(game)).records.length).toBe(before)
     const [a,b]=await Promise.all([ctl.execute(false),ctl.execute(false)])
     expect(a?.operationId).toBe(b?.operationId)
-    expect((await bridge.backups(game)).records.length).toBe(before+1)
-    expect(ctl.getState().job?.result?.status).toBe('completed')
+    expect(ctl.getState().job?.result?.status).toBe('restored')
   })
   it('a late location result cannot overwrite a new path', async () => {
     const bridge=createDemoBridge({durationMs:0})
@@ -60,23 +63,13 @@ describe('installer session', () => {
     expect(ctl.getState().location).toBeNull()
     expect(ctl.getState().busy).toBe(false)
   })
-  it('restore can be planned and executed without the source pack', async () => {
-    const {ctl}=await ready()
-    await ctl.previewInstall(); await ctl.execute(false)
-    ctl.setPackRoot('')
-    await ctl.refreshBackups()
-    await ctl.previewRestore('pristine')
-    expect(ctl.getState().preview?.kind).toBe('restore')
-    await ctl.execute(false)
-    expect(ctl.getState().job?.result?.status).toBe('restored')
-  })
-  it('cannot confirm stale or missing plans', async () => {
+  it('cannot confirm a plan made for another game folder', async () => {
     const {bridge,ctl}=await ready()
+    await ctl.previewRestore('pristine')
     const before=(await bridge.backups(ctl.getState().gameRoot)).records.length
-    await ctl.previewInstall()
-    ctl.setPackRoot('another pack')
+    ctl.setGameRoot('another game')
     expect(await ctl.execute(false)).toBeNull()
-    expect((await bridge.backups(ctl.getState().gameRoot)).records.length).toBe(before)
+    expect((await bridge.backups((await bridge.discover()).candidates[0]!)).records.length).toBe(before)
   })
   it('failed native calls stay errors instead of turning into demo success', async () => {
     const bridge=createDemoBridge({durationMs:0})
@@ -86,16 +79,12 @@ describe('installer session', () => {
     expect(ctl.getState().issue?.message).toBe('worker missing')
     expect(ctl.getState().discovery).toBeNull()
   })
-  it('starts with no plan, job or hidden write request', () => {
-    const state=createInitialState()
-    expect(state.preview).toBeNull(); expect(state.job).toBeNull(); expect(state.step).toBe(1)
-  })
 })
 
 it('does not execute a previous preview while a new preview is loading', async () => {
   const {bridge,ctl}=await ready()
-  await ctl.previewInstall()
-  const replacement={...ctl.getState().preview!,kind:'restore' as const,sourceId:'pristine'}
+  await ctl.previewRestore('pristine')
+  const replacement={...ctl.getState().preview!}
   let resolve!: (value:Preview)=>void
   bridge.planRestore=()=>new Promise(r=>{resolve=r})
   const pending=ctl.previewRestore('pristine')
@@ -106,7 +95,7 @@ it('does not execute a previous preview while a new preview is loading', async (
   await pending
 })
 
-describe('Quick import and the shared remembered folder', () => {
+describe('the restore page and the shared remembered folder', () => {
   it('tries the remembered folder instead of asking the player to browse again, when discovery finds nothing', async () => {
     const bridge = createDemoBridge({ durationMs: 0 })
     const remembered = 'D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'
@@ -119,9 +108,9 @@ describe('Quick import and the shared remembered folder', () => {
     expect(ctl.getState().issue).toBeNull()
   })
 
-  // The user's rule (2026-09-21): Quick import finds the game by the SAME method as the four
+  // The user's rule (2026-09-21): every page finds the game by the SAME method as the four
   // sections, so a "cannot find the game" report means one thing. Each case below is what
-  // `resolveGameRoot` does, observed through Quick import.
+  // `resolveGameRoot` does, observed through the restore page.
   it('prefers the remembered folder over what discovery offers, as the sections do', async () => {
     const bridge = createDemoBridge({ durationMs: 0 })
     const remembered = 'E:\\Games\\FPSAimTrainer'
@@ -156,7 +145,7 @@ describe('Quick import and the shared remembered folder', () => {
     expect(storage.map.has(GAME_ROOT_STORAGE_KEY)).toBe(false)
   })
 
-  it('writes a folder the player located in Quick import to the shared storage', async () => {
+  it('writes a folder the player located on the restore page to the shared storage', async () => {
     const bridge = createDemoBridge({ durationMs: 0 })
     const storage = fakeStorage()
     const ctl = createInstallerController(bridge, createInitialState(), storage)
@@ -169,7 +158,7 @@ describe('Quick import and the shared remembered folder', () => {
 
 it('does not attach old backup results to a newly selected game', async () => {
   const {bridge,ctl}=await ready()
-  await ctl.previewInstall()
+  await ctl.previewRestore('pristine')
   const original=bridge.backups.bind(bridge)
   let entered!:()=>void
   const reached=new Promise<void>(resolve=>{entered=resolve})

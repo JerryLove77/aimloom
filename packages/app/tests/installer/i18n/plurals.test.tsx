@@ -22,8 +22,10 @@ vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:plu
 const PAIRS: readonly MessageKey[] = [
   'scheme.pagination.count', 'profile.pagination.count',
   'profile.summary.audioFiles', 'profile.resource.fileErrorsSummary', 'profile.listErrors.summary',
-  'profile.audioSheet.filesHeading', 'installer.fileCount', 'installer.category.aria',
-  'installer.restore.recordCount', 'installer.review.skipped', 'installer.selection.skipped',
+  'profile.audioSheet.filesHeading', 'installer.fileCount',
+  'installer.restore.recordCount', 'installer.review.skipped',
+  'quick.sources', 'quick.count.themes', 'quick.count.sounds', 'quick.count.crosshairs', 'quick.count.settings',
+  'quick.advanced.carries', 'quick.done.title',
 ]
 
 describe('every counted sentence has a singular twin', () => {
@@ -48,13 +50,18 @@ describe('every counted sentence has a singular twin', () => {
       'profile.listErrors.summary': "1 file couldn't be read; other Profiles still work.",
       'profile.audioSheet.filesHeading': 'Kill sound: 1 file',
       'installer.fileCount': '1 file',
-      'installer.category.aria': 'Themes, 1 file',
       'installer.restore.recordCount': '1 record',
       'installer.review.skipped': '1 unrecognized item skipped',
-      'installer.selection.skipped': '1 unrecognized file will be skipped',
+      'quick.sources': 'Chose 1 item: Pack',
+      'quick.count.themes': '1 theme',
+      'quick.count.sounds': '1 sound',
+      'quick.count.crosshairs': '1 crosshair',
+      'quick.count.settings': '1 personal settings file',
+      'quick.advanced.carries': 'The choice has 1 personal settings file, not imported by default',
+      'quick.done.title': 'Added 1 file',
     }
     for (const key of PAIRS) {
-      const params = { count: 1, name: 'Themes', event: 'Kill sound' }
+      const params = { count: 1, name: 'Themes', event: 'Kill sound', names: 'Pack' }
       expect(t('en', plural(1, key), params)).toBe(ENGLISH_SINGULARS[key])
     }
   })

@@ -17,6 +17,12 @@ reason in that commit and, if it departs from the old engine, a row in `DIVERGEN
 behaviour is tested with Rust tests (`src/engine/tests.rs`, `tests/rust_worker.rs`), not new cases
 here.
 
+Four cases were retired with the operations they exercised, `planInstall` and `catalog`, when
+Quick import became `planImport` (0.1.6-beta.2): `install-pack`, `install-pack-invalid-json`,
+`install-case-variant` and `reads-catalog`. What they pinned for the install transaction (a
+multi-file install, a damaged theme, a name differing only in case) is covered by the Rust tests
+in `src/engine/import_tests.rs`. 48 cases remain.
+
 ## A case
 
 `cases/<name>.json` holds the settings file the game folder starts with (`fixture`, a file in

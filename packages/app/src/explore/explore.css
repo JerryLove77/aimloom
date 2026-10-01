@@ -4,8 +4,12 @@
 .ws-explore-card h2 { margin:0; display:flex; align-items:center; gap:8px; font:700 17px var(--ki-body-font); color:var(--ki-text) }
 .ws-explore-card p { margin:0; font-size:13px; line-height:20px; color:var(--ki-secondary) }
 .ws-explore-host { padding:2px 8px; border-radius:var(--ws-radius-pill); background:var(--ws-sidebar); font-size:11px; font-weight:500; color:var(--ki-secondary) }
-.ws-explore-art { height:150px; border-radius:var(--ws-radius-tile); display:flex; align-items:center; justify-content:center }
-.ws-explore-drop { flex-direction:column; gap:10px; background:var(--ws-selected); border:2px dashed var(--ki-accent); font-size:13px; font-weight:500; color:var(--ws-accent-text) }
+.ws-explore-art { min-height:150px; border-radius:var(--ws-radius-tile); display:flex; align-items:center; justify-content:center }
+.ws-explore-drop { flex-direction:column; gap:10px; padding:24px; text-align:center; background:var(--ws-selected); border:2px dashed var(--ki-accent); font-size:13px; color:var(--ki-text) }
+.ws-explore-drop strong { font-size:15px; font-weight:500 }
+.ws-explore-drop-note { font-size:12px; color:var(--ki-secondary) }
+.ws-explore-picks { display:flex; gap:8px; flex-wrap:wrap; justify-content:center }
+.ws-explore-wide { grid-column:1 / -1 }
 .ws-explore-files { display:flex }
 .ws-explore-files > span { width:34px; height:42px; border-radius:5px; background:var(--ki-surface); border:1.5px solid var(--ki-accent) }
 .ws-explore-files > span + span { margin-left:-10px; transform:rotate(12deg) }
@@ -16,4 +20,30 @@
 .ws-explore-kind-sound i { display:flex; align-items:center; justify-content:center; gap:3px }
 .ws-explore-kind-sound b { width:5px; border-radius:2px; background:var(--ki-accent) }
 .ws-explore-kind-crosshair i { background:linear-gradient(#3CFF6B, #3CFF6B) center / 22px 2px no-repeat, linear-gradient(#3CFF6B, #3CFF6B) center / 2px 22px no-repeat, #2A2A2E }
-@media (max-width: 900px) { .ws-explore { grid-template-columns:1fr } }
+/* Quick import (beta2): one summary between the choice and 加进游戏. */
+.ws-quick { display:flex; flex-direction:column; gap:14px; max-width:900px }
+.ws-quick-sources, .ws-quick-game { margin:0; font-size:13px; color:var(--ki-secondary); overflow-wrap:anywhere }
+.ws-quick-game { font-size:12px }
+.ws-quick-link { padding:0; border:0; background:none; font:500 13px var(--ki-body-font); color:var(--ws-accent-text); cursor:pointer }
+.ws-quick-link:disabled { color:var(--ws-disabled); cursor:default }
+.ws-quick-link:focus-visible, .ws-quick-toggle:focus-visible, .ws-quick-list summary:focus-visible { outline:2px solid var(--ki-focus); outline-offset:2px }
+.ws-quick-links { display:flex; gap:16px; flex-wrap:wrap }
+.ws-quick-card { display:flex; flex-direction:column; gap:12px; padding:20px 24px; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:16px }
+.ws-quick-card h2 { margin:0; font:700 18px var(--ki-body-font); color:var(--ki-text) }
+.ws-quick-card p { margin:0; font-size:13px; color:var(--ki-secondary) }
+.ws-quick-card progress { width:100%; max-width:420px; accent-color:var(--ki-accent) }
+.ws-quick-card code { font-size:12px; color:var(--ki-secondary); overflow-wrap:anywhere }
+.ws-quick-list summary { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500; cursor:pointer }
+.ws-quick-list summary::-webkit-details-marker { display:none }
+.ws-quick-list summary::before { content:'▸'; font-size:12px; color:var(--ki-secondary) }
+.ws-quick-list[open] summary::before { content:'▾' }
+.ws-quick-count { padding:1px 8px; border-radius:var(--ws-radius-pill); background:var(--ws-sidebar); font-size:11px; color:var(--ki-secondary) }
+.ws-quick-list ul { list-style:none; margin:8px 0 0; padding:0 0 0 20px; display:grid; gap:4px; max-height:260px; overflow:auto }
+.ws-quick-list li { display:grid; grid-template-columns:minmax(120px, 240px) 1fr; gap:12px; font-size:12px; color:var(--ki-secondary) }
+.ws-quick-list li strong { font-weight:500; color:var(--ki-text); overflow-wrap:anywhere }
+.ws-quick-toggle { display:flex; align-items:center; gap:8px; flex-wrap:wrap; padding:0; border:0; background:none; font:13px var(--ki-body-font); color:var(--ki-text); text-align:left; cursor:pointer }
+.ws-quick-toggle strong { font-weight:500 }
+.ws-quick-advanced-body { display:flex; flex-direction:column; gap:10px; padding-left:20px }
+.ws-quick-check { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:500 }
+.ws-quick-check input { width:16px; height:16px; accent-color:var(--ki-accent) }
+@media (max-width: 900px) { .ws-explore { grid-template-columns:1fr } .ws-quick-list li { grid-template-columns:1fr } }

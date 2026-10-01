@@ -114,19 +114,7 @@ pub struct Location {
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct CatalogEntry { pub category: Category, pub count: usize }
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Discovery { pub candidates: Vec<String>, pub default_pack: Option<String> }
-
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct Catalog {
-    pub pack_root: String,
-    pub categories: Vec<CatalogEntry>,
-    pub skipped: Vec<String>,
-}
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
@@ -450,12 +438,6 @@ struct EmptyArgs {}
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct GameRootArgs { game_root: String }
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct PackRootArgs { pack_root: String }
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", deny_unknown_fields)]
-struct PlanInstallArgs { game_root: String, pack_root: String, categories: Vec<Category>, revision: u64 }
 /// Quick import: the paths the player dropped or picked, read by the worker. The engine
 /// classifies them; this only bounds the request.
 #[derive(Debug, Deserialize, Serialize)]
@@ -625,8 +607,6 @@ pub fn validate_read(op: &str, args: Value) -> Result<Value, Issue> {
     match op {
         "discover" | "gameState" => normalize::<EmptyArgs>(args),
         "locate" | "backups" | "schemeList" => normalize::<GameRootArgs>(args),
-        "catalog" => normalize::<PackRootArgs>(args),
-        "planInstall" => normalize::<PlanInstallArgs>(args),
         "planImport" => {
             let args = normalize::<PlanImportArgs>(args)?;
             let paths: Vec<String> = serde_json::from_value(args["paths"].clone())
