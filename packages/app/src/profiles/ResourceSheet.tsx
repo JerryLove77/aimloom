@@ -14,6 +14,7 @@ import { SearchBox } from '../ui/SearchBox'
 import { importFileName } from '../section/import-check'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
 import { useSheetImport } from './sheet-import'
+import { useFavorites, type FavoritesStore } from '../section/favorites'
 
 type SingleKind = 'scheme'
 // The lowercase noun, not the section's title: it stands mid-sentence ("does not change the current theme").
@@ -29,7 +30,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
  * 用于此组合 hands it back, and even that writes the draft alone — nothing is saved to the
  * Profile's JSON and nothing is applied to the game.
  */
-export function ResourceSheet({ kind, profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, installed = null, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onAdded, onConfirm, onCancel }: {
+export function ResourceSheet({ kind, profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, installed = null, favorites, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onAdded, onConfirm, onCancel }: {
   kind: SingleKind
   profileName: string
   profilePath: string
@@ -44,6 +45,8 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
    * null the sheet falls back to browsing a folder, which is what it always did.
    */
   installed?: { file: string; label: string; detail: string; path: string; selectable: boolean; reason?: string | undefined; current?: boolean; duplicate?: boolean }[] | null
+  /** The starred themes: the game's own grid lists them first, with the same star as Theme. */
+  favorites?: FavoritesStore | undefined
   /**
    * Adds an outside file to the game through the existing byte-exact plan path (`planFileAdd`).
    * Absent means the caller has no game bridge wired in, so the button is not offered -- the
@@ -77,6 +80,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const [ready, setReady] = useState(false)
   const [page, setPage] = useState(0)
   const request = useRef(0)
+  const fav = useFavorites(favorites, 'theme', open)
   const importer = useSheetImport({
     onAddFile, onPickFile, onReconcile, onUnresolvedChange, setError,
     keys: { generic: GENERIC, unknown: 'scheme.error.importUnknown', reconcileFailed: 'scheme.error.reconcileFailed' },
@@ -130,7 +134,7 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
   const noun = t(NOUN_KEY[kind])
   // The grid's own shape: the sheet only adds which tile is staged right now.
   // Filtering narrows the grid only; the staged choice survives a search that hides its tile.
-  const tiles: TileChoice[] = (installed ?? [])
+  const tiles: TileChoice[] = fav.sort(installed ?? [], item => item.file)
     .filter(item => !needle || item.label.toLocaleLowerCase().includes(needle) || item.file.toLocaleLowerCase().includes(needle))
     .map(item => ({ ...item, pending: choice === item.path }))
   return <Dialog variant="sheet" open={open} title={t('profile.sheet.title', { name: profileName, noun })} onClose={() => { if (!unresolved) onCancel() }}>
@@ -160,6 +164,11 @@ export function ResourceSheet({ kind, profileName, profilePath, value, assets, i
       ariaLabel={item => t('scheme.tile.previewLabel', { label: item.label })}
       thumb={item => <AssetPreview key={item.path} kind={kind} reference={{ name: item.label, path: item.path }} profilePath={profilePath} assets={assets} />}
       onPage={setPage}
+      favorites={fav.enabled ? {
+        isFavorite: item => fav.isFavorite(item.file),
+        label: item => t('favorites.star', { label: item.label }),
+        onToggle: item => { void fav.toggle(item.file, (installed ?? []).map(entry => entry.file)).then(failure => { if (failure) setError(failure) }) },
+      } : undefined}
       onChoose={item => { setReady(true); setChoice(item.path) }} /> : null}
     {installed?.length && needle && !tiles.length ? <p className="ws-note">{t('scheme.search.noMatch', { query: search.trim() })}</p> : null}
     </>}

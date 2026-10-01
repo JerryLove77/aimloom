@@ -86,6 +86,12 @@
 .ws-tile-copy { display:flex; flex-direction:column; padding:0 4px }
 .ws-tile-copy strong { font-weight:600 }
 .ws-tile-copy small { color:var(--ki-secondary); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.ws-tile-wrap { position:relative; display:grid }
+.ws-star { display:grid; place-items:center; width:28px; height:28px; padding:0; border-radius:var(--ws-radius-pill); border:1px solid var(--ki-line); background:var(--ki-surface); color:var(--ws-disabled); font-size:15px; line-height:1; cursor:pointer }
+.ws-star[aria-pressed="true"] { color:var(--ki-accent); border-color:#FFBE78 }
+.ws-star:hover { background:var(--ws-hover) }
+.ws-star:focus-visible { outline:2px solid var(--ki-focus); outline-offset:2px }
+.ws-tile-star { position:absolute; top:12px; right:12px }
 .ws-panel { display:flex; flex-direction:column; gap:10px; padding:16px; background:var(--ki-surface); border:1px solid var(--ki-line); border-radius:var(--ws-radius-panel); position:sticky; top:0 }
 .ws-panel-head { display:flex; align-items:center; gap:8px }
 .ws-panel-head h2 { margin:0; font-size:15px; font-weight:600 }

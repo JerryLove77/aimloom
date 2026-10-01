@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import type { FavoritesStore } from '../section/favorites'
 import { Button } from '../ui/Button'
 import { WorkspaceShell } from '../workspace/WorkspaceShell'
 import type { WorkspaceSection } from '../workspace/WorkspaceShell'
@@ -64,7 +65,7 @@ const unavailableApplyBridge: ApplyBridge = {
   launchGame: async () => { throw new Error('no game bridge') },
 }
 
-export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage() }: {
+export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage() }: {
   bridge: ProfileBridge; assets: ProfileAssetBridge; isDemo?: boolean; isActive?: boolean; onSelectSection?: ((section: WorkspaceSection) => void) | undefined; onDirtyChange?: ((dirty: boolean) => void) | undefined
   /**
    * Reads what is installed in the game, so a sheet shows the same previewed choices the
@@ -73,6 +74,8 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
    */
   locate?: ProfileGameBridge | undefined
   storage?: GameRootStorage
+  /** The starred themes and sounds, listed first in the theme and sound sheets. */
+  favorites?: FavoritesStore | undefined
   /** Profile adds nothing to the game, so a dropped file only gets told which section takes it. */
   fileDrops?: FileDropSource
 }) {
@@ -218,14 +221,14 @@ export function ProfilesApp({ bridge, assets, isDemo = false, isActive = true, o
     <Toast message={toast} tone={tone} onDone={hide} />
     <Dialog open={deleting !== null} title={t('profile.delete.title')} onClose={() => { if (!state.busyId) setDeleting(null) }}><p>{t('profile.delete.confirm', { name: deleting?.name ?? '' })}</p>{state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}<div className="ki-dialog-actions"><Button data-safe-focus disabled={!!state.busyId} onClick={() => setDeleting(null)}>{t('import.cancel')}</Button><Button variant="danger" disabled={!!state.busyId} onClick={() => { if (deleting) void editor.deleteProfile(deleting.id).then(ok => { if (ok) { setDeleting(null); setNotice(t('profile.delete.done')) } }) }}>{state.busyId ? t('profile.delete.working') : t('profile.delete.button')}</Button></div></Dialog>
     {state.draft && sheet === 'audio' ? <AudioSheet open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
-      value={state.draft.audio} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('audio', gameRoot) : null}
+      value={state.draft.audio} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('audio', gameRoot) : null} favorites={favorites}
       onAddFile={locate && gameRoot ? input => addFile('sound', input) : undefined}
       onPickFile={locate ? lang => locate.pickFile('sound', lang) : undefined}
       onReconcile={locate ? reconcileImport : undefined}
       onUnresolvedChange={setImportUnresolved}
       onConfirm={value => { if (editor.setComponent('audio', value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
     {state.draft && sheet === 'theme' ? <ResourceSheet kind="scheme" open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
-      value={state.draft.theme} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('scheme', gameRoot) : null}
+      value={state.draft.theme} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('scheme', gameRoot) : null} favorites={favorites}
       installed={!installedError && installed?.kind === 'scheme' ? installed.choices : null}
       onAddFile={locate && gameRoot ? input => addFile('theme', input) : undefined}
       onPickFile={locate ? lang => locate.pickFile('theme', lang) : undefined}

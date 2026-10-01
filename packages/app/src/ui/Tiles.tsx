@@ -31,7 +31,18 @@ export interface TileChoice {
   duplicate?: boolean
 }
 
-export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onChoose, disabled = false, countKey, empty }: {
+/**
+ * A star beside each tile (Theme and Profile's theme sheet). It is its own button, laid over the
+ * tile's corner as a sibling (never a button inside a button), and never changes the selection.
+ */
+export interface TileFavorites {
+  isFavorite(choice: TileChoice): boolean
+  onToggle(choice: TileChoice): void
+  /** The star's accessible name for one tile, e.g. `收藏「Clean Dark」`. */
+  label(choice: TileChoice): string
+}
+
+export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onChoose, disabled = false, countKey, empty, favorites }: {
   choices: TileChoice[]
   page: number
   pageSize: number
@@ -45,14 +56,15 @@ export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onCho
   /** A plural message key for "N items", counted over every choice, not just this page. */
   countKey: Parameters<ReturnType<typeof useT>>[0]
   empty?: ReactNode
+  favorites?: TileFavorites | undefined
 }) {
   const t = useT()
   const lastPage = Math.max(0, Math.ceil(choices.length / pageSize) - 1)
   const current = Math.min(page, lastPage)
   return <>
     <div className="ws-grid">
-      {choices.slice(current * pageSize, current * pageSize + pageSize).map(choice =>
-        <button type="button" className="ws-tile" key={choice.file} aria-pressed={choice.pending ?? false}
+      {choices.slice(current * pageSize, current * pageSize + pageSize).map(choice => {
+        const tile = <button type="button" className="ws-tile" key={choice.file} aria-pressed={choice.pending ?? false}
           aria-label={ariaLabel(choice)} disabled={disabled || !choice.selectable} title={choice.reason}
           onClick={() => onChoose(choice)}>
           {thumb(choice)}
@@ -62,7 +74,15 @@ export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onCho
             {choice.duplicate ? <Tag kind="duplicate" /> : null}
           </span>
           <span className="ws-tile-copy"><strong>{choice.label}</strong><small>{choice.detail}</small></span>
-        </button>)}
+        </button>
+        // A file the game cannot read is nothing to come back to, so it gets no star.
+        if (!favorites || !(choice.selectable || choice.duplicate)) return tile
+        const on = favorites.isFavorite(choice)
+        return <div className="ws-tile-wrap" key={choice.file}>
+          {tile}
+          <FavoriteStar on={on} label={favorites.label(choice)} onToggle={() => favorites.onToggle(choice)} className="ws-tile-star" />
+        </div>
+      })}
     </div>
     {!choices.length && empty ? empty : null}
     <div className="pr-pagination">
@@ -74,4 +94,11 @@ export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onCho
       </div> : null}
     </div>
   </>
+}
+
+/** The star itself: `aria-pressed` says whether the file is a favourite. Shared by tiles and rows. */
+export function FavoriteStar({ on, label, onToggle, className = '' }: { on: boolean; label: string; onToggle: () => void; className?: string }) {
+  return <button type="button" className={`ws-star ${className}`} aria-pressed={on} aria-label={label} title={label} onClick={onToggle}>
+    <span aria-hidden="true">{on ? '★' : '☆'}</span>
+  </button>
 }

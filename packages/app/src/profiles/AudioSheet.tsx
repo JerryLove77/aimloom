@@ -14,6 +14,8 @@ import { SearchBox } from '../ui/SearchBox'
 import { importFileName } from '../section/import-check'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
 import { useSheetImport } from './sheet-import'
+import { useFavorites, type FavoritesStore } from '../section/favorites'
+import { FavoriteStar } from '../ui/Tiles'
 
 /** A Profile records every event (v2): 「无音效」 or files. `unset` only in a draft not yet chosen. */
 type Mode = 'unset' | 'none' | 'files'
@@ -27,7 +29,7 @@ const FILE_FALLBACK: Msg = { key: 'import.cantRead' }
  * Per-event audio for one Profile. Everything here is temporary until 用于此组合, which
  * writes the draft alone — nothing is saved to JSON, applied to the game, or auto-played.
  */
-export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onConfirm, onCancel }: {
+export function AudioSheet({ profileName, profilePath, value, assets, isDemo, open, defaultDirectory = null, favorites, onAddFile, onPickFile, onReconcile, onUnresolvedChange, onConfirm, onCancel }: {
   profileName: string
   profilePath: string
   value: ProfileAudio
@@ -36,6 +38,8 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   open: boolean
   /** The game's own sounds folder, so the sheet opens on what is installed instead of empty. */
   defaultDirectory?: string | null
+  /** The starred sounds: listed first, with the same star as Sounds, while the game's own folder is shown. */
+  favorites?: FavoritesStore | undefined
   /**
    * Adds an outside sound to the game through the existing byte-exact plan path
    * (`planFileAdd`). Absent means the caller has no game bridge wired in, so the button is not
@@ -54,6 +58,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   onConfirm: (value: ProfileAudio) => void
   onCancel: () => void
 }) {
+  const fav = useFavorites(favorites, 'audio', open)
   const t = useT()
   const { lang } = useLang()
   const msg = useMsg()
@@ -111,7 +116,11 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
   }, [open])
   // The same rule as the Sounds page: trimmed, case-insensitive, on the file's name.
   const needle = search.trim().toLocaleLowerCase()
-  const shownFiles = needle ? files.filter(file => file.name.toLocaleLowerCase().includes(needle)) : files
+  // Stars belong to the game's sounds; a folder browsed elsewhere lists its files as they are.
+  const gameFolder = Boolean(defaultDirectory) && directory.replace(/[\\/]+$/, '').toLowerCase() === (defaultDirectory ?? '').replace(/[\\/]+$/, '').toLowerCase()
+  const starred = fav.enabled && gameFolder
+  const ordered = starred ? fav.sort(files, file => importFileName(file.path)) : files
+  const shownFiles = needle ? ordered.filter(file => file.name.toLocaleLowerCase().includes(needle)) : ordered
   const changed = !same(temp, value)
   const move = (index: number, offset: number) => {
     if (!eventFiles) return
@@ -154,6 +163,8 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
       clearLabel={t('audio.clearSearch')} value={search} onChange={setSearch} /> : null}
     {needle && files.length && !shownFiles.length ? <p className="ws-note">{t('audio.sounds.noMatch', { query: search.trim() })}</p> : null}
     <div className="pr-sheet-list">{shownFiles.map(file => <div className="pr-sheet-row" key={file.path}><span><strong>{file.name}</strong><small>{file.path}</small></span>
+      {starred ? <FavoriteStar on={fav.isFavorite(importFileName(file.path))} label={t('favorites.star', { label: file.name })}
+        onToggle={() => { void fav.toggle(importFileName(file.path), files.map(item => importFileName(item.path))).then(failure => { if (failure) setError(failure) }) }} /> : null}
       {eventFiles?.some(item => item.path === file.path) ? <Tag kind="temporary">{t('audio.advanced.inList')}</Tag> : null}
       {single
         ? <Button aria-label={t('profile.audioSheet.useAria', { name: file.name })} disabled={eventFiles?.[0]?.path === file.path} onClick={() => setEventFiles([file])}>{t('profile.audioSheet.use')}</Button>

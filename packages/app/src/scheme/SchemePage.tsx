@@ -14,13 +14,16 @@ import { Tiles, type TileChoice } from '../ui/Tiles'
 import type { ProfileAssetBridge } from '../bridge/assets'
 import { useLang, useMsg, useT } from '../i18n'
 import { LocatePanel } from '../section/LocatePanel'
+import { sortFavoritesFirst, useFavorites, type FavoritesStore } from '../section/favorites'
 import './scheme.css'
 
 const PER_PAGE = 12
 
-export function SchemePage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
   bridge: SchemeBridge
   assets: ProfileAssetBridge
+  /** The starred themes, shown first; absent: no stars. */
+  favorites?: FavoritesStore | undefined
   isDemo?: boolean
   isActive?: boolean
   section: WorkspaceSection
@@ -38,13 +41,16 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
   const { toast, tone, hide, show } = useToast(state.message ? msg(state.message) : null)
   /** The outside file being confirmed in the add sheet. Nothing is written until Add to game. */
   const [importPath, setImportPath] = useState<string | null>(null)
+  const fav = useFavorites(favorites, 'theme', isActive)
+  // Favourites first, then the engine's order; the search, the pages and the added-theme jump all read this order.
+  const themes = useMemo(() => sortFavoritesFirst(state.themes, theme => theme.file, fav.names), [fav.names, state.themes])
   useEffect(() => { if (isActive && state.phase === 'idle') void controller.load() }, [isActive, controller, state.phase])
   useEffect(() => { setPage(0) }, [state.themes, query])
   // A theme that was just added is selected; turn to the page it landed on.
   useEffect(() => {
-    const index = state.selected ? state.themes.findIndex(theme => theme.file === state.selected?.file) : -1
+    const index = state.selected ? themes.findIndex(theme => theme.file === state.selected?.file) : -1
     if (index >= 0) setPage(Math.floor(index / PER_PAGE))
-  }, [state.selected, state.themes])
+  }, [state.selected, themes])
   useEffect(() => { if (!isActive) setImportPath(null) }, [isActive])
   const locked = state.applying || state.unresolved || state.phase === 'locating' || state.phase === 'loading'
   const openImport = (path: string) => { controller.clearImportError(); setImportPath(path) }
@@ -53,7 +59,7 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
     onFile: path => (state.phase === 'ready' ? openImport(path) : show(t('scheme.dropNeedsFolder'))),
   })
   if (!isActive) return null
-  const lastPage = Math.max(0, Math.ceil(state.themes.length / PER_PAGE) - 1)
+  const lastPage = Math.max(0, Math.ceil(themes.length / PER_PAGE) - 1)
   const activePage = Math.min(page, lastPage)
   /** Selecting the theme already in effect is not a change, so it never enables Apply. */
   const pending = state.selected && state.selected.name !== state.current ? state.selected : null
@@ -61,8 +67,8 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
   // current mark, which the controller still owns.
   const needle = query.trim().toLocaleLowerCase()
   const filteredThemes = needle
-    ? state.themes.filter(theme => (theme.name ?? '').toLocaleLowerCase().includes(needle) || theme.file.toLocaleLowerCase().includes(needle))
-    : state.themes
+    ? themes.filter(theme => (theme.name ?? '').toLocaleLowerCase().includes(needle) || theme.file.toLocaleLowerCase().includes(needle))
+    : themes
   // One shape for the grid, shared with the same grid inside Profile. An unreadable theme stays
   // visible and unselectable -- hiding it would leave the player wondering where their file went.
   const choices: TileChoice[] = filteredThemes.map(theme => ({
@@ -127,6 +133,11 @@ export function SchemePage({ bridge, assets, isDemo = false, isActive = true, se
                 ? <SchemePreview path={choice.path} name={choice.label} assets={assets} className="ws-tile-thumb" />
                 : <span className="ws-tile-thumb">{t('scheme.tile.unreadableShort')}</span>}
               onPage={setPage}
+              favorites={fav.enabled ? {
+                isFavorite: choice => fav.isFavorite(choice.file),
+                label: choice => t('favorites.star', { label: choice.label }),
+                onToggle: choice => { void fav.toggle(choice.file, state.themes.map(theme => theme.file)).then(failure => { if (failure) show(msg(failure)) }) },
+              } : undefined}
               onChoose={choice => {
                 const theme = state.themes.find(item => item.file === choice.file)
                 if (!theme) return
