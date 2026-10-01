@@ -27,7 +27,7 @@ It does not try to change a running game. Consequences:
 The App has five sections, named **Profile, Theme, Sounds, Crosshair, Enemy** where a player sees
 them (Enemy look in English) while the code says `theme` / `audio` (it said `scheme` until THEME-RENAME). Profile manages reusable
 combinations (Theme and Sounds); each other section manages one part of the game's current
-configuration. Quick import (一键拖入; code and routes keep `installer`) stays a utility outside
+configuration. Quick import (快速导入, 一键拖入 before 0.1.6-beta.2; code and routes keep `installer`) stays a utility outside
 the five.
 
 - **Profiles.** One JSON file per Profile holding {name, path} records; audio keeps records per
@@ -150,8 +150,8 @@ redesign and everything under Later wait.
 
 | ID | Deliverable | Status |
 |---|---|---|
-| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma drawn and approved 2026-10-01; **built** on `feat/app-nav` and checked on the test PC (test builds 0.1.6-test.1–3); ships as 0.1.6-beta.1 first (user, 2026-09-30) |
-| ENGINE-RUST 1–4 | **The engine in Rust takes over:** the spike, the whole engine with PowerShell goldens, then the App running only Rust with no PowerShell in the download — see the notes after this table | Steps 1–2 **merged** 2026-10-01 (PR #24); step 3 (a Settings switch) built and then replaced by the takeover (user, 2026-09-30); step 4 in progress on `feat/app-nav` |
+| APP-NAV | **The App becomes two big pages, and Quick import moves into Explore** — see the notes after this table | Decided by the user 2026-09-21; in v0.1.6 (user, 2026-09-30); Figma drawn and approved 2026-10-01; **built** on `feat/app-nav` and checked on the test PC (test builds 0.1.6-test.1–3); **released** in 0.1.6-beta.1 (2026-09-30) |
+| ENGINE-RUST 1–4 | **The engine in Rust takes over:** the spike, the whole engine with PowerShell goldens, then the App running only Rust with no PowerShell in the download — see the notes after this table | Steps 1–2 **merged** 2026-10-01 (PR #24); step 3 (a Settings switch) built and then replaced by the takeover (user, 2026-09-30); step 4 **released** in 0.1.6-beta.1 (2026-09-30) |
 
 **APP-NAV — the shell the user described (2026-09-21):**
 - The App's sidebar becomes **two top-level pages** instead of one flat list: **更改配置** (what
@@ -219,7 +219,21 @@ switch); on 2026-09-30 the user chose a takeover instead:
 - **Before stable:** a Profile saved by 0.1.5 or earlier (format v1) must not stay an unexplained
   "couldn't be read" row: the message says it was made by an older Aimloom and must be created
   again, the row offers 删除, and the release readme and notes say so. Also re-check every writer's refusal when the game's settings file lacks
-  one of the six sound keys (a Profile now writes all six).
+  one of the six sound keys (a Profile now writes all six). **Built on `release/0.1.6`
+  (2026-10-01), tests only:** the Profile page's unread-files notice says a Profile saved by 0.1.5
+  or earlier is in the old format and offers 删除 on each file named like a Profile; the engine's
+  own message is unchanged (the frozen goldens pin it); both release readmes carry the note and
+  the uninstall-first line. Every settings writer goes through one edit pass that refuses a
+  missing key and never adds one (read in the code, with a unit test).
+- **The review before stable (2026-10-01)** read everything since v0.1.5 and found no way to lose
+  or corrupt a player's file and nothing that blocks the release. Fixed on `release/0.1.6`, tests
+  only until the release build is used in the real game: lists that went stale after Quick
+  import or a restore; a blocked window close that showed nothing outside 备份与恢复; an execute
+  that failed before its job existed, and a write longer than 60 s, each of which could leave a
+  page locked or unlocked wrongly; a JSON file with tens of thousands of keys stalling the
+  worker; an abandoned import preview left in the data folder; and Quick import refusing
+  everything dropped from a folder that OneDrive syncs (its folders and files are reparse points,
+  seen on the test PC; a read-only source now refuses only symbolic links and junctions).
 - **The Setup now stops the engine too.** Its running-app check ends every `Aimloom.exe`, the
   worker included, so running the Setup while a write is in progress leaves that batch for
   recovery (the engine's recovery path handles it; it is on the test checklist).
@@ -238,20 +252,35 @@ Set by the user on 2026-09-30 (「beta2主要做修改一键拖入和fav系统�
 
 | ID | Deliverable | Status |
 |---|---|---|
-| ENGINE-RUST 5 | PowerShell removed from `main` (above) | **Done** on `feat/beta2` |
-| INSTALL-REDESIGN | **Quick import becomes drag, look, add** on Explore: drop or pick any mix of pack folders, kind folders and loose files; one summary of what will be added; names already in the game are **skipped and the player is told** (Quick import never overwrites a theme, sound or crosshair); personal settings (`UI.json`, `Palette.ini`, `PrimaryUserSettings.json`) only under a collapsed 「高级」, off by default; the game must be closed (rules unchanged); a ZIP is still refused. The Chinese name becomes 快速导入 (user, 2026-09-30) | Figma approved 2026-09-30; **built** on `feat/beta2` (engine `planImport`, Explore view); tests only, not yet seen in the real game |
-| RESTORE-CARD | The existing restore page becomes the third card on Explore (备份与恢复); no new restore | **Built** on `feat/beta2` |
-| FAVORITES | **A star on Theme and Sounds**, starred items first, also in the Profile sheets; kept in the data folder so an uninstall does not lose them | Figma approved 2026-09-30; **built** on `feat/beta2`; tests only |
-| SITE-COPY | The website stops saying PowerShell is included and describes WebView2 truthfully; restore is described for both 0.1.5 and 0.1.6 | Written on `feat/beta2`; deployed only with the beta2 release |
+| ENGINE-RUST 5 | PowerShell removed from `main` (above) | **Done**; in 0.1.6-beta.2 (2026-10-01) |
+| INSTALL-REDESIGN | **Quick import becomes drag, look, add** on Explore: drop or pick any mix of pack folders, kind folders and loose files; one summary of what will be added; names already in the game are **skipped and the player is told** (Quick import never overwrites a theme, sound or crosshair); personal settings (`UI.json`, `Palette.ini`, `PrimaryUserSettings.json`) only under a collapsed 「高级」, off by default; the game must be closed (rules unchanged); a ZIP is still refused. The Chinese name becomes 快速导入 (user, 2026-09-30) | Figma approved 2026-09-30; **released** in 0.1.6-beta.2 (2026-10-01; engine `planImport`, Explore view); walked through in the real game on the test PC before the release (test builds 0.1.6-test.11–12) |
+| RESTORE-CARD | The existing restore page becomes the third card on Explore (备份与恢复); no new restore | **Released** in 0.1.6-beta.2 |
+| FAVORITES | **A star on Theme and Sounds**, starred items first, also in the Profile sheets; kept in the data folder so an uninstall does not lose them | Figma approved 2026-09-30; **released** in 0.1.6-beta.2; not seen: favourites across an uninstall and reinstall, a starred file removed from the game |
+| SITE-COPY | The website stops saying PowerShell is included and describes WebView2 truthfully; restore is described for both 0.1.5 and 0.1.6 | **Deployed** with the beta.2 release (2026-10-01) |
 
 Deleting game files from the App is a later idea, not part of beta2 (user, 2026-09-30).
+
+## v0.1.7 — the patch after 0.1.6
+
+Set by the user on 2026-10-01 (「beta3当成016的补丁去发」): there is no 0.1.6-beta.3; what would have
+been in it ships as a patch after stable 0.1.6. The version is 0.1.7, because the version rules
+take three numbers and a `0.1.6-<anything>` sorts before 0.1.6. Its first content is what the
+review before stable found and left alone, none of which loses data:
+
+| Area | What | Status |
+|---|---|---|
+| Engine | A failed or interrupted write leaves `<target>.kvk-<batch>-<guid>.tmp` (and `.rollback-<guid>.tmp`) beside its target unless that batch is later restored; `.stage-<id>` folders and the `*-previews` staging folders other than `import-previews` are never swept, and each holds a copy of the settings file | Not started |
+| Engine | A first-protection restore treats a file as ours when an earlier restore removed it, so with conflict consent it can delete a file the player put back under the same name (it is backed up first) | Not started |
+| Engine | `exportFile`'s inside-the-game refusal compares path text, so another spelling of the game folder (`\\?\`, a short name, a mapped drive) passes; Quick import has no total size limit for one drop and does not count folders toward its file limit | Not started |
+| Native | A read that times out leaves a worker that is never ended; `planCrosshairAdd` has no native one-create-row check (the engine enforces it) | Not started |
+| App | Quick import: unrecognised files stay collapsed when nothing will be added, focus is lost when Advanced is toggled, no re-check after recovery; favourites: the 501st gives a misleading message and a damaged file is only reported on the first star; the Profile sound sheet's "use a file" choice does nothing for kill and spawn; a Theme tile click can change page during a search | Not started |
 
 ## After v0.1.6
 
 | ID | Deliverable | Status |
 |---|---|---|
-| INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; in 0.1.6-beta.2 (below) |
-| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS and the Rust engine, across the wire mirrors. The Profile JSON already says `theme` (format v2). Players see no change | Renamed in the code 2026-10-01, in no release yet: wire ops `themeList` / `planTheme`, asset kind `theme`, `@kvk/theme`'s `parseThemeDocument` / `renderThemePreview`. Kept: the data folder's `scheme-previews` staging folder (a name on disk) and the version 1 Profile key `scheme` that every layer refuses |
+| INSTALL-REDESIGN | **Quick import redesigned** — see the notes after this table | Decided by the user 2026-09-21; **released** in 0.1.6-beta.2 (the table above) |
+| THEME-RENAME | **Every `scheme` in the code becomes `theme`** (user, 2026-09-30: 「把所有schema都改成theme」): folders, wire ops (`schemeList`, `planScheme`), dictionary keys, CSS and the Rust engine, across the wire mirrors. The Profile JSON already says `theme` (format v2). Players see no change | Renamed in the code 2026-10-01, after 0.1.6-beta.2; first ships in stable 0.1.6: wire ops `themeList` / `planTheme`, asset kind `theme`, `@kvk/theme`'s `parseThemeDocument` / `renderThemePreview`. Kept: the data folder's `scheme-previews` staging folder (a name on disk) and the version 1 Profile key `scheme` that every layer refuses |
 | APP-EXPLORE | **The App's Explore page reads the website's catalog and downloads in place**, adding a file through the existing add-file plan | Decided by the user 2026-10-01 (「先入口，下一版再做 App 内下载」): after v0.1.6; not designed |
 | SLIM-2 | **The code slim-down, step 2: features and interaction** — fewer and simpler pages, buttons and flows; the behaviour differences step 1 recorded (for example, a job still running after 60 s locks the file-add flow but not a section apply); and **Profile apply speed** (user, 2026-09-29: 「profile 应用速度有点慢」), measured phase by phase on the tester's PC before anything changes, without weakening a safety check | Step 1 (code only, no behaviour change) shipped in v0.1.5; step 2 after v0.1.6 (user, 2026-09-30) |
 
@@ -260,8 +289,8 @@ Deleting game files from the App is a later idea, not part of beta2 (user, 2026-
   拖文件进来，然后我们提前设好备份，不让用户选来选去很麻烦」.
 - **Renamed on 2026-09-21: 一键拖入 / "Quick import".** The user's reason: 安装与恢复 read as
   installing and restoring *Aimloom itself*. The Chinese is the user's; the English is a first
-  choice that nobody has reviewed. The page behind the name is still the old wizard — the
-  drag-in redesign below has not started — so for now the name promises more than the page does.
+  choice that nobody has reviewed. Until 0.1.6-beta.2 the page behind the name was still the old
+  wizard; the redesign shipped there, with the Chinese name 快速导入.
   The website keeps 安装与恢复 until v0.1.3 is released, because it describes v0.1.2.
 - **Drag files in; stop asking.** Today the page makes the player find a pack folder, read a
   catalog of categories with counts, tick the ones they want, then review a preview. The new

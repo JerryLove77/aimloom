@@ -308,3 +308,20 @@ pub fn profile_apply_execute(engine: &Engine, context: &Context, apply: &Profile
     }
     txn::install(engine, context, &apply.plan, false, observer)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A Profile writes the theme and all six sound events in one pass: a settings file that
+    /// lacks any one of the keys refuses the whole edit, and no key is ever added.
+    #[test]
+    fn a_batch_of_edits_refuses_when_any_key_is_missing() {
+        let source = text::utf16(r#"{"a":"1","b":"2"}"#);
+        let edit = |key: &str| (key.to_string(), Value::One(Scalar::Str("x".into())));
+        let done = apply_edits(&source, &[edit("a"), edit("b")]).unwrap();
+        assert_eq!(String::from_utf16(&done).unwrap(), r#"{"a":"x","b":"x"}"#);
+        let error = apply_edits(&source, &[edit("a"), edit("c")]).unwrap_err();
+        assert!(error.english().contains("missing a required key: c"), "{}", error.english());
+    }
+}

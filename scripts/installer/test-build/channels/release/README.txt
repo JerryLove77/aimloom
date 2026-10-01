@@ -15,6 +15,11 @@ KovaaK setup manager: background, sounds, crosshair, enemy look, and training Pr
    Aimloom has no code-signing certificate yet, so Windows does not recognize it.
 
 [Before you use it]
+- Coming from 0.1.5 or earlier: uninstall the old version first, then install this one.
+  Uninstalling keeps your backups and Profiles.
+- The Profile format changed: Profiles saved by 0.1.5 or earlier (the old format) are not read
+  by this version, so delete them on the Profile page and recreate them; Profiles made in this
+  version cannot be opened by 0.1.5.
 - Close KovaaK before writing to the game files.
 - Every write is backed up first; open "Backup and restore" from the Explore page to undo it.
 - Backups and Profiles are kept in %LOCALAPPDATA%\Aimloom, apart from the game folder.
