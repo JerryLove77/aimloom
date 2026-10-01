@@ -39,7 +39,7 @@ export const en: Record<keyof typeof zh, string> = {
   'home.faq.os.q': 'Which systems are supported?',
   'home.faq.os.a': 'Windows 10/11 (64-bit) only. On Windows 11 there is nothing else to install; on Windows 10 the installer downloads and installs WebView2 if it is missing (the portable ZIP does not: if its window does not open, install the Microsoft Edge WebView2 Runtime yourself). The app is in Chinese and English, follows the Windows display language, and can be switched in Settings. The site reads fine on a phone; the app does not run there.',
   'home.faq.sens.q': 'Does it change my sensitivity?',
-  'home.faq.sens.a': 'No. Each page changes only its own settings: Theme changes the background, Sounds changes the chosen event\'s sound, Enemy look changes the enemy skin. Sensitivity, DPI and FOV are never touched.',
+  'home.faq.sens.a': 'Not by default. Each page changes only its own settings: Theme changes the background, Sounds changes the chosen event\'s sound, Enemy look changes the enemy skin. Sensitivity, DPI and FOV are left alone unless you choose to import someone else\'s personal settings in Quick import; those are backed up first too.',
   'home.faq.pack.q': 'Do I need my own files?',
   'home.faq.pack.a': 'No. Aimloom lists the themes, sounds and crosshairs already in the game, and a file you downloaded elsewhere can be dragged onto its page. The package itself ships no assets.',
   'home.faq.restore.q': 'How do I undo a change?',

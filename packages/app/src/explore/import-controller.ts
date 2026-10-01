@@ -54,6 +54,8 @@ export const skippedRows = (preview: Preview | null): FileRow[] => preview?.rows
 export const settingsRows = (preview: Preview | null): FileRow[] => preview?.rows.filter(r => SETTINGS.has(r.category)) ?? []
 /** The job's own outcome only; a running job publishes its progress until it ends. */
 const TERMINAL = ['finished', 'failed', 'unknown', 'reconciled']
+/** Codes that mean execute was refused before anything ran (as the restore page treats them). */
+const REFUSALS = ['PLAN_MISSING', 'PLAN_STALE', 'INVALID_PACK', 'INVALID_PATH', 'BUSY', 'GAME_RUNNING', 'GAME_STATE_UNKNOWN', 'CONFLICT', 'UNOWNED_FILE', 'RECOVERY_REQUIRED', 'BACKUP_INVALID', 'UNSUPPORTED_PLATFORM']
 
 export function createImportController(bridge: ImportBridge, storage: GameRootStorage, initial: ImportState = IDLE_IMPORT) {
   const store = createStore<ImportState>(initial)
@@ -63,14 +65,14 @@ export function createImportController(bridge: ImportBridge, storage: GameRootSt
   let operationId: string | null = null
   const locked = () => { const { phase, unresolved } = getState(); return phase === 'adding' || unresolved }
 
-  async function plan(): Promise<void> {
+  async function plan(keep: Msg | null = null): Promise<void> {
     const { gameRoot, paths, includeSettings } = getState()
     if (!gameRoot || !paths.length) return
     const mine = ++sequence
-    publish({ phase: 'planning', blocked: null, error: null, message: null, preview: null })
+    publish({ phase: 'planning', blocked: null, error: keep, message: null, preview: null })
     try {
       const preview = await bridge.planImport({ gameRoot, paths, includeSettings, revision: ++revision })
-      if (mine === sequence) publish({ phase: 'ready', preview })
+      if (mine === sequence) publish({ phase: 'ready', preview, error: keep })
     } catch (error) {
       if (mine !== sequence) return
       const code = (error as { issue?: { code?: string } })?.issue?.code
@@ -79,6 +81,9 @@ export function createImportController(bridge: ImportBridge, storage: GameRootSt
       else publish({ phase: 'error', error: errorMsg(error, { key: 'quick.error.plan' }) })
     }
   }
+
+  /** A failed or refused add leaves no plan to run: show why, then plan the same choice again. */
+  const replanAfter = (error: Msg) => plan(error)
 
   async function locateThenPlan(): Promise<void> {
     if (getState().gameRoot) return plan()
@@ -153,21 +158,33 @@ export function createImportController(bridge: ImportBridge, storage: GameRootSt
       publish({ phase: 'adding', progress: null, error: null, message: null })
       try {
         await bridge.execute({ operationId: id, planId: preview.planId, confirmation: 'install', allowConflicts: false })
-        const job = await waitForJob(id)
-        if (job.state === 'unknown') { publish({ phase: 'done', unresolved: true, progress: null, error: { key: 'quick.error.unresolved' } }); return }
-        operationId = null
-        if (job.state === 'failed') { publish({ phase: 'ready', progress: null, error: errorMsg(job.error, { key: 'quick.error.add' }) }); return }
-        const status = job.result?.status
-        if (status === 'completed' || status === 'no-change') {
-          publish({ phase: 'done', progress: null, outcome: { status, added: addedRows(preview), batchId: job.result?.batchId ?? null } })
+      } catch (error) {
+        const code = (error as { issue?: { code?: string } })?.issue?.code ?? ''
+        if (!REFUSALS.includes(code)) {
+          // The worker may have taken the plan before failing to answer: never success, locked.
+          publish({ phase: 'done', unresolved: true, progress: null, error: { key: 'quick.error.unresolved' } })
           return
         }
-        publish({ phase: 'done', progress: null, error: incompleteMsg('quick.error.incomplete', status) })
-      } catch (error) {
-        // The execute call itself failed: a refusal before anything ran, never an unknown write.
+        // Refused before anything ran. The engine may have used up the plan, so plan again.
         operationId = null
-        publish({ phase: 'ready', progress: null, error: errorMsg(error, { key: 'quick.error.add' }) })
+        await replanAfter(errorMsg(error, { key: 'quick.error.add' }))
+        return
       }
+      let job
+      try { job = await waitForJob(id) } catch {
+        // The add was accepted and its outcome could not be read: locked until reconciled.
+        publish({ phase: 'done', unresolved: true, progress: null, error: { key: 'quick.error.unresolved' } })
+        return
+      }
+      if (job.state === 'unknown') { publish({ phase: 'done', unresolved: true, progress: null, error: { key: 'quick.error.unresolved' } }); return }
+      operationId = null
+      if (job.state === 'failed') { await replanAfter(errorMsg(job.error, { key: 'quick.error.add' })); return }
+      const status = job.result?.status
+      if (status === 'completed' || status === 'no-change') {
+        publish({ phase: 'done', progress: null, outcome: { status, added: addedRows(preview), batchId: job.result?.batchId ?? null } })
+        return
+      }
+      publish({ phase: 'done', progress: null, error: incompleteMsg('quick.error.incomplete', status) })
     },
     async reconcile(): Promise<void> {
       if (!operationId) { publish({ unresolved: false }); return }

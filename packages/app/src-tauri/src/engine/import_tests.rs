@@ -200,7 +200,11 @@ fn a_file_the_game_cannot_use_is_skipped_with_the_engine_s_words_in_both_languag
     let mut huge = png(16);
     huge.resize(2 * 1024 * 1024 + 1, 0);
     write(&d.drop.join("huge.png"), &huge);
-    let paths = ["Broken 坏.json", "Nameless.json", "semi;colon.wav", "photo.png", "huge.png"].map(|n| d.drop.join(n));
+    write(&d.drop.join("empty.wav"), b"");
+    let mut big = b"RIFF".to_vec();
+    big.resize(8 * 1024 * 1024 + 1, 0);
+    write(&d.drop.join("big.wav"), &big);
+    let paths = ["Broken 坏.json", "Nameless.json", "semi;colon.wav", "photo.png", "huge.png", "empty.wav", "big.wav"].map(|n| d.drop.join(n));
     let refs: Vec<&Path> = paths.iter().map(PathBuf::as_path).collect();
     let preview = d.plan(&refs, false);
     for (key, _, why) in rows(&preview) {
@@ -210,7 +214,7 @@ fn a_file_the_game_cannot_use_is_skipped_with_the_engine_s_words_in_both_languag
         assert!(is_english(en), "{key}: {en}");
         assert!(!detail.get("message").and_then(Json::as_str).unwrap().is_empty());
     }
-    assert_eq!(rows(&preview).len(), 5);
+    assert_eq!(rows(&preview).len(), 7);
     assert!(row(&preview, "themes/Broken 坏.json").get("detail").unwrap().get("messageEn").and_then(Json::as_str).unwrap().contains("\"Broken 坏.json\""));
 }
 

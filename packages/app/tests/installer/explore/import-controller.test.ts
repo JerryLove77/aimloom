@@ -113,3 +113,35 @@ describe('Quick import controller', () => {
     expect(ctl.getState().phase).toBe('idle')
   })
 })
+
+describe('Quick import controller after a failed add', () => {
+  it('plans the same choice again, keeping the reason, so 加进游戏 never offers a used-up plan', async () => {
+    const bridge = createDemoBridge({ durationMs: 0 })
+    const ctl = createImportController(bridge, null)
+    await ctl.choose([PACK])
+    const first = ctl.getState().preview!.planId
+    bridge.job = async operationId => ({ operationId, planId: first, state: 'failed', progress: null, result: null, error: { code: 'PLAN_STALE', message: '预览已改变', messageEn: 'The preview changed', path: null } })
+    await ctl.add()
+    expect(ctl.getState().phase).toBe('ready')
+    expect(ctl.getState().preview?.planId).not.toBe(first)
+    expect(ctl.getState().error).not.toBeNull()
+  })
+
+  it('a job that cannot be read after execute was accepted stays locked; never success', async () => {
+    const bridge = createDemoBridge({ durationMs: 0 })
+    const ctl = createImportController(bridge, null)
+    await ctl.choose([PACK])
+    bridge.job = async () => { throw new Error('worker stopped') }
+    await ctl.add()
+    expect(ctl.getState()).toMatchObject({ phase: 'done', unresolved: true, outcome: null })
+  })
+
+  it('an execute that fails without a known refusal is unknown, not a refusal', async () => {
+    const bridge = createDemoBridge({ durationMs: 0 })
+    const ctl = createImportController(bridge, null)
+    await ctl.choose([PACK])
+    bridge.execute = async () => { throw new InstallerFailure({ code: 'WORKER_UNAVAILABLE', message: '后台引擎停止了', messageEn: 'The worker stopped.', path: null }) }
+    await ctl.add()
+    expect(ctl.getState()).toMatchObject({ phase: 'done', unresolved: true })
+  })
+})

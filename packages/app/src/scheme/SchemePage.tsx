@@ -50,7 +50,9 @@ export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive
   useEffect(() => {
     const index = state.selected ? themes.findIndex(theme => theme.file === state.selected?.file) : -1
     if (index >= 0) setPage(Math.floor(index / PER_PAGE))
-  }, [state.selected, themes])
+    // Only a new selection turns the page: starring a tile re-sorts the grid and must not jump.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.selected])
   useEffect(() => { if (!isActive) setImportPath(null) }, [isActive])
   const locked = state.applying || state.unresolved || state.phase === 'locating' || state.phase === 'loading'
   const openImport = (path: string) => { controller.clearImportError(); setImportPath(path) }

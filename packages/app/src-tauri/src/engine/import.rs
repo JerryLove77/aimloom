@@ -24,6 +24,13 @@ use super::{EngineError, EngineResult};
 /// The most paths one drop may name.
 pub const MAX_PATHS: usize = 64;
 
+/// The largest theme, sound or settings file read, as `planFileAdd` allows (crosshairs: 2 MiB).
+const MAX_FILE: usize = 8 * 1024 * 1024;
+
+fn size_refusal() -> EngineError {
+    EngineError::coded("ENGINE_ERROR", "文件是空的，或者超过 8 MiB，游戏用不了。", "The file is empty or larger than 8 MiB, so the game cannot use it.")
+}
+
 /// The game's kind folders, as a pack names them, and their plan categories.
 const KIND_FOLDERS: [(&str, &str); 3] = [("Themes", "themes"), ("sounds", "sounds"), ("crosshairs", "crosshairs")];
 
@@ -234,7 +241,10 @@ impl Checker<'_> {
         if c.category != "palette" {
             if let Err(error) = txn::assert_json_object(&c.source) { self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
         }
-        let bytes = std::fs::read(&c.source).map_err(|e| EngineError::io(&e))?;
+        let bytes = match read_bounded(&c.source, MAX_FILE)? {
+            Some(bytes) if !bytes.is_empty() => bytes,
+            _ => { let error = size_refusal(); self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
+        };
         let staged = stage_file(&self.stage, &c.name, &bytes)?;
         self.accepted.push((c, staged));
         Ok(())
@@ -273,7 +283,10 @@ impl Checker<'_> {
                 None => { let error = files::assert_crosshair_image(&[]).unwrap_err(); self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
             }
         } else {
-            std::fs::read(&c.source).map_err(|e| EngineError::io(&e))?
+            match read_bounded(&c.source, MAX_FILE)? {
+                Some(bytes) if !bytes.is_empty() => bytes,
+                _ => { let error = size_refusal(); self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }
+            }
         };
         if c.category == "crosshairs" {
             if let Err(error) = files::assert_crosshair_image(&bytes) { self.skip(&c, target, Reason::Invalid, Some(&error)); return Ok(()); }

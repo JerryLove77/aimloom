@@ -31,11 +31,14 @@ export function createFavoritesStore(bridge: FavoritesBridge) {
   const store = createStore<FavoritesState>({ favorites: { theme: [], audio: [] }, loaded: false, error: null })
   const { getState, publish } = store
   let saving: Promise<unknown> = Promise.resolve()
+  /** What the file holds, as last read or saved. */
+  let confirmed: Favorites = { theme: [], audio: [] }
+  let latest = 0
   return {
     ...store,
     /** Reads the file again; a page calls this when it becomes active. */
     async load(): Promise<void> {
-      try { publish({ favorites: await bridge.favoritesRead(), loaded: true, error: null }) }
+      try { confirmed = await bridge.favoritesRead(); publish({ favorites: confirmed, loaded: true, error: null }) }
       catch (error) { publish({ loaded: true, error: errorMsg(error, { key: 'favorites.error.read' }) }) }
     },
     isFavorite: (kind: FavoriteKind, file: string) => getState().favorites[kind].some(name => same(name, file)),
@@ -45,17 +48,23 @@ export function createFavoritesStore(bridge: FavoritesBridge) {
      * to show, or null.
      */
     toggle(kind: FavoriteKind, file: string, present: readonly string[]): Promise<Msg | null> {
-      const before = getState().favorites
-      const list = before[kind].filter(name => present.some(p => same(p, name)))
+      const list = getState().favorites[kind].filter(name => present.some(p => same(p, name)))
       const next = list.some(name => same(name, file)) ? list.filter(name => !same(name, file)) : [...list, file]
-      const favorites = { ...before, [kind]: next }
+      const favorites = { ...getState().favorites, [kind]: next }
       publish({ favorites, error: null })
+      const mine = ++latest
       // One save at a time, in order, so a quick second click cannot be overtaken by the first.
       const run = saving.then(async () => {
-        try { publish({ favorites: await bridge.favoritesSave(favorites) }); return null }
-        catch (error) {
+        try {
+          confirmed = await bridge.favoritesSave(favorites)
+          // A newer click is already on screen; its own save will answer for it.
+          if (mine === latest) publish({ favorites: confirmed })
+          return null
+        } catch (error) {
           const message = errorMsg(error, { key: 'favorites.error.save' })
-          publish({ favorites: { ...getState().favorites, [kind]: before[kind] }, error: message })
+          // Back to what the file holds, then to what newer clicks still ask for.
+          if (mine === latest) publish({ favorites: confirmed, error: message })
+          else publish({ error: message })
           return message
         }
       })
