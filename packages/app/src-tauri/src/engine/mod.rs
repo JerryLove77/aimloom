@@ -11,7 +11,9 @@
 
 pub mod discover;
 pub mod enemy;
+pub mod favorites;
 pub mod files;
+pub mod import;
 pub mod json;
 pub mod lists;
 pub mod manifest;
@@ -87,6 +89,8 @@ pub fn english_text(message: &str, english: Option<&str>) -> String {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod import_tests;
 
 /// The worker's runtime root in a release: `<exe dir>\scripts`. The folder is not shipped (from
 /// v0.1.6 the download holds `Aimloom.exe`, its readmes and `VERSION.txt`); it is only the

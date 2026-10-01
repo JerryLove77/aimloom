@@ -31,7 +31,7 @@ function fixtures(failSave = false, initial = original()) {
     stored = structuredClone(profile)
     return { filePath: '/profiles/profile1.json', profile: stored }
   })
-  const bridge: ProfileBridge = { list: async () => ({ directory: '/profiles', profiles: [stored], errors: [] }), read: async () => ({ filePath: '/profiles/profile1.json', profile: structuredClone(stored) }), save, delete: async () => ({ deleted: true }) }
+  const bridge: ProfileBridge = { list: async () => ({ directory: '/profiles', profiles: [stored], errors: [] }), read: async () => ({ filePath: '/profiles/profile1.json', profile: structuredClone(stored) }), save, delete: async () => ({ deleted: true }), favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites }
   const assets: ProfileAssetBridge = { chooseDirectory: async () => '/assets', list: async () => ({ directory: '/assets', files: [{ name: 'Blue.json', path: '/assets/Blue.json' }], errors: [] }), read: async () => new TextEncoder().encode(JSON.stringify({ themeName: 'Blue', wallMaterial: 'DRYWALL', floorMaterial: 'DRYWALL', wallTint: {x:0.1,y:0.3,z:0.8} })) }
   return { bridge, assets, save, stored: () => stored }
 }
@@ -451,7 +451,7 @@ describe('a new Profile starts from the game, and cannot be saved incomplete', (
     const saved: TrainingProfile[] = []
     const bridge: ProfileBridge = {
       list: async () => ({ directory: '/profiles', profiles: [], errors: [] }), read: async () => ({ filePath: '', profile: null }),
-      save: async profile => { saved.push(profile); return { filePath: `/profiles/${profile.id}.json`, profile } }, delete: async () => ({ deleted: true }),
+      save: async profile => { saved.push(profile); return { filePath: `/profiles/${profile.id}.json`, profile } }, delete: async () => ({ deleted: true }), favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites,
     }
     const assets: ProfileAssetBridge = { chooseDirectory: async () => null, list: async () => ({ directory: '', files: [], errors: [] }), read: async () => new Uint8Array() }
     render(<ProfilesApp bridge={bridge} assets={assets} locate={game(readable)} />)

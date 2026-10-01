@@ -132,6 +132,16 @@ pub struct Catalog {
 #[serde(rename_all = "lowercase")]
 pub enum FileAction { Create, Replace, Skip, Restore, Delete }
 
+/// Why Quick import does not add a file (`planImport` rows only).
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum SkipReason { ExistsSame, ExistsDifferent, ThemeNameTaken, SoundStemTaken, Invalid, DuplicateInDrop, SettingsNotIncluded }
+
+/// The engine's own words for an `invalid` file, in both languages.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RowDetail { pub message: String, pub message_en: String }
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct FileRow {
@@ -142,6 +152,11 @@ pub struct FileRow {
     pub action: FileAction,
     pub conflict: bool,
     pub unowned: bool,
+    /// Quick import only; absent from every other preview.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<SkipReason>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<RowDetail>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -441,6 +456,36 @@ struct PackRootArgs { pack_root: String }
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlanInstallArgs { game_root: String, pack_root: String, categories: Vec<Category>, revision: u64 }
+/// Quick import: the paths the player dropped or picked, read by the worker. The engine
+/// classifies them; this only bounds the request.
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct PlanImportArgs { game_root: String, paths: Vec<String>, include_settings: bool, revision: u64 }
+
+/// The most paths one Quick import may name (`engine::import::MAX_PATHS`).
+pub const MAX_IMPORT_PATHS: usize = 64;
+
+fn validate_import_paths(paths: &[String]) -> Result<(), Issue> {
+    if paths.is_empty() || paths.len() > MAX_IMPORT_PATHS {
+        return Err(Issue::new(ErrorCode::EngineError, format!("一次只能导入 1 到 {MAX_IMPORT_PATHS} 个文件或文件夹。"), format!("Import 1 to {MAX_IMPORT_PATHS} files or folders at a time.")));
+    }
+    for (i, path) in paths.iter().enumerate() {
+        let absolute = {
+            let b = path.as_bytes();
+            (b.len() >= 3 && b[0].is_ascii_alphabetic() && b[1] == b':' && matches!(b[2], b'\\' | b'/'))
+                || (b.len() >= 2 && matches!(b[0], b'\\' | b'/') && matches!(b[1], b'\\' | b'/'))
+                || (!cfg!(windows) && b.first() == Some(&b'/'))
+        };
+        if path.trim().is_empty() || path.encode_utf16().count() > 4096 || path.chars().any(char::is_control) || !absolute {
+            return Err(Issue::new(ErrorCode::InvalidPath, "导入的路径无效：必须是完整路径。", "An import path is not valid: it must be a full path."));
+        }
+        if paths[..i].iter().any(|p| p.eq_ignore_ascii_case(path)) {
+            return Err(Issue::new(ErrorCode::EngineError, "导入的路径重复了。", "The same path was given twice."));
+        }
+    }
+    Ok(())
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct PlanRestoreArgs { game_root: String, source_id: String, revision: u64 }
@@ -582,6 +627,13 @@ pub fn validate_read(op: &str, args: Value) -> Result<Value, Issue> {
         "locate" | "backups" | "schemeList" => normalize::<GameRootArgs>(args),
         "catalog" => normalize::<PackRootArgs>(args),
         "planInstall" => normalize::<PlanInstallArgs>(args),
+        "planImport" => {
+            let args = normalize::<PlanImportArgs>(args)?;
+            let paths: Vec<String> = serde_json::from_value(args["paths"].clone())
+                .map_err(|_| Issue::plain(ErrorCode::EngineError, "invalid request arguments"))?;
+            validate_import_paths(&paths)?;
+            Ok(args)
+        }
         "planRestore" => normalize::<PlanRestoreArgs>(args),
         "planScheme" => {
             let args = normalize::<PlanSchemeArgs>(args)?;

@@ -12,14 +12,14 @@ use crate::installer::protocol::MAX_LINE_BYTES;
 
 /// Every operation of protocol v=1. The ones this engine does not implement yet answer
 /// ENGINE_ERROR; the App never sends them here.
-const OPERATIONS: [&str; 26] = [
-    "discover", "locate", "catalog", "backups", "gameState", "planInstall", "planRestore", "schemeList", "planScheme",
+const OPERATIONS: [&str; 29] = [
+    "discover", "locate", "catalog", "backups", "gameState", "planInstall", "planImport", "planRestore", "schemeList", "planScheme",
     "audioList", "planAudio", "crosshairList", "planCrosshair", "planCrosshairAdd", "exportFile", "enemyList", "planEnemy",
     "planProfileApply", "planFileAdd", "execute", "profileList", "profileRead", "profileSave", "profileDelete",
-    "profileAssetList", "profileAssetRead",
+    "profileAssetList", "profileAssetRead", "profileFavoritesRead", "profileFavoritesSave",
 ];
 
-const PROFILE_OPERATIONS: [&str; 6] = ["profileList", "profileRead", "profileSave", "profileDelete", "profileAssetList", "profileAssetRead"];
+const PROFILE_OPERATIONS: [&str; 8] = ["profileList", "profileRead", "profileSave", "profileDelete", "profileAssetList", "profileAssetRead", "profileFavoritesRead", "profileFavoritesSave"];
 
 enum Adapter {
     Install(super::txn::Plan),
@@ -29,6 +29,7 @@ enum Adapter {
     Crosshair(super::files::CrosshairReplacement),
     CrosshairAdd(super::txn::Plan),
     FileAdd(super::files::FileAdd),
+    Import(super::import::ImportPlan),
     ProfileApply(super::settings::ProfileApply),
     Restore(super::txn::RestorePlan),
 }
@@ -152,6 +153,8 @@ impl Session {
             "profileDelete" => { assert_fields(args, &["id"], "args")?; super::profiles::delete(&self.engine, &self.local_data_root, args.get("id")) }
             "profileAssetList" => { assert_fields(args, &["kind", "directory"], "args")?; super::profiles::asset_list(args.get("kind"), args.get("directory")) }
             "profileAssetRead" => { assert_fields(args, &["kind", "path"], "args")?; super::profiles::asset_read(args.get("kind"), args.get("path")) }
+            "profileFavoritesRead" => { assert_fields(args, &[], "args")?; super::favorites::read(&self.engine, &self.local_data_root) }
+            "profileFavoritesSave" => { assert_fields(args, &["favorites"], "args")?; super::favorites::save(&self.engine, &self.local_data_root, args.get("favorites")) }
             "locate" => {
                 assert_fields(args, &["gameRoot"], "args")?;
                 let context = self.engine.context(string_arg(args, "gameRoot")?, &self.local_data_root)?;
@@ -247,6 +250,31 @@ impl Session {
                 }
                 let add = super::files::file_add_plan(&self.engine, &context, kind, source_path, source_sha, file)?;
                 Ok(self.record_plan(context, &add.plan.clone(), revision, Adapter::FileAdd(add)))
+            }
+            "planImport" => {
+                assert_fields(args, &["gameRoot", "paths", "includeSettings", "revision"], "args")?;
+                self.plan = None;
+                let game_root = string_arg(args, "gameRoot")?;
+                let Some(Json::Array(paths)) = args.get("paths") else {
+                    return Err(EngineError::coded("ENGINE_ERROR", "paths 必须是数组。", "paths must be an array."));
+                };
+                let paths: Vec<String> = paths.iter().map(|p| p.as_str().map(str::to_string)).collect::<Option<_>>()
+                    .ok_or_else(|| EngineError::coded("ENGINE_ERROR", "paths 只能包含字符串。", "paths must contain only strings."))?;
+                let Some(Json::Bool(include_settings)) = args.get("includeSettings") else {
+                    return Err(EngineError::coded("ENGINE_ERROR", "includeSettings 必须是布尔值。", "includeSettings must be boolean."));
+                };
+                let revision = revision_arg(args)?;
+                let context = self.engine.context(game_root, &self.local_data_root)?;
+                // Quick import may replace the settings file, which the game rewrites when it exits.
+                self.engine.assert_game_closed()?;
+                if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
+                    return Err(EngineError::coded("RECOVERY_REQUIRED", "上一次操作没有完成，请先在「备份与恢复」里处理，再导入 (an unfinished operation must be recovered first)。", "The last operation did not finish. Resolve it in Backup and restore before importing."));
+                }
+                let import = super::import::import_plan(&self.engine, &context, &paths, *include_settings)?;
+                let id = super::store::new_guid();
+                let preview = self.import_preview(&context, &import, revision, &id);
+                self.plan = Some(CachedPlan { id, kind: "install", context, adapter: Adapter::Import(import) });
+                Ok(preview)
             }
             "exportFile" => {
                 assert_fields(args, &["directory", "fileName", "base64", "gameRoot"], "args")?;
@@ -387,6 +415,7 @@ impl Session {
                     Adapter::Crosshair(plan) => super::files::image_execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::CrosshairAdd(plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,
                     Adapter::FileAdd(add) => super::files::file_add_execute(&self.engine, &cached.context, add, observer)?,
+                    Adapter::Import(import) => super::import::import_execute(&self.engine, &cached.context, import, observer)?,
                     Adapter::ProfileApply(apply) => super::settings::profile_apply_execute(&self.engine, &cached.context, apply, observer)?,
                     Adapter::Restore(_) => unreachable_restore(),
                 };
@@ -419,6 +448,29 @@ impl Session {
             ("planId", Json::str(id)), ("revision", Json::int(revision)), ("kind", Json::str("restore")), ("location", self.location(context)),
             ("packRoot", Json::Null), ("categories", Json::Array(categories.into_iter().map(Json::str).collect())),
             ("sourceId", Json::str(&plan.id)), ("rows", Json::Array(rows)), ("skipped", Json::Array(Vec::new())),
+        ])
+    }
+
+    /// A Quick import preview: an install preview whose rows also say why a file is not added.
+    /// Rows the plan adds come first, in plan order, then the skipped files in the order they
+    /// were found. `packRoot` is null: the staging folder is the engine's own business.
+    fn import_preview(&self, context: &Context, import: &super::import::ImportPlan, revision: i64, id: &str) -> Json {
+        let detail = |d: &Option<(String, String)>| d.as_ref().map_or(Json::Null, |(zh, en)| Json::object(vec![("message", Json::str(zh)), ("messageEn", Json::str(english_text(zh, Some(en))))]));
+        let mut rows: Vec<Json> = import.plan.iter().flat_map(|p| p.items.iter()).map(|i| Json::object(vec![
+            ("key", Json::str(&i.key)), ("category", Json::str(&i.category)), ("source", Json::str(import.original(&i.source))), ("target", Json::str(&i.target)),
+            ("action", Json::str(&i.action)), ("conflict", Json::Bool(false)), ("unowned", Json::Bool(false)),
+            ("reason", if i.action == "skip" { Json::str(super::import::Reason::ExistsSame.wire()) } else { Json::Null }), ("detail", Json::Null),
+        ])).collect();
+        rows.extend(import.skips.iter().map(|s| Json::object(vec![
+            ("key", Json::str(&s.key)), ("category", Json::str(&s.category)), ("source", Json::str(&s.source)), ("target", Json::str(&s.target)),
+            ("action", Json::str("skip")), ("conflict", Json::Bool(false)), ("unowned", Json::Bool(false)),
+            ("reason", Json::str(s.reason.wire())), ("detail", detail(&s.detail)),
+        ])));
+        let categories = import.plan.as_ref().map_or_else(Vec::new, |p| p.categories.iter().map(Json::str).collect());
+        Json::object(vec![
+            ("planId", Json::str(id)), ("revision", Json::int(revision)), ("kind", Json::str("install")), ("location", self.location(context)),
+            ("packRoot", Json::Null), ("categories", Json::Array(categories)),
+            ("sourceId", Json::Null), ("rows", Json::Array(rows)), ("skipped", Json::Array(import.unrecognized.iter().map(Json::str).collect())),
         ])
     }
 

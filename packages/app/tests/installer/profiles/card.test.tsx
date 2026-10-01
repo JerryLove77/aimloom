@@ -23,6 +23,7 @@ function setup(profile: TrainingProfile | null) {
     read: async () => ({ filePath: '/profiles/p.json', profile: structuredClone(profile) }),
     save: async p => ({ filePath: '/profiles/p.json', profile: p }),
     delete: async () => ({ deleted: true }),
+    favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites,
   }
   const assets: ProfileAssetBridge = { chooseDirectory: async () => null, list: async () => ({ directory: '', files: [], errors: [] }), read: async () => themeBytes }
   render(<ProfilesApp bridge={bridge} assets={assets} />)

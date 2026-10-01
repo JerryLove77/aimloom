@@ -13,7 +13,7 @@ use super::text::eq_ignore_case;
 use super::txn::{self, Plan};
 use super::{EngineError, EngineResult};
 
-const MAX_PNG: usize = 2 * 1024 * 1024;
+pub(super) const MAX_PNG: usize = 2 * 1024 * 1024;
 
 fn fail(zh: impl Into<String>, en: impl Into<String>) -> EngineError { EngineError::coded("ENGINE_ERROR", zh, en) }
 
@@ -219,7 +219,7 @@ pub fn add_plan(engine: &Engine, context: &Context, file: &str, png: &[u8]) -> E
 // ---- A theme or sound added from outside ---------------------------------------------------
 
 /// `Assert-KvkImportFileName`.
-fn assert_import_name(kind: &str, file: &str) -> EngineResult<()> {
+pub(super) fn assert_import_name(kind: &str, file: &str) -> EngineResult<()> {
     let extensions: &[&str] = if kind == "theme" { &[".json"] } else { &[".wav", ".ogg"] };
     let ext = paths::extension(file);
     let mut invalid = file.trim().is_empty() || file.encode_utf16().count() > 128 || file.chars().any(bad_name_char)

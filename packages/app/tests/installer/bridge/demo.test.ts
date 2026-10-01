@@ -42,3 +42,21 @@ it('the demo enemy skin state starts fixed and only changes once a plan is execu
  await bridge.execute({operationId:'enemy-skin',planId:plan.planId,confirmation:'install',allowConflicts:false})
  expect((await bridge.enemyList(gameRoot)).current.cylindrical).toEqual({model:'Ghost',skin:'Default'})
 })
+it('the demo Quick import adds new files, skips what the game has and plans settings only on request', async()=>{
+ const bridge=createDemoBridge({durationMs:0})
+ const found=await bridge.discover()
+ const gameRoot=found.candidates[0]!
+ const pack=found.defaultPack!
+ const plan=await bridge.planImport({gameRoot,paths:[pack,'C:\\Users\\Player1\\Downloads\\pack.zip','C:\\Users\\Player1\\Downloads\\Soft.wav'],includeSettings:false,revision:0})
+ const reasons=Object.fromEntries(plan.rows.map(r=>[r.key,r.action==='skip'?r.reason:r.action]))
+ expect(reasons).toMatchObject({'themes/Clean Dark.json':'exists-same','themes/Aimloom Demo.json':'create','sounds/Bell5.ogg':'sound-stem-taken',
+  'crosshairs/dot.png':'exists-same','sounds/Soft.wav':'create','primary/PrimaryUserSettings.json':'settings-not-included'})
+ expect(plan.skipped).toContain('C:\\Users\\Player1\\Downloads\\pack.zip')
+ expect(plan.packRoot).toBeNull()
+ expect(plan.rows.some(r=>r.action==='replace')).toBe(false)
+ await bridge.execute({operationId:'quick-import',planId:plan.planId,confirmation:'install',allowConflicts:false})
+ expect((await bridge.schemeList(gameRoot)).themes.map(t=>t.file)).toContain('Aimloom Demo.json')
+ const again=await bridge.planImport({gameRoot,paths:[pack],includeSettings:true,revision:1})
+ expect(again.rows.find(r=>r.key==='themes/Aimloom Demo.json')?.reason).toBe('exists-different')
+ expect(again.rows.find(r=>r.key==='primary/PrimaryUserSettings.json')?.action).toBe('replace')
+})

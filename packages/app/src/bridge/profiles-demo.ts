@@ -1,4 +1,4 @@
-import type { ProfileBridge } from './profiles'
+import { parseFavorites, type ProfileBridge } from './profiles'
 import type { AssetKind, ProfileAssetBridge } from './assets'
 import { parseTrainingProfile, type ProfileAudio, type TrainingProfile } from '../profiles/model'
 import { referenceFromPath } from '../profiles/file-reference'
@@ -13,6 +13,7 @@ const failure = (key: MessageKey) => new InstallerFailure({ code: 'ENGINE_ERROR'
 const DIRECTORY = '/demo/profiles'
 // v2: Profiles are complete snapshots now; a v1 demo store is simply started over.
 const KEY = 'aimloom.profile-page-demo.v2'
+const FAVORITES_KEY = 'aimloom.favorites-demo.v1'
 const ref = (kind: AssetKind, name: string) => referenceFromPath(`/demo/${kind}/${name}`, kind === 'crosshair' ? ['.png'] : kind === 'audio' ? ['.wav'] : ['.json'])
 function presets(): TrainingProfile[] {
   const none = [ref('audio', 'none.wav')]
@@ -44,6 +45,16 @@ export function createDemoProfileBridge(storage: Pick<Storage, 'getItem' | 'setI
       const profiles = readAll(); const next = profiles.filter(p => p.id !== id)
       if (next.length === profiles.length) return { deleted: false }
       storage.setItem(KEY, JSON.stringify(next)); return { deleted: true }
+    },
+    async favoritesRead() {
+      const raw = storage.getItem(FAVORITES_KEY)
+      if (raw === null) return { theme: [], audio: [] }
+      try { return parseFavorites(JSON.parse(raw)) } catch { throw failure('profile.demo.storageUnreadable') }
+    },
+    async favoritesSave(favorites) {
+      const kept = parseFavorites(favorites)
+      storage.setItem(FAVORITES_KEY, JSON.stringify(kept))
+      return kept
     },
   }
 }

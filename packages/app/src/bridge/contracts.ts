@@ -16,10 +16,16 @@ export interface Location {
 export interface CatalogEntry { category: Category; count: number }
 export interface Discovery { candidates: string[]; defaultPack: string|null }
 export interface Catalog { packRoot: string; categories: CatalogEntry[]; skipped: string[] }
+/** Why Quick import does not add a file. Only a `planImport` row carries one. */
+export type SkipReason = 'exists-same'|'exists-different'|'theme-name-taken'|'sound-stem-taken'|'invalid'|'duplicate-in-drop'|'settings-not-included'
+/** The engine's own words for an `invalid` file, in both languages. */
+export interface RowDetail { message: string; messageEn: string }
 export interface FileRow {
   key: string; category: Category; source: string|null; target: string
   action: 'create'|'replace'|'skip'|'restore'|'delete'
   conflict: boolean; unowned: boolean
+  /** Quick import only (absent from every other preview); a key may repeat, so list rows by index. */
+  reason?: SkipReason|null; detail?: RowDetail|null
 }
 export interface Preview {
   planId: string; revision: number; kind: 'install'|'restore'
@@ -103,6 +109,12 @@ export type PickFileKind = FileAddKind | 'crosshair'
  * UI never holds bytes it could alter. `sourceSha256` is the hash of what the player previewed.
  */
 export interface PlanFileAddRequest { gameRoot: string; kind: FileAddKind; sourcePath: string; sourceSha256: string; file: string; revision: number }
+/**
+ * Quick import: the paths the player dropped or picked (1 to 64, full paths). The engine reads
+ * them and decides what each one is; personal settings are planned only with `includeSettings`.
+ */
+export interface PlanImportRequest { gameRoot: string; paths: string[]; includeSettings: boolean; revision: number }
+export const MAX_IMPORT_PATHS = 64
 export interface ExportFileRequest { directory: string; fileName: string; base64: string; gameRoot: string }
 export interface ExportedFile { path: string; bytes: number; sha256: string }
 
@@ -147,6 +159,7 @@ export interface InstallerBridge {
   planCrosshair(input: PlanCrosshairRequest): Promise<Preview>
   planCrosshairAdd(input: PlanCrosshairRequest): Promise<Preview>
   planFileAdd(input: PlanFileAddRequest): Promise<Preview>
+  planImport(input: PlanImportRequest): Promise<Preview>
   execute(input: ExecuteRequest): Promise<Job>
   job(operationId: string): Promise<Job>
   reconcile(operationId: string): Promise<Reconciliation>

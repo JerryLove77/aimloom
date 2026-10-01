@@ -7,11 +7,20 @@ import { parseTrainingProfile, validateProfileId, type TrainingProfile } from '.
 export interface ProfileList { directory: string; profiles: TrainingProfile[]; errors: { fileName: string; message: string; messageEn: string }[] }
 export interface ProfileRead { filePath: string; profile: TrainingProfile | null }
 export interface ProfileSave { filePath: string; profile: TrainingProfile }
+/**
+ * The starred Theme and Sounds files, by file name, kept in the data folder (not WebView
+ * storage, which an uninstall may clear). At most `MAX_FAVORITES` of each, no repeats.
+ */
+export interface Favorites { theme: string[]; audio: string[] }
+export const MAX_FAVORITES = 500
 export interface ProfileBridge {
   list(): Promise<ProfileList>
   read(id: string): Promise<ProfileRead>
   save(profile: TrainingProfile): Promise<ProfileSave>
   delete(id: string): Promise<{ deleted: boolean }>
+  favoritesRead(): Promise<Favorites>
+  /** Replaces both lists and answers what was kept. */
+  favoritesSave(favorites: Favorites): Promise<Favorites>
 }
 
 function malformed(): never {
@@ -54,6 +63,22 @@ function stored(value: unknown, id: string, nullable: boolean): ProfileRead {
   return { filePath, profile }
 }
 
+/** A favourites value as the engine answers it, or a malformed-response failure. */
+export function parseFavorites(value: unknown): Favorites {
+  const body = envelope(value, ['theme', 'audio'])
+  const names = (list: unknown, pattern: RegExp): string[] => {
+    if (!Array.isArray(list) || list.length > MAX_FAVORITES) malformed()
+    const seen = new Set<string>()
+    return list.map(name => {
+      const file = string(name)
+      if (!pattern.test(file) || /[\\/]/.test(file) || seen.has(file.toLowerCase())) malformed()
+      seen.add(file.toLowerCase())
+      return file
+    })
+  }
+  return { theme: names(body.theme, /\.json$/i), audio: names(body.audio, /\.(wav|ogg)$/i) }
+}
+
 export function createNativeProfileBridge(): ProfileBridge {
   return {
     async list() {
@@ -83,6 +108,13 @@ export function createNativeProfileBridge(): ProfileBridge {
       const response = envelope(await call('profileDelete', { id }), ['deleted'])
       if (typeof response.deleted !== 'boolean') malformed()
       return { deleted: response.deleted }
+    },
+    async favoritesRead() {
+      return parseFavorites(envelope(await call('profileFavoritesRead', {}), ['favorites']).favorites)
+    },
+    async favoritesSave(input) {
+      const favorites = parseFavorites(input)
+      return parseFavorites(envelope(await call('profileFavoritesSave', { favorites }), ['favorites']).favorites)
     },
   }
 }

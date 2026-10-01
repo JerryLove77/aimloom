@@ -85,6 +85,7 @@ function profileBridge(): ProfileBridge {
     read: async () => ({ filePath: '/profiles/profile1.json', profile: structuredClone(stored) }),
     save: async () => ({ filePath: '/profiles/profile1.json', profile: stored }),
     delete: async () => ({ deleted: true }),
+    favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites,
   }
 }
 

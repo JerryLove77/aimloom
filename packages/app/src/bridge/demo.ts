@@ -1,5 +1,5 @@
 import demoData from './demo-data.json'
-import { InstallerFailure, localIssue, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme } from './contracts'
+import { InstallerFailure, localIssue, MAX_IMPORT_PATHS, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme, type SkipReason } from './contracts'
 const gameRoot='D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'
 const packRoot='C:\\Users\\Player\\Downloads\\KVK Settings 2025'
 const categories:Category[]=['themes','sounds','crosshairs','ui','palette','primary']
@@ -41,6 +41,8 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
   // Files a demo import added, so the listings show them once the job completes.
   const imports=new Map<string,{kind:'theme'|'sound';file:string}>()
   const added={theme:[] as string[],sound:[] as string[]}
+  // Files a demo Quick import adds, by plan.
+  const importAdds=new Map<string,{theme:string[];sound:string[]}>()
   // The demo's equipped skin per shape, and a change planned but not yet applied.
   let enemyState:Record<EnemyShape,EnemySkinChoice|null>={
     cylindrical:{model:'Stylized Ecto',skin:'Default'},cuboid:{model:'Ghost',skin:'Default'},spheroid:{model:'Mummy',skin:'Default'},
@@ -60,6 +62,8 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
     entry.applied=true
     const imported=imports.get(plan.planId)
     if(imported&&!added[imported.kind].includes(imported.file))added[imported.kind].push(imported.file)
+    const dropped=importAdds.get(plan.planId)
+    for(const kind of ['theme','sound'] as const)for(const file of dropped?.[kind]??[])if(!added[kind].includes(file))added[kind].push(file)
     const enemyChange=pendingEnemy.get(plan.planId)
     if(enemyChange)enemyState={...enemyState,[enemyChange.shape]:enemyChange.choice}
     const id=`demo-batch-${++sequence}`
@@ -168,6 +172,57 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
       const category=theme?'themes':'sounds'
       currentPlan={planId:crypto.randomUUID(),revision:input.revision,kind:'install',location:location(input.gameRoot),packRoot:null,categories:[category],sourceId:null,rows:[{key:`${category}/${input.file}`,category,source:input.sourcePath,target:`${input.gameRoot}\\FPSAimTrainer\\${folder}\\${input.file}`,action:'create',conflict:false,unowned:false}],skipped:[]}
       imports.set(currentPlan.planId,{kind:input.kind,file:input.file})
+      return clone(currentPlan)
+    },
+    async planImport(input){
+      // Browser demo: nothing is read. A path without an extension stands for a pack folder and
+      // offers a small sample of it; a file is read by its extension, a ZIP is not recognised.
+      if(!input.paths.length||input.paths.length>MAX_IMPORT_PATHS)throw error('ENGINE_ERROR','installer.demo.selectPack')
+      const name=(path:string)=>path.split(/[\\/]/).pop()??path
+      const folder:Record<Category,string>={themes:'Saved\\SaveGames\\Themes',sounds:'sounds',crosshairs:'crosshairs',ui:'Saved\\SaveGames',primary:'Saved\\SaveGames',palette:''}
+      const target=(category:Category,file:string)=>category==='palette'?`C:\\Users\\Player\\AppData\\Local\\FPSAimTrainer\\Saved\\Config\\WindowsNoEditor\\${file}`:`${input.gameRoot}\\FPSAimTrainer\\${folder[category]}\\${file}`
+      const inGame:Record<'themes'|'sounds'|'crosshairs',string[]>={
+        themes:['Clean Dark.json','snowi clarity.json','clover-alternate.json',...added.theme],
+        sounds:['Bell5.wav','spawn05.wav','saya_kick_deeper.wav','hit.wav','Twice.wav','None.wav',...added.sound],
+        crosshairs:['aimloom_slot.png','dot.png','plus.png','circle.png'],
+      }
+      const created:FileRow[]=[],skips:FileRow[]=[],skipped:string[]=[]
+      const stem=(file:string)=>file.replace(/\.[^.]+$/,'').toLowerCase()
+      const offer=(category:Category,file:string,source:string,sameBytes=false)=>{
+        const row:FileRow={key:`${category}/${file}`,category,source,target:target(category,file),action:'create',conflict:false,unowned:false,reason:null,detail:null}
+        const settings=category==='ui'||category==='palette'||category==='primary'
+        const skip=(reason:SkipReason)=>skips.push({...row,action:'skip',reason})
+        if(settings){
+          if(!input.includeSettings)return skip('settings-not-included')
+          return created.push({...row,action:category==='primary'?'replace':'create'})
+        }
+        if(created.some(r=>r.key.toLowerCase()===row.key.toLowerCase()))return skip('duplicate-in-drop')
+        const names=inGame[category as 'themes'|'sounds'|'crosshairs']
+        if(names.some(n=>n.toLowerCase()===file.toLowerCase()))return skip(sameBytes?'exists-same':'exists-different')
+        if(category==='sounds'&&names.some(n=>stem(n)===stem(file)))return skip('sound-stem-taken')
+        created.push(row)
+      }
+      for(const path of input.paths){
+        const file=name(path)
+        if(/\.(json)$/i.test(file)){const settings=/^(UI|PrimaryUserSettings)\.json$/i.exec(file);offer(settings?(settings[1]!.toLowerCase()==='ui'?'ui':'primary'):'themes',settings?(settings[1]!.toLowerCase()==='ui'?'UI.json':'PrimaryUserSettings.json'):file,path)}
+        else if(/\.(wav|ogg)$/i.test(file))offer('sounds',file,path)
+        else if(/\.png$/i.test(file))offer('crosshairs',file,path)
+        else if(/^Palette\.ini$/i.test(file))offer('palette','Palette.ini',path)
+        else if(/\.[^\\/.]+$/.test(file))skipped.push(path)
+        else{
+          offer('themes','Clean Dark.json',`${path}\\Themes\\Clean Dark.json`,true)
+          offer('themes','Aimloom Demo.json',`${path}\\Themes\\Aimloom Demo.json`)
+          offer('sounds','Bell5.ogg',`${path}\\sounds\\Bell5.ogg`)
+          offer('sounds',demoData.chineseSound,`${path}\\sounds\\${demoData.chineseSound}`)
+          offer('crosshairs','dot.png',`${path}\\crosshairs\\dot.png`,true)
+          offer('crosshairs',demoData.chineseCrosshair,`${path}\\crosshairs\\${demoData.chineseCrosshair}`)
+          for(const [category,file] of [['ui','UI.json'],['palette','Palette.ini'],['primary','PrimaryUserSettings.json']] as const)offer(category,file,`${path}\\${file}`)
+          skipped.push(`${path}\\readme.txt`)
+        }
+      }
+      const order:Category[]=['themes','sounds','crosshairs','ui','palette','primary']
+      currentPlan={planId:crypto.randomUUID(),revision:input.revision,kind:'install',location:location(input.gameRoot),packRoot:null,categories:order.filter(c=>created.some(r=>r.category===c)),sourceId:null,rows:[...created,...skips],skipped}
+      importAdds.set(currentPlan.planId,{theme:created.filter(r=>r.category==='themes').map(r=>name(r.key)),sound:created.filter(r=>r.category==='sounds').map(r=>name(r.key))})
       return clone(currentPlan)
     },
     async planCrosshairAdd(input){

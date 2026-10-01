@@ -20,6 +20,8 @@ function memory() {
     async read(id) { return { filePath: `/profiles/${id}.json`, profile: files.get(id) ?? null } },
     async save(profile) { files.set(profile.id, profile); return { filePath: `/profiles/${profile.id}.json`, profile } },
     async delete(id) { return { deleted: files.delete(id) } },
+    async favoritesRead() { return { theme: [], audio: [] } },
+    async favoritesSave(favorites) { return favorites },
   }
   return { bridge, files, source }
 }

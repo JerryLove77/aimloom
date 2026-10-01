@@ -348,7 +348,7 @@ fn first_difference(path: &str, a: &Json, b: &Json) -> Option<String> {
 }
 
 #[test]
-fn every_case_matches_its_powershell_golden() {
+fn every_case_matches_its_frozen_golden() {
     let dir = parity_dir();
     let mut names: Vec<PathBuf> = std::fs::read_dir(dir.join("cases")).unwrap().flatten().map(|e| e.path()).filter(|p| p.extension().is_some_and(|e| e == "json")).collect();
     names.sort();

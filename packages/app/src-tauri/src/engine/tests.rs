@@ -15,9 +15,9 @@ use super::store::Host;
 use super::{platform, EngineError, EngineResult};
 
 #[derive(Default)]
-struct HostState { running_from_call: Cell<Option<usize>>, calls: Cell<usize>, faults: RefCell<Vec<String>> }
+pub(super) struct HostState { pub(super) running_from_call: Cell<Option<usize>>, pub(super) calls: Cell<usize>, faults: RefCell<Vec<String>> }
 
-struct TestHost(Rc<HostState>);
+pub(super) struct TestHost(pub(super) Rc<HostState>);
 
 impl Host for TestHost {
     fn process_names(&self) -> std::io::Result<Vec<String>> {
@@ -33,15 +33,15 @@ impl Host for TestHost {
 }
 
 /// The CRLF + tab layout real KovaaK writes, as `New-KvkEnemyFixtureText` builds it.
-fn fixture_text(cylindrical: &str) -> String {
+pub(super) fn fixture_text(cylindrical: &str) -> String {
     let (m, s) = cylindrical.split_once('/').unwrap();
     format!("{{\r\n\t\"floatSettings\":\r\n\t{{\r\n\t\t\"EFloatSettingId::XSens\": 0.91\r\n\t}},\r\n\t\"characterModelOverride\":\r\n\t{{\r\n\t\t\"Cylindrical\":\r\n\t\t{{\r\n\t\t\t\"characterModel\": \"{m}\",\r\n\t\t\t\"characterSkin\": \"{s}\"\r\n\t\t}},\r\n\t\t\"Cuboid\":\r\n\t\t{{\r\n\t\t\t\"characterModel\": \"Ghost\",\r\n\t\t\t\"characterSkin\": \"Default\"\r\n\t\t}},\r\n\t\t\"Spheroid\":\r\n\t\t{{\r\n\t\t\t\"characterModel\": \"Mummy\",\r\n\t\t\t\"characterSkin\": \"Default\"\r\n\t\t}}\r\n\t}},\r\n\t\"currentlySelectedBoundingBoxType\": \"Cuboid\",\r\n\t\"large\": 9007199254740993,\r\n\t\"stringSettings\":\r\n\t{{\r\n\t\t\"unchangedDate\": \"2026-09-15T00:00:00Z\"\r\n\t}}\r\n}}")
 }
 
-struct Fixture { root: PathBuf, game: String, local: String, target: PathBuf, host: Rc<HostState>, session: Session, next: u32 }
+pub(super) struct Fixture { pub(super) root: PathBuf, pub(super) game: String, pub(super) local: String, pub(super) target: PathBuf, pub(super) host: Rc<HostState>, session: Session, next: u32 }
 
 impl Fixture {
-    fn new(bytes: &[u8]) -> Self {
+    pub(super) fn new(bytes: &[u8]) -> Self {
         // The temp folder sits behind a link on macOS; the engine refuses links, as PowerShell does.
         let base = super::paths::temp_dir_without_links();
         let root = base.join(format!("kvk-rust-{}", super::store::new_guid()));
@@ -57,7 +57,7 @@ impl Fixture {
         Fixture { game: game.to_string_lossy().into_owned(), local: local.to_string_lossy().into_owned(), root, target, host, session, next: 0 }
     }
 
-    fn request(&mut self, op: &str, args: Json) -> (Json, Vec<Json>) {
+    pub(super) fn request(&mut self, op: &str, args: Json) -> (Json, Vec<Json>) {
         self.next += 1;
         let request = Json::object(vec![("v", Json::int(1)), ("requestId", Json::str(format!("r{}", self.next))), ("op", Json::str(op)), ("args", args)]);
         let mut progress = Vec::new();
@@ -65,13 +65,13 @@ impl Fixture {
         (reply, progress)
     }
 
-    fn ok(&mut self, op: &str, args: Json) -> Json {
+    pub(super) fn ok(&mut self, op: &str, args: Json) -> Json {
         let (reply, _) = self.request(op, args);
         assert_eq!(reply.get("ok"), Some(&Json::Bool(true)), "{op} failed: {}", reply.to_compact());
         reply.get("data").cloned().unwrap()
     }
 
-    fn error(&mut self, op: &str, args: Json) -> Json {
+    pub(super) fn error(&mut self, op: &str, args: Json) -> Json {
         let (reply, _) = self.request(op, args);
         assert_eq!(reply.get("ok"), Some(&Json::Bool(false)), "{op} was accepted: {}", reply.to_compact());
         reply.get("error").cloned().unwrap()
@@ -87,18 +87,18 @@ impl Fixture {
         self.error("planEnemy", args)
     }
 
-    fn execute_args(plan_id: &str) -> Json {
+    pub(super) fn execute_args(plan_id: &str) -> Json {
         Json::object(vec![("operationId", Json::str("op-1")), ("planId", Json::str(plan_id)), ("confirmation", Json::str("install")), ("allowConflicts", Json::Bool(false))])
     }
 
-    fn bytes(&self) -> Vec<u8> { std::fs::read(&self.target).unwrap() }
+    pub(super) fn bytes(&self) -> Vec<u8> { std::fs::read(&self.target).unwrap() }
 
-    fn backup_root(&self) -> PathBuf {
+    pub(super) fn backup_root(&self) -> PathBuf {
         let backups = Path::new(&self.local).join("Aimloom/backups");
         std::fs::read_dir(&backups).unwrap().next().unwrap().unwrap().path()
     }
 
-    fn manifest(&self, id: &str) -> (String, Json) {
+    pub(super) fn manifest(&self, id: &str) -> (String, Json) {
         let raw = std::fs::read_to_string(self.backup_root().join(id).join("manifest.json")).unwrap();
         let parsed = json::parse(&raw, json::ReadOptions { strings: json::Strings::Literal, ..json::ReadOptions::CONVERT_FROM_JSON }).unwrap();
         (raw, parsed)
@@ -109,9 +109,9 @@ impl Drop for Fixture {
     fn drop(&mut self) { let _ = std::fs::remove_dir_all(&self.root); }
 }
 
-fn code(error: &Json) -> &str { error.get("code").and_then(Json::as_str).unwrap() }
-fn english(error: &Json) -> &str { error.get("messageEn").and_then(Json::as_str).unwrap() }
-fn original() -> Vec<u8> { fixture_text("Stylized Ecto/Default").into_bytes() }
+pub(super) fn code(error: &Json) -> &str { error.get("code").and_then(Json::as_str).unwrap() }
+pub(super) fn english(error: &Json) -> &str { error.get("messageEn").and_then(Json::as_str).unwrap() }
+pub(super) fn original() -> Vec<u8> { fixture_text("Stylized Ecto/Default").into_bytes() }
 
 #[test]
 fn listing_reads_each_shape_and_the_fixed_catalog() {
@@ -424,4 +424,21 @@ fn the_engine_adopts_the_old_data_folder_once_and_never_splits_the_data() {
     assert!(!both.join("Aimloom/marker.txt").exists());
 
     let _ = std::fs::remove_dir_all(&base);
+}
+
+/// The favourites ride the Profile route: they never need a game folder and never touch it.
+#[test]
+fn favourites_are_read_and_saved_through_the_worker_boundary() {
+    let mut f = Fixture::new(&original());
+    let favorites = Json::object(vec![("theme", Json::Array(vec![Json::str("Clean Dark.json")])), ("audio", Json::Array(vec![Json::str("hit.wav")]))]);
+    let empty = f.ok("profileFavoritesRead", Json::object(vec![]));
+    assert_eq!(empty.to_compact(), r#"{"favorites":{"theme":[],"audio":[]}}"#);
+    let saved = f.ok("profileFavoritesSave", Json::object(vec![("favorites", favorites.clone())]));
+    assert_eq!(saved.get("favorites"), Some(&favorites));
+    assert_eq!(f.ok("profileFavoritesRead", Json::object(vec![])), saved);
+    let refused = f.error("profileFavoritesSave", Json::object(vec![("favorites", Json::object(vec![("theme", Json::Array(vec![Json::str("x.wav")])), ("audio", Json::Array(vec![]))]))]));
+    assert_eq!(code(&refused), "ENGINE_ERROR");
+    assert!(crate::installer::protocol::is_english(english(&refused)));
+    assert_eq!(f.bytes(), original(), "the game is untouched");
+    assert!(!Path::new(&f.local).join("Aimloom/backups").exists(), "no backup is made");
 }

@@ -7,7 +7,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use super::jobs::JobManager;
 use super::protocol::{
     validate_read, BackupIndex, Catalog, Confirmation, Discovery, ErrorCode, ExecuteRequest,
-    AudioList, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, Location, Preview, PreviewKind, Reconciliation, SchemeList,
+    AudioList, Category, CrosshairList, EnemyList, ExportedFile, FileAction, GameState, Issue, Job, Location, Preview, PreviewKind, Reconciliation, SchemeList, SkipReason, is_english,
 };
 use super::report::Prepared;
 use super::worker::{WorkerClient, WorkerConfig};
@@ -78,8 +78,9 @@ impl InstallerRuntime {
             return Err(Issue::plain(ErrorCode::Busy, "an installer operation is still unresolved"));
         }
         let args = validate_read(op, args)?;
+        let include_settings = args.get("includeSettings").and_then(Value::as_bool).unwrap_or(false);
         let value = self.worker()?.read(op, args)?;
-        self.validate_read_response(op, value)
+        self.validate_response(op, value, include_settings)
     }
 
     fn profile_validated(&self, op: &str, args: Value) -> Result<Value, Issue> {
@@ -91,7 +92,11 @@ impl InstallerRuntime {
         validate_profile_response(op,&args,value)
     }
 
-    fn validate_read_response(&self, op: &str, value: Value) -> Result<Value, Issue> {
+    fn validate_read_response(&self, op: &str, value: Value) -> Result<Value, Issue> { self.validate_response(op, value, false) }
+
+    /// `include_settings` is the `planImport` request's own flag: what the player asked for
+    /// bounds what the preview may plan.
+    fn validate_response(&self, op: &str, value: Value, include_settings: bool) -> Result<Value, Issue> {
         match op {
             "discover" => round_trip::<Discovery>(value),
             "locate" => round_trip::<Location>(value),
@@ -105,7 +110,7 @@ impl InstallerRuntime {
             "enemyList" => round_trip::<EnemyList>(value),
             // A scheme preview is an ordinary single-file install preview of the settings
             // file, so it reuses the install plan and execute path unchanged.
-            "planInstall" | "planRestore" | "planScheme" | "planAudio" | "planCrosshair" | "planCrosshairAdd" | "planEnemy" | "planFileAdd" | "planProfileApply" => {
+            "planInstall" | "planImport" | "planRestore" | "planScheme" | "planAudio" | "planCrosshair" | "planCrosshairAdd" | "planEnemy" | "planFileAdd" | "planProfileApply" => {
                 let preview: Preview = decode(value)?;
                 let expected = if op == "planRestore" { PreviewKind::Restore } else { PreviewKind::Install };
                 if preview.kind != expected {
@@ -116,6 +121,11 @@ impl InstallerRuntime {
                 if op == "planFileAdd" && !matches!(preview.rows.as_slice(), [row] if row.action == FileAction::Create) {
                     return Err(Issue::worker("a file import must plan exactly one new file"));
                 }
+                if op == "planImport" {
+                    check_import_preview(&preview, include_settings)?;
+                } else if preview.rows.iter().any(|row| row.reason.is_some() || row.detail.is_some()) {
+                    return Err(Issue::worker("only a Quick import preview gives skip reasons"));
+                }
                 self.jobs.lock().unwrap().record_plan(
                     preview.plan_id.clone(), preview.location.game_root.clone(), preview.kind.clone(),
                 );
@@ -124,6 +134,37 @@ impl InstallerRuntime {
             _ => Err(Issue::plain(ErrorCode::EngineError, "unsupported installer read operation")),
         }
     }
+}
+
+/// Quick import adds and never overwrites: a theme, sound or crosshair row is a `create` or a
+/// `skip` with its reason; only the personal settings files may be replaced, and only when the
+/// player asked for them. Checked before the plan is recorded, so before it could be executed.
+fn check_import_preview(preview: &Preview, include_settings: bool) -> Result<(), Issue> {
+    if preview.kind != PreviewKind::Install || preview.source_id.is_some() || preview.pack_root.is_some() {
+        return Err(Issue::worker("a Quick import preview must be a plain install preview"));
+    }
+    for row in &preview.rows {
+        let settings = matches!(row.category, Category::Ui | Category::Palette | Category::Primary);
+        let reason_ok = match (&row.action, row.reason) {
+            (FileAction::Create, None) => !settings || include_settings,
+            (FileAction::Replace, None) => settings && include_settings,
+            (FileAction::Skip, Some(SkipReason::SettingsNotIncluded)) => settings && !include_settings,
+            (FileAction::Skip, Some(SkipReason::ExistsSame | SkipReason::Invalid | SkipReason::DuplicateInDrop)) => !settings || include_settings,
+            (FileAction::Skip, Some(SkipReason::ExistsDifferent)) => !settings,
+            (FileAction::Skip, Some(SkipReason::ThemeNameTaken)) => row.category == Category::Themes,
+            (FileAction::Skip, Some(SkipReason::SoundStemTaken)) => row.category == Category::Sounds,
+            _ => false,
+        };
+        let detail_ok = match (&row.detail, row.reason) {
+            (None, _) => true,
+            (Some(detail), Some(SkipReason::Invalid)) => !detail.message.trim().is_empty() && is_english(&detail.message_en),
+            _ => false,
+        };
+        if !reason_ok || !detail_ok || row.conflict || row.unowned {
+            return Err(Issue::worker(format!("the Quick import preview has a row it may not have: {} {:?} {:?}", row.key, row.action, row.reason)));
+        }
+    }
+    Ok(())
 }
 
 pub(super) fn decode<T: DeserializeOwned>(value: Value) -> Result<T, Issue> {
@@ -445,6 +486,58 @@ mod tests {
         }
         runtime.validate_read_response("planFileAdd", add_preview(json!([row("create")]))).unwrap();
         assert_eq!(runtime.jobs.lock().unwrap().game_root_for_plan("plan-add").as_deref(), Some("D:\\Game"));
+    }
+
+    fn import_row(category: &str, action: &str, reason: Option<&str>) -> Value {
+        json!({"key":format!("{category}/x"),"category":category,"source":"C:\\Drop\\x","target":"D:\\Game\\x",
+            "action":action,"conflict":false,"unowned":false,"reason":reason,"detail":null})
+    }
+    fn import_preview(rows: Value) -> Value {
+        let mut preview = add_preview(rows);
+        preview["planId"] = json!("plan-import");
+        preview["packRoot"] = Value::Null;
+        preview
+    }
+
+    #[test]
+    fn a_quick_import_preview_adds_and_replaces_only_the_settings_the_player_asked_for() {
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
+        let check = |rows: Value, include: bool| runtime.validate_response("planImport", import_preview(rows), include);
+        // What the engine plans.
+        let fine = json!([import_row("themes","create",None), import_row("sounds","skip",Some("exists-different")),
+            import_row("sounds","skip",Some("sound-stem-taken")), import_row("themes","skip",Some("theme-name-taken")),
+            import_row("crosshairs","skip",Some("duplicate-in-drop")), import_row("primary","skip",Some("settings-not-included"))]);
+        check(fine, false).unwrap();
+        check(json!([import_row("primary","replace",None), import_row("ui","create",None), import_row("palette","skip",Some("exists-same"))]), true).unwrap();
+        // What it must never answer: an overwrite of a theme, sound or crosshair; settings the
+        // player did not ask for; a skip without its reason; a reason that does not fit.
+        for (rows, include) in [
+            (json!([import_row("themes","replace",None)]), true),
+            (json!([import_row("sounds","replace",None)]), true),
+            (json!([import_row("primary","replace",None)]), false),
+            (json!([import_row("ui","create",None)]), false),
+            (json!([import_row("primary","skip",Some("settings-not-included"))]), true),
+            (json!([import_row("themes","skip",None)]), false),
+            (json!([import_row("themes","create",Some("exists-same"))]), false),
+            (json!([import_row("sounds","skip",Some("theme-name-taken"))]), false),
+            (json!([import_row("primary","skip",Some("exists-different"))]), true),
+            (json!([import_row("themes","delete",None)]), false),
+        ] {
+            assert!(check(rows.clone(), include).is_err(), "{rows} include={include}");
+        }
+        // Words only for an invalid file, and English-safe.
+        let mut invalid = import_row("themes","skip",Some("invalid"));
+        invalid["detail"] = json!({"message":"主题文件不是有效的 JSON","messageEn":"The theme file is not valid JSON: \"坏.json\"."});
+        check(json!([invalid.clone()]), false).unwrap();
+        invalid["detail"]["messageEn"] = json!("主题文件不是有效的 JSON");
+        assert!(check(json!([invalid]), false).is_err());
+        let mut worded = import_row("themes","skip",Some("exists-same"));
+        worded["detail"] = json!({"message":"x","messageEn":"x"});
+        assert!(check(json!([worded]), false).is_err());
+        // Another plan never carries a reason.
+        let mut reasoned = row("create");
+        reasoned["reason"] = json!("exists-same");
+        assert!(runtime.validate_read_response("planFileAdd", add_preview(json!([reasoned]))).is_err());
     }
 
     #[test]
