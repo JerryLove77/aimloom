@@ -61,7 +61,7 @@ Aimloom 没有代码签名，第一次运行时 Windows SmartScreen 可能会提
 | 路径 | 内容 |
 |---|---|
 | `packages/app` | App：React 前端，Tauri（Rust）外壳 |
-| `scripts/installer` | PowerShell 参考引擎（Rust 引擎对照的 parity goldens）和控制台向导；App 自 0.1.6 起不再运行它 |
+| `scripts/installer` | Windows 构建和打包脚本，以及 Rust 引擎对照的 parity goldens（旧 PowerShell 引擎留下的，已冻结） |
 | `packages/app/src-tauri/src/engine` | Rust 引擎，所有写入游戏的操作都经过它（`Aimloom.exe --worker`，0.1.6 起） |
 | `packages/crosshair` | CS2 / VALORANT 准星代码解析和 PNG 渲染 |
 | `packages/theme` | 主题解析和背景预览图（App 与官网共用） |
@@ -83,13 +83,11 @@ cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installe
 npm run test:site                         # 官网：页面构建 + Worker（D1、R2、登录、上传）
 ```
 
-PowerShell 测试需要 PowerShell 7，在 Windows 上运行（CI 每次 push 都会跑全部十七个套件）：
+打包脚本的测试需要 PowerShell 7，在 Windows 上运行（CI 每次 push 都会跑）：
 
 ```powershell
-pwsh -NoProfile -File scripts/installer/tests/engine.test.ps1
+pwsh -NoProfile -File scripts/installer/tests/package-build.test.ps1
 ```
-
-发布包不能直接从 Git 仓库构建：发布包里的音效和准星素材不在仓库里，`scripts/installer/release-inventory.json` 会让缺少其中任何一个的构建停下来。
 
 每个 checkout 都要先启用一次隐私提交钩子（每次提交前扫描暂存的改动，查找已知的身份信息和密钥，见 `.githooks/pre-commit`）：
 

@@ -20,7 +20,7 @@ type Writer = Pick<Storage, 'setItem'> | null
 
 /**
  * CJK punctuation (U+3000–303F), ideographs (U+3400–9FFF) and full-width forms (U+FF00–FFEF) —
- * the same three ranges the Rust (`has_cjk`) and PowerShell (`Get-KvkEnglishText`) guards use.
+ * the same three ranges the Rust guard (`has_cjk`) uses.
  * This is the App's single definition; every other module imports it.
  */
 const CJK = /[　-〿㐀-鿿＀-￯]/
@@ -34,9 +34,8 @@ export const hasCjk = (text: string): boolean => CJK.test(text)
  * translated and may well be Chinese. An odd number of quotes leaves the unclosed tail
  * outside, so a broken message can never smuggle an untranslated sentence through.
  *
- * `scripts/installer/kvk-engine.ps1` (`Test-KvkEnglishSafe`) and
- * `packages/app/src-tauri/src/installer/protocol.rs` (`is_english`) implement the same rule
- * over the same CJK ranges; a shared ten-case parity table pins them together
+ * `packages/app/src-tauri/src/installer/protocol.rs` (`is_english`) implements the same rule
+ * over the same CJK ranges; a shared ten-case parity table pins the two together
  * (`tests/installer/i18n/english-text.test.ts`).
  */
 export function isEnglishText(text: string): boolean {

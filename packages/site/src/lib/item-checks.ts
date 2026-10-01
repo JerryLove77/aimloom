@@ -35,8 +35,8 @@ export function checkSlug(slug: unknown): string {
 }
 
 /**
- * The App's add rules for a file name (`Assert-KvkImportFileName` in kvk-import.ps1 and
- * `Assert-KvkCrosshairTargetName` in kvk-crosshair.ps1), so a downloaded file can always be dropped in.
+ * The App's add rules for a file name (`assert_import_name` and `assert_crosshair_name` in the
+ * engine's `engine/files.rs`), so a downloaded file can always be dropped in.
  */
 export function checkFileName(kind: Kind, name: string): string {
   const ext = name.includes('.') ? name.slice(name.lastIndexOf('.')).toLowerCase() : ''

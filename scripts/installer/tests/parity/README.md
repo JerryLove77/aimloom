@@ -1,19 +1,21 @@
-# Engine parity: PowerShell goldens for the Rust engine
+# Engine parity: the frozen goldens of the PowerShell engine
 
-The Rust engine (`packages/app/src-tauri/src/engine/`) is a second implementation of this
-folder's PowerShell engine. This suite pins the two together: PowerShell runs every case and
-writes what it observed to `goldens/`; the Rust test `tests/engine_parity.rs` runs the same
-cases through the Rust engine and must observe the same thing.
+The Rust engine (`packages/app/src-tauri/src/engine/`) was written as a second implementation of
+the PowerShell engine that 0.1.5 and earlier ran. The PowerShell engine ran every case here and
+wrote what it observed to `goldens/`; the Rust test `tests/engine_parity.rs` runs the same cases
+through the Rust engine and must observe the same thing.
 
 ```sh
-pwsh -NoProfile -File scripts/installer/tests/parity/parity.test.ps1            # regenerate, fail on any diff
-pwsh -NoProfile -File scripts/installer/tests/parity/parity.test.ps1 -Write     # rewrite goldens/
-pwsh -NoProfile -File scripts/installer/tests/parity/parity.test.ps1 -CaseFilter enemy-apply
 cargo test --manifest-path packages/app/src-tauri/Cargo.toml --features installer-ui --test engine_parity
 ```
 
-Goldens come from PowerShell on Windows only. A change to the engine's behaviour lands in one
-PR as: the PowerShell change, the regenerated goldens, and the Rust change.
+**The goldens are frozen.** The PowerShell engine and its harness (`parity.test.ps1`,
+`cross.test.ps1`) were removed in 0.1.6-beta.2 and are kept in the history before it. Nothing
+regenerates a golden: a difference is a change in the Rust engine's behaviour. Either it is a bug,
+or it is intended, and then the case's golden is edited by hand in the same commit, with the
+reason in that commit and, if it departs from the old engine, a row in `DIVERGENCES.md`. A new
+behaviour is tested with Rust tests (`src/engine/tests.rs`, `tests/rust_worker.rs`), not new cases
+here.
 
 ## A case
 
@@ -35,8 +37,7 @@ UTF-8), `{"fixture": …}` or `{"dir": true}`, and the steps, run in order in on
 | `{"holdLock": true}` / `{"releaseLock": true}` | Hold `locks/palette.lock` open exclusively, as another instance would. |
 
 Each case starts from a fresh temporary root holding `游戏 with spaces/FPSAimTrainer` (with
-`sounds/`) and an empty `Local Data`. On the test PC, pass `-TempRoot` to keep it out of the user
-profile.
+`sounds/`) and an empty `Local Data`.
 
 ## What is recorded
 
@@ -45,7 +46,7 @@ For each request step: the reply line and the progress lines, as the worker woul
 under the local data folder, by relative path. A `manifest.json` and a Profile (`Aimloom/profiles/`) are recorded as
 their exact text, since they hold absolute paths; any other file as its size and SHA-256.
 
-## Normalization (both harnesses, in this order, on the JSON text)
+## Normalization (in this order, on the JSON text)
 
 1. The game, local data, pack and case folders and the repository, as they appear in JSON text
    (backslashes doubled) and as they are, become `<game>`, `<local>`, `<pack>`, `<root>` and
@@ -60,7 +61,7 @@ their exact text, since they hold absolute paths; any other file as its size and
 6. An ISO 8601 UTC timestamp (`yyyy-MM-ddTHH:mm:ss`, optional fraction of 1–7 digits, `Z`)
    becomes `<time>`.
 
-## PowerShell fixes this suite assumes
+## PowerShell fixes the goldens include
 
 Where PowerShell was wrong, or behaved differently with the player's Windows language, it is
 fixed first and Rust copies the fixed behaviour (user decision, 2026-09-30). Each is its own

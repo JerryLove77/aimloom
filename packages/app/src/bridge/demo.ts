@@ -7,7 +7,7 @@ const counts:Record<Category,number>={themes:139,sounds:480,crosshairs:73,ui:1,p
 const labels:Record<Category,string[]>={themes:['clover-alternate.json','Clean Dark.json','snowi clarity.json'],sounds:['Bell5.ogg','Q3Railgun.wav',demoData.chineseSound],crosshairs:['dot.png','01_plus.png',demoData.chineseCrosshair],ui:['UI.json'],palette:['Palette.ini'],primary:['PrimaryUserSettings.json']}
 const clone=<T,>(v:T):T=>structuredClone(v)
 // The game's own Skin Browser catalog (docs/research/kovaak-skin-browser.md), for the demo
-// only: the real catalog's single source is the engine (scripts/installer/kvk-enemy.ps1).
+// only: the real catalog's single source is the engine (src-tauri/src/engine/enemy.rs).
 const enemySkinCatalog:EnemySkin[]=[
   {label:'None',model:'None',skin:'None',shapes:['cylindrical','cuboid','spheroid']},
   {label:'Ghost',model:'Ghost',skin:'Default',shapes:['cylindrical','cuboid','spheroid']},

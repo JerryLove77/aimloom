@@ -1,12 +1,13 @@
-//! The engine in Rust (ENGINE-RUST, ROADMAP). It is a second implementation of
-//! `scripts/installer/kvk-engine.ps1` and its section adapters, speaking the same v=1 worker
-//! protocol, and it is held to the PowerShell engine by goldens that PowerShell regenerates
-//! (`scripts/installer/tests/parity/`). From v0.1.6 it is the only engine the App runs, as
-//! `Aimloom.exe --worker`; the PowerShell engine stays in the repository as the reference.
+//! The engine in Rust (ENGINE-RUST, ROADMAP). It was written as a second implementation of the
+//! PowerShell engine (`scripts/installer/kvk-engine.ps1` and its section adapters, removed in
+//! 0.1.6-beta.2 and kept in the history before it), speaking the same v=1 worker protocol, and it
+//! is still held to the goldens that engine wrote, now frozen (`scripts/installer/tests/parity/`).
+//! The App runs it as `Aimloom.exe --worker`. The file names the module headers cite are those
+//! of the PowerShell original each part was ported from.
 //!
 //! Every file write in this module goes through the same plan, backup and verification steps
-//! as the PowerShell engine, and reads and writes the same data folder, so either engine can
-//! pick up what the other left.
+//! the PowerShell engine used, and reads and writes the same data folder, so it picks up what
+//! 0.1.5 and earlier left.
 
 pub mod discover;
 pub mod enemy;

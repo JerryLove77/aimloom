@@ -1,8 +1,8 @@
 //! Engine parity: every case in `scripts/installer/tests/parity/cases/` runs through the Rust
-//! engine, and what it observes must equal the golden the PowerShell engine wrote
-//! (`parity.test.ps1 -Write`, on Windows). The case format and the normalization are specified
-//! in that folder's README.md; `parity.test.ps1` implements the same steps, and the two change
-//! together.
+//! engine, and what it observes must equal the golden the PowerShell engine wrote before it was
+//! retired (0.1.6-beta.2). The goldens are frozen: nothing regenerates them, so a difference here
+//! is a change in the Rust engine's behaviour, to be fixed or recorded in DIVERGENCES.md. The case
+//! format and the normalization are specified in that folder's README.md.
 //!
 //! A case without a golden is reported and skipped, unless `KVK_PARITY_REQUIRE=1` (CI) makes it
 //! a failure. `KVK_PARITY_OUT=<dir>` writes the Rust engine's own records there for comparison.
@@ -339,11 +339,11 @@ fn first_difference(path: &str, a: &Json, b: &Json) -> Option<String> {
             x.iter().zip(y).find_map(|((k, v), (_, w))| first_difference(&format!("{path}.{k}"), v, w))
         }
         (Json::Array(x), Json::Array(y)) => {
-            if x.len() != y.len() { return Some(format!("{path}: {} items in PowerShell, {} in Rust", x.len(), y.len())); }
+            if x.len() != y.len() { return Some(format!("{path}: {} items in the golden, {} in Rust", x.len(), y.len())); }
             x.iter().zip(y).enumerate().find_map(|(i, (v, w))| first_difference(&format!("{path}[{i}]"), v, w))
         }
         _ if a == b => None,
-        _ => Some(format!("{path}:\n  PowerShell: {}\n  Rust:       {}", a.to_compact(), b.to_compact())),
+        _ => Some(format!("{path}:\n  golden: {}\n  Rust:   {}", a.to_compact(), b.to_compact())),
     }
 }
 
@@ -370,10 +370,10 @@ fn every_case_matches_its_powershell_golden() {
             },
         }
     }
-    eprintln!("engine parity: {matched} cases match their PowerShell goldens");
+    eprintln!("engine parity: {matched} cases match their frozen goldens");
     if !missing.is_empty() {
         eprintln!("engine parity: no golden yet for {}", missing.join(", "));
         assert!(std::env::var_os("KVK_PARITY_REQUIRE").is_none(), "missing goldens: {}", missing.join(", "));
     }
-    assert!(failures.is_empty(), "the Rust engine differs from PowerShell:\n{}", failures.join("\n\n"));
+    assert!(failures.is_empty(), "the Rust engine differs from the frozen goldens:\n{}", failures.join("\n\n"));
 }

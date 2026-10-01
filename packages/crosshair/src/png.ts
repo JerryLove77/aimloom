@@ -6,7 +6,7 @@ import type { RasterImage } from './render-types'
  * implementation with no Node or DOM dependency.
  *
  * Output shape is fixed deliberately: 8-bit RGBA, colour type 6, no interlace, one IDAT.
- * That is what `scripts/installer/kvk-crosshair.ps1` accepts and what the game reads.
+ * That is what the App's engine accepts (`assert_crosshair_image`, `engine/files.rs`) and what the game reads.
  */
 export const MAX_PNG_BYTES = 2 * 1024 * 1024
 export const MAX_DIMENSION = 512

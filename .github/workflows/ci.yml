@@ -1,11 +1,10 @@
 # Continuous checks for every push and pull request. Read-only: no deploy, no release, no secrets.
 #
 # What this covers, and what it cannot: the three Vitest projects, both typechecks, the site's
-# Node and workerd suites, the Python packaging tests, the Rust suite on Linux and on Windows, the
-# seventeen PowerShell suites on a real Windows with the pinned PowerShell 7 (the release no longer ships it) — the ones that
-# could only run on the tester's PC before — and the Rust engine against PowerShell's goldens and
-# across the two engines. It does not build the Setup (built once, on the tester's PC), does not
-# run the suites that need an extracted release ZIP, and cannot observe the game.
+# Node and workerd suites, the privacy scanner's tests, the Rust suite on Linux and on Windows
+# (including the Rust engine against the frozen parity goldens the retired PowerShell engine
+# wrote), and the packager suite on a real Windows. It does not build the Setup (built once, on
+# the tester's PC) and cannot observe the game.
 name: CI
 
 on:
@@ -25,7 +24,7 @@ env:
 
 jobs:
   node:
-    name: Vitest, typecheck, site, Python
+    name: Vitest, typecheck, site, privacy tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +37,6 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run test:site
-      - run: python3 -m unittest discover -s scripts/installer/tests -p 'test_*.py'
       - run: python3 -m unittest discover -s scripts/privacy -p 'test_*.py'
 
   rust-linux:
@@ -54,7 +52,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: packages/app/src-tauri
-      # A parity case without its PowerShell golden fails here (tests/engine_parity.rs).
+      # A parity case without its frozen golden fails here (tests/engine_parity.rs).
       - run: cargo test --manifest-path "$CARGO_MANIFEST" --features installer-ui
         env:
           KVK_PARITY_REQUIRE: '1'
@@ -94,54 +92,13 @@ jobs:
             --exempt scripts/privacy/scan-exempt.txt
 
   windows:
-    name: PowerShell suites and Rust (Windows)
+    name: Rust and the packager (Windows)
     runs-on: windows-latest
     steps:
-      # Check out with LF line endings, as the release packages carry them (they are built from
-      # `git archive`). The runner's default converts to CRLF, and the fixtures embedded in the
-      # suites then stop matching their own "`n" edits.
+      # Check out with LF line endings, as the release packages carry them. The runner's default
+      # converts to CRLF.
       - run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
-      # The suites run on the PowerShell pinned in pwsh-runtime.json (0.1.5 and earlier shipped it;
-      # later releases do not): the parity goldens were made with it, and the runner's own 7.x may be older.
-      - uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/pwsh.zip
-          key: pwsh-${{ hashFiles('scripts/installer/test-build/pwsh-runtime.json') }}
-      - name: The bundled PowerShell, checked against its pin
-        shell: pwsh
-        run: |
-          $pin = Get-Content scripts/installer/test-build/pwsh-runtime.json -Raw | ConvertFrom-Json
-          $zip = Join-Path $env:RUNNER_TEMP 'pwsh.zip'
-          if (-not (Test-Path $zip)) { Invoke-WebRequest -Uri $pin.url -OutFile $zip }
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ((Get-Item $zip).Length -ne $pin.bytes -or $hash -ne $pin.sha256) { throw 'The PowerShell ZIP does not match pwsh-runtime.json.' }
-          $dir = Join-Path $env:RUNNER_TEMP 'pwsh'
-          Expand-Archive $zip $dir -Force
-          $dir | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
-      - name: PowerShell 7 is the worker's runtime
-        shell: pwsh
-        run: |
-          $PSVersionTable.PSVersion
-          $pin = Get-Content scripts/installer/test-build/pwsh-runtime.json -Raw | ConvertFrom-Json
-          if ($PSVersionTable.PSVersion.ToString() -ne $pin.version) { throw "Expected the bundled PowerShell $($pin.version)." }
-      - name: The seventeen PowerShell suites
-        shell: pwsh
-        run: |
-          # The same list as the tester's PC runs. distribution, gui-distribution and
-          # windows-entrypoints need an extracted release ZIP and are not here; crosshair-pack
-          # needs the gitignored asset folders. parity/parity regenerates every engine-parity golden
-          # and fails on any difference (scripts/installer/tests/parity/README.md).
-          $suites = 'audio','cli','crosshair-current','data-root','enemy','engine-observer','engine','gui-protocol','gui-recovery','import','package-build','profile-apply','profile-assets','profiles','scheme','target-lookup','parity/parity'
-          $failed = @()
-          foreach ($suite in $suites) {
-            Write-Host "::group::$suite"
-            & pwsh -NoProfile -File "scripts/installer/tests/$suite.test.ps1"
-            if ($LASTEXITCODE -ne 0) { $failed += $suite; Write-Host "::error::$suite exit $LASTEXITCODE" }
-            Write-Host '::endgroup::'
-          }
-          if ($failed.Count -gt 0) { throw "Failed suites: $($failed -join ', ')" }
-          Write-Host "All $($suites.Count) suites passed."
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -150,7 +107,7 @@ jobs:
         run: cargo test --manifest-path "$env:CARGO_MANIFEST" --features installer-ui
         env:
           KVK_PARITY_REQUIRE: '1'
-      # cargo test built examples/engine_worker; the two engines now share one data folder.
-      - name: Cross-engine recovery (PowerShell and Rust)
+      # The packager that makes the folder, the ZIP and the Setup payload, on the runner's own pwsh.
+      - name: The packager suite
         shell: pwsh
-        run: '& pwsh -NoProfile -File scripts/installer/tests/parity/cross.test.ps1; if ($LASTEXITCODE -ne 0) { throw "cross.test.ps1 exit $LASTEXITCODE" }'
+        run: '& pwsh -NoProfile -File scripts/installer/tests/package-build.test.ps1; if ($LASTEXITCODE -ne 0) { throw "package-build.test.ps1 exit $LASTEXITCODE" }'

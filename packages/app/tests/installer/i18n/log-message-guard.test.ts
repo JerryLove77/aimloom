@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
@@ -8,9 +8,8 @@ import { describe, expect, it } from 'vitest'
 /**
  * Spec §2.3: every App message that names `worker.log` also names the way out — the in-app
  * report action (「发送问题报告」 / "Send a report") or `feedback@aimloom.dev`. `WORKER_EXITED` /
- * `WORKER_EXITED_EN` (Rust) and the engine's fixed English fallback (PowerShell) already carry
- * both; this guard keeps it that way and catches a future regression anywhere else that names
- * the file — the two dictionaries, the Rust installer sources and the shipped PowerShell.
+ * `WORKER_EXITED_EN` (Rust) already carry both; this guard keeps it that way and catches a future
+ * regression anywhere else that names the file — the two dictionaries and the Rust sources.
  */
 const app = fileURLToPath(new URL('../../../', import.meta.url))
 const repoRoot = fileURLToPath(new URL('../../../../../', import.meta.url))
@@ -95,36 +94,6 @@ describe('a Rust installer message naming worker.log also names the way out', ()
     it(file, () => {
       const literals = rustProseLiterals(readFileSync(join(dir, file), 'utf8'))
       const offenders = literals.filter(s => s.includes('worker.log') && !wayOut(s))
-      expect(offenders).toEqual([])
-    })
-  }
-})
-
-/** Every PowerShell line that is not a pure comment line (a line whose trimmed text starts with `#`). */
-function nonCommentLines(text: string): string[] {
-  return text.split('\n').filter(line => !/^\s*#/.test(line))
-}
-
-describe('a shipped PowerShell message naming worker.log also names the way out', () => {
-  const dir = join(repoRoot, 'scripts/installer')
-  const walk = (d: string): string[] => readdirSync(d).flatMap(n => {
-    const p = join(d, n)
-    if (statSync(p).isDirectory()) return n === 'tests' ? [] : walk(p)
-    return p.endsWith('.ps1') ? [p] : []
-  })
-  const files = walk(dir)
-  it('scanned at least the engine and the GUI worker/service scripts', () => {
-    expect(files.length).toBeGreaterThan(5)
-  })
-  it('the scan still sees the engine line known to name the log (canary)', () => {
-    const engine = files.find(f => f.endsWith('kvk-engine.ps1'))
-    expect(engine).toBeDefined()
-    const hits = nonCommentLines(readFileSync(engine!, 'utf8')).filter(line => line.includes('worker.log'))
-    expect(hits.length).toBeGreaterThanOrEqual(1)
-  })
-  for (const file of files) {
-    it(file.slice(dir.length + 1), () => {
-      const offenders = nonCommentLines(readFileSync(file, 'utf8')).filter(line => line.includes('worker.log') && !wayOut(line))
       expect(offenders).toEqual([])
     })
   }

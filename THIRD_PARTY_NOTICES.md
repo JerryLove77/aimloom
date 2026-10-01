@@ -128,12 +128,12 @@ THE SOFTWARE.
 ## PowerShell 7
 
 Source: https://github.com/PowerShell/PowerShell (the official `PowerShell-<version>-win-x64.zip`
-release asset; the version and SHA-256 are pinned in `scripts/installer/test-build/pwsh-runtime.json`)
+release asset; the version and SHA-256 were pinned in `scripts/installer/test-build/pwsh-runtime.json`,
+removed in 0.1.6-beta.2)
 
 Use: the release packages up to 0.1.5 (the portable ZIP and the Setup) carried it, unmodified, in
 their `pwsh\` folder, and the App ran its PowerShell engine with it. The 0.1.6 packages do not carry
-it; CI still uses the pinned version to run the reference suites. Nothing from it is in this
-repository. Its own
+it. Nothing from it is in this repository. Its own
 `LICENSE.txt` and `ThirdPartyNotices.txt` (the notices for the components it includes) ship beside
 it in that folder, unchanged.
 

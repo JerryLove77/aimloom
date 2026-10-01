@@ -29,7 +29,7 @@ describe('browser-safe PNG encoder', () => {
 
   it('emits the canonical shape the Windows replacement adapter demands', () => {
     const bytes = encodePng(sample())
-    // kvk-crosshair.ps1 rejects anything but 8-bit RGBA, non-interlaced, with a plain IDAT.
+    // The engine (`assert_crosshair_image`) rejects anything but 8-bit RGBA, non-interlaced, with a plain IDAT.
     expect(Array.from(bytes.subarray(0, 8))).toEqual([137, 80, 78, 71, 13, 10, 26, 10])
     expect(canonicalPngIssue(bytes)).toBeNull()
     expect(isCanonicalPng(bytes)).toBe(true)

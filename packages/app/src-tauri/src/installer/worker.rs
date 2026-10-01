@@ -77,7 +77,7 @@ const LEGACY_DATA_FOLDER: &str = "KovaaKConfigInstaller";
 /// The data folder under `%LOCALAPPDATA%`: backups, first-protection records, Profiles, locks
 /// and this log. It was `KovaaKConfigInstaller` before the product became Aimloom.
 ///
-/// This mirrors `Get-KvkDataRoot` in `kvk-engine.ps1`, and the two must agree, because the rule
+/// This mirrors `Engine::data_root` in `engine/store.rs`, and the two must agree, because the rule
 /// exists to keep the permanent first-protection records from being split across two names:
 /// `Aimloom` wins if it exists; otherwise an existing old folder is adopted by one rename (same
 /// volume, so atomic); if that rename fails, the old folder is used as it is. The app opens
@@ -493,8 +493,9 @@ mod tests {
         assert_eq!(worker_log_path(&local), local.join("Aimloom").join("logs").join("worker.log"));
     }
 
-    // The data folder was renamed KovaaKConfigInstaller -> Aimloom. These mirror
-    // scripts/installer/tests/data-root.test.ps1: data is never split across the two names.
+    // The data folder was renamed KovaaKConfigInstaller -> Aimloom. These mirror the engine's
+    // `the_engine_adopts_the_old_data_folder_once_and_never_splits_the_data`: data is never split
+    // across the two names.
     #[test]
     fn data_root_is_aimloom_on_a_fresh_machine_and_resolving_creates_nothing() {
         let local = log_dir("fresh");

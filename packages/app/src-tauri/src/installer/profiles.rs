@@ -80,8 +80,8 @@ fn profile(value: &Value) -> Result<(), Fault> {
     // Profile v2 (2026-09-30): a complete snapshot. The theme (field `theme`) and all six sound events are
     // required, an empty kill or spawn list means "no sound", and each MBS event holds exactly
     // one. Version 1 (with its "keep current" gaps and the old `crosshair`/`enemy` fields) is
-    // refused: the user chose no data migration. The same rule lives in `profiles/model.ts`,
-    // `protocol.schema.json` and both engines' profile checks.
+    // refused: the user chose no data migration. The same rule lives in `profiles/model.ts`
+    // and the engine's profile checks (`engine/profiles.rs`).
     let map=object(value,&["schemaVersion","id","name","theme","audio"],&[])?;
     if map["schemaVersion"].as_f64()!=Some(2.0) {return Err(fault("不支持此 Profile 版本", "This Profile version is not supported."));}
     safe_id(&map["id"])?;text(&map["name"],128,true)?;
@@ -347,7 +347,7 @@ mod tests {
     }
     /// The Rust third of `tests/installer/profiles/profile.saved.fixture.json` — what TypeScript
     /// really writes today, pinned to the serialiser by `saved-shape.test.ts` and to the engine by
-    /// `profiles.test.ps1`. A hand-written profile here once hid a validator that refused every
+    /// the `profiles-*` parity cases. A hand-written profile here once hid a validator that refused every
     /// real save.
     #[test]
     fn the_profile_typescript_really_saves_is_accepted() {
@@ -358,7 +358,7 @@ mod tests {
 
     /// A version 1 Profile (keep-current gaps, and the old crosshair and enemy records) is no
     /// longer supported (user, 2026-09-30: no data migration). Every layer refuses it: here, in
-    /// `saved-shape.test.ts` and in `profiles.test.ps1`.
+    /// `saved-shape.test.ts` and in the engine (the `profiles-refusals` parity case).
     #[test]
     fn a_version_one_profile_is_refused() {
         let legacy: Value = serde_json::from_str(include_str!("../../../tests/installer/profiles/profile.legacy.fixture.json")).unwrap();

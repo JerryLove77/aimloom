@@ -102,15 +102,6 @@ Test-Case 'the folder holds exactly the EXE, VERSION.txt and the two readmes, an
     Assert (($inZip -join '|') -ceq ($expected -join '|')) "The ZIP holds $($inZip -join ', ')"
 }
 
-# The pin is no longer shipped; CI downloads that ZIP to run the PowerShell suites.
-Test-Case 'the tracked pin, which CI uses to run these suites, still names the official PowerShell 7 ZIP' {
-    $pin = Get-Content -LiteralPath (Join-Path (Split-Path $packager -Parent) 'pwsh-runtime.json') -Raw | ConvertFrom-Json -AsHashtable
-    Assert ($pin.schemaVersion -eq 1) 'schemaVersion 1'
-    Assert ($pin.version -cmatch '^7\.\d+\.\d+$') "A PowerShell 7 release: $($pin.version)"
-    Assert ($pin.url -ceq "https://github.com/PowerShell/PowerShell/releases/download/v$($pin.version)/PowerShell-$($pin.version)-win-x64.zip") "The official win-x64 ZIP: $($pin.url)"
-    Assert ($pin.sha256 -cmatch '^[0-9a-f]{64}$' -and $pin.bytes -gt 0) 'Size and SHA-256'
-}
-
 Test-Case 'a label that disagrees with the app version or the channel is refused' {
     Expect-Refusal { Invoke-Packager @{ Version = '9.9.9'; Channel = 'release' } } $appVersion
     Expect-Refusal { Invoke-Packager @{ Version = '9.9.9-test.1' } } $appVersion

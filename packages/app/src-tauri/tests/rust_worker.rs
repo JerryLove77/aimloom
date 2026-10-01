@@ -1,7 +1,7 @@
 //! The Rust engine as the App starts it: this crate's own binary with `--worker`, through the
 //! App's `WorkerClient`, with `LOCALAPPDATA` pointed at a temporary folder. This is the path every
 //! player's write takes from v0.1.6, so it is tested end to end here rather than only through the
-//! engine's library API (`engine_parity.rs`) or the separate test worker (`examples/engine_worker`).
+//! engine's library API (`engine_parity.rs`).
 #![cfg(feature = "installer-ui")]
 
 use std::fs;

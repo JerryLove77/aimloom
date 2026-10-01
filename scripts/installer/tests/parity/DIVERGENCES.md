@@ -1,6 +1,8 @@
 # Accepted differences between the PowerShell and Rust engines
 
-Each entry says what differs, why it is accepted, and how the parity suite treats it.
+Each entry says what differs, why it is accepted, and how the parity suite treats it. The
+PowerShell engine was removed in 0.1.6-beta.2; its goldens are frozen (see `README.md`), and this
+list records where the Rust engine was accepted to differ from them.
 
 | Where | Difference | Treatment |
 |---|---|---|
