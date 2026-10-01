@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { InstallerApp } from '../installer/InstallerApp'
 import { ProfilesApp } from '../profiles/ProfilesApp'
 import { SchemePage } from '../scheme/SchemePage'
@@ -12,6 +12,7 @@ import { ReportSheet } from './ReportSheet'
 import { createReportController } from './report-controller'
 import { readAccount } from './account'
 import { resolveGameRoot } from '../section/game-root'
+import { createFavoritesStore } from '../section/favorites'
 import { noFileDrops, type FileDropSource } from './file-drop'
 import { browserStorage, useLang } from '../i18n'
 import { readUpdatesEnabled } from './updates'
@@ -47,6 +48,8 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
   // Lives for the whole session, not per mount of the sheet: closing (Cancel/Esc) must keep the
   // draft, so the controller cannot be recreated the next time the sheet opens (ruling B3).
   const [reportController] = useState(() => createReportController(bridge))
+  // The starred themes and sounds, shared by Theme, Sounds and the Profile sheets.
+  const favorites = useMemo(() => createFavoritesStore(profileBridge), [profileBridge])
   const { lang, choice } = useLang()
   // The sidebar dot is a launch notification, not a standing indicator of "update.newer": once
   // the player has opened Settings once this session, it has done its job and stays gone even
@@ -116,9 +119,9 @@ export function Workspace({ bridge, profileBridge, assetBridge, isDemo, fileDrop
       storage, accountResolve: bridge.accountResolve.bind(bridge), openLogs: bridge.openLogs.bind(bridge), openDownload: bridge.openDownload.bind(bridge), openExplore: bridge.openExplore.bind(bridge),
       update, updateDot, appInfo, betaOn: betaOn ?? false, setBetaOn, openReport, rootOverlay,
     }}>
-      <ProfilesApp bridge={profileBridge} assets={assetBridge} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
-      <SchemePage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'scheme'} section={section} onSelect={setSection} fileDrops={fileDrops} />
-      <AudioPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <ProfilesApp bridge={profileBridge} assets={assetBridge} favorites={favorites} locate={bridge} isDemo={isDemo} isActive={installer === null && section === 'profile'} onSelectSection={setSection} onDirtyChange={setProfileUnsaved} fileDrops={fileDrops} />
+      <SchemePage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'scheme'} section={section} onSelect={setSection} fileDrops={fileDrops} />
+      <AudioPage bridge={bridge} assets={assetBridge} favorites={favorites} isDemo={isDemo} isActive={installer === null && section === 'audio'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <CrosshairPage bridge={bridge} assets={assetBridge} isDemo={isDemo} isActive={installer === null && section === 'crosshair'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <EnemyPage bridge={bridge} isDemo={isDemo} isActive={installer === null && section === 'enemy'} section={section} onSelect={setSection} fileDrops={fileDrops} />
       <ExplorePage bridge={bridge} storage={storage} isDemo={isDemo} isActive={installer === null && section === 'explore'} section={section} onSelect={setSection} onOpenRestore={openRestore} fileDrops={fileDrops} />

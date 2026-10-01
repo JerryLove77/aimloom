@@ -14,13 +14,17 @@ import { AUDIO_EVENTS, type AudioEvent } from '../bridge/contracts'
 import { useLang, useMsg, useT } from '../i18n'
 import { LocatePanel } from '../section/LocatePanel'
 import { TabRow } from '../ui/TabRow'
+import { FavoriteStar } from '../ui/Tiles'
+import { useFavorites, type FavoritesStore } from '../section/favorites'
 import './audio.css'
 
 const LIST_EVENTS: AudioEvent[] = ['kill', 'spawn']
 
-export function AudioPage({ bridge, assets, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+export function AudioPage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
   bridge: AudioBridge
   assets: ProfileAssetBridge
+  /** The starred sounds, listed first; absent: no stars. */
+  favorites?: FavoritesStore | undefined
   isDemo?: boolean
   isActive?: boolean
   section: WorkspaceSection
@@ -42,6 +46,7 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
   const [importPath, setImportPath] = useState<string | null>(null)
   const addedRow = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
+  const fav = useFavorites(favorites, 'audio', isActive)
   /** Whether the list editor is open, per event. A list of several sounds always shows it. */
   const [advancedOpen, setAdvancedOpen] = useState<Partial<Record<AudioEvent, boolean>>>({})
   // stop(), not dispose(): StrictMode replays mount → cleanup → mount on this same memoized
@@ -74,7 +79,9 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
   // except over a list of several sounds, which must never be hidden.
   const advanced = isList && (state.draft.length > 1 || (event !== null && advancedOpen[event] === true))
   const needle = query.trim().toLocaleLowerCase()
-  const shownSounds = needle ? state.sounds.filter(sound => sound.name.toLocaleLowerCase().includes(needle) || sound.file.toLocaleLowerCase().includes(needle)) : state.sounds
+  // Favourites first, then the engine's order, before the search narrows the list.
+  const sounds = fav.sort(state.sounds, sound => sound.file)
+  const shownSounds = needle ? sounds.filter(sound => sound.name.toLocaleLowerCase().includes(needle) || sound.file.toLocaleLowerCase().includes(needle)) : sounds
   const others = controller.pendingEvents().filter(item => item !== event)
   const eventLabel = event ? label(event) : ''
   const playing = (path: string) => audition.status !== 'idle' && audition.file === path
@@ -186,6 +193,8 @@ export function AudioPage({ bridge, assets, isDemo = false, isActive = true, sec
                   <Button variant={playing(sound.path) ? 'secondary' : 'ghost'} aria-pressed={playing(sound.path)}
                     aria-label={`${playing(sound.path) ? t('audio.action.stop') : t('audio.action.play')} ${sound.name}`} onClick={() => void play(sound.path)}>{playing(sound.path) ? t('audio.stop.button') : t('audio.play.button')}</Button>
                   {advanced ? <Button aria-label={t('audio.addToList.aria', { name: sound.name })} disabled={locked || sound.ambiguous} onClick={() => controller.add(sound.name)}>{t('audio.addToList.button')}</Button> : null}
+                  {fav.enabled ? <FavoriteStar on={fav.isFavorite(sound.file)} label={t('favorites.star', { label: sound.name })}
+                    onToggle={() => { void fav.toggle(sound.file, state.sounds.map(item => item.file)).then(failure => { if (failure) show(msg(failure)) }) }} /> : null}
                 </div>
               })}
               {query && !shownSounds.length ? <p className="ws-note">{t('audio.sounds.noMatch', { query })}</p> : null}
