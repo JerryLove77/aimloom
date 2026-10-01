@@ -89,12 +89,12 @@ fn file_add_refuses_target_names_that_could_escape_split_a_list_or_change_type()
 
 #[test]
 fn an_installed_theme_with_a_long_chinese_name_can_still_be_selected() {
-    // planScheme names a file that already exists, so the limit is the file system's: 255
+    // planTheme names a file that already exists, so the limit is the file system's: 255
     // UTF-16 units. A byte limit refused names over about 85 Chinese characters.
     let long = format!("{}.json", "主".repeat(200));
-    assert!(validate_read("planScheme", json!({"gameRoot":"D:/Game","file":long,"revision":1})).is_ok());
+    assert!(validate_read("planTheme", json!({"gameRoot":"D:/Game","file":long,"revision":1})).is_ok());
     let too_long = format!("{}.json", "主".repeat(251));
-    assert!(validate_read("planScheme", json!({"gameRoot":"D:/Game","file":too_long,"revision":1})).is_err());
+    assert!(validate_read("planTheme", json!({"gameRoot":"D:/Game","file":too_long,"revision":1})).is_err());
 }
 
 fn plan_enemy(shape: &str, model: &str, skin: &str) -> serde_json::Value {

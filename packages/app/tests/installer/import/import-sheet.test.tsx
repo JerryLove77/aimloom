@@ -46,7 +46,7 @@ describe('add-to-game sheet', () => {
     fireEvent.click(addButton())
     await waitFor(() => expect(f.onAdd).toHaveBeenCalledOnce())
     expect(f.onAdd).toHaveBeenCalledWith({ sourcePath: SOURCE, sourceSha256: await sha256Hex(f.bytes), file: 'Night.json' })
-    expect(f.reads).toEqual([`scheme:${SOURCE}`])
+    expect(f.reads).toEqual([`theme:${SOURCE}`])
   })
 
   it('lets the player rename the file but keeps the extension fixed', async () => {

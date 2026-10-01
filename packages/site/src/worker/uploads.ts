@@ -4,7 +4,7 @@
  * creator's file goes straight to the public bucket; anyone else's waits in the private one.
  */
 import { localizePath, t, type Lang } from '../i18n'
-import { renderSchemePreview, parseScheme } from '@kvk/theme'
+import { renderThemePreview, parseThemeDocument } from '@kvk/theme'
 import { checkFile, CONTENT_TYPE, extensionOf, parseManifest, PublishError, sha256Hex, UPLOAD_LICENCES, type Kind } from '../lib/item-checks'
 import type { Item } from '../lib/explore-types'
 import { accountBar, emptyForm, MAX_UPLOAD_BYTES, mineHtml, reviewHtml, uploadDoneHtml, uploadFormHtml, UPLOADS_PER_DAY, welcomeHtml, type FormValues, type Viewer } from '../lib/upload-view'
@@ -157,7 +157,7 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     const obj = await env.UPLOADS.get(item.file_key)
     if (!obj) return shell.notFound()
     if (file[2]) {
-      const svg = renderSchemePreview(parseScheme(new Uint8Array(await obj.arrayBuffer())), lang)
+      const svg = renderThemePreview(parseThemeDocument(new Uint8Array(await obj.arrayBuffer())), lang)
       return new Response(svg, { headers: { 'content-type': 'image/svg+xml', 'cache-control': 'private, no-store' } })
     }
     return new Response(obj.body, { headers: { 'content-type': obj.httpMetadata?.contentType ?? 'application/octet-stream', 'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff' } })

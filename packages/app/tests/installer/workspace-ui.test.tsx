@@ -58,7 +58,7 @@ describe('workspace primitives', () => {
   })
 
   it('shows the drop hint over the window without taking focus or clicks', () => {
-    const shell = (hint: { accepted: boolean; text: string } | null) => <WorkspaceShell active="scheme" onSelect={() => {}} isDemo={false} eyebrow="SCHEME" title="背景" scope="" dropHint={hint}><p>content</p></WorkspaceShell>
+    const shell = (hint: { accepted: boolean; text: string } | null) => <WorkspaceShell active="theme" onSelect={() => {}} isDemo={false} eyebrow="THEME" title="背景" scope="" dropHint={hint}><p>content</p></WorkspaceShell>
     const { rerender, container } = render(shell(null))
     expect(container.querySelector('.ws-drop-overlay')).toBeNull()
     rerender(shell({ accepted: true, text: '松开以添加主题' }))

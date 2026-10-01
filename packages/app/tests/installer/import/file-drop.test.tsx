@@ -6,7 +6,7 @@ import { renderMsg } from '../../../src/i18n'
 
 describe('routeDrop', () => {
   it('accepts the one kind of file a section can add', () => {
-    expect(routeDrop('scheme', ['C:/d/Blue.JSON'])).toEqual({ ok: true, paths: ['C:/d/Blue.JSON'] })
+    expect(routeDrop('theme', ['C:/d/Blue.JSON'])).toEqual({ ok: true, paths: ['C:/d/Blue.JSON'] })
     expect(routeDrop('audio', ['C:/d/hit.ogg'])).toEqual({ ok: true, paths: ['C:/d/hit.ogg'] })
     expect(routeDrop('audio', ['C:/d/hit.WAV'])).toEqual({ ok: true, paths: ['C:/d/hit.WAV'] })
     expect(routeDrop('crosshair', ['C:/d/dot.png'])).toEqual({ ok: true, paths: ['C:/d/dot.png'] })
@@ -14,7 +14,7 @@ describe('routeDrop', () => {
 
   it('names the section that accepts a file dropped on the wrong one', () => {
     expect(routeDrop('audio', ['C:/d/Blue.json'])).toEqual({ ok: false, message: { key: 'import.drop.whereTheme' } })
-    expect(routeDrop('scheme', ['C:/d/hit.wav'])).toEqual({ ok: false, message: { key: 'import.drop.whereSound' } })
+    expect(routeDrop('theme', ['C:/d/hit.wav'])).toEqual({ ok: false, message: { key: 'import.drop.whereSound' } })
     expect(routeDrop('profile', ['C:/d/dot.png'])).toEqual({ ok: false, message: { key: 'import.drop.whereCrosshair' } })
     expect(renderMsg('zh', { key: 'import.drop.whereTheme' })).toMatch(/Theme 栏目/)
   })
@@ -34,19 +34,19 @@ describe('routeDrop', () => {
   })
 
   it('refuses a ZIP dropped alone everywhere: Quick import reads folders and files only', () => {
-    for (const section of ['explore', 'scheme', 'profile'] as const) {
+    for (const section of ['explore', 'theme', 'profile'] as const) {
       expect(routeDrop(section, ['D:/Downloads/pack.ZIP'])).toEqual({ ok: false, message: { key: 'import.drop.unzipFirst' } })
     }
   })
 
   it('takes one file at a time and says which types it knows', () => {
-    expect(routeDrop('scheme', ['C:/a.json', 'C:/b.json'])).toEqual({ ok: false, message: { key: 'import.drop.tooMany' } })
-    expect(routeDrop('scheme', ['C:/d/readme.txt'])).toEqual({ ok: false, message: { key: 'import.drop.unsupported' } })
-    expect(routeDrop('scheme', [])).toEqual({ ok: false, message: { key: 'import.drop.empty' } })
+    expect(routeDrop('theme', ['C:/a.json', 'C:/b.json'])).toEqual({ ok: false, message: { key: 'import.drop.tooMany' } })
+    expect(routeDrop('theme', ['C:/d/readme.txt'])).toEqual({ ok: false, message: { key: 'import.drop.unsupported' } })
+    expect(routeDrop('theme', [])).toEqual({ ok: false, message: { key: 'import.drop.empty' } })
   })
 })
 
-function Probe({ source, section = 'scheme', active = true, busy = false, onFile, onRefused }: {
+function Probe({ source, section = 'theme', active = true, busy = false, onFile, onRefused }: {
   source: FileDropSource; section?: WorkspaceSection; active?: boolean; busy?: boolean; onFile: (path: string) => void; onRefused: (message: string) => void
 }) {
   const hint = useFileDrop(source, { section, active, busy, onFile, onRefused })

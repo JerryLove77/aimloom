@@ -27,7 +27,7 @@
     {
       "request": "profileAssetList",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes"
       }
     },
@@ -55,35 +55,35 @@
     {
       "request": "profileAssetList",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "directory": "relative/Themes"
       }
     },
     {
       "request": "profileAssetList",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/*"
       }
     },
     {
       "request": "profileAssetList",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "directory": "<game>/missing"
       }
     },
     {
       "request": "profileAssetList",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "directory": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/../Themes"
       }
     },
     {
       "request": "profileAssetRead",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/b.json"
       }
     },
@@ -104,21 +104,21 @@
     {
       "request": "profileAssetRead",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/missing.json"
       }
     },
     {
       "request": "profileAssetRead",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/empty.json"
       }
     },
     {
       "request": "profileAssetRead",
       "args": {
-        "kind": "scheme",
+        "kind": "theme",
         "path": "<game>/FPSAimTrainer/Saved/SaveGames/Themes/folder.json"
       }
     }

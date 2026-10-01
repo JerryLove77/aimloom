@@ -79,7 +79,7 @@ pub fn installed_themes(engine: &Engine, context: &Context) -> EngineResult<Them
     Ok(Themes { directory, themes, current })
 }
 
-pub fn scheme_list_json(themes: &Themes) -> Json {
+pub fn theme_list_json(themes: &Themes) -> Json {
     Json::object(vec![
         ("directory", Json::str(&themes.directory)),
         ("current", Json::opt_str(themes.current.clone())),

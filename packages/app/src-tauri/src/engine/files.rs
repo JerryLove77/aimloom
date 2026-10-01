@@ -259,7 +259,7 @@ pub fn file_add_plan(engine: &Engine, context: &Context, kind: &str, source_path
     assert_import_name(kind, file)?;
     if !paths::is_hash(source_sha) { return Err(fail("来源文件的校验值无效。", "The source file's checksum is not valid.")); }
     let is_theme = kind == "theme";
-    let asset_kind = Json::str(if is_theme { "scheme" } else { "audio" });
+    let asset_kind = Json::str(if is_theme { "theme" } else { "audio" });
     let source_full = profiles::asset_path(Some(&Json::str(source_path)))?;
     if !Path::new(&source_full).is_file() {
         return Err(EngineError::coded("INVALID_PATH", format!("找不到来源文件，它可能已被移动或删除: {source_full}"), format!("The source file was not found; it may have been moved or deleted: \"{source_full}\".")));

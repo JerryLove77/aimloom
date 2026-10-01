@@ -21,8 +21,10 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
   **Code identifiers stay `kvk` / `KovaaK`**: packages (`@kvk/app`), CSS roots
   (`.kvk-installer`), env variables (`KVK_PARITY_REQUIRE`) and the sample pack (`KVK Settings 2025`).
   Do **not** do a repo-wide rename.
-- **Sections.** Code, folders (`src/scheme`, `src/audio`), dictionary keys, CSS classes, wire ops
-  and Profile JSON fields say `scheme` / `audio`, while the player sees Theme / Sounds. The Chinese
+- **Sections.** Code, folders (`src/theme`, `src/audio`), dictionary keys, CSS classes, wire ops
+  and Profile JSON fields say `theme` / `audio`, while the player sees Theme / Sounds (the code
+  said `scheme` until the THEME-RENAME of 2026-10-01; two names on disk keep it: the data folder's
+  `scheme-previews` staging folder and the version 1 Profile key that is refused). The Chinese
   page titles 「背景」 and 「音效」 and the sentences about what a page changes (应用背景 / "Apply
   background") keep their wording. Quick import's code lives in `explore/` (`import-controller.ts`)
   and the wire op is `planImport`; the restore page's code, routes and file names say `installer`.
@@ -45,7 +47,7 @@ to change a running game: KovaaK keeps its settings in memory and rewrites
   `tests/installer/report/backend-paths.test.ts` (paths), `command-shapes.test.ts` (what each
   command answers) and `backend-codes.test.ts` (failure codes). A fake standing where the real
   counterpart should be compared once shipped three defects.
-- **`@kvk/theme`** decodes and parses themes and renders the scheme preview SVG, for the App's
+- **`@kvk/theme`** decodes and parses themes and renders the theme preview SVG, for the App's
   previews and the site's upload checks. It is browser-safe and writes nothing; never require a
   player to have Node. **`@kvk/crosshair`** stays independent of `@kvk/theme`: its
   browser-safe entry exports parsers, geometry, RGBA and SVG, and `@kvk/crosshair/node` holds the
@@ -159,7 +161,7 @@ The front end is split by who the code is for: `main.tsx` (entry), `bridge/` (ev
 the wire types in `contracts.ts`, and the browser fakes), `ui/` (domain-free components and
 `tokens.css`), `section/` (what several pages share: game-folder lookup, the plan runner, adding
 an outside file, failure text), `workspace/` (the shell: window, sidebar, Settings, reports),
-`installer/` (备份与恢复 and its help), `explore/` (the Explore page and Quick import), `profiles/`, `scheme/`,
+`installer/` (备份与恢复 and its help), `explore/` (the Explore page and Quick import), `profiles/`, `theme/`,
 `audio/`, `enemy/`, `crosshair/` (one folder per section) and `i18n/` (dictionaries only).
 
 **The engine is Rust** (`packages/app/src-tauri/src/engine/`, ROADMAP ENGINE-RUST). It implements

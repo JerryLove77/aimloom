@@ -49,10 +49,10 @@
   },
   "steps": [
     {
-      "request": "planScheme",
+      "request": "planTheme",
       "args": {
         "gameRoot": "<game>",
-        "file": "numbers.json",
+        "file": "Default.json",
         "revision": 1
       }
     },
@@ -63,6 +63,52 @@
         "planId": "<plan>",
         "confirmation": "install",
         "allowConflicts": false
+      }
+    },
+    {
+      "request": "themeList",
+      "args": {
+        "gameRoot": "<game>"
+      }
+    },
+    {
+      "request": "planTheme",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "Default.json",
+        "revision": 2
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-2",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "planTheme",
+      "args": {
+        "gameRoot": "<game>",
+        "file": "Legacy Sample.json",
+        "revision": 3
+      }
+    },
+    {
+      "request": "execute",
+      "args": {
+        "operationId": "op-3",
+        "planId": "<plan>",
+        "confirmation": "install",
+        "allowConflicts": false
+      }
+    },
+    {
+      "request": "themeList",
+      "args": {
+        "gameRoot": "<game>"
       }
     }
   ]

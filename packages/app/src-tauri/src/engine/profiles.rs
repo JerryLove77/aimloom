@@ -258,7 +258,7 @@ pub fn asset_extensions(kind: Option<&Json>) -> EngineResult<&'static [&'static 
     match kind.and_then(Json::as_str) {
         Some("audio") => Ok(&[".wav", ".ogg"]),
         Some("crosshair") => Ok(&[".png"]),
-        Some("scheme" | "enemy") => Ok(&[".json"]),
+        Some("theme" | "enemy") => Ok(&[".json"]),
         _ => Err(fail("资源类型无效。", "The asset kind is not valid.")),
     }
 }

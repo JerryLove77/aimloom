@@ -9,7 +9,7 @@ import './locate.css'
  * Wording comes from `<section>.locate.{multiple,none,chooseFolder,chooseGameFolder}`.
  */
 export function LocatePanel({ section, phase, candidates, locked, controller }: {
-  section: 'scheme' | 'audio' | 'enemy' | 'crosshair' | 'quick'
+  section: 'theme' | 'audio' | 'enemy' | 'crosshair' | 'quick'
   phase: SectionPhase
   candidates: string[]
   locked: boolean

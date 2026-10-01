@@ -1,5 +1,5 @@
 import demoData from './demo-data.json'
-import { InstallerFailure, localIssue, MAX_IMPORT_PATHS, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type SchemeTheme, type SkipReason } from './contracts'
+import { InstallerFailure, localIssue, MAX_IMPORT_PATHS, type Backup, type Category, type EnemyShape, type EnemySkin, type EnemySkinChoice, type FileRow, type InstallerBridge, type Job, type Location, type Preview, type ThemeEntry, type SkipReason } from './contracts'
 const gameRoot='D:\\SteamLibrary\\steamapps\\common\\FPSAimTrainer'
 const packRoot='C:\\Users\\Player\\Downloads\\KVK Settings 2025'
 // The personal settings files a demo game starts with, so a restore puts them back.
@@ -85,15 +85,15 @@ export function createDemoBridge(options:{durationMs?:number}={}):InstallerBridg
     async locate(root){if(!root.trim())throw error('INVALID_PATH','installer.demo.selectGame');return location(root)},
     async backups(root){if(!root.trim())throw error('INVALID_PATH','installer.error.selectGameFirst');return {location:location(root),records:clone(records),hasPristine:records.length>0}},
     async gameState(){return 'closed'},
-    async schemeList(root){
+    async themeList(root){
       if(!root.trim())throw error('INVALID_PATH','installer.error.selectGameFirst')
       const folder=`${root}\\FPSAimTrainer\\Saved\\SaveGames\\Themes`
-      const themes:SchemeTheme[]=['Clean Dark','snowi clarity','clover-alternate'].map(name=>({name,file:`${name}.json`,path:`${folder}\\${name}.json`,readable:true,duplicateName:false}))
+      const themes:ThemeEntry[]=['Clean Dark','snowi clarity','clover-alternate'].map(name=>({name,file:`${name}.json`,path:`${folder}\\${name}.json`,readable:true,duplicateName:false}))
       for(const file of added.theme)themes.push({name:file.replace(/\.json$/i,''),file,path:`${folder}\\${file}`,readable:true,duplicateName:false})
       themes.push({name:null,file:'Broken.json',path:`${folder}\\Broken.json`,readable:false,duplicateName:false})
       return {directory:folder,current:'Clean Dark',themes}
     },
-    async planScheme(input){
+    async planTheme(input){
       if(!input.file.endsWith('.json'))throw error('INVALID_PATH','installer.demo.invalidTheme')
       const target=`${input.gameRoot}\\FPSAimTrainer\\Saved\\SaveGames\\PrimaryUserSettings.json`
       currentPlan={planId:crypto.randomUUID(),revision:input.revision,kind:'install',location:location(input.gameRoot),packRoot:null,categories:['primary'],sourceId:null,rows:[{key:'primary/PrimaryUserSettings.json',category:'primary',source:null,target,action:'replace',conflict:false,unowned:false}],skipped:[]}

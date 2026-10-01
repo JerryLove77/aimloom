@@ -19,7 +19,7 @@ const render_ = (lang: 'zh' | 'en', node: React.ReactElement) =>
   render(<LangProvider storage={null} languages={[lang === 'zh' ? 'zh-CN' : 'en-US']}>{node}</LangProvider>)
 
 describe('an unreadable asset file gets its own message, not the Profile one', () => {
-  const sheet = () => <ResourceSheet kind="scheme" profileName="每日训练" profilePath="/profiles/p1.json"
+  const sheet = () => <ResourceSheet kind="theme" profileName="每日训练" profilePath="/profiles/p1.json"
     value={{ name: 'Blue.json', path: '/assets/Blue.json' }} assets={bridge([{ name: 'Blue.json', path: '/assets/Blue.json' }])}
     isDemo open onConfirm={() => {}} onCancel={() => {}} />
 

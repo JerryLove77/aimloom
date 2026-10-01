@@ -75,10 +75,10 @@ fn read_settings(engine: &Engine, context: &Context) -> EngineResult<(String, St
     Ok((target, hash, settings))
 }
 
-// ---- Theme (scheme) ------------------------------------------------------------------------
+// ---- Theme (theme) ------------------------------------------------------------------------
 
 /// `Assert-KvkSchemeNumber`: a JSON number (not a BigInteger) inside the range; whole when asked.
-fn scheme_number(value: Option<&Json>, label: &str, min: f64, max: f64, integer: bool) -> EngineResult<Number> {
+fn theme_number(value: Option<&Json>, label: &str, min: f64, max: f64, integer: bool) -> EngineResult<Number> {
     let number = match value.and_then(Json::number) {
         Some(n @ (Number::Int(_) | Number::Double(_))) => n,
         _ => return Err(EngineError::coded("ENGINE_ERROR", format!("主题字段 {label} 必须是数值"), format!("Theme field {label} must be a number."))),
@@ -106,7 +106,7 @@ fn as_double(number: Number) -> f64 { match number { Number::Int(i) => i as f64,
 
 /// `Get-KvkSchemeEdits`: a field the theme carries must be valid and is written; a field it
 /// lacks keeps the player's value. The three material overrides are always written.
-pub fn scheme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
+pub fn theme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
     let mut edits = Vec::new();
     for (native, lower) in [("Wall", "wall"), ("Floor", "floor"), ("Ceiling", "ceiling"), ("Ramp", "ramp")] {
         let field = |name: &str| format!("{lower}{name}");
@@ -121,25 +121,25 @@ pub fn scheme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
             let f = field("Tint");
             if !matches!(tint, Json::Object(_)) { return Err(EngineError::coded("ENGINE_ERROR", format!("主题字段 {f} 格式不正确"), format!("Theme field {f} is not in the expected format."))); }
             let mut channels = Vec::new();
-            for channel in ["x", "y", "z"] { channels.push((channel, channel_scalar(scheme_number(tint.get(channel), &format!("{f}.{channel}"), 0.0, 1.0, false)?))); }
+            for channel in ["x", "y", "z"] { channels.push((channel, channel_scalar(theme_number(tint.get(channel), &format!("{f}.{channel}"), 0.0, 1.0, false)?))); }
             edits.push((format!("EVectorSettingId::{native}Color"), Value::Channels(channels)));
         }
         for name in ["Roughness", "Metallic", "FullBright"] {
             let f = field(name);
             if theme.get(&f).is_none() { continue; }
-            let number = scheme_number(theme.get(&f), &f, 0.0, 1.0, false)?;
+            let number = theme_number(theme.get(&f), &f, 0.0, 1.0, false)?;
             edits.push((format!("EFloatSettingId::{native}{name}"), Value::One(Scalar::Double(as_double(number)))));
         }
         let f = field("TextureScale");
         if theme.get(&f).is_some() {
-            let number = as_double(scheme_number(theme.get(&f), &f, 0.0, f64::MAX, false)?);
+            let number = as_double(theme_number(theme.get(&f), &f, 0.0, f64::MAX, false)?);
             if number <= 0.0 { return Err(EngineError::coded("ENGINE_ERROR", format!("主题字段 {f} 必须为正数"), format!("Theme field {f} must be positive."))); }
             edits.push((format!("EFloatSettingId::{native}TextureScale"), Value::One(Scalar::Double(number))));
         }
     }
     for (field, setting, max) in [("skyPresetId", "SkyPreset", 13.0), ("cloudCoverId", "CloudCover", 5.0)] {
         if theme.get(field).is_none() { continue; }
-        let number = scheme_number(theme.get(field), field, 0.0, max, true)?;
+        let number = theme_number(theme.get(field), field, 0.0, max, true)?;
         edits.push((format!("EIntegerSettingId::{setting}"), Value::One(Scalar::Int(as_double(number) as i64))));
     }
     for (field, setting) in [("solidSkyColor", "SolidSkyColor"), ("sunVisible", "ShowSunInSkybox")] {
@@ -150,7 +150,7 @@ pub fn scheme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
     if let Some(sky) = theme.get("skyColor") {
         if !matches!(sky, Json::Object(_)) { return Err(EngineError::coded("ENGINE_ERROR", "主题字段 skyColor 格式不正确", "Theme field skyColor is not in the expected format.")); }
         let mut channels = Vec::new();
-        for channel in ["r", "g", "b", "a"] { channels.push((channel, channel_scalar(scheme_number(sky.get(channel), &format!("skyColor.{channel}"), 0.0, 255.0, true)?))); }
+        for channel in ["r", "g", "b", "a"] { channels.push((channel, channel_scalar(theme_number(sky.get(channel), &format!("skyColor.{channel}"), 0.0, 255.0, true)?))); }
         edits.push(("EColorSettingId::SkyColor".to_string(), Value::Channels(channels)));
     }
     // The game writes these three when it applies a theme itself; their material indices are
@@ -161,12 +161,12 @@ pub fn scheme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
     Ok(edits)
 }
 
-pub struct SchemePlan { pub theme_path: String, pub theme_hash: String, pub plan: Plan }
+pub struct ThemePlan { pub theme_path: String, pub theme_hash: String, pub plan: Plan }
 
 /// `Get-KvkSchemeSource`: the installed theme file by name, and every settings edit it makes.
-pub struct SchemeSource { pub theme_path: String, pub theme_hash: String, pub edits: Vec<(String, Value)> }
+pub struct ThemeSource { pub theme_path: String, pub theme_hash: String, pub edits: Vec<(String, Value)> }
 
-pub fn scheme_source(engine: &Engine, context: &Context, file: &str) -> EngineResult<SchemeSource> {
+pub fn theme_source(engine: &Engine, context: &Context, file: &str) -> EngineResult<ThemeSource> {
     engine.assert_context(context)?;
     paths::assert_file_name(file)?;
     if !file.to_ascii_lowercase().ends_with(".json") {
@@ -185,8 +185,8 @@ pub fn scheme_source(engine: &Engine, context: &Context, file: &str) -> EngineRe
     let parsed = lists::read_theme(&theme_path)?;
     let name = parsed.get("themeName").and_then(Json::as_str).unwrap_or_default().to_string();
     let mut edits = vec![("EStringSettingId::CurrentThemeName".to_string(), Value::One(Scalar::Str(name)))];
-    edits.extend(scheme_edits(&parsed)?);
-    Ok(SchemeSource { theme_path, theme_hash, edits })
+    edits.extend(theme_edits(&parsed)?);
+    Ok(ThemeSource { theme_path, theme_hash, edits })
 }
 
 /// Applies the edits to the settings file's text, stages the result and plans it as the one
@@ -200,18 +200,18 @@ pub fn settings_plan(engine: &Engine, context: &Context, edits: &[(String, Value
 }
 
 /// `New-KvkSchemePlan`.
-pub fn scheme_plan(engine: &Engine, context: &Context, file: &str) -> EngineResult<SchemePlan> {
-    let source = scheme_source(engine, context, file)?;
-    let plan = settings_plan(engine, context, &source.edits, "scheme-previews", "Scheme staging must be outside the game directory.", ("准备预览期间背景来源发生了变化。", "Scheme source changed during preview preparation."))?;
-    Ok(SchemePlan { theme_path: source.theme_path, theme_hash: source.theme_hash, plan })
+pub fn theme_plan(engine: &Engine, context: &Context, file: &str) -> EngineResult<ThemePlan> {
+    let source = theme_source(engine, context, file)?;
+    let plan = settings_plan(engine, context, &source.edits, "scheme-previews", "Theme staging must be outside the game directory.", ("准备预览期间背景来源发生了变化。", "Theme source changed during preview preparation."))?;
+    Ok(ThemePlan { theme_path: source.theme_path, theme_hash: source.theme_hash, plan })
 }
 
 /// `Invoke-KvkSchemeReplacement`.
-pub fn scheme_execute(engine: &Engine, context: &Context, scheme: &SchemePlan, observer: txn::Observer) -> EngineResult<txn::Report> {
-    if store::hash(&scheme.theme_path)?.as_deref() != Some(scheme.theme_hash.as_str()) {
+pub fn theme_execute(engine: &Engine, context: &Context, theme: &ThemePlan, observer: txn::Observer) -> EngineResult<txn::Report> {
+    if store::hash(&theme.theme_path)?.as_deref() != Some(theme.theme_hash.as_str()) {
         return Err(EngineError::coded("PLAN_STALE", "预览之后主题文件发生了变化，请重新核对。", "The theme file changed after preview; review it again."));
     }
-    txn::install(engine, context, &scheme.plan, false, observer)
+    txn::install(engine, context, &theme.plan, false, observer)
 }
 
 // ---- Sounds (audio) ------------------------------------------------------------------------
@@ -273,7 +273,7 @@ pub fn profile_apply_plan(engine: &Engine, context: &Context, id: &str) -> Engin
     let Some(entry) = resolve_reference(saved, &installed.themes, |t| &t.path) else {
         return Err(EngineError::coded("ENGINE_ERROR", format!("Profile 引用的背景文件不在游戏中：「{saved}」"), format!("The Theme file the Profile refers to is not in the game: \"{saved}\".")));
     };
-    let scheme = scheme_source(engine, context, &entry.file.clone())?;
+    let theme = theme_source(engine, context, &entry.file.clone())?;
     let (mut audio_edits, mut sources) = (Vec::new(), Vec::new());
     let audio = profile.get("audio").cloned().unwrap_or(Json::Null);
     let (_, sounds) = lists::installed_sounds(engine, context)?;
@@ -290,10 +290,10 @@ pub fn profile_apply_plan(engine: &Engine, context: &Context, id: &str) -> Engin
         }
         audio_edits.push(audio_edit(engine, context, event, &names)?);
     }
-    let mut edits: Vec<_> = scheme.edits.iter().cloned().collect();
+    let mut edits: Vec<_> = theme.edits.iter().cloned().collect();
     edits.extend(audio_edits);
     let plan = settings_plan(engine, context, &edits, "profile-apply-previews", "Profile apply staging must be outside the game directory.", ("准备预览期间 Profile 应用的来源发生了变化。", "A Profile apply source changed during preview preparation."))?;
-    let mut all_sources = vec![(scheme.theme_path, scheme.theme_hash)];
+    let mut all_sources = vec![(theme.theme_path, theme.theme_hash)];
     all_sources.extend(sources);
     Ok(ProfileApply { profile_path, profile_hash, sources: all_sources, plan })
 }

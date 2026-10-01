@@ -3,7 +3,7 @@ import { InstallerFailure, type Issue } from './contracts'
 import { isEnglishText, t, type Lang } from '../i18n'
 import { parseFileReference, referenceFromPath, type ProfileFileReference } from '../profiles/file-reference'
 
-export type AssetKind = 'scheme' | 'audio' | 'crosshair' | 'enemy'
+export type AssetKind = 'theme' | 'audio' | 'crosshair' | 'enemy'
 /** Each unreadable file carries both languages: `message` is Chinese, `messageEn` its English twin. */
 export interface AssetList { directory: string; files: ProfileFileReference[]; errors: { fileName: string; message: string; messageEn: string }[] }
 export interface ProfileAssetBridge {
@@ -12,7 +12,7 @@ export interface ProfileAssetBridge {
   list(kind: AssetKind, directory: string): Promise<AssetList>
   read(kind: AssetKind, path: string): Promise<Uint8Array>
 }
-const extensions: Record<AssetKind, string[]> = { scheme: ['.json'], enemy: ['.json'], crosshair: ['.png'], audio: ['.wav', '.ogg'] }
+const extensions: Record<AssetKind, string[]> = { theme: ['.json'], enemy: ['.json'], crosshair: ['.png'], audio: ['.wav', '.ogg'] }
 const MAX_BYTES = 8 * 1024 * 1024
 function invalid(): never { throw new InstallerFailure({ code: 'ENGINE_ERROR', message: t('zh', 'profile.assets.invalidResponse'), messageEn: t('en', 'profile.assets.invalidResponse'), path: null }) }
 function fields(value: unknown, keys: string[]): Record<string, unknown> {

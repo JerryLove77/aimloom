@@ -155,7 +155,7 @@ describe('workspace: 更改配置 and 探索', () => {
     expect(restored).toHaveValue('未保存的草稿')
   })
 
-  it('applies a scheme in the browser demo without touching a Profile', async () => {
+  it('applies a theme in the browser demo without touching a Profile', async () => {
     render(<Workspace bridge={createDemoBridge({ durationMs: 0 })} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo />)
     fireEvent.click(await screen.findByRole('button', { name: 'Theme' }))
     fireEvent.click(await screen.findByRole('button', { name: 'snowi clarity 预览' }))
@@ -229,7 +229,7 @@ describe('workspace: 更改配置 and 探索', () => {
     expect(await screen.findAllByRole('status', { name: '操作结果' })).toHaveLength(1)
     expect(screen.getByRole('status', { name: '操作结果' })).toHaveTextContent(/Theme 栏目/)
     expect(screen.queryByRole('dialog')).toBeNull()
-    // On Scheme, the same drop opens the add sheet; confirming adds the file and selects it.
+    // On Theme, the same drop opens the add sheet; confirming adds the file and selects it.
     fireEvent.click(screen.getByRole('button', { name: 'Theme' }))
     await screen.findByRole('button', { name: '添加主题…' })
     act(() => drops.emit({ type: 'drop', paths: ['/demo/downloads/Night-arena.json'] }))
@@ -325,7 +325,7 @@ describe('acceptance flows', () => {
   it('flow 3: saving a Profile writes JSON and applies nothing', async () => {
     const bridge = createDemoBridge({ durationMs: 0 })
     const plans: string[] = []
-    for (const key of ['planScheme', 'planAudio', 'planEnemy', 'planCrosshair', 'planCrosshairAdd', 'planFileAdd'] as const) {
+    for (const key of ['planTheme', 'planAudio', 'planEnemy', 'planCrosshair', 'planCrosshairAdd', 'planFileAdd'] as const) {
       const original = (bridge as unknown as Record<string, (...args: unknown[]) => unknown>)[key]!.bind(bridge)
       ;(bridge as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => { plans.push(key); return original(...args) }
     }

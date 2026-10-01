@@ -41,7 +41,7 @@ type FileKind = 'theme' | 'sound' | 'crosshair'
 /** A section takes one kind of file; Explore takes anything Quick import may read. */
 type Accepts = FileKind | 'import'
 // The enemy skin is chosen from the game's own fixed catalog, never from a dropped file.
-const ACCEPTS: Record<WorkspaceSection, Accepts | null> = { profile: null, scheme: 'theme', enemy: null, audio: 'sound', crosshair: 'crosshair', explore: 'import' }
+const ACCEPTS: Record<WorkspaceSection, Accepts | null> = { profile: null, theme: 'theme', enemy: null, audio: 'sound', crosshair: 'crosshair', explore: 'import' }
 const BY_EXTENSION: Record<string, FileKind> = { '.json': 'theme', '.wav': 'sound', '.ogg': 'sound', '.png': 'crosshair' }
 const WHERE: Record<FileKind, Msg> = {
   theme: { key: 'import.drop.whereTheme' },

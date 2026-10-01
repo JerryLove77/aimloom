@@ -8,19 +8,19 @@ import { importFileName } from '../section/import-check'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import { SearchBox } from '../ui/SearchBox'
 import { ExploreLink } from '../section/ExploreLink'
-import { createSchemeController, type SchemeBridge } from './controller'
-import { SchemePreview } from './SchemePreview'
+import { createThemeController, type ThemeBridge } from './controller'
+import { ThemePreview } from './ThemePreview'
 import { Tiles, type TileChoice } from '../ui/Tiles'
 import type { ProfileAssetBridge } from '../bridge/assets'
 import { useLang, useMsg, useT } from '../i18n'
 import { LocatePanel } from '../section/LocatePanel'
 import { sortFavoritesFirst, useFavorites, type FavoritesStore } from '../section/favorites'
-import './scheme.css'
+import './theme.css'
 
 const PER_PAGE = 12
 
-export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
-  bridge: SchemeBridge
+export function ThemePage({ bridge, assets, favorites, isDemo = false, isActive = true, section, onSelect, fileDrops = noFileDrops }: {
+  bridge: ThemeBridge
   assets: ProfileAssetBridge
   /** The starred themes, shown first; absent: no stars. */
   favorites?: FavoritesStore | undefined
@@ -34,7 +34,7 @@ export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive
   const t = useT()
   const { lang } = useLang()
   const msg = useMsg()
-  const controller = useMemo(() => createSchemeController(bridge), [bridge])
+  const controller = useMemo(() => createThemeController(bridge), [bridge])
   const state = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState)
   const [page, setPage] = useState(0)
   const [query, setQuery] = useState('')
@@ -57,8 +57,8 @@ export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive
   const locked = state.applying || state.unresolved || state.phase === 'locating' || state.phase === 'loading'
   const openImport = (path: string) => { controller.clearImportError(); setImportPath(path) }
   const dropHint = useFileDrop(fileDrops, {
-    section: 'scheme', active: isActive, busy: locked, onRefused: show,
-    onFile: path => (state.phase === 'ready' ? openImport(path) : show(t('scheme.dropNeedsFolder'))),
+    section: 'theme', active: isActive, busy: locked, onRefused: show,
+    onFile: path => (state.phase === 'ready' ? openImport(path) : show(t('theme.dropNeedsFolder'))),
   })
   if (!isActive) return null
   const lastPage = Math.max(0, Math.ceil(themes.length / PER_PAGE) - 1)
@@ -76,10 +76,10 @@ export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive
   const choices: TileChoice[] = filteredThemes.map(theme => ({
     file: theme.file,
     label: theme.name ?? theme.file,
-    detail: theme.readable ? theme.file : t('scheme.tile.fileUnreadable'),
+    detail: theme.readable ? theme.file : t('theme.tile.fileUnreadable'),
     path: theme.path,
     selectable: theme.readable && !theme.duplicateName,
-    reason: !theme.readable ? t('scheme.tile.unreadable') : theme.duplicateName ? t('scheme.tile.duplicateTitle') : undefined,
+    reason: !theme.readable ? t('theme.tile.unreadable') : theme.duplicateName ? t('theme.tile.duplicateTitle') : undefined,
     current: theme.readable && theme.name === state.current,
     pending: pending?.file === theme.file,
     duplicate: theme.duplicateName,
@@ -100,40 +100,40 @@ export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive
     <Toast message={toast} tone={tone} onDone={hide} />
     {importPath && state.directory ? <ImportSheet key={importPath} kind="theme" sourcePath={importPath} directory={state.directory}
       installed={state.themes.map(theme => ({ name: theme.name, file: theme.file }))} assets={assets} busy={state.importing} error={state.importError}
-      preview={<SchemePreview path={importPath} name={importFileName(importPath)} assets={assets} />}
+      preview={<ThemePreview path={importPath} name={importFileName(importPath)} assets={assets} />}
       onAdd={addImport} onClose={() => setImportPath(null)} /> : null}
   </>
   const actions = !ready ? undefined : state.unresolved
-    ? <><Button disabled>{t('scheme.discard')}</Button><Button variant="primary" onClick={() => void controller.reconcile()}>{t('scheme.reconcile')}</Button></>
-    : <><Button disabled={!pending || state.applying} onClick={() => controller.close()}>{t('scheme.discard')}</Button>
-      <Button variant="primary" disabled={!pending || state.applying} onClick={() => void controller.apply()}>{state.applying ? t('scheme.applying') : t('scheme.apply')}</Button></>
-  const actionNote = state.applying ? t('scheme.note.applying')
-    : state.unresolved ? t('scheme.note.unresolved')
-    : pending ? t('scheme.note.pending', { current: state.current ?? t('scheme.notSet'), next: pending.name ?? t('scheme.notSet') })
-    : t('scheme.note.default')
+    ? <><Button disabled>{t('theme.discard')}</Button><Button variant="primary" onClick={() => void controller.reconcile()}>{t('theme.reconcile')}</Button></>
+    : <><Button disabled={!pending || state.applying} onClick={() => controller.close()}>{t('theme.discard')}</Button>
+      <Button variant="primary" disabled={!pending || state.applying} onClick={() => void controller.apply()}>{state.applying ? t('theme.applying') : t('theme.apply')}</Button></>
+  const actionNote = state.applying ? t('theme.note.applying')
+    : state.unresolved ? t('theme.note.unresolved')
+    : pending ? t('theme.note.pending', { current: state.current ?? t('theme.notSet'), next: pending.name ?? t('theme.notSet') })
+    : t('theme.note.default')
   return (
     <WorkspaceShell overlays={overlays} dropHint={dropHint} active={section} onSelect={onSelect} isDemo={isDemo}
-      eyebrow={t('scheme.eyebrow')} title={t('scheme.title')} scope={t('scheme.scope')}
+      eyebrow={t('theme.eyebrow')} title={t('theme.title')} scope={t('theme.scope')}
       actions={actions} actionNote={actionNote}>
-      {state.unresolved ? <Notice tone="warning"><p>{state.error ? msg(state.error) : t('scheme.error.unresolved')}</p></Notice>
+      {state.unresolved ? <Notice tone="warning"><p>{state.error ? msg(state.error) : t('theme.error.unresolved')}</p></Notice>
         : state.error ? <Notice tone="error"><p>{msg(state.error)}</p></Notice> : null}
 
-      {state.phase === 'locating' ? <p role="status">{t('scheme.status.locating')}</p> : null}
-      {state.phase === 'loading' ? <p role="status">{t('scheme.status.loading')}</p> : null}
-      <LocatePanel section="scheme" phase={state.phase} candidates={state.candidates} locked={locked} controller={controller} />
+      {state.phase === 'locating' ? <p role="status">{t('theme.status.locating')}</p> : null}
+      {state.phase === 'loading' ? <p role="status">{t('theme.status.loading')}</p> : null}
+      <LocatePanel section="theme" phase={state.phase} candidates={state.candidates} locked={locked} controller={controller} />
 
       {ready ? <>
-        <StatusStrip current={state.current ?? t('scheme.notSet')} pending={pending ? pending.name : null}
-          aside={<><span>{t('scheme.note.takesEffect')}</span><Button onClick={() => void pickImport()} disabled={locked}>{t('scheme.addTheme')}</Button><Button variant="ghost" onClick={() => void controller.load()} disabled={locked}>{t('scheme.refresh')}</Button></>} />
+        <StatusStrip current={state.current ?? t('theme.notSet')} pending={pending ? pending.name : null}
+          aside={<><span>{t('theme.note.takesEffect')}</span><Button onClick={() => void pickImport()} disabled={locked}>{t('theme.addTheme')}</Button><Button variant="ghost" onClick={() => void controller.load()} disabled={locked}>{t('theme.refresh')}</Button></>} />
         <div className="ws-columns">
           <div>
-            <SearchBox id="scheme-search" label={t('scheme.search.label')} placeholder={t('scheme.search.placeholder')}
-              clearLabel={t('scheme.clearSearch')} value={query} onChange={setQuery} />
-            <Tiles choices={choices} page={activePage} pageSize={PER_PAGE} disabled={locked} countKey="scheme.pagination.count"
-              ariaLabel={choice => t('scheme.tile.previewLabel', { label: choice.label })}
+            <SearchBox id="theme-search" label={t('theme.search.label')} placeholder={t('theme.search.placeholder')}
+              clearLabel={t('theme.clearSearch')} value={query} onChange={setQuery} />
+            <Tiles choices={choices} page={activePage} pageSize={PER_PAGE} disabled={locked} countKey="theme.pagination.count"
+              ariaLabel={choice => t('theme.tile.previewLabel', { label: choice.label })}
               thumb={choice => choice.selectable || choice.duplicate
-                ? <SchemePreview path={choice.path} name={choice.label} assets={assets} className="ws-tile-thumb" />
-                : <span className="ws-tile-thumb">{t('scheme.tile.unreadableShort')}</span>}
+                ? <ThemePreview path={choice.path} name={choice.label} assets={assets} className="ws-tile-thumb" />
+                : <span className="ws-tile-thumb">{t('theme.tile.unreadableShort')}</span>}
               onPage={setPage}
               favorites={fav.enabled ? {
                 isFavorite: choice => fav.isFavorite(choice.file),
@@ -145,17 +145,17 @@ export function SchemePage({ bridge, assets, favorites, isDemo = false, isActive
                 if (!theme) return
                 theme.readable && theme.name === state.current ? controller.close() : controller.open(theme)
               }}
-              empty={query ? undefined : <div className="pr-empty"><span aria-hidden="true">▱</span><h2>{t('scheme.empty.title')}</h2><p>{t('scheme.empty.body')}</p></div>} />
-            {query && !choices.length ? <p className="ws-note">{t('scheme.search.noMatch', { query })}</p> : null}
+              empty={query ? undefined : <div className="pr-empty"><span aria-hidden="true">▱</span><h2>{t('theme.empty.title')}</h2><p>{t('theme.empty.body')}</p></div>} />
+            {query && !choices.length ? <p className="ws-note">{t('theme.search.noMatch', { query })}</p> : null}
             <ExploreLink kind="theme" />
           </div>
-          <section className="ws-panel" aria-label={t('scheme.panel.ariaLabel')}>
-            <div className="ws-panel-head"><h2>{t('scheme.panel.heading')}</h2>{shown ? <Tag kind={pending ? (state.applying ? 'working' : 'pending') : 'current'} /> : null}</div>
+          <section className="ws-panel" aria-label={t('theme.panel.ariaLabel')}>
+            <div className="ws-panel-head"><h2>{t('theme.panel.heading')}</h2>{shown ? <Tag kind={pending ? (state.applying ? 'working' : 'pending') : 'current'} /> : null}</div>
             {shown
-              ? <SchemePreview key={shown.path} path={shown.path} name={shown.name ?? shown.file} assets={assets} className="ws-preview-large" />
-              : <div className="ws-preview-large">{t('scheme.panel.empty')}</div>}
+              ? <ThemePreview key={shown.path} path={shown.path} name={shown.name ?? shown.file} assets={assets} className="ws-preview-large" />
+              : <div className="ws-preview-large">{t('theme.panel.empty')}</div>}
             {shown ? <><strong>{shown.name ?? shown.file}</strong><span className="ws-path">{shown.path}</span></> : null}
-            <p className="ws-note">{t('scheme.panel.note')}</p>
+            <p className="ws-note">{t('theme.panel.note')}</p>
           </section>
         </div>
       </> : null}

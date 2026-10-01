@@ -10,13 +10,13 @@ import type { AppInfo, ExploreKind, SteamAccount, UpdateCheck } from '../bridge/
 import './workspace.css'
 
 /** The five sections under 更改配置 / Customize, then the Explore page. */
-export type WorkspaceSection = 'profile' | 'scheme' | 'audio' | 'crosshair' | 'enemy' | 'explore'
+export type WorkspaceSection = 'profile' | 'theme' | 'audio' | 'crosshair' | 'enemy' | 'explore'
 export type CustomizeSection = Exclude<WorkspaceSection, 'explore'>
-export const CUSTOMIZE_SECTIONS: CustomizeSection[] = ['profile', 'scheme', 'audio', 'crosshair', 'enemy']
+export const CUSTOMIZE_SECTIONS: CustomizeSection[] = ['profile', 'theme', 'audio', 'crosshair', 'enemy']
 export const WORKSPACE_SECTIONS: WorkspaceSection[] = [...CUSTOMIZE_SECTIONS, 'explore']
 /** English reuses the approved nav wording (Background / Sounds / ... / Enemy look); Chinese keeps today's plain section names. */
 const NAV_KEYS: Record<WorkspaceSection, MessageKey> = {
-  profile: 'shell.nav.profile', scheme: 'shell.nav.scheme', audio: 'shell.nav.audio', crosshair: 'shell.nav.crosshair', enemy: 'shell.nav.enemy', explore: 'shell.nav.explore',
+  profile: 'shell.nav.profile', theme: 'shell.nav.theme', audio: 'shell.nav.audio', crosshair: 'shell.nav.crosshair', enemy: 'shell.nav.enemy', explore: 'shell.nav.explore',
 }
 /**
  * Cross-section facts the sidebar shows. Only Profile's unsaved draft is surfaced (no pending
@@ -128,7 +128,7 @@ export function WorkspaceShell({ active, onSelect, isDemo, demoNote, overlays, d
           {customizing ? <div className="ws-nav-children">
             {item('profile')}
             <hr className="ws-nav-divider" />
-            {(['scheme', 'audio', 'crosshair', 'enemy'] as const).map(section => item(section))}
+            {(['theme', 'audio', 'crosshair', 'enemy'] as const).map(section => item(section))}
           </div> : null}
         </nav>
         <div className="ws-sidebar-bottom">

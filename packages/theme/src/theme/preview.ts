@@ -1,6 +1,6 @@
 import type { Vec3 } from "../types.js"
-import { validateScheme } from "./document.js"
-import { SURFACE_SLOTS, type SchemeDocument } from "./types.js"
+import { validateThemeDocument } from "./document.js"
+import { SURFACE_SLOTS, type ThemeDocument } from "./types.js"
 
 const escape = (value: string) => value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" })[char]!)
 const hex = (value: number) => Math.round(value).toString(16).padStart(2, "0")
@@ -22,7 +22,7 @@ const STRINGS = {
     skyPreset: (id: number) => `天空预设 ${id} · 示意占位`,
     approxNote: "近似预览 · 不代表游戏内最终效果",
     unsimulated: "贴图、材质属性、天空预设、云层和光照未模拟；数值见上方。此图不预览敌人、准星或训练规则。",
-    warnings: (count: number) => `源文件兼容提示 ${count} 项；详情见 scheme.warnings。`,
+    warnings: (count: number) => `源文件兼容提示 ${count} 项；详情见 theme.warnings。`,
     noWrite: "本地预览 · 不写入游戏文件",
   },
   en: {
@@ -38,14 +38,14 @@ const STRINGS = {
     skyPreset: (id: number) => `Sky preset ${id} · placeholder`,
     approxNote: "Approximate preview · not the final in-game look",
     unsimulated: "Textures, material properties, sky preset, clouds and lighting are not simulated; see the values above. This image does not preview the enemy, crosshair or training rules.",
-    warnings: (count: number) => `${count} source-compatibility note(s); see scheme.warnings.`,
+    warnings: (count: number) => `${count} source-compatibility note(s); see theme.warnings.`,
     noWrite: "Local preview · writes no game file",
   },
 } as const
 
 /** Self-contained schematic: no network, material shader simulation, or gameplay geometry. */
-export function renderSchemePreview(input: SchemeDocument, lang: "zh" | "en" = "zh"): string {
-  const doc = validateScheme(input)
+export function renderThemePreview(input: ThemeDocument, lang: "zh" | "en" = "zh"): string {
+  const doc = validateThemeDocument(input)
   const env = doc.environment
   const s = STRINGS[lang]
   const sky = env.sky.solid ? `#${hex(env.sky.color.r)}${hex(env.sky.color.g)}${hex(env.sky.color.b)}` : "#879aad"
@@ -54,9 +54,9 @@ export function renderSchemePreview(input: SchemeDocument, lang: "zh" | "en" = "
     const x = 32 + index * 272
     return `<g transform="translate(${x} 532)"><rect width="256" height="113" rx="8" fill="#202630"/><rect x="16" y="16" width="20" height="20" rx="4" fill="${color(surface.tint)}"/><text x="46" y="32" font-size="15" fill="#f2f4f7">${s.slot[slot]}</text><text x="16" y="60" font-size="12" fill="#c2ccd8">${escape(short(surface.material, 27))}</text><text x="16" y="82" font-size="11" fill="#a5b1c1">${s.roughness} ${surface.roughness.toFixed(2)} · ${s.metallic} ${surface.metallic.toFixed(2)}</text><text x="16" y="100" font-size="11" fill="#a5b1c1">${s.emissive} ${surface.fullBright.toFixed(2)} · ${s.scale} ${escape(short(String(surface.textureScale), 10))}</text></g>`
   }).join("")
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1152" height="768" viewBox="0 0 1152 768" role="img" aria-labelledby="scheme-title scheme-description">
-<title id="scheme-title">${escape(doc.name)} ${s.titleSuffix}</title>
-<desc id="scheme-description">${s.desc}</desc>
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1152" height="768" viewBox="0 0 1152 768" role="img" aria-labelledby="theme-title theme-description">
+<title id="theme-title">${escape(doc.name)} ${s.titleSuffix}</title>
+<desc id="theme-description">${s.desc}</desc>
 <rect width="1152" height="768" fill="#15191f"/>
 <g font-family="system-ui, sans-serif"><text x="32" y="44" fill="#eaf0f7" font-size="25" font-weight="600">${escape(short(doc.name, 60))}</text><text x="32" y="72" fill="#a5b1c1" font-size="13">${s.eyebrow}</text>
 <svg x="32" y="96" width="1088" height="408" viewBox="0 0 1088 408"><rect width="1088" height="408" fill="${sky}"/>

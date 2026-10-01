@@ -17,7 +17,7 @@ import { Tag, Toast, useToast } from '../ui/status'
 import { noFileDrops, useFileDrop, type FileDropSource } from '../workspace/file-drop'
 import { gameAssetFolder, resolveGameRoot, type GameRootStorage } from '../section/game-root'
 import type { TileChoice } from '../ui/Tiles'
-import { AUDIO_EVENTS, type AudioList, type SchemeList } from '../bridge/contracts'
+import { AUDIO_EVENTS, type AudioList, type ThemeList } from '../bridge/contracts'
 import { browserStorage } from '../i18n'
 import { plural, useLang, useMsg, useT, type Lang, type MessageKey } from '../i18n'
 import { resolveProfileAssetPath, type ProfileAudio, type ProfileFileReference, type TrainingProfile } from './model'
@@ -30,7 +30,7 @@ import './profiles.css'
 
 /** Just enough of the installer bridge for Profile to show what the game already has, plus what applying a saved combination needs. */
 export interface ProfileGameBridge extends ApplyBridge {
-  schemeList(gameRoot: string): Promise<SchemeList>
+  themeList(gameRoot: string): Promise<ThemeList>
   audioList(gameRoot: string): Promise<AudioList>
   /** The same byte-exact add-a-file plan the Theme and Sounds pages use, reused unchanged from inside a Profile sheet. */
   planFileAdd(input: PlanFileAddRequest): Promise<{ planId: string }>
@@ -39,10 +39,10 @@ export interface ProfileGameBridge extends ApplyBridge {
 /** A tile before the sheet marks which one is staged. */
 export type InstalledChoice = Omit<TileChoice, 'pending'>
 
-const labelKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.label.scheme', audio: 'profile.label.audio' }
-const subtitleKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.subtitle.scheme', audio: 'audio.title' }
+const labelKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.label.theme', audio: 'profile.label.audio' }
+const subtitleKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.subtitle.theme', audio: 'audio.title' }
 // The same nouns lowercased, for the sentence in profile.slot.unchosenDetail.
-const nounKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.subtitle.schemeNoun', audio: 'audio.noun' }
+const nounKeys: Record<ProfileComponent, MessageKey> = { theme: 'profile.subtitle.themeNoun', audio: 'audio.noun' }
 const components: ProfileComponent[] = ['theme', 'audio']
 /** A component as the player reads it: the recorded names, or 「未选择」 in an unfinished draft. */
 function summary(profile: TrainingProfile, kind: ProfileComponent, t: ReturnType<typeof useT>) {
@@ -117,7 +117,7 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
   }, [isActive, gameRoot, locate, storage])
   // What the game already has, for the sheets to show. Best effort: if this cannot be read the
   // sheet falls back to browsing a folder, which is what it always did.
-  const [installed, setInstalled] = useState<{ kind: 'scheme'; choices: InstalledChoice[] } | null>(null)
+  const [installed, setInstalled] = useState<{ kind: 'theme'; choices: InstalledChoice[] } | null>(null)
   const [installedError, setInstalledError] = useState(false)
   // What the game has now, read each time the page is shown and after an apply, since the other
   // four pages change it: a new Profile starts from it and 当前使用 compares against it.
@@ -130,19 +130,19 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     return () => { live = false }
   }, [isActive, gameRoot, locate, currentStamp])
   useEffect(() => {
-    const kind = sheet === 'theme' ? 'scheme' as const : null
+    const kind = sheet === 'theme' ? 'theme' as const : null
     if (!kind || !gameRoot || !locate || installed?.kind === kind) return
     let live = true
     setInstalledError(false)
     let read: Promise<InstalledChoice[]>
     try {
-      read = locate.schemeList(gameRoot).then(list => list.themes.map((theme): InstalledChoice => ({
+      read = locate.themeList(gameRoot).then(list => list.themes.map((theme): InstalledChoice => ({
         file: theme.file,
         label: theme.name ?? theme.file,
-        detail: theme.readable ? theme.file : t('scheme.tile.fileUnreadable'),
+        detail: theme.readable ? theme.file : t('theme.tile.fileUnreadable'),
         path: theme.path,
         selectable: theme.readable && !theme.duplicateName,
-        reason: !theme.readable ? t('scheme.tile.unreadable') : theme.duplicateName ? t('scheme.tile.duplicateTitle') : undefined,
+        reason: !theme.readable ? t('theme.tile.unreadable') : theme.duplicateName ? t('theme.tile.duplicateTitle') : undefined,
         current: theme.readable && theme.name === list.current,
         duplicate: theme.duplicateName,
       })))
@@ -154,7 +154,7 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
 
   // Adding a file from a Profile sheet reuses the section pages' own byte-exact plan path
   // (`planFileAdd`), never a separate write. Each add gets a fresh operationId and a rising
-  // revision, exactly like the Scheme and Audio controllers.
+  // revision, exactly like the Theme and Audio controllers.
   const fileImportRevision = useRef(0)
   // `unknown` is never success: the operationId of an unresolved add is kept here so 核对结果
   // can reconcile the very same operation, exactly as `installer_reconcile` requires. Only one
@@ -227,9 +227,9 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
       onReconcile={locate ? reconcileImport : undefined}
       onUnresolvedChange={setImportUnresolved}
       onConfirm={value => { if (editor.setComponent('audio', value)) setSheet(null) }} onCancel={() => setSheet(null)} /> : null}
-    {state.draft && sheet === 'theme' ? <ResourceSheet kind="scheme" open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
-      value={state.draft.theme} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('scheme', gameRoot) : null} favorites={favorites}
-      installed={!installedError && installed?.kind === 'scheme' ? installed.choices : null}
+    {state.draft && sheet === 'theme' ? <ResourceSheet kind="theme" open profileName={state.draft.name || t('profile.draft.fallbackName')} profilePath={basePath}
+      value={state.draft.theme} assets={assets} isDemo={isDemo} defaultDirectory={gameRoot ? gameAssetFolder('theme', gameRoot) : null} favorites={favorites}
+      installed={!installedError && installed?.kind === 'theme' ? installed.choices : null}
       onAddFile={locate && gameRoot ? input => addFile('theme', input) : undefined}
       onPickFile={locate ? lang => locate.pickFile('theme', lang) : undefined}
       onReconcile={locate ? reconcileImport : undefined}
@@ -265,7 +265,7 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
           <div className="pr-slots">{components.map(kind => <Slot key={kind} kind={kind} profile={state.draft!} profilePath={basePath} assets={assets} onOpen={() => setSheet(kind)} />)}</div>
           <p className="ws-note">{t('profile.draft.persistNote')}</p>
         </form> : <>
-          <div className="pr-library-toolbar"><div className="pr-search"><label className="pr-sr-only" htmlFor="profile-search">{t('profile.search.label')}</label><input id="profile-search" ref={searchInput} type="search" placeholder={t('profile.search.label')} value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} />{search ? <Button variant="ghost" aria-label={t('crosshair.clearSearch')} onClick={() => { setSearch(''); setPage(0); searchInput.current?.focus() }}>×</Button> : null}</div><Button onClick={() => void editor.load()} disabled={locked || state.loading}>{t('scheme.refresh')}</Button><Button variant="primary" disabled={locked || state.loading} onClick={() => { setNotice(''); editor.create(t('profile.editor.defaultName'), snapshotFromGame(currentGame)) }}>{t('profile.new')}</Button></div>
+          <div className="pr-library-toolbar"><div className="pr-search"><label className="pr-sr-only" htmlFor="profile-search">{t('profile.search.label')}</label><input id="profile-search" ref={searchInput} type="search" placeholder={t('profile.search.label')} value={search} onChange={e => { setSearch(e.target.value); setPage(0) }} />{search ? <Button variant="ghost" aria-label={t('crosshair.clearSearch')} onClick={() => { setSearch(''); setPage(0); searchInput.current?.focus() }}>×</Button> : null}</div><Button onClick={() => void editor.load()} disabled={locked || state.loading}>{t('theme.refresh')}</Button><Button variant="primary" disabled={locked || state.loading} onClick={() => { setNotice(''); editor.create(t('profile.editor.defaultName'), snapshotFromGame(currentGame)) }}>{t('profile.new')}</Button></div>
           {state.listErrors.length ? <Notice tone="warning"><p>{t(plural(state.listErrors.length, 'profile.listErrors.summary'), { count: state.listErrors.length })}</p><details><summary>{t('profile.listErrors.viewFiles')}</summary>{state.listErrors.map((e, i) => <p key={i}>{t('profile.listErrors.item', { file: e.fileName, message: msg(e.message) })}</p>)}</details></Notice> : null}
           {state.loading ? <p role="status">{t('profile.library.loading')}</p> : null}
           <div className="pr-library" aria-busy={state.loading}>{matches.slice(activePage * 12, activePage * 12 + 12).map(profile => {
@@ -274,7 +274,7 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
               {/* The user (test 0.1.6-test.1): grey means in use, bright means it can be applied. */}
               <Button variant="ghost" disabled={locked || inUse} aria-label={inUse ? t('profile.apply.inUseAria', { name: profile.name }) : t('profile.apply.aria', { name: profile.name })} onClick={() => void applyController.open(profile)}>{inUse ? t('profile.apply.inUse') : t('profile.apply.button')}</Button><Button variant="ghost" disabled={locked} aria-label={t('profile.duplicate.aria', { name: profile.name })} onClick={() => void editor.duplicate(profile.id, name => t('profile.editor.copyName', { name }))}>{t('profile.duplicate.button')}</Button><Button variant="ghost" disabled={locked} aria-label={t('profile.delete.aria', { name: profile.name })} onClick={() => setDeleting(profile)}>{t('profile.delete.button')}</Button></div></article>
           })}{!state.loading && matches.length === 0 ? <div className="pr-empty"><span aria-hidden="true">◎</span><h2>{search ? t('profile.empty.title.search') : t('profile.empty.title.default')}</h2><p>{search ? t('profile.empty.body.search') : t('profile.empty.body.default')}</p></div> : null}</div>
-          <div className="pr-pagination"><span>{t(plural(matches.length, 'profile.pagination.count'), { count: matches.length })}</span>{lastPage > 0 ? <div><Button disabled={activePage === 0} onClick={() => setPage(activePage - 1)}>{t('scheme.pagination.prev')}</Button><span>{activePage + 1} / {lastPage + 1}</span><Button disabled={activePage === lastPage} onClick={() => setPage(activePage + 1)}>{t('scheme.pagination.next')}</Button></div> : null}</div>
+          <div className="pr-pagination"><span>{t(plural(matches.length, 'profile.pagination.count'), { count: matches.length })}</span>{lastPage > 0 ? <div><Button disabled={activePage === 0} onClick={() => setPage(activePage - 1)}>{t('theme.pagination.prev')}</Button><span>{activePage + 1} / {lastPage + 1}</span><Button disabled={activePage === lastPage} onClick={() => setPage(activePage + 1)}>{t('theme.pagination.next')}</Button></div> : null}</div>
         </>}
     </WorkspaceShell>
   )
@@ -296,7 +296,7 @@ function Slot({ kind, profile, profilePath, assets, onOpen }: {
     let cancelled = false
     setMissing(false)
     if (!theme) return
-    assets.read('scheme', resolveProfileAssetPath(profilePath, theme.path)).catch(() => { if (!cancelled) setMissing(true) })
+    assets.read('theme', resolveProfileAssetPath(profilePath, theme.path)).catch(() => { if (!cancelled) setMissing(true) })
     return () => { cancelled = true }
   }, [theme, profilePath, assets])
   const open = unchosen(profile, kind)
@@ -309,7 +309,7 @@ function Slot({ kind, profile, profilePath, assets, onOpen }: {
   return <button type="button" className={`pr-slot${open ? '' : ' pr-slot-recorded'}${missing ? ' pr-slot-missing' : ''}`} aria-label={subtitle ? t('profile.slot.aria', { label, noun: subtitle, detail: name }) : t('profile.slot.ariaLabelOnly', { label, detail: name })} onClick={onOpen}>
     <span className="pr-slot-head"><span className="pr-slot-kind">{label.toUpperCase()}</span><span className="pr-slot-tags">{open ? <Tag kind="missing">{t('profile.unchosen')}</Tag> : null}{missing ? <Tag kind="missing" /> : null}</span></span>
     <span className="pr-slot-body">{kind === 'theme'
-      ? <AssetPreview kind="scheme" reference={theme} profilePath={profilePath} assets={assets} emptyLabel={emptyBody} />
+      ? <AssetPreview kind="theme" reference={theme} profilePath={profilePath} assets={assets} emptyLabel={emptyBody} />
       : <ul className="pr-slot-audio-list">{AUDIO_EVENTS.map(event => <li key={event}>{t('profile.eventSounds', { event: eventLabel(event, t), names: describeEvent(event, profile.audio, t) })}</li>)}</ul>}</span>
     <span className="pr-slot-foot"><strong>{name}</strong><span className="pr-slot-action" aria-hidden="true">{t('profile.slot.change')}</span></span>
   </button>

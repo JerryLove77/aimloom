@@ -46,7 +46,7 @@ export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onCho
   choices: TileChoice[]
   page: number
   pageSize: number
-  /** How one tile names itself to a screen reader, e.g. `label => t('scheme.tile.previewLabel', { label })`. */
+  /** How one tile names itself to a screen reader, e.g. `label => t('theme.tile.previewLabel', { label })`. */
   ariaLabel: (choice: TileChoice) => string
   /** The thumbnail for a readable choice; an unreadable one gets its `detail` instead. */
   thumb: (choice: TileChoice) => ReactNode
@@ -88,9 +88,9 @@ export function Tiles({ choices, page, pageSize, ariaLabel, thumb, onPage, onCho
     <div className="pr-pagination">
       <span>{t(plural(choices.length, countKey), { count: choices.length })}</span>
       {lastPage > 0 ? <div>
-        <Button disabled={current === 0} onClick={() => onPage(current - 1)}>{t('scheme.pagination.prev')}</Button>
+        <Button disabled={current === 0} onClick={() => onPage(current - 1)}>{t('theme.pagination.prev')}</Button>
         <span>{current + 1} / {lastPage + 1}</span>
-        <Button disabled={current === lastPage} onClick={() => onPage(current + 1)}>{t('scheme.pagination.next')}</Button>
+        <Button disabled={current === lastPage} onClick={() => onPage(current + 1)}>{t('theme.pagination.next')}</Button>
       </div> : null}
     </div>
   </>

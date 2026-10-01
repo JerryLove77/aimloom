@@ -2,7 +2,7 @@
  * The item checks shared by the publish command and the Worker's upload route (spec 2026-09-22
  * §6, §11.3). Pure and platform-neutral: no Node, no bindings.
  */
-import { parseScheme, renderSchemePreview } from '@kvk/theme'
+import { parseThemeDocument, renderThemePreview } from '@kvk/theme'
 import { canonicalPngIssue, encodePng, MAX_DIMENSION, MAX_PNG_BYTES, parseCs2, parseValorant } from '@kvk/crosshair'
 import { RESERVED_SLUGS } from './explore-types'
 
@@ -232,8 +232,8 @@ export async function checkFile(kind: Kind, name: string, bytes: Uint8Array): Pr
   if (kind === 'theme') {
     if (bytes.length > MAX_THEME_BYTES) fail(`theme is larger than ${MAX_THEME_BYTES} bytes`)
     let doc
-    try { doc = parseScheme(bytes) } catch (e) { return fail(`theme: Aimloom's theme reader refuses it (${e instanceof Error ? e.message : String(e)})`) }
-    return { bytes, previews: { zh: renderSchemePreview(doc, 'zh'), en: renderSchemePreview(doc, 'en') } }
+    try { doc = parseThemeDocument(bytes) } catch (e) { return fail(`theme: Aimloom's theme reader refuses it (${e instanceof Error ? e.message : String(e)})`) }
+    return { bytes, previews: { zh: renderThemePreview(doc, 'zh'), en: renderThemePreview(doc, 'en') } }
   }
   if (kind === 'crosshair') return { bytes: await cleanPng(bytes), previews: null }
   if (bytes.length === 0 || bytes.length > MAX_SOUND_BYTES) fail(`sound must be between 1 byte and ${MAX_SOUND_BYTES} bytes`)

@@ -21,7 +21,7 @@ resource paths wrap, native audio controls remain visible, and all media is loca
 
 The [workspace contract](docs/superpowers/specs/2026-09-13-aimloom-training-profiles-design.md)
 and execution plan (private record) own the five
-sections and their state boundaries. Profile manages saved combinations; Scheme, Audio,
+sections and their state boundaries. Profile manages saved combinations; Theme, Audio,
 Crosshair and Enemy manage current configuration. Preview controls can be reused across
 contexts, but Profile drafts and current-setting state must remain separate.
 
@@ -42,7 +42,7 @@ Runtime colors, typography and shared controls remain canonical for both context
 
 ## MVP simplification — 2026-09-15
 
-Use one Profile selector and four editor sections: scheme, audio, crosshair and enemy.
+Use one Profile selector and four editor sections: theme, audio, crosshair and enemy.
 The Profile persists as one JSON file; previews and replacement feed Save and Apply.
 No separate asset-library platform or application-history dashboard is required. Continue
 the existing Figma-before-screen workflow and visual foundations below.

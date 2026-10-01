@@ -21,16 +21,16 @@ export interface CurrentGame {
 interface InstalledEntry { name: string | null; path: string; file?: string; duplicateName?: boolean; ambiguous?: boolean }
 
 export interface CurrentGameBridge {
-  schemeList(gameRoot: string): Promise<{ current: string | null; themes?: InstalledEntry[] }>
+  themeList(gameRoot: string): Promise<{ current: string | null; themes?: InstalledEntry[] }>
   audioList(gameRoot: string): Promise<{ bindings: AudioBindings; sounds?: InstalledEntry[] }>
 }
 
 export async function readCurrentGame(bridge: CurrentGameBridge, gameRoot: string): Promise<CurrentGame> {
-  const [scheme, audio] = await Promise.allSettled([bridge.schemeList(gameRoot), bridge.audioList(gameRoot)])
+  const [theme, audio] = await Promise.allSettled([bridge.themeList(gameRoot), bridge.audioList(gameRoot)])
   return {
-    theme: scheme.status === 'fulfilled' ? scheme.value.current : null,
+    theme: theme.status === 'fulfilled' ? theme.value.current : null,
     sounds: audio.status === 'fulfilled' ? audio.value.bindings : null,
-    installedThemes: scheme.status === 'fulfilled' ? scheme.value.themes ?? null : null,
+    installedThemes: theme.status === 'fulfilled' ? theme.value.themes ?? null : null,
     installedSounds: audio.status === 'fulfilled' ? audio.value.sounds ?? null : null,
   }
 }

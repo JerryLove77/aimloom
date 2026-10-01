@@ -56,19 +56,19 @@ export type ExecuteRequest = {
   operationId: string; planId: string; confirmation: 'install'|'restore'
   allowConflicts: boolean
 }
-export interface SchemeTheme {
+export interface ThemeEntry {
   name: string | null
   file: string
   path: string
   readable: boolean
   duplicateName: boolean
 }
-export interface SchemeList {
+export interface ThemeList {
   directory: string
   current: string | null
-  themes: SchemeTheme[]
+  themes: ThemeEntry[]
 }
-export interface PlanSchemeRequest { gameRoot: string; file: string; revision: number }
+export interface PlanThemeRequest { gameRoot: string; file: string; revision: number }
 
 /** The game's six sound events, in the order every screen lists them. */
 export const AUDIO_EVENTS = ['kill', 'spawn', 'mbsGood', 'mbsOkay', 'mbsBad', 'mbsChangeNow'] as const
@@ -98,7 +98,7 @@ export interface EnemyList { current: EnemyCurrent; skins: EnemySkin[] }
 export interface PlanEnemyRequest { gameRoot: string; shape: EnemyShape; model: string; skin: string; revision: number }
 /** Applies the saved Profile named by `id` -- never the open editor's draft. */
 export interface PlanProfileApplyRequest { gameRoot: string; id: string; revision: number }
-/** What an import adds to the game: a theme JSON (used by Scheme) or a sound. */
+/** What an import adds to the game: a theme JSON (used by Theme) or a sound. */
 export type FileAddKind = 'theme' | 'sound'
 /** What the native file dialog can be asked to pick. A crosshair PNG is read, not imported by path. */
 export type PickFileKind = FileAddKind | 'crosshair'
@@ -147,8 +147,8 @@ export interface InstallerBridge {
   backups(gameRoot: string): Promise<BackupIndex>
   gameState(): Promise<GameState>
   planRestore(input: {gameRoot: string; sourceId: string; revision: number}): Promise<Preview>
-  schemeList(gameRoot: string): Promise<SchemeList>
-  planScheme(input: PlanSchemeRequest): Promise<Preview>
+  themeList(gameRoot: string): Promise<ThemeList>
+  planTheme(input: PlanThemeRequest): Promise<Preview>
   audioList(gameRoot: string): Promise<AudioList>
   planAudio(input: PlanAudioRequest): Promise<Preview>
   crosshairList(gameRoot: string): Promise<CrosshairList>

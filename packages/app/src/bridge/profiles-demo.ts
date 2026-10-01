@@ -19,8 +19,8 @@ function presets(): TrainingProfile[] {
   const none = [ref('audio', 'none.wav')]
   const audio = (kill: string[], spawn: string[]): ProfileAudio => ({ kill: kill.map(name => ref('audio', name)), spawn: spawn.map(name => ref('audio', name)), mbsGood: none, mbsOkay: none, mbsBad: none, mbsChangeNow: none })
   return [
-    parseTrainingProfile({ schemaVersion: 2, id: 'daily', name: data.profiles.daily, theme: ref('scheme', 'Blue-room.json'), audio: audio(['Soft-hit.wav'], []) }),
-    parseTrainingProfile({ schemaVersion: 2, id: 'focus', name: data.profiles.focus, theme: ref('scheme', 'Warm-room.json'), audio: audio([], ['Bell5.wav']) }),
+    parseTrainingProfile({ schemaVersion: 2, id: 'daily', name: data.profiles.daily, theme: ref('theme', 'Blue-room.json'), audio: audio(['Soft-hit.wav'], []) }),
+    parseTrainingProfile({ schemaVersion: 2, id: 'focus', name: data.profiles.focus, theme: ref('theme', 'Warm-room.json'), audio: audio([], ['Bell5.wav']) }),
   ]
 }
 /** Explicit browser demo; this store never reads or changes the game's current settings. */
@@ -58,7 +58,7 @@ export function createDemoProfileBridge(storage: Pick<Storage, 'getItem' | 'setI
     },
   }
 }
-function scheme(name: string, wall: {x:number;y:number;z:number}, floor: {x:number;y:number;z:number}) {
+function theme(name: string, wall: {x:number;y:number;z:number}, floor: {x:number;y:number;z:number}) {
   const surface = (tint: typeof wall) => ({ material: 'DRYWALL', tint, roughness: .8, metallic: 0, fullBright: .2, textureScale: 1 })
   return { schemaVersion: 1, name, environment: { wall: surface(wall), floor: surface(floor), ceiling: surface(wall), ramp: surface(floor), sky: { presetId: 0, cloudCoverId: 0, solid: true, sunVisible: false, color: {r:28,g:35,b:46,a:255} } }, provenance: {kind:'local'}, warnings: [] }
 }
@@ -72,7 +72,7 @@ function tone(frequency: number): Uint8Array {
 
 const pngs = ["iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABg0lEQVR4Ae3BwWncAAAF0RFML2rGRakoNbPVKOwhB4MDznXnvyeTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyZdF99dBEnZw4u3g5MomTQpOziJk7KHL94ObqJk0mTSZNJk0mTSpOzgJk4+y8XvXXx38XsXH0I+zcOLt4OThy9+cnDzk4cvfnJw8/Di7eDkg8ikyac5OPnr4OZ/HNz8y8HJB5LPcvF7F99dBEnZwxdvBzdRMmkyaTJpMmkyaVJ2cBMnZQ8v3g5OomTSpOzgJE66LgaZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJm0P49aGnUQCOEYAAAAAElFTkSuQmCC", "iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAABjklEQVR4Ae3BsW0bUQAFwf3A9sJmVNQVxWZYzRkMHAiQATnlvhmZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTSZNJk0mTTpuvjuIkjK7vvF2zkPomTSpOycB3FSdt9fvJ3zJEomTSZNJk0mTSZNys55Eief5eL3Lr67+L2LDyGf5r5fvJ3z4L6/+Mk5T35y31/85Jwn9/3i7ZwHH0QmTT7NOQ/+OufJ/zjnyb+c8+ADyWe5+L2L7y6CpOy+v3g750mUTJpMmkyaTJpMmpSd8yROyu77xds5D6Jk0qTsnAdx0nUxyKTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpMmkyaTJpP0B0lAifa77GogAAAAASUVORK5CYII="]
 /**
- * The Scheme, Audio, Crosshair and Enemy pages read files from the demo game directory
+ * The Theme, Audio, Crosshair and Enemy pages read files from the demo game directory
  * that the demo installer bridge reports. Synthesize a stable sample per file name so the
  * browser demo shows real previews there too. Nothing is ever read from or written to disk.
  */
@@ -102,8 +102,8 @@ function demoTheme(name: string) {
 export function createDemoAssetBridge(): ProfileAssetBridge {
   const encode = (value: unknown) => new TextEncoder().encode(JSON.stringify(value))
   const files: Record<string, Uint8Array> = {
-    '/demo/scheme/Blue-room.json': encode(scheme(data.schemes.blue,{x:.16,y:.25,z:.4},{x:.09,y:.12,z:.18})),
-    '/demo/scheme/Warm-room.json': encode(scheme(data.schemes.warm,{x:.4,y:.3,z:.21},{x:.15,y:.12,z:.1})),
+    '/demo/theme/Blue-room.json': encode(theme(data.themes.blue,{x:.16,y:.25,z:.4},{x:.09,y:.12,z:.18})),
+    '/demo/theme/Warm-room.json': encode(theme(data.themes.warm,{x:.4,y:.3,z:.21},{x:.15,y:.12,z:.1})),
     '/demo/crosshair/Green-cross.png': Uint8Array.from(atob(pngs[0]!),c=>c.charCodeAt(0)),
     '/demo/crosshair/Cyan-cross.png': Uint8Array.from(atob(pngs[1]!),c=>c.charCodeAt(0)),
     '/demo/audio/Soft-hit.wav': tone(620), '/demo/audio/Clear-hit.wav': tone(960),
@@ -125,7 +125,7 @@ export function createDemoAssetBridge(): ProfileAssetBridge {
       if (game) {
         const file = game[1]!
         const stem = file.replace(/\.[^.]+$/, '')
-        if (kind === 'scheme' && /\.json$/i.test(file) && stem !== 'Broken') return encode(demoTheme(stem))
+        if (kind === 'theme' && /\.json$/i.test(file) && stem !== 'Broken') return encode(demoTheme(stem))
         if (kind === 'crosshair' && /\.png$/i.test(file)) return Uint8Array.from(atob(pngs[demoHue(stem) % pngs.length]!), c => c.charCodeAt(0))
         if (kind === 'audio' && /\.(ogg|wav)$/i.test(file)) return tone(400 + demoHue(stem) % 800)
       }

@@ -54,7 +54,7 @@ function isPlausibleRoot(value: string): boolean {
  * touches (`Get-KvkTargetPath`), and these strings only decide which folder a picker opens on.
  * Themes and enemy looks are both theme JSONs, so they share one folder.
  */
-export function gameAssetFolder(kind: 'scheme' | 'enemy' | 'audio', gameRoot: string): string {
+export function gameAssetFolder(kind: 'theme' | 'enemy' | 'audio', gameRoot: string): string {
   const separator = gameRoot.includes('\\') ? '\\' : '/'
   const parts = kind === 'audio'
     ? ['FPSAimTrainer', 'sounds']

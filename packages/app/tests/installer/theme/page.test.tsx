@@ -1,13 +1,13 @@
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { SchemePage } from '../../../src/scheme/SchemePage'
+import { ThemePage } from '../../../src/theme/ThemePage'
 import { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
-import type { SchemeTheme } from '../../../src/bridge/contracts'
+import type { ThemeEntry } from '../../../src/bridge/contracts'
 
-vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:scheme'), revokeObjectURL: vi.fn() }))
+vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:theme'), revokeObjectURL: vi.fn() }))
 
-const theme = (name: string, readable = true, duplicateName = false): SchemeTheme => ({
+const theme = (name: string, readable = true, duplicateName = false): ThemeEntry => ({
   name: readable ? name : null, file: `${name}.json`,
   path: `D:/Game/FPSAimTrainer/Saved/SaveGames/Themes/${name}.json`, readable, duplicateName,
 })
@@ -26,8 +26,8 @@ function fixtures() {
     discover: async () => ({ candidates: ['D:/Game'] }),
     locate: async (root: string) => ({ gameRoot: root }),
     pickFolder: async () => null,
-    schemeList: async (root: string) => ({ directory: `${root}/Themes`, current: 'Clean Dark', themes: [theme('Clean Dark'), theme('Blue Room'), theme('Broken', false)] }),
-    planScheme: async (input: { file: string }) => { planCalls.push(input.file); return { planId: 'plan-1' } },
+    themeList: async (root: string) => ({ directory: `${root}/Themes`, current: 'Clean Dark', themes: [theme('Clean Dark'), theme('Blue Room'), theme('Broken', false)] }),
+    planTheme: async (input: { file: string }) => { planCalls.push(input.file); return { planId: 'plan-1' } },
     execute: async () => ({ operationId: 'op-1' }),
     job: async () => ({ state: 'finished', result: { status: 'completed' } }),
     planFileAdd: async () => ({ planId: 'plan-add' }),
@@ -42,7 +42,7 @@ function fixtures() {
   return { bridge, assets, planCalls }
 }
 
-const tree = (f: ReturnType<typeof fixtures>) => <SchemePage bridge={f.bridge} assets={f.assets} section={'scheme' as WorkspaceSection} onSelect={() => {}} />
+const tree = (f: ReturnType<typeof fixtures>) => <ThemePage bridge={f.bridge} assets={f.assets} section={'theme' as WorkspaceSection} onSelect={() => {}} />
 
 describe('Theme page', () => {
   beforeEach(() => { vi.mocked(URL.createObjectURL).mockClear() })
@@ -142,7 +142,7 @@ describe('Theme page', () => {
 
   it('renders nothing while another section is active so a Profile draft survives', () => {
     const f = fixtures()
-    render(<SchemePage bridge={f.bridge} assets={f.assets} isActive={false} section={'profile' as WorkspaceSection} onSelect={() => {}} />)
+    render(<ThemePage bridge={f.bridge} assets={f.assets} isActive={false} section={'profile' as WorkspaceSection} onSelect={() => {}} />)
     expect(screen.queryByText('选择当前背景')).toBeNull()
   })
 })

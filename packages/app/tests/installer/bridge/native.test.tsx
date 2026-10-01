@@ -8,7 +8,7 @@ vi.mock('@tauri-apps/api/core', () => ({ invoke: (...args: unknown[]) => invoke(
 
 import { createNativeBridge } from '../../../src/bridge/native'
 import { InstallerFailure } from '../../../src/bridge/contracts'
-import { SchemePage } from '../../../src/scheme/SchemePage'
+import { ThemePage } from '../../../src/theme/ThemePage'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
@@ -31,7 +31,7 @@ describe('native bridge when the engine worker has stopped', () => {
   })
 
   it('shows what happened and what to do on the section the user opened', async () => {
-    render(<SchemePage bridge={createNativeBridge()} assets={assets} section={'scheme' as WorkspaceSection} onSelect={() => {}} />)
+    render(<ThemePage bridge={createNativeBridge()} assets={assets} section={'theme' as WorkspaceSection} onSelect={() => {}} />)
     expect(await screen.findByText(WORKER_EXITED)).toBeVisible()
   })
 })
