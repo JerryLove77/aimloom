@@ -89,14 +89,21 @@ fn write_files(root: &Path, files: Option<&Json>, fixtures: &Path, case_root: &s
 
 enum Recorded { Text(String), File { size: usize, sha256: String } }
 
-fn files(root: &Path) -> Vec<(String, Recorded)> {
+fn files(root: &Path, local_data: bool) -> Vec<(String, Recorded)> {
     let mut out = Vec::new();
-    fn walk(root: &Path, dir: &Path, out: &mut Vec<(String, Recorded)>) {
+    fn walk(root: &Path, dir: &Path, out: &mut Vec<(String, Recorded)>, local_data: bool) {
         let Ok(entries) = std::fs::read_dir(dir) else { return };
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_dir() { walk(root, &path, out); continue; }
+            if path.is_dir() { walk(root, &path, out, local_data); continue; }
             let relative = path.strip_prefix(root).unwrap().to_string_lossy().replace('\\', "/");
+            // DIVERGENCES.md: persistent, empty import leases protect another session's
+            // preview. Read metadata only: an active lease is exclusively open on Windows.
+            if local_data && relative.strip_prefix("Aimloom/locks/import-").and_then(|name| name.strip_suffix(".lock"))
+                .is_some_and(|hash| paths::is_lower_hex(hash, 64)) {
+                assert_eq!(std::fs::metadata(&path).unwrap().len(), 0, "an import lease must hold no data");
+                continue;
+            }
             let bytes = std::fs::read(&path).unwrap();
             // Manifests and Profiles are recorded as text: they hold absolute paths, which normalize.
             let recorded = if path.file_name().is_some_and(|n| n == "manifest.json") || relative.starts_with("Aimloom/profiles/") {
@@ -107,7 +114,7 @@ fn files(root: &Path) -> Vec<(String, Recorded)> {
             out.push((relative, recorded));
         }
     }
-    walk(root, root, &mut out);
+    walk(root, root, &mut out, local_data);
     out
 }
 
@@ -272,8 +279,8 @@ fn run_case(name: &str, case: &Json) -> Json {
     }
     drop(lock);
     drop(session);
-    let game_files = files(Path::new(&game));
-    let local_files = files(Path::new(&local));
+    let game_files = files(Path::new(&game), false);
+    let local_files = files(Path::new(&local), true);
     let _ = std::fs::remove_dir_all(&root);
 
     let json_root = |p: &str| p.replace('\\', "\\\\").replace('"', "\\\"");

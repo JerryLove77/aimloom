@@ -20,27 +20,32 @@ export type PlanOutcome =
   | { kind: 'incomplete'; status: string | undefined }
 
 const TERMINAL = ['finished', 'failed', 'unknown', 'reconciled']
+const MAX_CONSECUTIVE_POLL_FAILURES = 3
 
 /**
  * Executes a plan as an install, never with conflict permission, and polls its job (250 ms)
  * until it is terminal. There is no time cap: the worker may still be writing, and giving up
  * while the job is `running` would unlock a page the worker is still changing.
  *
- * A refused `execute` throws, as it proves nothing was written. Once execute was accepted, a
- * failed poll no longer proves anything, so it answers an `unknown` job (never a throw that a
- * caller could read as a plain failure) and the caller locks until reconciliation.
+ * A refused `execute` throws, as it proves nothing was written. Once execute was accepted,
+ * retry transient query failures without repeating the write. Three consecutive failed
+ * queries answer an `unknown` job and keep the caller locked until reconciliation retrieves
+ * the native result or checks a genuinely unknown worker outcome.
  */
 export async function waitForJob(bridge: PlanRunner, operationId: string, planId: string): Promise<PlanJob> {
   await bridge.execute({ operationId, planId, confirmation: 'install', allowConflicts: false })
-  try {
-    let job = await bridge.job(operationId)
-    while (!TERMINAL.includes(job.state)) {
-      await new Promise(resolve => setTimeout(resolve, 250))
-      job = await bridge.job(operationId)
+  let failures = 0
+  while (true) {
+    try {
+      const job = await bridge.job(operationId)
+      if (TERMINAL.includes(job.state)) return job
+      failures = 0
+    } catch {
+      if (++failures >= MAX_CONSECUTIVE_POLL_FAILURES) {
+        return { state: 'unknown', result: null, error: null }
+      }
     }
-    return job
-  } catch {
-    return { state: 'unknown', result: null, error: null }
+    await new Promise(resolve => setTimeout(resolve, 250))
   }
 }
 

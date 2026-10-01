@@ -194,7 +194,7 @@ fn stage_file(stage: &str, relative: &str, bytes: &[u8]) -> EngineResult<String>
     Ok(staged)
 }
 
-/// Every `<data root>/import-previews/<32 hex>` folder: a plan the session no longer holds.
+/// Only collect previews whose owning engine no longer holds their cross-process lock.
 pub fn remove_orphan_stages(engine: &Engine, context: &Context) { remove_orphan_stages_in(engine, &context.local_data_root) }
 
 pub fn remove_orphan_stages_in(engine: &Engine, local_data_root: &str) {
@@ -202,7 +202,12 @@ pub fn remove_orphan_stages_in(engine: &Engine, local_data_root: &str) {
     let Ok(entries) = std::fs::read_dir(&base) else { return };
     for entry in entries.flatten() {
         let name = entry.file_name().to_string_lossy().into_owned();
-        if paths::is_lower_hex(&name, 32) { files::remove_import_stage_in(engine, local_data_root, &join(&base, &name)); }
+        if paths::is_lower_hex(&name, 32) {
+            let stage = join(&base, &name);
+            let Ok(_lock) = engine.import_stage_lock(local_data_root, &stage) else { continue };
+            // Do not call the owner cleanup path: it releases this engine's held lease.
+            if paths::assert_safe_path(&stage).is_ok() { let _ = std::fs::remove_dir_all(&stage); }
+        }
     }
 }
 
@@ -333,6 +338,7 @@ pub fn import_plan(engine: &Engine, context: &Context, paths_in: &[String], incl
         return Err(EngineError::coded("ENGINE_ERROR", "导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory."));
     }
     let result = (|| -> EngineResult<ImportPlan> {
+        engine.hold_import_stage(&context.local_data_root, &stage)?;
         store::new_directory(&stage)?;
         let themes = lists::installed_themes(engine, context)?;
         let (_, sounds) = lists::installed_sounds(engine, context)?;

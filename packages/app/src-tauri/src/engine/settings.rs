@@ -70,8 +70,12 @@ fn read_settings(engine: &Engine, context: &Context) -> EngineResult<(String, St
     if !Path::new(&target).is_file() {
         return Err(EngineError::coded("ENGINE_ERROR", "找不到 PrimaryUserSettings.json；请先启动一次游戏并正常退出。", "PrimaryUserSettings.json was not found. Run the game once and exit normally first."));
     }
-    let settings = TextFile::decode(&std::fs::read(&target).map_err(|e| EngineError::io(&e))?);
-    let hash = store::hash(&target)?.unwrap_or_default();
+    let bytes = std::fs::read(&target).map_err(|e| EngineError::io(&e))?;
+    let settings = TextFile::decode(&bytes);
+    engine.host.fault("settings-read")?;
+    // The optimistic concurrency check must describe the exact bytes being edited, even
+    // when another process changes the file while we decode or prepare the preview.
+    let hash = paths::sha256_hex(&bytes);
     Ok((target, hash, settings))
 }
 
@@ -312,6 +316,39 @@ pub fn profile_apply_execute(engine: &Engine, context: &Context, apply: &Profile
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    struct ConcurrentSettingsChange {
+        target: std::path::PathBuf,
+        replacement: Vec<u8>,
+    }
+
+    impl store::Host for ConcurrentSettingsChange {
+        fn process_names(&self) -> std::io::Result<Vec<String>> { Ok(Vec::new()) }
+
+        fn fault(&self, point: &str) -> EngineResult<()> {
+            if point == "settings-read" {
+                std::fs::write(&self.target, &self.replacement).map_err(|e| EngineError::io(&e))?;
+            }
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn a_settings_change_during_preview_cannot_be_paired_with_the_old_content() {
+        let original = br#"{"theme":"old","sensitivity":0.91}"#;
+        let replacement = br#"{"theme":"old","sensitivity":0.42}"#;
+        let fixture = super::super::tests::Fixture::new(original);
+        let engine = Engine::new(Box::new(ConcurrentSettingsChange {
+            target: fixture.target.clone(), replacement: replacement.to_vec(),
+        }));
+        let context = engine.context(&fixture.game, &fixture.local).unwrap();
+        let edits = vec![("theme".into(), Value::One(Scalar::Str("new".into())))];
+        let result = settings_plan(&engine, &context, &edits, "scheme-previews", "Stage outside game.",
+            ("设置已变化。", "Settings changed."));
+
+        assert_eq!(result.unwrap_err().code, "PLAN_STALE");
+        assert_eq!(fixture.bytes(), replacement, "the newer sensitivity must remain untouched");
+    }
 
     /// A Profile writes the theme and all six sound events in one pass: a settings file that
     /// lacks any one of the keys refuses the whole edit, and no key is ever added.

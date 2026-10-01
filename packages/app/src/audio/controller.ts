@@ -58,9 +58,11 @@ export function createAudioController(bridge: AudioBridge, storage: GameRootStor
       locate: 'audio.error.locate', readDirectory: 'audio.error.readDirectory', chooseFolder: 'audio.error.chooseFolder',
       list: 'audio.error.listSounds', reconciled: 'audio.applied.reconciled', reconcileFailed: 'audio.error.reconcileFailed',
     },
-    async list(gameRoot) {
+    async list(gameRoot): Promise<Partial<AudioState>> {
       const listing = await bridge.audioList(gameRoot)
-      return { directory: listing.directory, sounds: listing.sounds, bindings: listing.bindings }
+      const { event, drafts } = section.getState()
+      return { directory: listing.directory, sounds: listing.sounds, bindings: listing.bindings,
+        draft: event ? [...(drafts[event] ?? listing.bindings[event])] : [] }
     },
     onLoad: { lastAdded: null },
   })
