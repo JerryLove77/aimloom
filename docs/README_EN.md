@@ -75,16 +75,18 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 
 ## Status
 
-- **In development (not released):** 0.1.6-beta.2 — Quick import becomes drop, look, add: drop
+- **Beta:** 0.1.6-beta.2 (2026-10-01) — Quick import becomes drop, look, add: drop
   several packs, folders or files at once; whatever the game already has is skipped with the
   reason, and personal settings sit under a collapsed Advanced. Backup and restore becomes Explore's
-  third card, and themes and sounds can be starred, with favourites listed first. So far this has
-  run only in tests, not in the real game.
-- **Beta:** 0.1.6-beta.1 (2026-09-30) — the sidebar becomes two big pages, Customize (Profile,
+  third card, and themes and sounds can be starred, with favourites listed first. A pre-release on
+  GitHub, offered as the beta on the website's download page. Before it shipped, Quick import and
+  restore were walked through in the real game on the test PC; not seen: whether favourites
+  survive an uninstall and reinstall.
+- **Earlier beta:** 0.1.6-beta.1 (2026-09-30) — the sidebar becomes two big pages, Customize (Profile,
   Theme, Sounds, Crosshair, Enemy) and Explore; a new engine written in Rust reads and writes the
   game's files, so the download no longer carries PowerShell 7 and is a few MB; a Profile becomes a
-  complete snapshot (the theme and every sound). A pre-release on GitHub, offered as the beta on
-  the website's download page.
+  complete snapshot (the theme and every sound), so a Profile saved by 0.1.5 has to be created
+  again.
 - **Released:** v0.1.5 (2026-09-30) — PowerShell 7 comes with Aimloom, so nothing else needs
   installing (the installer is about 81 MB, the portable ZIP about 114 MB); Theme, Sounds and
   Crosshair open the website's Explore page; a linked Steam account's display name can be changed.
