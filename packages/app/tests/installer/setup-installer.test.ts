@@ -139,5 +139,5 @@ describe('the Setup bundle configuration', () => {
     expect(installer.bundle.resources).toBeUndefined()
   })
 
-  it('is version 0.1.6', () => expect(installer.version).toBe('0.1.6'))
+  it('is version 0.1.7', () => expect(installer.version).toBe('0.1.7'))
 })
