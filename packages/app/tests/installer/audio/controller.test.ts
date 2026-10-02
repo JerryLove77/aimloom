@@ -31,7 +31,7 @@ function bridge(options: { job?: { state: string; result?: { status: string }; e
     job: async () => job,
     planFileAdd: async () => ({ planId: 'plan-add' }),
     pickFile: async () => null,
-    reconcile: async () => { calls.push('reconcile'); return {} },
+    reconcile: async () => { calls.push('reconcile'); return { job: { state: 'reconciled' } } },
   }
 }
 

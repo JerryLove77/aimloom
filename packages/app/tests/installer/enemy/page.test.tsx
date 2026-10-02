@@ -23,7 +23,7 @@ function fixtures() {
     planEnemy: async (input: { shape: EnemyShape; model: string; skin: string }) => { plans.push(input); return { planId: 'plan-1' } },
     execute: async () => ({ operationId: 'op-1' }),
     job: async () => ({ state: 'finished', result: { status: 'completed' } }),
-    reconcile: async () => ({}),
+    reconcile: async () => ({ job: { state: 'reconciled' } }),
   }
   return { bridge, plans }
 }

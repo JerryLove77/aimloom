@@ -32,7 +32,7 @@ function shared(options: { job?: Job; planError?: unknown; hold?: Promise<void> 
       return { operationId: input.operationId }
     },
     job: async () => job,
-    reconcile: async () => { calls.push('reconcile'); return {} },
+    reconcile: async () => { calls.push('reconcile'); return { job: { state: 'reconciled' } } },
   }
 }
 

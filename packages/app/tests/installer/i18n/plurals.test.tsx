@@ -78,7 +78,7 @@ const located = {
   job: async () => ({ state: 'finished', result: { status: 'completed' } }),
   planFileAdd: async () => ({ planId: 'plan-add' }),
   pickFile: async () => null,
-  reconcile: async () => ({}),
+  reconcile: async () => ({ job: { state: 'reconciled' } }),
 }
 const assets: ProfileAssetBridge = {
   chooseDirectory: async () => null,

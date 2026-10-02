@@ -13,7 +13,7 @@ import { ImportSheet } from '../section/ImportSheet'
 import { SearchBox } from '../ui/SearchBox'
 import { importFileName } from '../section/import-check'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
-import { useSheetImport } from './sheet-import'
+import { useSheetImport, type SheetReconcile } from './sheet-import'
 import { useFavorites, type FavoritesStore } from '../section/favorites'
 import { FavoriteStar } from '../ui/Tiles'
 
@@ -52,7 +52,7 @@ export function AudioSheet({ profileName, profilePath, value, assets, isDemo, op
    * Reconciles an add whose result came back `unknown` -- the only exit, per
    * `installer_reconcile`. Absent has the same meaning as `onAddFile` absent.
    */
-  onReconcile?: (() => Promise<void>) | undefined
+  onReconcile?: SheetReconcile | undefined
   /** Lifts "an add here is unresolved" so the caller can lock the whole Profile page too. */
   onUnresolvedChange?: ((unresolved: boolean) => void) | undefined
   onConfirm: (value: ProfileAudio) => void

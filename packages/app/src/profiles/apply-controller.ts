@@ -3,7 +3,7 @@ import { browserStorage } from '../i18n'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage, type LocateBridge } from '../section/game-root'
 import { errorMsg } from '../section/issue-text'
 import type { Lang, Msg } from '../i18n'
-import { createStore } from '../section/controller'
+import { createStore, type SectionBridge } from '../section/controller'
 import { incompleteMsg, waitForJob } from '../section/run-plan'
 import type { TrainingProfile } from './model'
 
@@ -13,7 +13,7 @@ export interface ApplyBridge extends LocateBridge {
   planProfileApply(input: { gameRoot: string; id: string; revision: number }): Promise<Preview>
   execute(input: ExecuteRequest): Promise<Job>
   job(operationId: string): Promise<Job>
-  reconcile(operationId: string): Promise<unknown>
+  reconcile: SectionBridge['reconcile']
   /** Best effort; a rejection here must never turn a successful apply into a failure. */
   launchGame(): Promise<void>
 }
@@ -154,8 +154,12 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
     async reconcile(): Promise<boolean> {
       if (!operationId) { publish(idle()); return true }
       try {
-        await bridge.reconcile(operationId)
+        const { job } = await bridge.reconcile(operationId)
         operationId = null
+        if (job.state === 'failed' || job.error) {
+          await replanAfter(errorMsg(job.error, { key: 'profile.apply.error.failed' }), session)
+          return false
+        }
         planId = null
         publish(idle())
         return true

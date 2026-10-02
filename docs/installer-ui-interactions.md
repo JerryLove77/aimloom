@@ -421,7 +421,7 @@ its own 「核对结果」/"Check result" button, disabling choosing, 用于此�
 until reconciled. Reconciling calls `reconcile(operationId)` for the very operation that came
 back unresolved (kept by `ProfilesApp`, since only one Profile sheet is ever open) and then
 refreshes the same way a normal add does: Theme re-reads the game's installed list, Sounds
-re-reads its own folder. Nothing distinguishes "added" from "not added" beyond that refresh — the
-same as Theme and Sounds themselves, which never say which one it was, only show the list as it
-now stands. While unresolved, the whole Profile page locks too (`Save`/`取消编辑`/navigation),
+re-reads its own folder. A cached failed job or backup-scan error remains visible after the sheet
+unlocks; a rejected reconciliation request keeps it locked for retry. For a reconciliation with
+no error, the refreshed list shows what is installed. While unresolved, the whole Profile page locks too (`Save`/`取消编辑`/navigation),
 the same as an unresolved section page locks itself.
