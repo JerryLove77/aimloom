@@ -1,4 +1,5 @@
 import { t, type MessageKey, type Msg } from '../i18n'
+import { errorMsg } from './issue-text'
 
 /** A job as every section bridge reports it. */
 export interface PlanJob { state: string; result?: { status: string } | null; error?: { code: string; message: string; messageEn?: string } | null }
@@ -58,6 +59,14 @@ export async function runPlan(bridge: PlanRunner, operationId: string, planId: s
   if (status === 'completed') return { kind: 'completed' }
   if (status === 'no-change') return { kind: 'no-change' }
   return { kind: 'incomplete', status }
+}
+
+/** A cached terminal job keeps the same failure/incomplete meaning after reconciliation. */
+export function reconciliationError(job: PlanJob, fallback: Msg, incomplete: MessageKey): Msg | null {
+  if (job.state === 'failed' || job.error) return errorMsg(job.error, fallback)
+  const status = job.result?.status
+  if (job.state === 'finished' && status !== 'completed' && status !== 'no-change') return incompleteMsg(incomplete, status)
+  return null
 }
 
 /** A status code the engine returns, or none. A real code is language-neutral and sits in

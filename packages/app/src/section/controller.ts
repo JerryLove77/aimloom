@@ -1,7 +1,7 @@
 import type { Lang, MessageKey, Msg } from '../i18n'
 import { errorMsg } from './issue-text'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage } from './game-root'
-import { incompleteMsg, waitForJob, type PlanJob, type PlanRunner } from './run-plan'
+import { incompleteMsg, reconciliationError, waitForJob, type PlanJob, type PlanRunner } from './run-plan'
 
 /** A page controller's state and who listens to it. */
 export function createStore<S>(initial: S) {
@@ -80,6 +80,7 @@ export function createSection<S extends SectionState>(bridge: SectionBridge, sto
   const { keys } = options
   let revision = 0
   let operationId: string | null = null
+  let incompleteKey: MessageKey = 'import.incomplete'
   async function list(gameRoot: string): Promise<void> {
     publish({ phase: 'ready', gameRoot, ...await options.list(gameRoot) } as Partial<S>)
   }
@@ -93,7 +94,7 @@ export function createSection<S extends SectionState>(bridge: SectionBridge, sto
     refresh,
     nextRevision: () => ++revision,
     /** Starts tracking a new operation and returns its id. */
-    startOperation(): string { operationId = crypto.randomUUID(); return operationId },
+    startOperation(): string { incompleteKey = 'import.incomplete'; operationId = crypto.randomUUID(); return operationId },
     /** The operation's outcome is known: nothing is left to reconcile. */
     finishOperation(): void { operationId = null },
     async load(): Promise<void> {
@@ -122,6 +123,7 @@ export function createSection<S extends SectionState>(bridge: SectionBridge, sto
     },
     /** Plans, executes and waits; the page locks on an unknown result until `reconcile`. */
     async apply(run: SectionApply<S>): Promise<boolean> {
+      incompleteKey = run.keys.incomplete
       publish({ applying: true, error: null, message: null } as Partial<S>)
       const id = crypto.randomUUID()
       operationId = id
@@ -157,11 +159,12 @@ export function createSection<S extends SectionState>(bridge: SectionBridge, sto
       if (!operationId) { publish({ unresolved: false } as Partial<S>); return }
       try {
         const { job } = await bridge.reconcile(operationId)
+        const failure = reconciliationError(job, { key: keys.reconcileFailed }, incompleteKey)
         operationId = null
         await refresh()
         // A successful query can recover a failed write (or a failed backup scan).
-        if (job.state === 'failed' || job.error) {
-          publish({ unresolved: false, error: errorMsg(job.error, { key: keys.reconcileFailed }), message: null } as Partial<S>)
+        if (failure) {
+          publish({ unresolved: false, error: failure, message: null } as Partial<S>)
           return
         }
         publish({ unresolved: false, error: null, message: { key: keys.reconciled }, ...options.onReconciled } as Partial<S>)

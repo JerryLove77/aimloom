@@ -2,7 +2,7 @@ import { MAX_IMPORT_PATHS, type FileRow, type InstallerBridge, type Preview, typ
 import type { Lang, Msg } from '../i18n'
 import { createStore } from '../section/controller'
 import { errorMsg } from '../section/issue-text'
-import { incompleteMsg } from '../section/run-plan'
+import { incompleteMsg, reconciliationError } from '../section/run-plan'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage } from '../section/game-root'
 
 /**
@@ -193,9 +193,11 @@ export function createImportController(bridge: ImportBridge, storage: GameRootSt
       try {
         const { job } = await bridge.reconcile(operationId)
         operationId = null
-        if (job.state === 'failed' || job.error) {
+        const failure = reconciliationError(job, { key: 'quick.error.add' }, 'quick.error.incomplete')
+        if (failure) {
           publish({ unresolved: false, progress: null, outcome: null, message: null })
-          await replanAfter(errorMsg(job.error, { key: 'quick.error.add' }))
+          if (job.state === 'failed' || job.error) await replanAfter(failure)
+          else publish({ phase: 'done', error: failure })
           return
         }
         publish({ unresolved: false, error: null, message: { key: 'quick.reconciled' } })
