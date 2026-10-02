@@ -4,7 +4,7 @@ import { resolveGameRoot, writeGameRoot, type GameRootStorage, type LocateBridge
 import { errorMsg } from '../section/issue-text'
 import type { Lang, Msg } from '../i18n'
 import { createStore, type SectionBridge } from '../section/controller'
-import { incompleteMsg, waitForJob } from '../section/run-plan'
+import { incompleteMsg, reconciliationError, waitForJob } from '../section/run-plan'
 import type { TrainingProfile } from './model'
 
 /** The subset of the installer bridge the apply dialog needs. */
@@ -156,8 +156,9 @@ export function createApplyController(bridge: ApplyBridge, storage: GameRootStor
       try {
         const { job } = await bridge.reconcile(operationId)
         operationId = null
-        if (job.state === 'failed' || job.error) {
-          await replanAfter(errorMsg(job.error, { key: 'profile.apply.error.failed' }), session)
+        const failure = reconciliationError(job, { key: 'profile.apply.error.failed' }, 'profile.apply.error.incomplete')
+        if (failure) {
+          await replanAfter(failure, session)
           return false
         }
         planId = null

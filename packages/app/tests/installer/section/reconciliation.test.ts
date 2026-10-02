@@ -63,6 +63,41 @@ describe('reconciling cached failures after status queries fail', () => {
     expect(ctl.getState()).toMatchObject({ unresolved: false, message: null, error: { key: 'theme.error.reconcileFailed' } })
   })
 
+  it.each(['rolled-back', 'recovery-required'] as const)('sections preserve drafts and the incomplete %s outcome', async status => {
+    vi.useFakeTimers()
+    const f = fixture()
+    const ctl = await sectionSetup(f)
+    f.setJob({ state: 'finished', error: null, result: { status, batchId: null, items: [], errors: [], errorsEn: [] } })
+    await ctl.reconcile()
+    expect(ctl.getState()).toMatchObject({ unresolved: false, message: null, draft: 'pending', error: { key: 'theme.error.incomplete', params: { status } } })
+  })
+
+  it.each(['rolled-back', 'recovery-required'] as const)('Profile retains the incomplete %s result and a fresh preview', async status => {
+    vi.useFakeTimers()
+    const f = fixture()
+    const plan = vi.spyOn(f.bridge, 'planProfileApply').mockImplementation(input => f.bridge.planImport({ ...input, paths: [PACK], includeSettings: false }))
+    const ctl = createApplyController(f.bridge, null)
+    await ctl.open({ schemaVersion: 2, id: 'profile1', name: 'Practice', theme: null, audio: {} })
+    const applying = ctl.confirm()
+    await vi.runAllTimersAsync()
+    await applying
+    f.setJob({ state: 'finished', error: null, result: { status, batchId: null, items: [], errors: [], errorsEn: [] } })
+    expect(await ctl.reconcile()).toBe(false)
+    expect(ctl.getState()).toMatchObject({ phase: 'ready', canConfirm: true, error: { key: 'profile.apply.error.incomplete', params: { status } } })
+    expect(plan).toHaveBeenCalledTimes(2)
+    expect(f.execute).toHaveBeenCalledOnce()
+  })
+
+  it.each(['rolled-back', 'recovery-required'] as const)('Quick import shows its incomplete %s outcome without a clean notice', async status => {
+    const f = fixture()
+    const ctl = createImportController(f.bridge, null)
+    await ctl.choose([PACK])
+    await ctl.add()
+    f.setJob({ state: 'finished', error: null, result: { status, batchId: null, items: [], errors: [], errorsEn: [] } })
+    await ctl.reconcile()
+    expect(ctl.getState()).toMatchObject({ phase: 'done', unresolved: false, outcome: null, message: null, error: { key: 'quick.error.incomplete', params: { status } } })
+  })
+
   it('Profile keeps the dialog and failure reason, replans, and does not launch or repeat the write', async () => {
     vi.useFakeTimers()
     const f = fixture()

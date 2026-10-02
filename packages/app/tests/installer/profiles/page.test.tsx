@@ -428,6 +428,17 @@ describe('adding a file to a Profile sheet from my computer', () => {
     expect(within(sheet).getByRole('button', { name: '取消' })).toBeEnabled()
   })
 
+  it.each(['rolled-back', 'recovery-required'])('a cached %s import unlocks the sheet and explains the incomplete result', async status => {
+    const f = fixtures()
+    const { game } = gameWithAdd({ jobUnknown: true })
+    game.reconcile = async () => ({ job: { state: 'finished', result: { status }, error: null } })
+    const sheet = await addUntilUnknown(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '核对结果' }))
+    expect(await within(sheet).findByText(`添加没有完成（${status}），请到「备份与恢复」处理。`)).toBeVisible()
+    expect(within(sheet).queryByRole('button', { name: '核对结果' })).toBeNull()
+    expect(within(sheet).getByRole('button', { name: '取消' })).toBeEnabled()
+  })
+
   it('a failed reconcile keeps the sheet locked so the player can retry \u6838\u5bf9\u7ed3\u679c', async () => {
     const f = fixtures()
     const { game } = gameWithAdd({ jobUnknown: true, reconcileFails: true })

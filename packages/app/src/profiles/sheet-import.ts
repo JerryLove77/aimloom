@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Lang, MessageKey, Msg } from '../i18n'
 import { errorMsg } from '../section/issue-text'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
-import type { PlanJob } from '../section/run-plan'
+import { reconciliationError, type PlanJob } from '../section/run-plan'
 
 export type SheetReconcile = () => Promise<PlanJob | null>
 
@@ -61,7 +61,8 @@ export function useSheetImport({ onAddFile, onPickFile, onReconcile, onUnresolve
         setError(null)
         const after = afterReconcile()
         if (after) await after
-        if (job && (job.state === 'failed' || job.error)) setError(errorMsg(job.error, { key: keys.reconcileFailed }))
+        const failure = job ? reconciliationError(job, { key: keys.reconcileFailed }, 'import.incomplete') : null
+        if (failure) setError(failure)
       } catch (reason) { setError(errorMsg(reason, { key: keys.reconcileFailed })) }
       finally { setReconciling(false) }
     },
