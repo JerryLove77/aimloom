@@ -146,19 +146,18 @@ describe('the committed releases.json', () => {
       expect(releases.releases.find(x => x.version === version)?.status, version).toBe('withdrawn')
     }
   })
-  it('recommends 0.1.6, stable, with the Setup on the site\'s R2 bucket and the portable ZIP on GitHub', () => {
-    // Both files were built once from 03be57d (main after PR #31) with the path-remapping build.
-    // The Setup is not byte-reproducible, so these facts name the one file that exists. Change
-    // them only together.
+  it('recommends 0.1.7, stable, with the Setup on the site\'s R2 bucket and the portable ZIP on GitHub', () => {
+    // Both files were built once from 502ab05 with the path-remapping build. The Setup is not
+    // byte-reproducible, so these facts name the one file that exists. Change them only together.
     expect(releases.beta).toBeNull()
     const r = recommendedRelease(releases)
     expect(r).toMatchObject({
-      version: '0.1.6', status: 'stable', bytes: 4_718_595, mirrorUrl: null,
-      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.6/Aimloom-v0.1.6.zip',
-      sha256: '768b506017a8e9d272b6a1afe89f1052309dcc31e7613f1fb7425fb12b688ba7',
+      version: '0.1.7', status: 'stable', bytes: 4_715_112, mirrorUrl: null,
+      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.7/Aimloom-v0.1.7.zip',
+      sha256: 'd42245308d0d0b0f2d11b8b8b22179c2afae67d56d29c116de675d5e85e329dc',
       setup: {
-        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6.exe', bytes: 3_388_455,
-        sha256: 'cc08d2579103632140d49b2b53d17b45e49562a3226e954edc1c6521a4595cf7',
+        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.7.exe', bytes: 3_385_044,
+        sha256: 'cbb2461993e607fa550e8f768bc1b603b4deaa3ca537d9c988f5729086a82ada',
       },
     })
     expect(r?.contents).toEqual(['Aimloom.exe', '使用说明.txt', 'README.txt', 'VERSION.txt'])
@@ -167,6 +166,18 @@ describe('the committed releases.json', () => {
     expect(r?.knownIssues.zh.join('')).toMatch(/卸载旧版本[\s\S]*重新创建/)
     expect(r?.knownIssues.en.join(' ')).toMatch(/uninstall the older Aimloom[\s\S]*create them again/)
     expect(r?.knownIssues.zh.length).toBe(r?.knownIssues.en.length)
+  })
+  it('keeps 0.1.6 as a stable record: the first release with the Rust engine', () => {
+    // Both files were built once from 03be57d (main after PR #31).
+    expect(releases.releases.find(x => x.version === '0.1.6')).toMatchObject({
+      version: '0.1.6', status: 'stable', bytes: 4_718_595, mirrorUrl: null,
+      primaryUrl: 'https://github.com/JerryLove77/aimloom/releases/download/v0.1.6/Aimloom-v0.1.6.zip',
+      sha256: '768b506017a8e9d272b6a1afe89f1052309dcc31e7613f1fb7425fb12b688ba7',
+      setup: {
+        url: 'https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6.exe', bytes: 3_388_455,
+        sha256: 'cc08d2579103632140d49b2b53d17b45e49562a3226e954edc1c6521a4595cf7',
+      },
+    })
   })
   it('keeps 0.1.5 as a stable record: the last release with PowerShell 7 inside', () => {
     // Both files were built once from fe2a80e with the path-remapping build; the Setup was then
@@ -224,7 +235,7 @@ describe('the committed releases.json', () => {
   it('lists no release that was never published', () => {
     expect(releases.releases.map(r => r.version)).not.toContain('0.1.0')
   })
-  it('offers no beta once 0.1.6 is stable', () => {
+  it('offers no beta after stable 0.1.6', () => {
     expect(betaRelease(releases)).toBeNull()
   })
 })

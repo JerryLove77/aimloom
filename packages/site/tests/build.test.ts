@@ -66,11 +66,11 @@ describe('build output', () => {
   it('home hides the showcase while showcase.json is empty', () => {
     expect(page('zh')).not.toContain('id="showcase"')
   })
-  it('home offers the 0.1.6 Setup from the site\'s R2 bucket, in the hero and the closing block, and no ZIP', () => {
+  it('home offers the 0.1.7 Setup from the site\'s R2 bucket, in the hero and the closing block, and no ZIP', () => {
     for (const r of ['zh', 'en']) {
       const html = page(r)
       expect(html.match(/data-download-state="stable"/g)?.length, r).toBe(2)
-      expect(html.match(/<a[^>]+href="https:\/\/dl\.aimloom\.dev\/releases\/Aimloom-Setup-v0\.1\.6\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
+      expect(html.match(/<a[^>]+href="https:\/\/dl\.aimloom\.dev\/releases\/Aimloom-Setup-v0\.1\.7\.exe"[^>]*\sdownload[\s>]/g)?.length, r).toBe(2)
       expect(html, r).not.toMatch(/href="[^"]+\.zip"/)
     }
     expect(page('en')).toContain('One setup for each way you train.')
@@ -82,10 +82,10 @@ describe('build output', () => {
       const html = page(r)
       expect(html, r).toContain('data-download-state="stable"')
       expect(html.match(/href="[^"]+\.(exe|zip)"/g), r).toEqual([
-        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.6.exe"',
+        'href="https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.7.exe"',
       ])
-      expect(html, r).toContain('cc08d2579103632140d49b2b53d17b45e49562a3226e954edc1c6521a4595cf7')
-      expect(html, r).not.toContain('768b506017a8e9d272b6a1afe89f1052309dcc31e7613f1fb7425fb12b688ba7')
+      expect(html, r).toContain('cbb2461993e607fa550e8f768bc1b603b4deaa3ca537d9c988f5729086a82ada')
+      expect(html, r).not.toContain('d42245308d0d0b0f2d11b8b8b22179c2afae67d56d29c116de675d5e85e329dc')
       expect(html, r).toContain('id="first-step"')
       expect(html, r).toContain('id="source"')
       expect(html, r).not.toContain('id="beta"')

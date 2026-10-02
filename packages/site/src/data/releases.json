@@ -1,8 +1,54 @@
 {
   "schemaVersion": 1,
-  "recommended": "0.1.6",
+  "recommended": "0.1.7",
   "beta": null,
   "releases": [
+    {
+      "version": "0.1.7",
+      "status": "stable",
+      "date": "2026-10-01",
+      "platform": "Windows 10/11 x64",
+      "requires": [
+        "WebView2"
+      ],
+      "bytes": 4715112,
+      "sha256": "d42245308d0d0b0f2d11b8b8b22179c2afae67d56d29c116de675d5e85e329dc",
+      "primaryUrl": "https://github.com/JerryLove77/aimloom/releases/download/v0.1.7/Aimloom-v0.1.7.zip",
+      "mirrorUrl": null,
+      "contents": [
+        "Aimloom.exe",
+        "使用说明.txt",
+        "README.txt",
+        "VERSION.txt"
+      ],
+      "notes": {
+        "zh": "0.1.6 的补丁，只修问题，没有新功能。修复：应用背景、音效、敌人或 Profile 时，如果设置文件在读取之后被别的程序改过，现在会拒绝写入，不会把旧内容写回去；写入进行中查询结果偶尔失败时会重试，不再直接锁住页面；「核对结果」之后，如果那次写入其实失败了或没有完成，会显示原因，不再只说已核对；应用 Profile 之后，背景、音效和敌人页会重新读取游戏当前的设置；音效页刷新时，没有改动过的事件会跟上游戏里的新值，改到一半的不会被冲掉；取消的导入预览会自己清掉暂存的文件。Profile 页不再显示 Profile 的数量。",
+        "en": "A patch for 0.1.6: fixes only, no new features. Fixed: applying a theme, sounds, an enemy skin or a Profile now refuses to write when another program changed the settings file after it was read, instead of writing the older content back; a result query that fails now and then during a write is retried instead of locking the page at once; after Check result, a write that in fact failed or did not finish shows why, instead of only saying it was checked; after a Profile is applied, the Theme, Sounds and Enemy pages read the game's current settings again; when the Sounds page refreshes, an event you have not edited follows the game's new value and one you are editing is kept; a cancelled import preview removes its own staged files. The Profile page no longer shows the number of Profiles."
+      },
+      "knownIssues": {
+        "zh": [
+          "从 0.1.5 或更早版本升级：请先在 Windows 设置里卸载旧版本的 Aimloom，再安装这个版本。卸载不会删除你的备份。已经装了 0.1.6 的，直接运行这个安装程序即可。",
+          "0.1.5 及更早版本存的 Profile 这个版本读不出来，需要在 Profile 页删除后重新创建；在 0.1.6 或之后的版本里新建的 Profile，装回 0.1.5 后也打不开。",
+          "同一次导入里如果有同名的音效（比如同时有 .wav 和 .ogg）或内部名称相同的主题，只加入第一个：游戏按名字识别它们，两个都放进去哪个都用不了。",
+          "如果你的桌面或下载文件夹由 OneDrive 同步，从那里拖入或添加的文件会被拒绝（提示不允许链接）：先把文件复制到不在 OneDrive 里的文件夹再导入。",
+          "没有代码签名证书：运行安装程序（或便携版的 Aimloom.exe）时 Windows 会提示「已保护你的电脑」，点「更多信息」→「仍要运行」。",
+          "用哪个准星要在游戏设置里选，Aimloom 读不到也改不了这个选择。"
+        ],
+        "en": [
+          "Coming from 0.1.5 or earlier: uninstall the older Aimloom in Windows Settings first, then install this version. Uninstalling keeps your backups. If you have 0.1.6 installed, just run this installer.",
+          "Profiles saved by 0.1.5 or earlier cannot be read by this version: delete them on the Profile page and create them again. Profiles made in 0.1.6 or later cannot be opened after going back to 0.1.5.",
+          "If one import holds two sounds with the same name (a .wav and an .ogg, say) or two themes with the same internal name, only the first is added: the game tells them apart by name, so with both neither would work.",
+          "If OneDrive syncs your Desktop or Downloads folder, files dropped or added from there are refused (\"Links and junctions are not allowed\"): copy them to a folder outside OneDrive first.",
+          "No code-signing certificate: running the installer (or the portable Aimloom.exe) shows \"Windows protected your PC\"; choose More info → Run anyway.",
+          "The crosshair in use is chosen in the game's settings; Aimloom can neither read nor change that choice."
+        ]
+      },
+      "setup": {
+        "url": "https://dl.aimloom.dev/releases/Aimloom-Setup-v0.1.7.exe",
+        "bytes": 3385044,
+        "sha256": "cbb2461993e607fa550e8f768bc1b603b4deaa3ca537d9c988f5729086a82ada"
+      }
+    },
     {
       "version": "0.1.6",
       "status": "stable",
