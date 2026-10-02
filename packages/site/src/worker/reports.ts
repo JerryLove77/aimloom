@@ -11,15 +11,29 @@ export interface ReportDeps {
   /** Runs after the report is stored; the mail plugs in here (notify.ts). Its failure never fails the report. */
   afterStore?: (number: string, report: Report, env: AppEnv) => Promise<void>
 }
-const INSERT = 'INSERT OR IGNORE INTO reports (number, created_at, day, app_label, lang, windows, has_log, has_contact, steam_id, bytes, body) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+// ?1 is the UTC day, ?2 the final stored body's UTF-8 bytes. CASE checks the indexed daily
+// quota first, so an already-full day does not scan the archive. NULL means there is room.
+function quotaSql(hasCounter: boolean): string {
+  // Missing counter rows fail closed. The SUM fallback lets this Worker deploy before 0010.
+  const archive = hasCounter
+    ? `COALESCE((SELECT bytes FROM report_storage WHERE id = 1), ${ARCHIVE_CEILING_BYTES})`
+    : '(SELECT COALESCE(SUM(bytes), 0) FROM reports)'
+  return `SELECT CASE
+    WHEN COUNT(*) >= ${DAILY_CEILING} OR COALESCE(SUM(bytes), 0) + ?2 > ${DAILY_BYTES_CEILING} THEN 'DAILY_LIMIT'
+    WHEN ${archive} + ?2 > ${ARCHIVE_CEILING_BYTES} THEN 'STORAGE_FULL'
+    ELSE NULL END FROM reports WHERE day = ?1`
+}
 
 /** Deletes reports older than the retention window. Shared by the request path (on arrival) and the
  * daily Cron Trigger (`index.ts`'s `scheduled`), so the promise on the Privacy page holds even when
  * no report ever arrives again. Returns the number of rows removed. */
 export async function deleteExpired(env: AppEnv, now: Date): Promise<number> {
   const cutoff = new Date(now.getTime() - RETENTION_DAYS * 86_400_000).toISOString()
-  const done = await env.DB.prepare('DELETE FROM reports WHERE created_at < ?').bind(cutoff).run()
-  return done.meta.changes
+  const [, result] = await env.DB.batch<{ removed: number }>([
+    env.DB.prepare('DELETE FROM reports WHERE created_at < ?').bind(cutoff),
+    env.DB.prepare('SELECT changes() AS removed'),
+  ])
+  return result!.results[0]!.removed
 }
 
 export async function handleReport(request: Request, env: AppEnv, ctx: { waitUntil(p: Promise<unknown>): void }, deps: ReportDeps = {}): Promise<Response> {
@@ -36,20 +50,29 @@ export async function handleReport(request: Request, env: AppEnv, ctx: { waitUnt
   try {
     // Retention first: an archive that is full of expired reports must free itself, not refuse forever.
     await deleteExpired(env, now)
-    // The indexed daily total FIRST: a flood that is about to be refused must not pay for a full-table scan.
-    const daily = await env.DB.prepare('SELECT COUNT(*) AS c, COALESCE(SUM(bytes), 0) AS bytes FROM reports WHERE day = ?').bind(day).first<{ c: number; bytes: number }>()
-    if ((daily?.c ?? 0) >= DAILY_CEILING) return fail('DAILY_LIMIT', 429)
-    if ((daily?.bytes ?? 0) >= DAILY_BYTES_CEILING) return fail('DAILY_LIMIT', 429)
-    // Only once the daily checks pass does the archive total run.
-    const archive = await env.DB.prepare('SELECT COALESCE(SUM(bytes), 0) AS bytes FROM reports').first<{ bytes: number }>()
-    if ((archive?.bytes ?? 0) >= ARCHIVE_CEILING_BYTES) return fail('STORAGE_FULL', 507)
+    const hasCounter = await env.DB.prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'report_storage'").first()
+    const quota = quotaSql(hasCounter !== null)
+    const insert = `INSERT INTO reports (number, created_at, day, app_label, lang, windows, has_log, has_contact, steam_id, bytes, body)
+      SELECT ?3, ?4, ?1, ?5, ?6, ?7, ?8, ?9, ?10, ?2, ?11 WHERE (${quota}) IS NULL ON CONFLICT(number) DO NOTHING`
     for (let attempt = 0; attempt < NUMBER_ATTEMPTS && number === ''; attempt++) {
       const candidate = reportNumber(now, random)
       const body = JSON.stringify({ ...report, number: candidate, receivedAt: createdAt })
-      // The number is the primary key: a taken number changes nothing, and the next attempt draws another.
-      const done = await env.DB.prepare(INSERT).bind(candidate, createdAt, day, report.app.label, report.system.lang, report.system.windows,
-        report.log === null ? 0 : 1, report.contact === null ? 0 : 1, report.account?.steamId ?? null, new TextEncoder().encode(body).length, body).run()
-      if (done.meta.changes === 1) number = candidate
+      const bytes = new TextEncoder().encode(body).length
+      // The quota and insert are one statement. Diagnose a refused insert in the same batch
+      // transaction; a concurrent insert or retention cleanup cannot change its failure code.
+      // SQL changes() excludes accounting-trigger updates, unlike D1 meta.changes.
+      const [, result] = await env.DB.batch<{ inserted: number; code: 'DAILY_LIMIT' | 'STORAGE_FULL' | null }>([
+        env.DB.prepare(insert).bind(day, bytes, candidate, createdAt, report.app.label, report.system.lang, report.system.windows,
+          report.log === null ? 0 : 1, report.contact === null ? 0 : 1, report.account?.steamId ?? null, body),
+        env.DB.prepare(`SELECT changes() AS inserted, CASE WHEN changes() = 0 THEN (${quota}) ELSE NULL END AS code`).bind(day, bytes),
+      ])
+      const outcome = result!.results[0]!
+      if (outcome.inserted === 1) number = candidate
+      else {
+        const code = outcome.code
+        if (code) return fail(code, code === 'DAILY_LIMIT' ? 429 : 507)
+        // Only a taken number leaves the quotas open without inserting; draw another.
+      }
     }
   } catch { return fail('STORAGE_FAILED', 500) }
   if (number === '') return fail('STORAGE_FAILED', 500)

@@ -3,6 +3,7 @@
  * read returns published items only; nothing here learns anything about who is asking.
  */
 import { KINDS, SORTS, MAX_QUERY, PAGE_SIZE, TRENDING_DAYS, type Item, type ItemStatus, type Kind, type ListQuery, type ListResult, type Sort } from '../lib/explore-types'
+import { REVIEW_PAGE_SIZE, type ReviewCursor, type ReviewPage } from '../lib/review-pagination'
 export { KINDS, SORTS, MAX_QUERY, PAGE_SIZE, TRENDING_DAYS, type Item, type Kind, type ListQuery, type ListResult, type Sort }
 
 const isKind = (v: string | null): v is Kind => (KINDS as readonly string[]).includes(v ?? '')
@@ -30,28 +31,28 @@ export async function popularAvailable(db: D1Database, now: Date): Promise<boole
   return typeof first === 'string' && first <= utcDay(now, -(TRENDING_DAYS - 1))
 }
 
-// LIKE, not FTS5: the default tokenizer does not split Chinese, and the catalogue is small.
-const escapeLike = (s: string): string => s.replace(/[\\%_]/g, c => '\\' + c)
+// Literal substring search: instr avoids D1's 50-byte LIKE-pattern limit for Chinese and long
+// queries. SQLite lower preserves LIKE's default ASCII case folding; %, _ and \ are literal.
 const SEARCHED = ['title_zh', 'title_en', 'summary_zh', 'summary_en', 'file_name'] as const
-/** ?1 is the LIKE pattern, ?2 the kind. `t` names the item table in the statement. */
+/** ?1 is the search text, ?2 the kind. `t` names the item table in the statement. */
 function where(t: string, searching: boolean): string {
-  const search = SEARCHED.map(c => `${t}.${c} LIKE ?1 ESCAPE '\\'`).join(' OR ')
+  const search = SEARCHED.map(c => `instr(lower(${t}.${c}), lower(?1)) > 0`).join(' OR ')
   return `${t}.status = 'published' AND ${t}.kind = ?2${searching ? ` AND (${search})` : ''}`
 }
 
 export async function listItems(db: D1Database, query: ListQuery, now: Date): Promise<ListResult> {
   const popular = await popularAvailable(db, now)
   const sort: Sort = query.sort === 'popular' && popular ? 'popular' : 'new'
-  const like = `%${escapeLike(query.q)}%`
   const searching = query.q !== ''
-  const total = (await db.prepare(`SELECT COUNT(*) AS c FROM item i WHERE ${where('i', searching)}`).bind(like, query.kind).first<number>('c')) ?? 0
+  const total = (await db.prepare(`SELECT COUNT(*) AS c FROM item i WHERE ${where('i', searching)}`).bind(query.q, query.kind).first<number>('c')) ?? 0
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const page = Math.min(query.page, pages)
   const order = sort === 'popular' ? 'COALESCE(d.c, 0) DESC, i.published_at DESC, i.slug' : 'i.published_at DESC, i.slug'
-  const { results } = await db.prepare(
-    `SELECT i.* FROM item i LEFT JOIN (SELECT slug, SUM(count) AS c FROM download_daily WHERE day >= ?3 GROUP BY slug) d ON d.slug = i.slug
-     WHERE ${where('i', searching)} ORDER BY ${order} LIMIT ?4 OFFSET ?5`,
-  ).bind(like, query.kind, utcDay(now, -(TRENDING_DAYS - 1)), PAGE_SIZE, (page - 1) * PAGE_SIZE).all<Item>()
+  const join = sort === 'popular' ? 'LEFT JOIN (SELECT slug, SUM(count) AS c FROM download_daily WHERE day >= ?5 GROUP BY slug) d ON d.slug = i.slug' : ''
+  const args: (string | number)[] = [query.q, query.kind, PAGE_SIZE, (page - 1) * PAGE_SIZE]
+  if (sort === 'popular') args.push(utcDay(now, -(TRENDING_DAYS - 1)))
+  const { results } = await db.prepare(`SELECT i.* FROM item i ${join}
+    WHERE ${where('i', searching)} ORDER BY ${order} LIMIT ?3 OFFSET ?4`).bind(...args).all<Item>()
   return { items: results, total, page, pages, popularAvailable: popular }
 }
 
@@ -191,15 +192,39 @@ export async function mine(db: D1Database, steamId: string): Promise<Item[]> {
   return results
 }
 
-export async function pendingItems(db: D1Database): Promise<(Item & { uploader_total: number; uploader_live: number })[]> {
-  const { results } = await db.prepare(`SELECT i.*, (SELECT COUNT(*) FROM item x WHERE x.uploader = i.uploader) AS uploader_total, (SELECT COUNT(*) FROM item x WHERE x.uploader = i.uploader AND x.status = 'published') AS uploader_live
-    FROM item i WHERE i.status = 'pending' ORDER BY i.uploaded_at`).all<Item & { uploader_total: number; uploader_live: number }>()
-  return results
+function reviewPage<T extends Item>(rows: T[], time: 'uploaded_at' | 'published_at'): ReviewPage<T> {
+  const items = rows.slice(0, REVIEW_PAGE_SIZE)
+  const last = items.at(-1)
+  return { items, next: rows.length > REVIEW_PAGE_SIZE && last ? { at: last[time] ?? '', slug: last.slug } : null }
 }
 
-export async function liveItems(db: D1Database, limit = 100): Promise<Item[]> {
-  const { results } = await db.prepare("SELECT * FROM item WHERE status = 'published' ORDER BY published_at DESC LIMIT ?").bind(limit).all<Item>()
-  return results
+type PendingItem = Item & { uploader_total: number; uploader_live: number }
+
+export async function pendingItems(db: D1Database, cursor: ReviewCursor | null = null): Promise<ReviewPage<PendingItem>> {
+  const select = "SELECT * FROM item WHERE status = 'pending'"
+  const order = "ORDER BY COALESCE(uploaded_at, ''), slug"
+  // SQLite does not seek this expression index for a row-value comparison. Split equal/later
+  // times into two indexed ranges; merge at most two pages, even for deep same-time cursors.
+  const page = cursor ? `SELECT * FROM (
+      SELECT * FROM (${select} AND COALESCE(uploaded_at, '') = ?2 AND slug > ?3 ${order} LIMIT ?1)
+      UNION ALL
+      SELECT * FROM (${select} AND COALESCE(uploaded_at, '') > ?2 ${order} LIMIT ?1)
+    ) ${order} LIMIT ?1` : `${select} ${order} LIMIT ?1`
+  const { results } = await db.prepare(`WITH page AS MATERIALIZED (${page}), totals AS MATERIALIZED (
+      SELECT uploader, COUNT(*) AS total, SUM(status = 'published') AS live FROM item
+      WHERE uploader IN (SELECT uploader FROM page ORDER BY COALESCE(uploaded_at, ''), slug LIMIT ${REVIEW_PAGE_SIZE}) GROUP BY uploader
+    )
+    SELECT i.*, COALESCE(t.total, 0) AS uploader_total, COALESCE(t.live, 0) AS uploader_live
+    FROM page i LEFT JOIN totals t ON t.uploader = i.uploader ORDER BY COALESCE(i.uploaded_at, ''), i.slug`)
+    .bind(REVIEW_PAGE_SIZE + 1, ...(cursor ? [cursor.at, cursor.slug] : [])).all<PendingItem>()
+  return reviewPage(results, 'uploaded_at')
+}
+
+export async function liveItems(db: D1Database, cursor: ReviewCursor | null = null): Promise<ReviewPage<Item>> {
+  const { results } = await db.prepare(`SELECT * FROM item WHERE status = 'published'
+    ${cursor ? 'AND (published_at, slug) < (?2, ?3)' : ''} ORDER BY published_at DESC, slug DESC LIMIT ?1`)
+    .bind(REVIEW_PAGE_SIZE + 1, ...(cursor ? [cursor.at, cursor.slug] : [])).all<Item>()
+  return reviewPage(results, 'published_at')
 }
 
 export type ItemAction = 'approve' | 'reject' | 'hide' | 'withdraw'

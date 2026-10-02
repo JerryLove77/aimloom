@@ -98,8 +98,8 @@ describe('POST /api/reports', () => {
     expect(r.status).toBe(400); expect(await r.json()).toEqual({ code: 'INVALID_JSON' })
   })
   it('says STORAGE_FAILED when the database cannot write', async () => {
-    const broken = { ...base.DB, prepare: (sql: string) => sql.startsWith('INSERT') ? { bind: () => ({ run: async () => { throw new Error('d1 down') } }) } : base.DB.prepare(sql) } as unknown as AppEnv['DB']
-    const r = await handleReport(post(fixture), env({ DB: broken }), ctx, at('2026-09-21T10:00:00Z'))
+    await base.DB.prepare("CREATE TRIGGER refuse_report BEFORE INSERT ON reports BEGIN SELECT RAISE(ABORT, 'simulated storage failure'); END").run()
+    const r = await handleReport(post(fixture), env(), ctx, at('2026-09-21T10:00:00Z'))
     expect(r.status).toBe(500); expect(await r.json()).toEqual({ code: 'STORAGE_FAILED' })
   })
   it('hands the stored report to afterStore, and survives its failure', async () => {

@@ -1,8 +1,20 @@
 import { applyD1Migrations } from 'cloudflare:test'
 import { describe, expect, it } from 'vitest'
-import { count, db, emptyDatabase, test } from './seed'
+import { count, db, emptyDatabase, seedDays, seedItems, seedMonths, test } from './seed'
 
 describe('the migrations', () => {
+  it('adds the month index to 0007 without changing download totals', async () => {
+    await emptyDatabase(db)
+    await applyD1Migrations(db, test.TEST_MIGRATIONS.slice(0, 7))
+    await seedItems({ slug: 'sample' })
+    await seedDays('sample', [['2026-10-01', 3]])
+    await seedMonths('sample', [['2026-07', 7], ['2026-08', 11]])
+    await applyD1Migrations(db, test.TEST_MIGRATIONS)
+    expect(await count('SELECT SUM(count) AS c FROM download_daily')).toBe(3)
+    expect(await count('SELECT SUM(count) AS c FROM download_monthly')).toBe(18)
+    expect(await db.prepare('SELECT MIN(month) AS month FROM download_monthly').first('month')).toBe('2026-07')
+    expect(await count("SELECT COUNT(*) AS c FROM sqlite_master WHERE type = 'index' AND name = 'download_monthly_month'")).toBe(1)
+  })
   it('are numbered without gaps, the order wrangler applies them in', () => {
     const names = test.TEST_MIGRATIONS.map(m => m.name)
     expect(names.length).toBeGreaterThanOrEqual(7)

@@ -4,6 +4,7 @@ import { encodePng } from '@kvk/crosshair'
 import { createSession, handleAuth, readSession, safeNext } from '../src/worker/auth'
 import { handleExplore } from '../src/worker/explore'
 import type { AppEnv } from '../src/worker/env'
+import { seedItems } from './seed'
 
 // The fixed fake identities (CLAUDE.md): an admin, a creator and a creator the admin trusts.
 const ADMIN = '76561198000000042', CREATOR = '76561198000000043', TRUSTED = '76561198000000044'
@@ -44,6 +45,36 @@ const post = (path: string, fd: FormData, cookie: string, origin: string | null 
 const item = (slug: string) => base.DB.prepare('SELECT * FROM item WHERE slug = ?').bind(slug).first<Record<string, unknown>>()
 /** Where an item's file is kept now; a waiting file's key has a random part. */
 const keyOf = async (slug: string) => String((await item(slug))!.file_key)
+
+describe('review page navigation', () => {
+  it('keeps the two list positions through forms, errors and successful actions', async () => {
+    await seedItems(...Array.from({length: 53},(_,i)=>({slug:`pending-${String(i).padStart(2,'0')}`,status:'pending' as const})),
+      ...Array.from({length: 30},(_,i)=>({slug:`live-${String(i).padStart(2,'0')}`})))
+    const admin = await cookieFor(ADMIN)
+    const first = (await send('/en/explore/review/',{cookie:admin}))!
+    const html = await first.text()
+    const next = (kind: string) => {
+      const nav = html.match(new RegExp(`<nav[^>]*data-review-page="${kind}"[^>]*>([\\s\\S]*?)</nav>`))
+      expect(nav).not.toBeNull()
+      const link = nav![1]!.match(/rel="next" href="([^"]+)"/)
+      expect(link).not.toBeNull()
+      return new URL(link![1]!.replaceAll('&amp;','&'),ORIGIN)
+    }
+    const second = next('pending'); second.searchParams.set('live_after',next('live').searchParams.get('live_after')!)
+    const page = await (await send(second.pathname+second.search,{cookie:admin}))!.text()
+    expect(page).toContain('Title pending-24'); expect(page).not.toContain('Title pending-00')
+    expect(page).toContain('Title live-05'); expect(page).not.toContain('Title live-29')
+    expect(page).toContain('action="'+second.pathname+'action'+second.search.replaceAll('&','&amp;')+'"')
+    const endpoint = second.pathname+'action'+second.search
+    const error = await (await post(endpoint,form({slug:'pending-24',action:'reject'},null),admin))!.text()
+    expect(error).toContain('A rejection needs a reason.'); expect(error).toContain('Title pending-24')
+    expect(error).not.toContain('Title pending-00')
+    const done = (await post(endpoint,form({slug:'pending-24',action:'reject',reason:'Synthetic rejection'},null),admin))!
+    expect(done.status).toBe(303); expect(done.headers.get('location')).toBe(second.toString())
+    const updated = await (await send(second.pathname+second.search,{cookie:admin}))!.text()
+    expect(updated).not.toContain('Title pending-24'); expect(updated).toContain('Title pending-25')
+  })
+})
 
 describe('sign in through Steam', () => {
   it('sends the browser to Steam with the callback and the page to return to', async () => {

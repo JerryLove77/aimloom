@@ -12,6 +12,7 @@ import { creatorOf, fileKeyInUse, fileNameTaken, freeSlug, insertItem, itemAnySt
 import { requireSameOrigin } from './auth'
 import { humanCheck } from './turnstile'
 import type { AppEnv } from './env'
+import { parseReviewCursors, reviewSearch } from '../lib/review-pagination'
 import { fail } from './http'
 
 export interface Shell { fill(page: string, html: string, title?: string): Promise<Response>; notFound(): Promise<Response> }
@@ -141,9 +142,10 @@ async function minePage(request: Request, env: AppEnv, lang: Lang, viewer: Viewe
   return shell.fill('mine', mineHtml(lang, await mine(env.DB, viewer.steamId), viewer), t(lang, 'explore.mine.title'))
 }
 
-async function reviewPage(env: AppEnv, lang: Lang, viewer: Viewer, shell: Shell, error: string | null): Promise<Response> {
-  const [pending, live, trusted] = await Promise.all([pendingItems(env.DB), liveItems(env.DB), trustedCreators(env.DB)])
-  return shell.fill('review', reviewHtml(lang, pending, live, trusted, viewer, error), t(lang, 'explore.review.title'))
+async function reviewPage(request: Request, env: AppEnv, lang: Lang, viewer: Viewer, shell: Shell, error: string | null): Promise<Response> {
+  const cursors = parseReviewCursors(new URL(request.url).searchParams)
+  const [pending, live, trusted] = await Promise.all([pendingItems(env.DB, cursors.pending), liveItems(env.DB, cursors.live), trustedCreators(env.DB)])
+  return shell.fill('review', reviewHtml(lang, pending, live, trusted, viewer, error, cursors), t(lang, 'explore.review.title'))
 }
 
 async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer | null, shell: Shell, sub: string, now: Date): Promise<Response> {
@@ -170,7 +172,7 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
     const item = slug ? await itemAnyStatus(env.DB, slug) : null
     const at = now.toISOString()
     // Another admin (or the owner) changed the item between this page's read and this action.
-    const stale = () => reviewPage(env, lang, viewer, shell, t(lang, 'explore.review.error.stale'))
+    const stale = () => reviewPage(request, env, lang, viewer, shell, t(lang, 'explore.review.error.stale'))
     if (action === 'approve' && item?.status === 'pending') {
       const obj = await env.UPLOADS.get(item.file_key)
       if (obj) {
@@ -187,7 +189,7 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
         await env.UPLOADS.delete(item.file_key)
       }
     } else if (action === 'reject' && item?.status === 'pending') {
-      if (!reason) return reviewPage(env, lang, viewer, shell, t(lang, 'explore.review.error.reason'))
+      if (!reason) return reviewPage(request, env, lang, viewer, shell, t(lang, 'explore.review.error.reason'))
       if (!(await transition(env.DB, { slug, from: 'pending', to: 'rejected', action: 'reject', actor: viewer.steamId, at, reason }))) return stale()
       await env.UPLOADS.delete(item.file_key)
     } else if (action === 'hide' && item?.status === 'published') {
@@ -196,10 +198,10 @@ async function review(request: Request, env: AppEnv, lang: Lang, viewer: Viewer 
       const steamId = item?.uploader ?? str(fd, 'steam_id', 20)
       if (/^7656119\d{10}$/.test(steamId)) await setTrusted(env.DB, steamId, action === 'trust', viewer.steamId, now)
     }
-    return Response.redirect(new URL(localizePath(lang, '/explore/review'), request.url).toString(), 303)
+    return Response.redirect(new URL(localizePath(lang, '/explore/review') + reviewSearch(parseReviewCursors(new URL(request.url).searchParams)), request.url).toString(), 303)
   }
   if (sub !== 'review' || request.method !== 'GET') return shell.notFound()
-  return reviewPage(env, lang, viewer, shell, null)
+  return reviewPage(request, env, lang, viewer, shell, null)
 }
 
 /** `sub` is the path under /<lang>/explore/ without its trailing slash: `upload`, `mine`, `review/action`, … */

@@ -7,6 +7,7 @@ import { localizePath, t, type Lang, type MessageKey } from '../i18n'
 import { esc, formatBytes, itemPath, title } from './explore-view'
 import { UPLOAD_LICENCES, type Kind } from './item-checks'
 import type { Item } from './explore-types'
+import { reviewSearch, type ReviewCursors, type ReviewPage } from './review-pagination'
 
 const fill = (s: string, vars: Record<string, string | number>): string => s.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m))
 const tt = (lang: Lang, key: MessageKey, vars: Record<string, string | number> = {}): string => esc(fill(t(lang, key), vars))
@@ -100,10 +101,18 @@ export function mineHtml(lang: Lang, items: Item[], viewer: Viewer): string {
 
 export interface PendingRow extends Item { uploader_total: number; uploader_live: number }
 
-export function reviewHtml(lang: Lang, pending: PendingRow[], live: Item[], trusted: string[], viewer: Viewer, error: string | null): string {
+export function reviewHtml(lang: Lang, pendingPage: ReviewPage<PendingRow>, livePage: ReviewPage<Item>, trusted: string[], viewer: Viewer, error: string | null, cursors: ReviewCursors): string {
   const here = localizePath(lang, '/explore/review')
+  const pending = pendingPage.items; const live = livePage.items
+  const actionUrl = here + 'action' + reviewSearch(cursors)
+  const pager = (kind: 'pending' | 'live', page: ReviewPage<Item>): string => {
+    if (!cursors[kind] && !page.next) return ''
+    return `<nav class="ex-pager" data-review-page="${kind}" aria-label="${tt(lang, kind === 'pending' ? 'explore.review.pendingPages' : 'explore.review.livePages')}">`
+      + (cursors[kind] ? `<a class="button button--secondary" href="${esc(here + reviewSearch({ ...cursors, [kind]: null }))}">${tt(lang, 'explore.review.first')}</a>` : '')
+      + (page.next ? `<a class="button button--secondary" rel="next" href="${esc(here + reviewSearch({ ...cursors, [kind]: page.next }))}">${tt(lang, 'explore.next')}</a>` : '') + '</nav>'
+  }
   const act = (slug: string, action: string, label: MessageKey, cls = 'button--secondary', extra = ''): string =>
-    `<form method="post" action="${esc(here + 'action')}" class="ex-inline"><input type="hidden" name="slug" value="${esc(slug)}" /><input type="hidden" name="action" value="${action}" />${extra}<button type="submit" class="button ${cls}">${tt(lang, label)}</button></form>`
+    `<form method="post" action="${esc(actionUrl)}" class="ex-inline"><input type="hidden" name="slug" value="${esc(slug)}" /><input type="hidden" name="action" value="${action}" />${extra}<button type="submit" class="button ${cls}">${tt(lang, label)}</button></form>`
   const preview = (i: PendingRow): string => {
     const src = esc(`${here}file/${i.slug}`)
     if (i.kind === 'theme') return `<img class="ex-theme" src="${src}.svg" alt="" width="320" height="180" />`
@@ -114,7 +123,7 @@ export function reviewHtml(lang: Lang, pending: PendingRow[], live: Item[], trus
     + `<h2>${esc(i.title_zh)} / ${esc(i.title_en)}</h2><p class="mono small muted">${fileLine(i, lang)} · ${esc(i.licence)}${i.code ? ` · ${esc(i.code)}` : ''}</p>`
     + `<p>${esc(i.summary_zh)}<br />${esc(i.summary_en)}</p>`
     + `<p class="small muted">${tt(lang, 'explore.by')} ${esc(i.author)}${i.author_url ? ` · ${esc(i.author_url)}` : ''} · ${tt(lang, 'explore.review.uploader', { id: i.uploader ?? '', total: i.uploader_total, live: i.uploader_live })}</p>`
-    + `<form method="post" action="${esc(here + 'action')}" class="ex-review__actions"><input type="hidden" name="slug" value="${esc(i.slug)}" />`
+    + `<form method="post" action="${esc(actionUrl)}" class="ex-review__actions"><input type="hidden" name="slug" value="${esc(i.slug)}" />`
     + `<label class="ex-field"><span>${tt(lang, 'explore.review.reason')}</span><input name="reason" maxlength="400" /></label>`
     + `<div class="ex-actions"><button type="submit" name="action" value="approve" class="button button--primary">${tt(lang, 'explore.review.approve')}</button>`
     + `<button type="submit" name="action" value="reject" class="button button--danger">${tt(lang, 'explore.review.reject')}</button>`
@@ -123,9 +132,9 @@ export function reviewHtml(lang: Lang, pending: PendingRow[], live: Item[], trus
   const trustedRows = trusted.map(id => `<li class="ex-mine"><span class="mono">${esc(id)}</span><div class="ex-mine__meta">${act('', 'untrust', 'explore.review.untrust', 'button--secondary', `<input type="hidden" name="steam_id" value="${esc(id)}" />`)}</div></li>`).join('')
   return crumbs(lang, tt(lang, 'explore.review.title')) + `<h1>${tt(lang, 'explore.review.title')}</h1><p class="muted">${tt(lang, 'explore.review.intro')}</p>` + accountBar(lang, viewer, here)
     + (error ? `<div class="notice ex-notice-error" role="alert"><p>${esc(error)}</p></div>` : '')
-    + (pending.length ? `<ul class="ex-list">${queue}</ul>` : `<p class="panel">${tt(lang, 'explore.review.empty')}</p>`)
+    + (pending.length ? `<ul class="ex-list">${queue}</ul>` : `<p class="panel">${tt(lang, cursors.pending ? 'explore.review.pageEmpty' : 'explore.review.empty')}</p>`) + pager('pending', pendingPage)
     + `<section class="ex-section"><h2>${tt(lang, 'explore.review.trusted')}</h2>${trustedRows ? `<ul class="ex-list">${trustedRows}</ul>` : '<p class="muted">—</p>'}</section>`
-    + `<section class="ex-section"><h2>${tt(lang, 'explore.review.live')}</h2>${liveRows ? `<ul class="ex-list">${liveRows}</ul>` : '<p class="muted">—</p>'}</section>`
+    + `<section class="ex-section"><h2>${tt(lang, 'explore.review.live')}</h2>${liveRows ? `<ul class="ex-list">${liveRows}</ul>` : '<p class="muted">—</p>'}${pager('live', livePage)}</section>`
 }
 
 /** After the first sign-in (or from "Change name"): the public display name and an optional link. */

@@ -113,6 +113,9 @@ no R2 binding: a download is a counted `302`.
 
 **Provisioning, once** (the maintainer, logged in with `wrangler login`):
 
+For an existing deployment with migration 0010 pending, read its **Worker-first deployment
+order** below before running `migrations apply`; that command applies every pending migration.
+
     npx wrangler r2 bucket create aimloom-files
     # Dashboard → R2 → aimloom-files → Settings → Custom domains → add dl.aimloom.dev; keep r2.dev off.
     npm run wrangler-config -w @kvk/site
@@ -156,6 +159,48 @@ make the `CREATE UNIQUE INDEX` fail, so resolve those items first:
 Then apply 0005–0007 in order to both databases, before deploying the Worker that uses them. The
 workerd suite builds its schema from `migrations/` with `applyD1Migrations`, and empties both
 buckets before every test, so a new migration needs no change to the tests.
+
+Migration `0008_download_monthly_month.sql` adds a month-first index for the explorer's earliest
+month lookup; it changes no download counts. Apply it to preview and production with the same
+migration commands above. The latest listing does not aggregate downloads; only popular sorting
+does. Search uses a literal substring with ASCII case folding, preserving the 64-character input
+limit without exceeding D1's 50-byte `LIKE` pattern limit for Chinese or escaped punctuation.
+
+Migration `0009_review_pagination.sql` adds partial indexes for the two admin lists. Each shows
+24 items, with an independent `(time, slug)` cursor, Next and First page links. Null upload times
+sort first. Moderating an earlier item does not shift later pages; actions, errors and redirects
+retain both list positions. Uploader totals still cover all statuses, but are aggregated only
+for the uploaders shown on the current page.
+
+**Deployment order for `0010_report_storage.sql` is different: deploy this compatible Worker
+first, then apply the pending migrations.** Test that order on preview before production.
+The Worker falls back to the archive sum while `report_storage` is absent. Once migrated, it
+uses the single counter row. Insert, byte-update and delete triggers keep the counter in the
+same transaction as reports, including retention and rollback. The Worker uses SQL `changes()`
+to count report rows because D1 `meta.changes` also counts trigger updates; older Workers do not
+handle this and must not serve report requests after 0010 is applied. For the same reason, do
+not roll back to a pre-compatible Worker while the triggers exist.
+
+The counter is initialized from existing reports by the migration. For an occasional read-only
+check (through the usual `wrangler d1 execute` command), use:
+
+```sql
+SELECT COALESCE((SELECT bytes FROM report_storage WHERE id = 1), -1) AS recorded,
+       COALESCE(SUM(bytes), 0) AS actual FROM reports;
+```
+
+If they differ, reconcile in a single statement, with no intervening report write:
+
+```sql
+INSERT INTO report_storage (id, bytes)
+SELECT 1, COALESCE(SUM(bytes), 0) FROM reports WHERE 1
+ON CONFLICT(id) DO UPDATE SET bytes = excluded.bytes;
+```
+
+A missing counter row refuses reports with `STORAGE_FULL` until repaired. Maintenance writes
+must use INSERT, UPDATE, DELETE or an UPSERT; do not use `INSERT OR REPLACE`, whose implicit
+delete does not reliably run SQLite delete triggers. Normal report inserts ignore number
+collisions without changing accounting.
 
 **Backups.** D1's Time Travel restores any minute of the last 7 days (free plan). About once a week,
 with the weekly look at the database, run `npm run site:backup -w @kvk/site`: it writes the
@@ -241,12 +286,18 @@ about to be refused never pays for a full-table scan:
    open — see the spec, §5.2 step 3);
 2. **per UTC day, by count**: at most 300 reports (`DAILY_CEILING`, `DAILY_LIMIT`), read from an
    indexed `WHERE day = ?` query;
-3. **per UTC day, by bytes**: at most 64 MiB (`DAILY_BYTES_CEILING`, also `DAILY_LIMIT`), from the
+3. **per UTC day, by bytes**: at most 64 MiB including the incoming stored body (`DAILY_BYTES_CEILING`, also `DAILY_LIMIT`), from the
    same indexed query as #2 at no extra cost — this is what stops 300 reports × up to 1 MiB each
    from reaching 300 MiB in a single day against a 400 MiB archive;
-4. **archive total**: once the table's total `bytes` reaches 400 MiB (`ARCHIVE_CEILING_BYTES`,
-   `STORAGE_FULL`) new reports are refused until old ones age out. Only checked once #2 and #3
-   pass, with an unindexed full-table `SUM(bytes)`.
+4. **archive total**: the table's total `bytes`, including the incoming stored body, cannot exceed
+   400 MiB (`ARCHIVE_CEILING_BYTES`, `STORAGE_FULL`); new reports are refused until old ones age out. Only checked once #2 and #3
+   pass, using `report_storage` after migration 0010 (an unindexed `SUM(bytes)` before it).
+
+Count and byte checks are part of the insert itself, so concurrent requests cannot overrun them.
+The final stored JSON, including its number and receipt time, determines the incoming byte count.
+A failed insert is classified in the same transaction: a full quota returns its existing error
+code, a number collision retries, and any other database failure returns `STORAGE_FAILED`.
+Tickets enforce their 100-per-day quota in the same way. Only stored rows schedule notification.
 
 Retention is 180 days (`RETENTION_DAYS`), enforced two ways: every incoming report first runs
 `deleteExpired` (`DELETE FROM reports WHERE created_at < now - 180d`), and a Cron Trigger
