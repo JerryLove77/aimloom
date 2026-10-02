@@ -6,6 +6,9 @@ const plan = async (sql: string, ...args: unknown[]) =>
   (await db.prepare(`EXPLAIN QUERY PLAN ${sql}`).bind(...args).all<{ detail: string }>()).results.map(r => r.detail).join(' | ')
 
 describe('query plans', () => {
+  it('the oldest month uses a month-first index', async () => {
+    expect(await plan('SELECT MIN(month) FROM download_monthly')).toMatch(/SEARCH download_monthly USING COVERING INDEX download_monthly_month/)
+  })
   it('the live-name check searches item_live_name instead of scanning item', async () => {
     const p = await plan("SELECT COUNT(*) AS c FROM item WHERE kind = ? AND file_name = ? COLLATE NOCASE AND status IN ('published','pending','hidden')", 'theme', 'x.json')
     expect(p).toMatch(/SEARCH item USING (COVERING )?INDEX item_live_name/)

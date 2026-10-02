@@ -20,7 +20,10 @@ export type TicketKind = typeof TICKET_KINDS[number]
 export interface Ticket { kind: TicketKind; description: string; contact: string | null; lang: 'zh' | 'en'; page: string }
 export const MAX_TICKET_DESCRIPTION = 2000, MAX_TICKET_CONTACT = 200, MAX_TICKET_BODY = 16 * 1024, TICKETS_PER_DAY = 100, NUMBER_ATTEMPTS = 5
 const PAGE = /^\/(zh|en)(\/[a-z0-9/-]*)?$/
-const INSERT = 'INSERT OR IGNORE INTO tickets (number, created_at, day, kind, lang, has_contact, bytes, body) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+const INSERT = `INSERT INTO tickets (number, created_at, day, kind, lang, has_contact, bytes, body)
+  SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
+  WHERE (SELECT COUNT(*) FROM tickets WHERE day = ?3) < ${TICKETS_PER_DAY}
+  ON CONFLICT(number) DO NOTHING`
 
 export interface TicketDeps {
   now?: () => Date
@@ -75,13 +78,16 @@ export async function handleTickets(request: Request, env: AppEnv, ctx: { waitUn
   let number = ''
   try {
     await deleteExpiredTickets(env, now)
-    const today = await env.DB.prepare('SELECT COUNT(*) AS c FROM tickets WHERE day = ?').bind(day).first<number>('c')
-    if ((today ?? 0) >= TICKETS_PER_DAY) return fail('DAILY_LIMIT', 429)
     for (let attempt = 0; attempt < NUMBER_ATTEMPTS && number === ''; attempt++) {
       const candidate = reportNumber(now, random)
       const body = JSON.stringify({ ...ticket, number: candidate, receivedAt: createdAt })
-      const done = await env.DB.prepare(INSERT).bind(candidate, createdAt, day, ticket.kind, ticket.lang, ticket.contact === null ? 0 : 1, new TextEncoder().encode(body).length, body).run()
-      if (done.meta.changes === 1) number = candidate
+      // Keep failure diagnosis in the insert's transaction, and skip it when a row was stored.
+      const [done, refused] = await env.DB.batch<{ c: number }>([
+        env.DB.prepare(INSERT).bind(candidate, createdAt, day, ticket.kind, ticket.lang, ticket.contact === null ? 0 : 1, new TextEncoder().encode(body).length, body),
+        env.DB.prepare('SELECT (SELECT COUNT(*) FROM tickets WHERE day = ?) AS c WHERE changes() = 0').bind(day),
+      ])
+      if (done!.meta.changes === 1) number = candidate
+      else if ((refused!.results[0]?.c ?? 0) >= TICKETS_PER_DAY) return fail('DAILY_LIMIT', 429)
     }
   } catch { return fail('STORAGE_FAILED', 500) }
   if (number === '') return fail('STORAGE_FAILED', 500)
