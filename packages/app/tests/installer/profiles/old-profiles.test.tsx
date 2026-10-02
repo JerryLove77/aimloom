@@ -39,7 +39,6 @@ describe('an unreadable Profile file in the list', () => {
     render(<ProfilesApp bridge={bridge} assets={createDemoAssetBridge()} />)
     fireEvent.click(await screen.findByText('查看文件'))
     expect(screen.getByText(/old-tracking\.json：不支持此 Profile 版本。/)).toBeVisible()
-    expect(screen.getByText(/0\.1\.5 或更早版本保存的 Profile 是旧格式.*删除后重新创建/)).toBeVisible()
     expect(screen.getByRole('button', { name: '删除 old-tracking.json' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: '删除 My Profile.json' })).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: '删除 old-tracking.json' }))

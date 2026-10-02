@@ -275,6 +275,7 @@ review before stable found and left alone, none of which loses data:
 | Engine | `exportFile`'s inside-the-game refusal compares path text, so another spelling of the game folder (`\\?\`, a short name, a mapped drive) passes; Quick import has no total size limit for one drop and does not count folders toward its file limit | Not started |
 | Native | A read that times out leaves a worker that is never ended; `planCrosshairAdd` has no native one-create-row check (the engine enforces it) | Not started |
 | App | Quick import: unrecognised files stay collapsed when nothing will be added, focus is lost when Advanced is toggled, no re-check after recovery; favourites: the 501st gives a misleading message and a damaged file is only reported on the first star; the Profile sound sheet's "use a file" choice does nothing for kill and spawn; a Theme tile click can change page during a search | Not started |
+| App | The Profile library no longer shows its count of Profiles, and its unread-files notice drops the sentence about the 0.1.5 format (user, 2026-10-01: nobody is known to have saved an old Profile). The notice itself, its file list and 删除 on each file named like a Profile stay; the release readmes still carry the note | Done, tests only |
 
 ## After v0.1.6
 
