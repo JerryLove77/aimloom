@@ -23,7 +23,7 @@
 Get the Setup from [aimloom.dev](https://aimloom.dev/en/download/), which lists its SHA-256. The
 Setup and the portable ZIP are both attached to the
 [GitHub release](https://github.com/JerryLove77/aimloom/releases/latest). The current release is
-**v0.1.6**.
+**v0.1.7**.
 
 ## Features
 
@@ -75,7 +75,16 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
 
 ## Status
 
-- **Released:** v0.1.6 (2026-10-01) — the sidebar becomes two big pages, Explore (Quick import,
+- **Released:** v0.1.7 (2026-10-01) — a patch for 0.1.6: fixes only, no new features. A write is
+  refused when another program changed the settings file after it was read; a result query that
+  fails now and then during a write is retried; after Check result, a write that in fact failed
+  shows why; after a Profile is applied, the Theme, Sounds and Enemy pages read the game's
+  current settings again; a cancelled import preview removes its own staged files; the Profile
+  page no longer shows the number of Profiles. The website's Steam sign-in and its report storage
+  quotas were hardened at the same time. These fixes have run only in tests; a test build was
+  opened on the test PC, and the release build itself has not been used in the real game yet.
+  With 0.1.6 installed, just run the installer.
+- **Previous:** v0.1.6 (2026-10-01) — the sidebar becomes two big pages, Explore (Quick import,
   Backup and restore, the website's explorer) and Customize (Profile, Theme, Sounds, Crosshair,
   Enemy); a new engine written in Rust reads and writes the game's files, so the download no
   longer carries PowerShell 7 and is a few MB; Quick import becomes drop, look, add, where
@@ -88,12 +97,12 @@ Aimloom is not code-signed, so Windows SmartScreen may warn on first run: choose
   have run only in tests, and the release build itself has not been used in the real game yet.
   Known issue: files dropped or added from a folder that OneDrive syncs are refused
   ([#30](https://github.com/JerryLove77/aimloom/issues/30)).
-- **Previous:** v0.1.5 (2026-09-30) — PowerShell 7 comes with Aimloom, so nothing else needs
+- **Earlier:** v0.1.5 (2026-09-30) — PowerShell 7 comes with Aimloom, so nothing else needs
   installing (the installer is about 81 MB, the portable ZIP about 114 MB); Theme, Sounds and
   Crosshair open the website's Explore page; a linked Steam account's display name can be changed.
   The Explore page (Steam sign-in, uploads, review) and feedback tickets go live on the site with
   it. The installer was installed and opened on a clean Windows (Windows Sandbox).
-- **Earlier:** v0.1.4 (2026-09-22) — fine-tuning a pasted CS2 / VALORANT crosshair code, "Apply
+- **Before that:** v0.1.4 (2026-09-22) — fine-tuning a pasted CS2 / VALORANT crosshair code, "Apply
   and start the game" for a Profile, search and add-from-computer when choosing a Profile's
   background and sounds, search on the Theme page, and a "Join the beta" switch in Settings.
   v0.1.3 brought in-App problem reports, an optional Steam account, a launch update check,
