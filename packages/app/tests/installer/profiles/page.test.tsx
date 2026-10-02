@@ -293,7 +293,7 @@ describe('adding a file to a Profile sheet from my computer', () => {
         reconcileCalls.push(operationId)
         if (options.reconcileFails) throw new Error('无法核对，请稍后重试')
         if (options.reconcileAdds) added = true
-        return {}
+        return { job: { state: 'reconciled' } }
       },
       planFileAdd: options.planFileAdd ?? (async (input: unknown) => { planCalls.push(input); if (!options.jobUnknown) added = true; return { planId: 'plan-add' } }),
       pickFile: async () => (options.pickPath !== undefined ? options.pickPath : 'C:/Users/Player1/Downloads/New Theme.json'),
@@ -415,6 +415,17 @@ describe('adding a file to a Profile sheet from my computer', () => {
     await within(sheet).findByRole('button', { name: /Blue Room/ })
     expect(within(sheet).queryByRole('button', { name: 'Blue \u9884\u89c8' })).toBeNull()
     expect(within(sheet).getByRole('button', { name: '\u53d6\u6d88' })).toBeEnabled()
+  })
+
+  it.each(['failed', 'reconciled'])('a cached %s import with an Issue unlocks the sheet and keeps the reason visible', async state => {
+    const f = fixtures()
+    const { game } = gameWithAdd({ jobUnknown: true })
+    game.reconcile = async () => ({ job: { state, error: { code: 'ENGINE_ERROR', message: '文件写入失败。', messageEn: 'Writing the file failed.' } } })
+    const sheet = await addUntilUnknown(f, game)
+    fireEvent.click(within(sheet).getByRole('button', { name: '核对结果' }))
+    expect(await within(sheet).findByText('文件写入失败。')).toBeVisible()
+    expect(within(sheet).queryByRole('button', { name: '核对结果' })).toBeNull()
+    expect(within(sheet).getByRole('button', { name: '取消' })).toBeEnabled()
   })
 
   it('a failed reconcile keeps the sheet locked so the player can retry \u6838\u5bf9\u7ed3\u679c', async () => {

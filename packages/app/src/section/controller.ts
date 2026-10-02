@@ -1,7 +1,7 @@
 import type { Lang, MessageKey, Msg } from '../i18n'
 import { errorMsg } from './issue-text'
 import { resolveGameRoot, writeGameRoot, type GameRootStorage } from './game-root'
-import { incompleteMsg, waitForJob, type PlanRunner } from './run-plan'
+import { incompleteMsg, waitForJob, type PlanJob, type PlanRunner } from './run-plan'
 
 /** A page controller's state and who listens to it. */
 export function createStore<S>(initial: S) {
@@ -40,7 +40,7 @@ export interface SectionBridge extends PlanRunner {
   discover(): Promise<{ candidates: string[] }>
   locate(gameRoot: string): Promise<{ gameRoot: string }>
   pickFolder(kind: 'game', lang: Lang): Promise<string | null>
-  reconcile(operationId: string): Promise<unknown>
+  reconcile(operationId: string): Promise<{ job: PlanJob }>
 }
 
 /** Each section's own wording for the shared steps. */
@@ -156,9 +156,14 @@ export function createSection<S extends SectionState>(bridge: SectionBridge, sto
     async reconcile(): Promise<void> {
       if (!operationId) { publish({ unresolved: false } as Partial<S>); return }
       try {
-        await bridge.reconcile(operationId)
+        const { job } = await bridge.reconcile(operationId)
         operationId = null
         await refresh()
+        // A successful query can recover a failed write (or a failed backup scan).
+        if (job.state === 'failed' || job.error) {
+          publish({ unresolved: false, error: errorMsg(job.error, { key: keys.reconcileFailed }), message: null } as Partial<S>)
+          return
+        }
         publish({ unresolved: false, error: null, message: { key: keys.reconciled }, ...options.onReconciled } as Partial<S>)
       } catch (error) { publish({ error: errorMsg(error, { key: keys.reconcileFailed }) } as Partial<S>) }
     },

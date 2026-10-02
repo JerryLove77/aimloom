@@ -41,7 +41,7 @@ function shared(picked: string | null) {
       planFileAdd: async (input: PlanFileAddRequest) => { adds.push(input); return { planId: 'plan-add' } },
       execute: async () => ({ operationId: 'op-1' }),
       job: async () => ({ state: 'finished', result: { status: 'completed' } }),
-      reconcile: async () => ({}),
+      reconcile: async () => ({ job: { state: 'reconciled' } }),
     },
   }
 }

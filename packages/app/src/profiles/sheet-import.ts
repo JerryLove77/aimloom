@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import type { Lang, MessageKey, Msg } from '../i18n'
 import { errorMsg } from '../section/issue-text'
 import type { FileAddOutcome, FileImportInput } from '../section/file-import'
+import type { PlanJob } from '../section/run-plan'
+
+export type SheetReconcile = () => Promise<PlanJob | null>
 
 /**
  * Adding an outside file from a Profile sheet: the nested add sheet's state, and the lock that
@@ -11,7 +14,7 @@ import type { FileAddOutcome, FileImportInput } from '../section/file-import'
 export function useSheetImport({ onAddFile, onPickFile, onReconcile, onUnresolvedChange, setError, keys, afterAdd, afterReconcile }: {
   onAddFile: ((input: FileImportInput) => Promise<FileAddOutcome>) | undefined
   onPickFile: ((lang: Lang) => Promise<string | null>) | undefined
-  onReconcile: (() => Promise<void>) | undefined
+  onReconcile: SheetReconcile | undefined
   onUnresolvedChange: ((unresolved: boolean) => void) | undefined
   setError(error: Msg | null): void
   keys: { generic: Msg; unknown: MessageKey; reconcileFailed: MessageKey }
@@ -53,11 +56,12 @@ export function useSheetImport({ onAddFile, onPickFile, onReconcile, onUnresolve
       if (!onReconcile) return
       setReconciling(true)
       try {
-        await onReconcile()
+        const job = await onReconcile()
         setUnresolved(false)
         setError(null)
         const after = afterReconcile()
         if (after) await after
+        if (job && (job.state === 'failed' || job.error)) setError(errorMsg(job.error, { key: keys.reconcileFailed }))
       } catch (reason) { setError(errorMsg(reason, { key: keys.reconcileFailed })) }
       finally { setReconciling(false) }
     },

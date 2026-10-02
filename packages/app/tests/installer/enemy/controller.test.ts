@@ -29,7 +29,7 @@ function bridge(options: { job?: Job } = {}) {
     },
     execute: async () => ({ operationId: 'op-1' }),
     job: async () => job,
-    reconcile: async () => { calls.push('reconcile'); return {} },
+    reconcile: async () => { calls.push('reconcile'); return { job: { state: 'reconciled' } } },
   }
 }
 

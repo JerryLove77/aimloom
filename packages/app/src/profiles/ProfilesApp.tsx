@@ -181,10 +181,11 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     return outcome
   }
   /** Reconciles the pending add's own operationId -- the only exit from `unknown`. */
-  async function reconcileImport(): Promise<void> {
-    if (!locate || !pendingImportOp.current) return
-    await locate.reconcile(pendingImportOp.current)
+  async function reconcileImport() {
+    if (!locate || !pendingImportOp.current) return null
+    const { job } = await locate.reconcile(pendingImportOp.current)
     pendingImportOp.current = null
+    return job
   }
   const { toast, tone, hide, show } = useToast(null)
   const dropHint = useFileDrop(fileDrops, { section: 'profile', active: isActive && sheet === null && deleting === null, busy: false, onFile: () => {}, onRefused: show })

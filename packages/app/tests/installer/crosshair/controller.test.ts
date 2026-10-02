@@ -27,7 +27,7 @@ function bridge(options: { job?: { state: string; result?: { status: string }; e
     planCrosshairAdd: async (input: { file: string; pngBase64: string; revision: number }) => { plans.push({ file: input.file, pngBase64: input.pngBase64 }); return { planId: 'plan-1' } },
     execute: async () => ({ operationId: 'op-1' }),
     job: async () => job,
-    reconcile: async () => { calls.push('reconcile'); return {} },
+    reconcile: async () => { calls.push('reconcile'); return { job: { state: 'reconciled' } } },
     pickFile: async () => null,
   }
 }

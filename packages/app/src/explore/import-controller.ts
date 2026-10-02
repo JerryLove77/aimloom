@@ -191,8 +191,13 @@ export function createImportController(bridge: ImportBridge, storage: GameRootSt
     async reconcile(): Promise<void> {
       if (!operationId) { publish({ unresolved: false }); return }
       try {
-        await bridge.reconcile(operationId)
+        const { job } = await bridge.reconcile(operationId)
         operationId = null
+        if (job.state === 'failed' || job.error) {
+          publish({ unresolved: false, progress: null, outcome: null, message: null })
+          await replanAfter(errorMsg(job.error, { key: 'quick.error.add' }))
+          return
+        }
         publish({ unresolved: false, error: null, message: { key: 'quick.reconciled' } })
       } catch (error) { publish({ error: errorMsg(error, { key: 'quick.error.reconcile' }) }) }
     },

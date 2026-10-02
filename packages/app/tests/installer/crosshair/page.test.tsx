@@ -30,7 +30,7 @@ function fixtures(options: { picked?: string | null; job?: { state: string; resu
     planCrosshairAdd: async (input: { file: string; pngBase64: string }) => { plans.push({ file: input.file }); pngs.push(input.pngBase64); return { planId: 'plan-1' } },
     execute: async () => ({ operationId: 'op-1' }),
     job: async () => options.job ?? ({ state: 'finished', result: { status: 'completed' } }),
-    reconcile: async (operationId: string) => { reconciled.push(operationId); return {} },
+    reconcile: async (operationId: string) => { reconciled.push(operationId); return { job: { state: 'reconciled' } } },
     pickFile: async (kind: 'theme' | 'sound' | 'crosshair') => { pickKinds.push(kind); return picked },
     exported: [] as { directory: string; fileName: string }[],
     async exportFile(input: { directory: string; fileName: string; base64: string; gameRoot: string }) {
