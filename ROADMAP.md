@@ -269,7 +269,17 @@ Set by the user on 2026-09-30 (「beta2主要做修改一键拖入和fav系统�
 
 Deleting game files from the App is a later idea, not part of beta2 (user, 2026-09-30).
 
-## Next: v0.1.7 — the patch after 0.1.6
+## v0.1.7 — the patch after 0.1.6 (released 2026-10-01)
+
+**Released** from `502ab05` as GitHub release `v0.1.7`, stable and recommended on aimloom.dev. It
+carries the fixes of PR #33 and #34 (the settings hash covers the bytes that were read; job
+results recovered after a failed query; import previews own their staging folder and its lease;
+pages refreshed after a Profile apply; the website's Steam sign-in bound to the browser, D1
+quotas and review pagination, migrations 0008–0010) and the Profile page row at the end of the
+table below. Checked in tests on macOS and Windows only; a test build was opened on the test PC,
+and the release build has not been used in the real game. **Every row marked Not started below
+is still open** and moves to the next patch. One more for that list: each import or file-add
+preview leaves an empty `locks\import-<hash>.lock` in the data folder that is never removed.
 
 Set by the user on 2026-10-01 (「beta3当成016的补丁去发」): there is no 0.1.6-beta.3; what would have
 been in it ships as a patch after stable 0.1.6. The version is 0.1.7, because the version rules
@@ -283,7 +293,7 @@ review before stable found and left alone, none of which loses data:
 | Engine | `exportFile`'s inside-the-game refusal compares path text, so another spelling of the game folder (`\\?\`, a short name, a mapped drive) passes; Quick import has no total size limit for one drop and does not count folders toward its file limit | Not started |
 | Native | A read that times out leaves a worker that is never ended; `planCrosshairAdd` has no native one-create-row check (the engine enforces it) | Not started |
 | App | Quick import: unrecognised files stay collapsed when nothing will be added, focus is lost when Advanced is toggled, no re-check after recovery; favourites: the 501st gives a misleading message and a damaged file is only reported on the first star; the Profile sound sheet's "use a file" choice does nothing for kill and spawn; a Theme tile click can change page during a search | Not started |
-| App | The Profile library no longer shows its count of Profiles, and its unread-files notice drops the sentence about the 0.1.5 format (user, 2026-10-01: nobody is known to have saved an old Profile). The notice itself, its file list and 删除 on each file named like a Profile stay; the release readmes still carry the note | Done, tests only |
+| App | The Profile library no longer shows its count of Profiles, and its unread-files notice drops the sentence about the 0.1.5 format (user, 2026-10-01: nobody is known to have saved an old Profile). The notice itself, its file list and 删除 on each file named like a Profile stay; the release readmes still carry the note | Shipped in 0.1.7, tests only |
 
 ## After v0.1.6
 
