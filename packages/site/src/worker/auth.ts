@@ -9,6 +9,8 @@ import { fail } from './http'
 
 export const STEAM_OPENID = 'https://steamcommunity.com/openid/login'
 export const COOKIE = 'aimloom_session'
+const LOGIN_COOKIE = '__Host-aimloom_login'
+const LOGIN_SECONDS = 600
 export const SESSION_DAYS = 30
 const CLAIMED = /^https:\/\/steamcommunity\.com\/openid\/id\/(7656119\d{10})$/
 
@@ -23,24 +25,53 @@ export function safeNext(value: string | null): string {
   return value && /^\/(zh|en)\/[a-z0-9/_?=&.%-]*$/i.test(value) && !value.includes('//') ? value : '/zh/explore/'
 }
 
+/** Initiation and verification must construct exactly the same signed return address. */
+function callbackUrl(url: URL, state: string): string {
+  const returnTo = new URL('/auth/steam/callback', url.origin)
+  returnTo.searchParams.set('next', safeNext(url.searchParams.get('next')))
+  returnTo.searchParams.set('state', state)
+  return returnTo.toString()
+}
+
+function tokenCookie(name: string, token: string, maxAge: number): string {
+  return `${name}=${token}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`
+}
+
+function readTokenCookie(request: Request, name: string): string | null {
+  return new RegExp(`(?:^|;\\s*)${name}=([0-9a-f]{64})(?:;|$)`).exec(request.headers.get('cookie') ?? '')?.[1] ?? null
+}
+
 export function loginRedirect(url: URL): Response {
-  const next = safeNext(url.searchParams.get('next'))
-  const returnTo = new URL('/auth/steam/callback', url.origin); returnTo.searchParams.set('next', next)
+  const state = hex(crypto.getRandomValues(new Uint8Array(32)).buffer)
   const p = new URLSearchParams({
     'openid.ns': 'http://specs.openid.net/auth/2.0', 'openid.mode': 'checkid_setup',
-    'openid.return_to': returnTo.toString(), 'openid.realm': url.origin,
+    'openid.return_to': callbackUrl(url, state), 'openid.realm': url.origin,
     'openid.identity': 'http://specs.openid.net/auth/2.0/identifier_select', 'openid.claimed_id': 'http://specs.openid.net/auth/2.0/identifier_select',
   })
-  return Response.redirect(`${STEAM_OPENID}?${p}`, 302)
+  return new Response(null, { status: 302, headers: {
+    location: `${STEAM_OPENID}?${p}`, 'cache-control': 'no-store',
+    'set-cookie': tokenCookie(LOGIN_COOKIE, state, LOGIN_SECONDS),
+  } })
 }
 
 /** Asks Steam whether the signed answer is genuine; returns the SteamID64 or null. */
 export async function verifyCallback(url: URL, fetcher: Fetcher): Promise<string | null> {
   const q = url.searchParams
+  // URLSearchParams.get reads the first value, while the verification POST below uses
+  // set. Refuse duplicates so both sides authenticate exactly the same identity.
+  const seen = new Set<string>()
+  for (const key of q.keys()) {
+    if (seen.has(key)) return null
+    seen.add(key)
+  }
   const claimed = q.get('openid.claimed_id') ?? ''
   const m = CLAIMED.exec(claimed)
   const returnTo = q.get('openid.return_to') ?? ''
-  if (!m || q.get('openid.mode') !== 'id_res' || !returnTo.startsWith(`${url.origin}/auth/steam/callback`)) return null
+  const signed = (q.get('openid.signed') ?? '').split(',')
+  if (!m || q.get('openid.mode') !== 'id_res' || returnTo !== callbackUrl(url, q.get('state') ?? '')
+    || q.get('openid.ns') !== 'http://specs.openid.net/auth/2.0'
+    || q.get('openid.op_endpoint') !== STEAM_OPENID || q.get('openid.identity') !== claimed
+    || !['op_endpoint', 'claimed_id', 'identity', 'return_to', 'response_nonce'].every(key => signed.includes(key))) return null
   const check = new URLSearchParams()
   for (const [k, v] of q) if (k.startsWith('openid.')) check.set(k, v)
   check.set('openid.mode', 'check_authentication')
@@ -60,8 +91,7 @@ export async function createSession(env: AppEnv, steamId: string, now: Date): Pr
 }
 
 export function cookieOf(request: Request): string | null {
-  const m = new RegExp(`(?:^|;\\s*)${COOKIE}=([0-9a-f]{64})(?:;|$)`).exec(request.headers.get('cookie') ?? '')
-  return m ? m[1]! : null
+  return readTokenCookie(request, COOKIE)
 }
 
 export async function readSession(request: Request, env: AppEnv, now: Date): Promise<Session | null> {
@@ -76,8 +106,8 @@ export async function deleteSession(request: Request, env: AppEnv): Promise<void
   if (token) await env.DB.prepare('DELETE FROM session WHERE token_hash = ?').bind(await tokenHash(token)).run()
 }
 
-export const setCookie = (token: string): string => `${COOKIE}=${token}; Path=/; Max-Age=${SESSION_DAYS * 86_400}; HttpOnly; Secure; SameSite=Lax`
-export const clearCookie = (): string => `${COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax`
+export const setCookie = (token: string): string => tokenCookie(COOKIE, token, SESSION_DAYS * 86_400)
+export const clearCookie = (): string => tokenCookie(COOKIE, '', 0)
 
 /** Every state-changing request must come from the site's own origin. */
 export function requireSameOrigin(request: Request): Response | null {
@@ -97,15 +127,26 @@ export async function handleAuth(request: Request, env: AppEnv, now: Date, fetch
   }
   if (url.pathname === '/auth/steam/callback') {
     if (request.method !== 'GET') return fail('METHOD_NOT_ALLOWED', 405)
-    const steamId = await verifyCallback(url, fetcher)
+    // The signed Steam answer must belong to the browser that initiated this login.
+    // A host-only cookie prevents another subdomain from supplying the browser challenge.
+    const state = url.searchParams.get('state') ?? ''
+    const cookie = readTokenCookie(request, LOGIN_COOKIE)
+    const steamId = /^[0-9a-f]{64}$/.test(state) && cookie === state ? await verifyCallback(url, fetcher) : null
     const next = safeNext(url.searchParams.get('next'))
-    if (!steamId) return Response.redirect(new URL(next + (next.includes('?') ? '&' : '?') + 'signin=failed', url.origin).toString(), 302)
+    const headers = new Headers({ 'cache-control': 'no-store',
+      'set-cookie': tokenCookie(LOGIN_COOKIE, '', 0) })
+    if (!steamId) {
+      headers.set('location', new URL(next + (next.includes('?') ? '&' : '?') + 'signin=failed', url.origin).toString())
+      return new Response(null, { status: 302, headers })
+    }
     const token = await createSession(env, steamId, now)
     // A first sign-in goes through "pick a name" (the display name belongs to the account), then on to `next`.
     const named = await env.DB.prepare('SELECT display_name FROM creator WHERE steam_id = ?').bind(steamId).first<string | null>('display_name')
     const lang = next.startsWith('/en/') ? 'en' : 'zh'
     const to = named ? next : `/${lang}/explore/welcome/?next=${encodeURIComponent(next)}`
-    return new Response(null, { status: 302, headers: { location: new URL(to, url.origin).toString(), 'set-cookie': setCookie(token), 'cache-control': 'no-store' } })
+    headers.set('location', new URL(to, url.origin).toString())
+    headers.append('set-cookie', setCookie(token))
+    return new Response(null, { status: 302, headers })
   }
   if (url.pathname === '/auth/signout') {
     if (request.method !== 'POST') return fail('METHOD_NOT_ALLOWED', 405)

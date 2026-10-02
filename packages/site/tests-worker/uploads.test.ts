@@ -82,7 +82,10 @@ describe('sign in through Steam', () => {
     expect(r.status).toBe(302)
     const to = new URL(r.headers.get('location')!)
     expect(to.origin + to.pathname).toBe('https://steamcommunity.com/openid/login')
-    expect(to.searchParams.get('openid.return_to')).toBe(`${ORIGIN}/auth/steam/callback?next=%2Fen%2Fexplore%2Fupload%2F`)
+    const callback = new URL(to.searchParams.get('openid.return_to')!)
+    expect(callback.origin + callback.pathname).toBe(`${ORIGIN}/auth/steam/callback`)
+    expect(callback.searchParams.get('next')).toBe('/en/explore/upload/')
+    expect(callback.searchParams.get('state')).toMatch(/^[0-9a-f]{64}$/)
     expect(to.searchParams.get('openid.realm')).toBe(ORIGIN)
   })
   it('only ever returns to a page on this site', () => {
@@ -90,17 +93,30 @@ describe('sign in through Steam', () => {
     for (const bad of ['https://evil.example/', '//evil.example', '/api/reports', null]) expect(safeNext(bad)).toBe('/zh/explore/')
   })
   it('creates a session only after Steam confirms the signed answer, and signs out on POST from this origin', async () => {
-    const cb = (id: string) => `${ORIGIN}/auth/steam/callback?next=/en/explore/&openid.mode=id_res&openid.claimed_id=https://steamcommunity.com/openid/id/${id}&openid.return_to=${encodeURIComponent(`${ORIGIN}/auth/steam/callback?next=/en/explore/`)}&openid.sig=x`
+    const cb = async (id: string) => {
+      const login = (await handleAuth(new Request(`${ORIGIN}/auth/steam/login?next=/en/explore/`), env, NOW))!
+      const returnTo = new URL(login.headers.get('location')!).searchParams.get('openid.return_to')!
+      const callback = new URL(returnTo)
+      for (const [key, value] of Object.entries({
+        'openid.ns': 'http://specs.openid.net/auth/2.0', 'openid.mode': 'id_res',
+        'openid.claimed_id': `https://steamcommunity.com/openid/id/${id}`,
+        'openid.identity': `https://steamcommunity.com/openid/id/${id}`,
+        'openid.op_endpoint': 'https://steamcommunity.com/openid/login', 'openid.return_to': returnTo,
+        'openid.response_nonce': `${NOW.toISOString()}test`, 'openid.sig': 'test-signature',
+        'openid.signed': 'op_endpoint,claimed_id,identity,return_to,response_nonce',
+      })) callback.searchParams.set(key, value)
+      return new Request(callback, { headers: { cookie: login.headers.get('set-cookie')!.split(';')[0]! } })
+    }
     const said = (text: string) => async () => new Response(text)
-    const bad = (await handleAuth(new Request(cb(CREATOR)), env, NOW, said('ns:http://specs.openid.net/auth/2.0\nis_valid:false\n')))!
-    expect(bad.status).toBe(302); expect(bad.headers.get('location')).toBe(`${ORIGIN}/en/explore/?signin=failed`); expect(bad.headers.get('set-cookie')).toBeNull()
-    const ok = (await handleAuth(new Request(cb(CREATOR)), env, NOW, said('ns:http://specs.openid.net/auth/2.0\nis_valid:true\n')))!
+    const bad = (await handleAuth(await cb(CREATOR), env, NOW, said('ns:http://specs.openid.net/auth/2.0\nis_valid:false\n')))!
+    expect(bad.status).toBe(302); expect(bad.headers.get('location')).toBe(`${ORIGIN}/en/explore/?signin=failed`); expect(bad.headers.get('set-cookie')).toContain('__Host-aimloom_login=; Path=/; Max-Age=0')
+    const ok = (await handleAuth(await cb(CREATOR), env, NOW, said('ns:http://specs.openid.net/auth/2.0\nis_valid:true\n')))!
     // A first sign-in picks a display name before going on; a known creator goes straight on.
     expect(ok.status).toBe(302); expect(ok.headers.get('location')).toBe(`${ORIGIN}/en/explore/welcome/?next=%2Fen%2Fexplore%2F`)
     await base.DB.prepare("INSERT INTO creator (steam_id, trusted, display_name, first_seen) VALUES (?, 0, 'Sample author', '2026-10-01T00:00:00Z')").bind(CREATOR).run()
-    const again = (await handleAuth(new Request(cb(CREATOR)), env, NOW, said('is_valid:true\n')))!
+    const again = (await handleAuth(await cb(CREATOR), env, NOW, said('is_valid:true\n')))!
     expect(again.headers.get('location')).toBe(`${ORIGIN}/en/explore/`)
-    const cookie = ok.headers.get('set-cookie')!
+    const cookie = ok.headers.getSetCookie().find(value => value.startsWith('aimloom_session='))!
     expect(cookie).toMatch(/^aimloom_session=[0-9a-f]{64}; Path=\/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax$/)
     const token = cookie.slice('aimloom_session='.length, 'aimloom_session='.length + 64)
     expect(await readSession(new Request(ORIGIN, { headers: { cookie: `aimloom_session=${token}` } }), env, NOW)).toEqual({ steamId: CREATOR })

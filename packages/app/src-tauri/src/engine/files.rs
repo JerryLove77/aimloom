@@ -239,16 +239,55 @@ pub(super) fn assert_import_name(kind: &str, file: &str) -> EngineResult<()> {
 }
 
 /// A reviewed file add: the staged copy's folder, removed once the add has run.
-pub struct FileAdd { pub stage: String, pub plan: Plan }
+pub struct FileAdd { pub stage: ImportStage, pub plan: Plan }
 
-/// `Remove-KvkImportStage`: only ever `<data root>/import-previews/<32 hex>`, best effort.
-pub fn remove_import_stage(engine: &Engine, context: &Context, stage: &str) { remove_import_stage_in(engine, &context.local_data_root, stage) }
+/// A preview owns its temporary files and their cross-process lock together. Dropping it
+/// cleans up on success, refusal, cancellation and unwinding without an engine-side registry.
+pub struct ImportStage { path: String, _lock: std::fs::File }
 
-pub fn remove_import_stage_in(engine: &Engine, local_data_root: &str, stage: &str) {
+impl ImportStage {
+    pub fn new(engine: &Engine, context: &Context) -> EngineResult<Self> {
+        let path = join(&join(&engine.data_root(&context.local_data_root)?, "import-previews"), &store::new_guid());
+        let prefix = format!("{}{}", context.game_root, paths::SEP);
+        if path.to_lowercase().starts_with(&prefix.to_lowercase()) {
+            return Err(fail("导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory."));
+        }
+        // Acquire before publishing the directory; an orphan sweep must never see an
+        // unlocked stage under construction. The lock also stays held during removal.
+        let lock = import_stage_lock(engine, &context.local_data_root, &path)?;
+        let stage = Self { path, _lock: lock };
+        store::new_directory(stage.path())?;
+        Ok(stage)
+    }
+
+    pub fn path(&self) -> &str { &self.path }
+
+    pub fn remove(&self) {
+        if paths::assert_safe_path(&self.path).is_ok() { let _ = std::fs::remove_dir_all(&self.path); }
+    }
+}
+
+impl Drop for ImportStage {
+    fn drop(&mut self) { self.remove(); }
+}
+
+/// Persistent empty lock files cannot be unlinked: that could split one Unix lease across
+/// two inodes. Both creation and orphan cleanup must use the same lock identity.
+fn import_stage_lock(engine: &Engine, local: &str, stage: &str) -> EngineResult<std::fs::File> {
+    let locks = join(&engine.data_root(local)?, "locks");
+    store::new_directory(&locks)?;
+    let lock = join(&locks, &format!("import-{}.lock", paths::text_hash(&super::text::lower_invariant(stage))));
+    paths::assert_safe_path(&lock)?;
+    super::platform::open_exclusive(Path::new(&lock)).map_err(|e| EngineError::io(&e))
+}
+
+/// Best-effort cleanup of unowned `<data root>/import-previews/<32 hex>` directories only.
+pub fn remove_orphan_import_stage(engine: &Engine, local_data_root: &str, stage: &str) {
     let Ok(base) = engine.data_root(local_data_root).map(|d| join(&d, "import-previews")) else { return };
     let (Ok(base), Ok(full)) = (paths::full_path(&base), paths::full_path(stage)) else { return };
     if paths::directory_name(&full).is_some_and(|p| eq_ignore_case(&p, &base)) && paths::is_lower_hex(&paths::file_name(&full), 32) {
-        let _ = std::fs::remove_dir_all(&full);
+        let Ok(_lock) = import_stage_lock(engine, local_data_root, &full) else { return };
+        if paths::assert_safe_path(&full).is_ok() { let _ = std::fs::remove_dir_all(&full); }
     }
 }
 
@@ -290,43 +329,35 @@ pub fn file_add_plan(engine: &Engine, context: &Context, kind: &str, source_path
                 format!("The sounds folder already has a sound named \"{existing}\". The game binds sounds by the name without its extension, so adding another would leave neither one bindable. Choose another file name.")));
         }
     }
-    let stage = join(&join(&engine.data_root(&context.local_data_root)?, "import-previews"), &store::new_guid());
-    let prefix = format!("{}{}", context.game_root, paths::SEP);
-    if stage.to_lowercase().starts_with(&prefix.to_lowercase()) { return Err(fail("导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory.")); }
-    let result = (|| -> EngineResult<Plan> {
-        store::new_directory(&join(&stage, folder))?;
-        let staged = join(&join(&stage, folder), file);
-        store::write_durable(&staged, &bytes)?;
-        if is_theme {
-            let theme_name = lists::read_theme(&staged)?.get("themeName").and_then(Json::as_str).unwrap_or_default().to_string();
-            let installed = lists::installed_themes(engine, context)?;
-            if let Some(clash) = installed.themes.iter().find(|t| t.readable && t.name.as_deref().is_some_and(|n| eq_ignore_case(n, &theme_name))) {
-                let existing = &clash.file;
-                return Err(fail(
-                    format!("这个主题的内部名称是「{theme_name}」，而游戏里的「{existing}」已经叫这个名字。游戏按内部名称识别主题，再添加一个会让两者都无法应用；没有添加。"),
-                    format!("This theme's internal name is \"{theme_name}\", and \"{existing}\" in the game already uses that name. The game identifies themes by their internal name, so adding another would leave neither one applicable. Nothing was added.")));
-            }
+    let stage = ImportStage::new(engine, context)?;
+    store::new_directory(&join(stage.path(), folder))?;
+    let staged = join(&join(stage.path(), folder), file);
+    store::write_durable(&staged, &bytes)?;
+    if is_theme {
+        let theme_name = lists::read_theme(&staged)?.get("themeName").and_then(Json::as_str).unwrap_or_default().to_string();
+        let installed = lists::installed_themes(engine, context)?;
+        if let Some(clash) = installed.themes.iter().find(|t| t.readable && t.name.as_deref().is_some_and(|n| eq_ignore_case(n, &theme_name))) {
+            let existing = &clash.file;
+            return Err(fail(
+                format!("这个主题的内部名称是「{theme_name}」，而游戏里的「{existing}」已经叫这个名字。游戏按内部名称识别主题，再添加一个会让两者都无法应用；没有添加。"),
+                format!("This theme's internal name is \"{theme_name}\", and \"{existing}\" in the game already uses that name. The game identifies themes by their internal name, so adding another would leave neither one applicable. Nothing was added.")));
         }
-        let category = folder.to_ascii_lowercase();
-        let plan = txn::new_plan(engine, context, &stage, std::slice::from_ref(&category))?;
-        let fresh = plan.items.len() == 1 && plan.items[0].key == format!("{category}/{file}") && plan.items[0].action == "create"
-            && plan.items[0].before.is_none() && plan.items[0].after.as_deref() == Some(actual.as_str());
-        if !fresh {
-            return Err(EngineError::coded("PLAN_STALE", "准备添加时，目标文件的状态发生了变化，这次没有写入。请刷新后重试。", "The target file changed while the add was being prepared, so nothing was written. Refresh and try again."));
-        }
-        Ok(plan)
-    })();
-    match result {
-        Ok(plan) => Ok(FileAdd { stage, plan }),
-        Err(error) => { remove_import_stage(engine, context, &stage); Err(error) }
     }
+    let category = folder.to_ascii_lowercase();
+    let plan = txn::new_plan(engine, context, stage.path(), std::slice::from_ref(&category))?;
+    let fresh = plan.items.len() == 1 && plan.items[0].key == format!("{category}/{file}") && plan.items[0].action == "create"
+        && plan.items[0].before.is_none() && plan.items[0].after.as_deref() == Some(actual.as_str());
+    if !fresh {
+        return Err(EngineError::coded("PLAN_STALE", "准备添加时，目标文件的状态发生了变化，这次没有写入。请刷新后重试。", "The target file changed while the add was being prepared, so nothing was written. Refresh and try again."));
+    }
+    Ok(FileAdd { stage, plan })
 }
 
 /// `Invoke-KvkFileAdd`: the batch keeps its own copy of the source, so the staging folder goes
 /// either way.
 pub fn file_add_execute(engine: &Engine, context: &Context, add: &FileAdd, observer: txn::Observer) -> EngineResult<txn::Report> {
     let result = txn::install(engine, context, &add.plan, true, observer);
-    remove_import_stage(engine, context, &add.stage);
+    add.stage.remove();
     result
 }
 

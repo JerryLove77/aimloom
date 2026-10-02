@@ -51,6 +51,8 @@ For each request step: the reply line and the progress lines, as the worker woul
 (`ConvertTo-Json -Depth 32 -Compress`). After the last step: every file under the game folder and
 under the local data folder, by relative path. A `manifest.json` and a Profile (`Aimloom/profiles/`) are recorded as
 their exact text, since they hold absolute paths; any other file as its size and SHA-256.
+The only excluded files are empty `Aimloom/locks/import-<64 lowercase hex>.lock` ownership
+leases under local data, as documented in `DIVERGENCES.md`; their emptiness is asserted.
 
 ## Normalization (in this order, on the JSON text)
 

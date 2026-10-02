@@ -65,7 +65,7 @@ const unavailableApplyBridge: ApplyBridge = {
   launchGame: async () => { throw new Error('no game bridge') },
 }
 
-export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActive = true, onSelectSection, onDirtyChange, fileDrops = noFileDrops, locate, storage = browserStorage(), changeStamp = 0 }: {
+export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActive = true, onSelectSection, onDirtyChange, onGameChanged, fileDrops = noFileDrops, locate, storage = browserStorage(), changeStamp = 0 }: {
   bridge: ProfileBridge; assets: ProfileAssetBridge; isDemo?: boolean; isActive?: boolean; onSelectSection?: ((section: WorkspaceSection) => void) | undefined; onDirtyChange?: ((dirty: boolean) => void) | undefined
   /**
    * Reads what is installed in the game, so a sheet shows the same previewed choices the
@@ -80,6 +80,8 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
   fileDrops?: FileDropSource
   /** Bumped by the workspace when Quick import or a restore changed the game: what the sheets cached is read again. */
   changeStamp?: number
+  /** Refresh the other game-side sections after applying or reconciling a Profile. */
+  onGameChanged?: (() => void) | undefined
 }) {
   const t = useT()
   const msg = useMsg()
@@ -200,27 +202,20 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     if (await editor.save()) { setNotice(t('profile.saved.notice', { name })); setSheet(null) }
     else if (editor.getState().nameError) nameInput.current?.focus()
   }
-  async function applyConfirm() {
+  /** Both buttons share the apply and refresh flow; the controller launches only on success. */
+  async function applyConfirm(launchGame: boolean) {
     const name = applyState.profile?.name ?? t('profile.draft.fallbackName')
-    setApplyIntent('apply')
-    const outcome = await applyController.confirm(false)
+    setApplyIntent(launchGame ? 'launch' : 'apply')
+    const outcome = await applyController.confirm(launchGame)
     setApplyIntent(null)
-    if (outcome === 'completed' || outcome === 'no-change') { setNotice(t('profile.apply.done', { name })); setCurrentStamp(n => n + 1) }
+    if (outcome === 'completed' || outcome === 'no-change') {
+      setNotice(t(launchGame ? 'profile.apply.doneAndLaunching' : 'profile.apply.done', { name }))
+      currentChanged()
+    }
   }
-  /**
-   * Runs the identical apply -- `confirm(true)` asks the controller to launch the game only
-   * once that apply itself finished with `completed`/`no-change`. A failed or refused apply
-   * launches nothing and shows the same error path `applyConfirm` shows.
-   */
-  async function applyConfirmAndLaunch() {
-    const name = applyState.profile?.name ?? t('profile.draft.fallbackName')
-    setApplyIntent('launch')
-    const outcome = await applyController.confirm(true)
-    setApplyIntent(null)
-    if (outcome === 'completed' || outcome === 'no-change') { setNotice(t('profile.apply.doneAndLaunching', { name })); setCurrentStamp(n => n + 1) }
-  }
+  function currentChanged() { setCurrentStamp(n => n + 1); onGameChanged?.() }
   async function applyReconcile() {
-    if (await applyController.reconcile()) setNotice(t('profile.apply.reconciled'))
+    if (await applyController.reconcile()) { setNotice(t('profile.apply.reconciled')); currentChanged() }
   }
   return (<WorkspaceShell dropHint={dropHint} overlays={<>
     <Toast message={toast} tone={tone} onDone={hide} />
@@ -244,8 +239,8 @@ export function ProfilesApp({ bridge, assets, favorites, isDemo = false, isActiv
     <ApplyDialog state={applyState} current={currentGame} launching={applyIntent === 'launch'}
       onChooseGameRoot={root => void applyController.chooseGameRoot(root)}
       onChooseFolder={() => void applyController.chooseFolder(lang)}
-      onConfirm={() => void applyConfirm()}
-      onConfirmAndLaunch={() => void applyConfirmAndLaunch()}
+      onConfirm={() => void applyConfirm(false)}
+      onConfirmAndLaunch={() => void applyConfirm(true)}
       onCancel={() => applyController.close()}
       onReconcile={() => void applyReconcile()} />
     </>} active="profile" onSelect={onSelectSection ?? (() => setSheet(null))} isDemo={isDemo}

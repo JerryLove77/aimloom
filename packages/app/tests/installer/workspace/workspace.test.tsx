@@ -269,6 +269,33 @@ describe('workspace: 更改配置 and 探索', () => {
  * cancelling one scope never undoes another. If one fails, fix the product, not the flow.
  */
 describe('acceptance flows', () => {
+  it.each(['确认应用', '应用并启动游戏'])('refreshes Theme after Profile %s so the former theme can be applied again', async confirm => {
+    const bridge = createDemoBridge({ durationMs: 0 })
+    const list = bridge.themeList.bind(bridge)
+    const job = bridge.job.bind(bridge)
+    let current = 'Clean Dark'
+    bridge.themeList = async root => ({ ...await list(root), current })
+    bridge.job = async operationId => {
+      const result = await job(operationId)
+      if (result.state === 'finished') current = 'snowi clarity'
+      return result
+    }
+    render(<Workspace bridge={bridge} profileBridge={createDemoProfileBridge()} assetBridge={createDemoAssetBridge()} isDemo />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Theme' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Clean Dark 预览' }))
+    expect(screen.getByRole('button', { name: '应用背景' })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: 'Profile' }))
+    fireEvent.click(await screen.findByRole('button', { name: '应用 日常跟枪' }))
+    const dialog = await screen.findByRole('dialog')
+    const apply = await within(dialog).findByRole('button', { name: confirm })
+    await waitFor(() => expect(apply).toBeEnabled())
+    fireEvent.click(apply)
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    fireEvent.click(screen.getByRole('button', { name: 'Theme' }))
+    await waitFor(() => expect(screen.getByRole('group', { name: '配置状态' })).toHaveTextContent('当前使用snowi clarity'))
+    fireEvent.click(screen.getByRole('button', { name: 'Clean Dark 预览' }))
+    expect(screen.getByRole('button', { name: '应用背景' })).toBeEnabled()
+  })
   it('flow 1: cancelling a Profile edit does not undo other sections', async () => {
     const profileBridge = createDemoProfileBridge()
     render(<Workspace bridge={createDemoBridge({ durationMs: 0 })} profileBridge={profileBridge} assetBridge={createDemoAssetBridge()} isDemo />)

@@ -88,6 +88,66 @@ fn stages(local: &str) -> usize {
 }
 
 #[test]
+fn another_session_cannot_sweep_a_live_import_preview() {
+    let mut d = Dropped::new();
+    let a = d.drop.join("a.wav");
+    write(&a, b"RIFF previewed");
+    let preview = d.plan(&[&a], false);
+    let mut other = super::session::Session::new(
+        Box::new(super::tests::TestHost(d.fixture.host.clone())),
+        &d.fixture.local, &d.fixture.root.to_string_lossy(),
+    ).unwrap();
+    other.handle(&Json::object(vec![("v", Json::int(1)), ("requestId", Json::str("other")),
+        ("op", Json::str("gameState")), ("args", Json::object(vec![]))]), &mut |_| {});
+    assert_eq!(stages(&d.fixture.local), 1, "another session's startup must preserve the held plan");
+    let second = other.handle(&Json::object(vec![("v", Json::int(1)), ("requestId", Json::str("other-plan")),
+        ("op", Json::str("planImport")), ("args", d.args(&[&a], false))]), &mut |_| {});
+    assert_eq!(second.get("ok"), Some(&Json::Bool(true)), "{}", second.to_compact());
+    assert_eq!(stages(&d.fixture.local), 2, "planning in another session must also preserve the first preview");
+    assert_eq!(d.execute(&preview).get("status").and_then(Json::as_str), Some("completed"));
+    assert_eq!(std::fs::read(d.game("sounds/a.wav")).unwrap(), b"RIFF previewed");
+    assert_eq!(stages(&d.fixture.local), 1);
+    other.discard_plan();
+    assert_eq!(stages(&d.fixture.local), 0);
+}
+
+#[test]
+fn dropping_a_preview_cleans_its_stage_while_the_engine_stays_alive() {
+    let d = Dropped::new();
+    let a = d.drop.join("a.wav");
+    write(&a, b"RIFF previewed");
+    let engine = super::store::Engine::new(Box::new(super::tests::TestHost(d.fixture.host.clone())));
+    let context = engine.context(&d.fixture.game, &d.fixture.local).unwrap();
+    let plan = super::import::import_plan(&engine, &context, &[a.to_string_lossy().into_owned()], false).unwrap();
+    let stage = plan.stage.path().to_string();
+    drop(plan);
+    assert!(!Path::new(&stage).exists(), "the preview owns its temporary files, not the engine");
+}
+
+#[test]
+fn orphan_cleanup_skips_live_previews_and_dropping_them_cleans_up() {
+    for single_file in [false, true] {
+        let d = Dropped::new();
+        let a = d.drop.join("a.wav");
+        write(&a, b"RIFF previewed");
+        let owner = super::store::Engine::new(Box::new(super::tests::TestHost(d.fixture.host.clone())));
+        let context = owner.context(&d.fixture.game, &d.fixture.local).unwrap();
+        let stage = if single_file {
+            super::files::file_add_plan(&owner, &context, "sound", &a.to_string_lossy(),
+                &super::paths::sha256_hex(b"RIFF previewed"), "a.wav").unwrap().stage
+        } else {
+            super::import::import_plan(&owner, &context, &[a.to_string_lossy().into_owned()], false).unwrap().stage
+        };
+        let cleaner = super::store::Engine::new(Box::new(super::tests::TestHost(d.fixture.host.clone())));
+        super::import::remove_orphan_stages(&cleaner, &context);
+        assert!(Path::new(stage.path()).is_dir());
+        let path = stage.path().to_string();
+        drop(stage);
+        assert!(!Path::new(&path).exists());
+    }
+}
+
+#[test]
 fn every_kind_of_drop_is_read_and_anything_else_is_listed_as_not_recognised() {
     let mut d = Dropped::new();
     // A pack folder.
