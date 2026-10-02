@@ -4,11 +4,8 @@ import { LangProvider, plural, t, type MessageKey } from '../../../src/i18n'
 import { zh } from '../../../src/i18n/zh'
 import { en } from '../../../src/i18n/en'
 import { ThemePage } from '../../../src/theme/ThemePage'
-import { ProfilesApp } from '../../../src/profiles/ProfilesApp'
 import { BackupList } from '../../../src/installer/components/BackupList'
 import type { WorkspaceSection } from '../../../src/workspace/WorkspaceShell'
-import { v2Parsed } from '../profiles/v2'
-import type { ProfileBridge } from '../../../src/bridge/profiles'
 import type { ProfileAssetBridge } from '../../../src/bridge/assets'
 
 vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:plurals'), revokeObjectURL: vi.fn() }))
@@ -20,7 +17,7 @@ vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:plu
  * a number ("Game sounds folder · 1", "Per-file results (1)") have no twin, by design.
  */
 const PAIRS: readonly MessageKey[] = [
-  'theme.pagination.count', 'profile.pagination.count',
+  'theme.pagination.count',
   'profile.summary.audioFiles', 'profile.resource.fileErrorsSummary', 'profile.listErrors.summary',
   'profile.audioSheet.filesHeading', 'installer.fileCount',
   'installer.restore.recordCount', 'installer.review.skipped',
@@ -44,7 +41,6 @@ describe('every counted sentence has a singular twin', () => {
   it('no English singular says "1 <plural>"', () => {
     const ENGLISH_SINGULARS: Record<string, string> = {
       'theme.pagination.count': '1 theme',
-      'profile.pagination.count': '1 Profile',
       'profile.summary.audioFiles': '1 audio file',
       'profile.resource.fileErrorsSummary': "1 file couldn't be used",
       'profile.listErrors.summary': "1 file couldn't be read; other Profiles still work.",
@@ -85,16 +81,6 @@ const assets: ProfileAssetBridge = {
   list: async () => ({ directory: 'D:/Game/Themes', files: [], errors: [] }),
   read: async () => new TextEncoder().encode(JSON.stringify({ themeName: 'Night', wallTint: { x: 0, y: 0, z: 0 }, enemyBodyColor: { x: 1, y: 0, z: 0 }, overrideEnemyBodyColor: true })),
 }
-function profileBridge(): ProfileBridge {
-  const stored = v2Parsed('profile1', 'Daily')
-  return {
-    list: async () => ({ directory: '/profiles', profiles: [stored], errors: [] }),
-    read: async () => ({ filePath: '/profiles/profile1.json', profile: structuredClone(stored) }),
-    save: async () => ({ filePath: '/profiles/profile1.json', profile: stored }),
-    delete: async () => ({ deleted: true }),
-    favoritesRead: async () => ({ theme: [], audio: [] }), favoritesSave: async favorites => favorites,
-  }
-}
 
 /** One rendered surface per area, so a call site that forgot `plural()` fails here. */
 describe('a count of 1 reads correctly on the page', () => {
@@ -102,11 +88,6 @@ describe('a count of 1 reads correctly on the page', () => {
     const bridge = { ...located, themeList: async () => ({ directory: 'D:/Game/Themes', current: 'Night', themes: [{ name: 'Night', file: 'Night.json', path: 'D:/Game/Themes/Night.json', readable: true, duplicateName: false }] }), planTheme: async () => ({ planId: 'p' }) }
     inEnglish(<ThemePage bridge={bridge} assets={assets} section={'theme' as WorkspaceSection} onSelect={() => {}} />)
     expect(await screen.findByText('1 theme')).toBeVisible()
-  })
-
-  it('Profile library: "1 Profile"', async () => {
-    inEnglish(<ProfilesApp bridge={profileBridge()} assets={assets} />)
-    expect(await screen.findByText('1 Profile')).toBeVisible()
   })
 
   it('Quick import backup list: "1 file"', () => {
