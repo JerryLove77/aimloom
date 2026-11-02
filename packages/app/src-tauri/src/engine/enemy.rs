@@ -97,7 +97,7 @@ pub fn list(engine: &Engine, context: &Context) -> EngineResult<Json> {
 }
 
 /// What executing an Enemy plan needs again: the settings file and the hash the preview saw.
-pub struct EnemyPlan { pub settings_path: String, pub settings_hash: String, pub plan: Plan }
+pub struct EnemyPlan { pub settings_path: String, pub settings_hash: String, pub plan: Plan, pub stage: super::files::Stage }
 
 /// `New-KvkEnemySkinPlan`.
 pub fn plan(engine: &Engine, context: &Context, shape: &str, model: &str, skin: &str) -> EngineResult<EnemyPlan> {
@@ -128,10 +128,10 @@ pub fn plan(engine: &Engine, context: &Context, shape: &str, model: &str, skin: 
     let updated = set_field(&updated, key, "characterSkin", skin)?;
     let after = source.encoding.encode(&updated);
     let staged = txn::settings_preview_plan(engine, context, &target, &settings_hash, &after, "enemy-previews", "Enemy skin preview staging must be outside the game directory.")?;
-    let Some(plan) = staged else {
+    let Some((stage, plan)) = staged else {
         return Err(EngineError::coded("PLAN_STALE", "准备预览期间敌人皮肤来源发生了变化。", "Enemy skin source changed during preview preparation."));
     };
-    Ok(EnemyPlan { settings_path: target, settings_hash, plan })
+    Ok(EnemyPlan { settings_path: target, settings_hash, plan, stage })
 }
 
 /// `Invoke-KvkEnemySkinReplacement`: the game must be closed, since it rewrites the whole

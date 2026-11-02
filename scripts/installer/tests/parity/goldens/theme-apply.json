@@ -178,21 +178,6 @@
         "path": "Aimloom/locks/palette.lock",
         "size": 0,
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      },
-      {
-        "path": "Aimloom/scheme-previews/<guid#2>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "b4605e5f8e3f57ace9c4d5b963f0f215b03aa4e09e5a98fa99b883f916c43582"
-      },
-      {
-        "path": "Aimloom/scheme-previews/<guid#5>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "b4605e5f8e3f57ace9c4d5b963f0f215b03aa4e09e5a98fa99b883f916c43582"
-      },
-      {
-        "path": "Aimloom/scheme-previews/<guid#7>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "f87776fef94acd39308e19bec14c81a0b84c6e13692166c1aadcd9abb46f02b7"
       }
     ]
   }

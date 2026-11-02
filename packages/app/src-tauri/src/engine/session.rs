@@ -24,9 +24,10 @@ const PROFILE_OPERATIONS: [&str; 8] = ["profileList", "profileRead", "profileSav
 enum Adapter {
     Enemy(enemy::EnemyPlan),
     Theme(super::settings::ThemePlan),
-    Audio(super::txn::Plan),
+    // The `Stage` is held for its lease: dropping the plan removes the staged copy.
+    Audio(#[allow(dead_code)] super::files::Stage, super::txn::Plan),
     Crosshair(super::files::CrosshairReplacement),
-    CrosshairAdd(super::txn::Plan),
+    CrosshairAdd(#[allow(dead_code)] super::files::Stage, super::txn::Plan),
     FileAdd(super::files::FileAdd),
     Import(super::import::ImportPlan),
     ProfileApply(super::settings::ProfileApply),
@@ -204,8 +205,8 @@ impl Session {
                     });
                 }
                 if adding {
-                    let plan = super::files::add_plan(&self.engine, &context, file, &png)?;
-                    Ok(self.record_plan(context, &plan.clone(), revision, Adapter::CrosshairAdd(plan)))
+                    let (stage, plan) = super::files::add_plan(&self.engine, &context, file, &png)?;
+                    Ok(self.record_plan(context, &plan.clone(), revision, Adapter::CrosshairAdd(stage, plan)))
                 } else {
                     let replacement = super::files::image_plan(&self.engine, &context, file, &png)?;
                     Ok(self.record_plan(context, &replacement.plan.clone(), revision, Adapter::Crosshair(replacement)))
@@ -299,8 +300,8 @@ impl Session {
                 if manifest::has_unfinished(&manifest::all(&self.engine, &context)?) {
                     return Err(EngineError::coded("RECOVERY_REQUIRED", "必须先恢复未完成的操作，才能更换音效。", "An unfinished operation must be recovered before changing sounds."));
                 }
-                let planned = super::settings::audio_plan(&self.engine, &context, event, &names)?;
-                Ok(self.record_plan(context, &planned.clone(), revision, Adapter::Audio(planned)))
+                let (stage, planned) = super::settings::audio_plan(&self.engine, &context, event, &names)?;
+                Ok(self.record_plan(context, &planned.clone(), revision, Adapter::Audio(stage, planned)))
             }
             "planRestore" => {
                 assert_fields(args, &["gameRoot", "sourceId", "revision"], "args")?;
@@ -392,9 +393,9 @@ impl Session {
                 let report = match &cached.adapter {
                     Adapter::Enemy(plan) => enemy::execute(&self.engine, &cached.context, plan, observer)?,
                     Adapter::Theme(plan) => super::settings::theme_execute(&self.engine, &cached.context, plan, observer)?,
-                    Adapter::Audio(plan) => super::txn::install(&self.engine, &cached.context, plan, false, observer)?,
+                    Adapter::Audio(_, plan) => super::txn::install(&self.engine, &cached.context, plan, false, observer)?,
                     Adapter::Crosshair(plan) => super::files::image_execute(&self.engine, &cached.context, plan, observer)?,
-                    Adapter::CrosshairAdd(plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,
+                    Adapter::CrosshairAdd(_, plan) => super::txn::install(&self.engine, &cached.context, plan, true, observer)?,
                     Adapter::FileAdd(add) => super::files::file_add_execute(&self.engine, &cached.context, add, observer)?,
                     Adapter::Import(import) => super::import::import_execute(&self.engine, &cached.context, import, observer)?,
                     Adapter::ProfileApply(apply) => super::settings::profile_apply_execute(&self.engine, &cached.context, apply, observer)?,

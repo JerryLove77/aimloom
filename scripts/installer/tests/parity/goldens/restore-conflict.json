@@ -88,11 +88,6 @@
         "text": "{\"Version\":1,\"Id\":\"pristine\",\"Kind\":\"pristine\",\"CreatedAt\":\"<time>\",\"GameRoot\":\"<game>\",\"LocalDataRoot\":\"<local>\",\"PackRoot\":\"\",\"Categories\":[],\"Status\":\"protected\",\"SourceId\":null,\"Items\":[{\"Key\":\"primary/PrimaryUserSettings.json\",\"Target\":\"<game>/FPSAimTrainer/Saved/SaveGames/PrimaryUserSettings.json\",\"BeforeHash\":\"d93e55e9e9769407c007e58720cd975e70d61f17f4f83f6c8e22791b2c7d7d7b\",\"AfterHash\":\"d4e086c8b6e4751dc5b5caccb21c9f2c98805f5a7e1ec92f7e09c9c167c8d702\",\"Backup\":\"files/<pristine#1>.bin\",\"DesiredBackup\":null,\"State\":\"protected\",\"TempPath\":null}]}"
       },
       {
-        "path": "Aimloom/enemy-previews/<guid#2>/PrimaryUserSettings.json",
-        "size": 391,
-        "sha256": "d4e086c8b6e4751dc5b5caccb21c9f2c98805f5a7e1ec92f7e09c9c167c8d702"
-      },
-      {
         "path": "Aimloom/locks/<gamehash>.lock",
         "size": 0,
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

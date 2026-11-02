@@ -22,12 +22,6 @@
         "sha256": "938ad46244530e41b2dee36e609a09638b65b0e9a34204b78b7171b21a2a55f7"
       }
     ],
-    "local": [
-      {
-        "path": "Aimloom/enemy-previews/<guid#2>/PrimaryUserSettings.json",
-        "size": 515,
-        "sha256": "a9d492dd17e914ca198a92f9af1868235b8e900387f0d0455ff16bdd059f7fa5"
-      }
-    ]
+    "local": []
   }
 }

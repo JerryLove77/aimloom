@@ -485,3 +485,83 @@ fn an_oversized_settings_file_or_duplicate_is_an_invalid_skip_before_it_is_read(
     let en = row(&preview, "ui/UI.json").get("detail").unwrap().get("messageEn").and_then(Json::as_str).unwrap().to_string();
     assert!(en.contains("8 MiB"), "{en}");
 }
+
+fn restore(d: &mut Dropped, source: &str, revision: i64, allow_conflicts: bool) -> (Json, Json) {
+    let game = d.fixture.game.clone();
+    let plan = d.fixture.ok("planRestore", Json::object(vec![("gameRoot", Json::str(&game)), ("sourceId", Json::str(source)), ("revision", Json::int(revision))]));
+    let plan_id = plan.get("planId").and_then(Json::as_str).unwrap().to_string();
+    let execute = Json::object(vec![("operationId", Json::str(format!("op-restore-{revision}"))), ("planId", Json::str(plan_id)), ("confirmation", Json::str("restore")), ("allowConflicts", Json::Bool(allow_conflicts))]);
+    let (reply, _) = d.fixture.request("execute", execute);
+    (plan, reply)
+}
+
+#[test]
+fn a_first_protection_restore_never_deletes_a_file_the_player_put_back_after_a_restore_removed_ours() {
+    let mut d = Dropped::new();
+    let added = d.drop.join("new.wav");
+    write(&added, b"RIFF ours");
+    let preview = d.plan(&[&added], false);
+    let report = d.execute(&preview);
+    let batch = report.get("batchId").and_then(Json::as_str).unwrap().to_string();
+    let (_, undone) = restore(&mut d, &batch, 2, false);
+    assert_eq!(undone.get("data").and_then(|r| r.get("status")).and_then(Json::as_str), Some("restored"), "{}", undone.to_compact());
+    assert!(!d.game("sounds/new.wav").exists());
+
+    // The player puts their own file back under the same name.
+    write(&d.game("sounds/new.wav"), b"RIFF the player's");
+    let (plan, refused) = restore(&mut d, "pristine", 3, true);
+    let row = plan.get("rows").and_then(Json::as_array).unwrap().iter().find(|r| r.get("key").and_then(Json::as_str) == Some("sounds/new.wav")).unwrap().clone();
+    assert_eq!(row.get("action").and_then(Json::as_str), Some("delete"));
+    assert_eq!(row.get("unowned"), Some(&Json::Bool(true)), "{}", row.to_compact());
+    assert_eq!(refused.get("ok"), Some(&Json::Bool(false)), "{}", refused.to_compact());
+    assert_eq!(refused.get("error").and_then(|e| e.get("code")).and_then(Json::as_str), Some("UNOWNED_FILE"));
+    assert_eq!(std::fs::read(d.game("sounds/new.wav")).unwrap(), b"RIFF the player's", "even with conflict consent");
+}
+
+#[test]
+fn a_first_protection_restore_still_deletes_a_file_this_installer_added_and_nobody_touched() {
+    let mut d = Dropped::new();
+    let added = d.drop.join("new.wav");
+    write(&added, b"RIFF ours");
+    let preview = d.plan(&[&added], false);
+    d.execute(&preview);
+    let (plan, done) = restore(&mut d, "pristine", 2, false);
+    let row = plan.get("rows").and_then(Json::as_array).unwrap().iter().find(|r| r.get("key").and_then(Json::as_str) == Some("sounds/new.wav")).unwrap().clone();
+    assert_eq!((row.get("action").and_then(Json::as_str), row.get("unowned"), row.get("conflict")), (Some("delete"), Some(&Json::Bool(false)), Some(&Json::Bool(false))));
+    assert_eq!(done.get("data").and_then(|r| r.get("status")).and_then(Json::as_str), Some("restored"), "{}", done.to_compact());
+    assert!(!d.game("sounds/new.wav").exists());
+}
+
+#[test]
+fn folders_count_toward_the_limit_of_one_drop() {
+    let mut d = Dropped::new();
+    let tree = d.drop.join("tree");
+    for i in 0..2501 { std::fs::create_dir_all(tree.join(format!("{i}/inner"))).unwrap(); }
+    let error = d.refusal(&[&tree], false);
+    assert!(english(&error).contains("too many files and folders"), "{}", error.to_compact());
+    assert_eq!(stages(&d.fixture.local), 0);
+}
+
+/// Sparse files: the sizes are real to the engine, the disk holds almost nothing (Unix hosts).
+#[cfg(unix)]
+#[test]
+fn a_drop_that_would_stage_more_than_a_gibibyte_is_refused_before_anything_is_staged() {
+    let mut d = Dropped::new();
+    let big = d.drop.join("big");
+    std::fs::create_dir_all(&big).unwrap();
+    for i in 0..129 {
+        let file = std::fs::File::create(big.join(format!("{i}.wav"))).unwrap();
+        file.set_len(8 * 1024 * 1024).unwrap();
+    }
+    let error = d.refusal(&[&big], false);
+    assert_eq!(english(&error), "The files in this drop add up to more than 1 GiB. Import them a few at a time.");
+    assert_eq!(stages(&d.fixture.local), 0);
+    // A file over its own limit is never read, so it does not count toward the total.
+    std::fs::remove_dir_all(&big).unwrap();
+    std::fs::create_dir_all(&big).unwrap();
+    for i in 0..20 { std::fs::File::create(big.join(format!("huge-{i}.wav"))).unwrap().set_len(64 * 1024 * 1024).unwrap(); }
+    write(&big.join("small.wav"), b"RIFF small");
+    let args = d.args(&[&big], false);
+    let (reply, _) = d.fixture.request("planImport", args);
+    assert_eq!(reply.get("ok"), Some(&Json::Bool(true)), "{}", reply.get("error").map(Json::to_compact).unwrap_or_default());
+}

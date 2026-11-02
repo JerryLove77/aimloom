@@ -252,36 +252,6 @@
         "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       },
       {
-        "path": "Aimloom/profile-apply-previews/<guid#10>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "4ba6cfdab6788fcabccf350df02005a7f855bdf8965fc12d53fdf08b400888ad"
-      },
-      {
-        "path": "Aimloom/profile-apply-previews/<guid#12>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "4ba6cfdab6788fcabccf350df02005a7f855bdf8965fc12d53fdf08b400888ad"
-      },
-      {
-        "path": "Aimloom/profile-apply-previews/<guid#14>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "4ba6cfdab6788fcabccf350df02005a7f855bdf8965fc12d53fdf08b400888ad"
-      },
-      {
-        "path": "Aimloom/profile-apply-previews/<guid#2>/PrimaryUserSettings.json",
-        "size": 8293,
-        "sha256": "301278e5fe8bda3bbbd0afa7aa2bc89ec9685cdca8b4a8cfeeeba1bf80c14f34"
-      },
-      {
-        "path": "Aimloom/profile-apply-previews/<guid#5>/PrimaryUserSettings.json",
-        "size": 8293,
-        "sha256": "301278e5fe8bda3bbbd0afa7aa2bc89ec9685cdca8b4a8cfeeeba1bf80c14f34"
-      },
-      {
-        "path": "Aimloom/profile-apply-previews/<guid#7>/PrimaryUserSettings.json",
-        "size": 8285,
-        "sha256": "22fb24098342fba21c2b55abf60e9f5643f1560a1473447eee31c1eea6445dae"
-      },
-      {
         "path": "Aimloom/profiles/ambiguous.json",
         "text": "{\"schemaVersion\":2,\"id\":\"ambiguous\",\"name\":\"P\",\"theme\":{\"name\":\"Default\",\"path\":\"<game>/FPSAimTrainer/Saved/SaveGames/Themes/Default.json\"},\"audio\":{\"kill\":[{\"name\":\"dup\",\"path\":\"<game>/FPSAimTrainer/sounds/dup.wav\"}],\"spawn\":[],\"mbsGood\":[{\"name\":\"Zeta\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\"}],\"mbsOkay\":[{\"name\":\"Zeta\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\"}],\"mbsBad\":[{\"name\":\"Zeta\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\"}],\"mbsChangeNow\":[{\"name\":\"Zeta\",\"path\":\"<game>/FPSAimTrainer/sounds/Zeta.wav\"}]}}"
       },

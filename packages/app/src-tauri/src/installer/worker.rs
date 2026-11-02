@@ -26,14 +26,22 @@ pub struct WorkerConfig {
     /// (tests, and any machine without the variable). The log's folder is resolved at each
     /// spawn, not here, so it always matches the folder the worker is about to use.
     log_root: Option<PathBuf>,
+    /// How long a read waits for its reply before the App gives up on this worker.
+    read_timeout: Duration,
+    /// After a read timed out and the worker's input was closed: how long it may take to exit
+    /// on its own before it is ended (only while no write is pending, see `end_if_hung`).
+    hung_grace: Duration,
 }
+
+const READ_TIMEOUT: Duration = Duration::from_secs(120);
+const HUNG_GRACE: Duration = Duration::from_secs(30);
 
 impl WorkerConfig {
     /// The Rust engine's worker: `program` started with `--worker`. The App passes its own
     /// executable; integration tests pass the test build of it (`CARGO_BIN_EXE_app`). `log_root` is
     /// the `%LOCALAPPDATA%` the worker is started with and logs under.
     pub fn rust_worker(program: PathBuf, log_root: Option<PathBuf>) -> Self {
-        Self { program, args: vec![RUST_WORKER_FLAG.into()], log_root }
+        Self { program, args: vec![RUST_WORKER_FLAG.into()], log_root, read_timeout: READ_TIMEOUT, hung_grace: HUNG_GRACE }
     }
 
     /// `local_app_data` is the runtime's own `%LOCALAPPDATA%`: the worker log goes under it and the
@@ -56,6 +64,12 @@ impl WorkerConfig {
     #[cfg(test)]
     pub fn for_test(program: impl Into<PathBuf>) -> Self {
         Self::rust_worker(program.into(), None)
+    }
+
+    /// Any program with its own arguments and short timeouts, for the hung-worker tests.
+    #[cfg(test)]
+    pub fn for_program(program: impl Into<PathBuf>, args: &[&str], read_timeout: Duration, hung_grace: Duration) -> Self {
+        Self { program: program.into(), args: args.iter().map(Into::into).collect(), log_root: None, read_timeout, hung_grace }
     }
 }
 
@@ -155,6 +169,8 @@ pub struct WorkerClient {
     jobs: Arc<Mutex<JobManager>>,
     protocol_ended: Arc<AtomicBool>,
     next_request: AtomicU64,
+    read_timeout: Duration,
+    hung_grace: Duration,
 }
 
 impl WorkerClient {
@@ -185,6 +201,8 @@ impl WorkerClient {
             jobs: jobs.clone(),
             protocol_ended: protocol_ended.clone(),
             next_request: AtomicU64::new(1),
+            read_timeout: config.read_timeout,
+            hung_grace: config.hung_grace,
         });
 
         thread::spawn(move || {
@@ -229,13 +247,13 @@ impl WorkerClient {
             self.pending.lock().unwrap().remove(&request_id);
             return Err(issue);
         }
-        match rx.recv_timeout(Duration::from_secs(120)) {
+        match rx.recv_timeout(self.read_timeout) {
             Ok(result) => result,
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 // Closing stdin asks the persistent worker to exit after its current read.
-                // It does not terminate the process or interrupt an engine operation.
                 self.process.lock().unwrap().stdin.take();
-                Err(Issue::worker("worker did not reply within 120 seconds"))
+                self.end_if_hung();
+                Err(Issue::worker(format!("worker did not reply within {} seconds", self.read_timeout.as_secs())))
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
                 Err(Issue::worker("worker reply channel closed"))
@@ -254,6 +272,27 @@ impl WorkerClient {
             return Err(issue);
         }
         Ok(())
+    }
+
+    /// A read that never answers would otherwise leave a worker that never ends, and the App
+    /// could not start another (`worker()` waits for the old one to exit). Once its input is
+    /// closed the worker is given `hung_grace` to finish and exit on its own; if it has not, and
+    /// no write was sent to it, it is ended. A read changes nothing in the game, and the staging
+    /// it may leave in the data folder is swept by the next worker. A worker with a write pending
+    /// is never ended here: that write's job becomes `unknown` only when the worker exits, and
+    /// reconciliation waits for that.
+    fn end_if_hung(&self) {
+        let (process, pending, grace) = (self.process.clone(), self.pending.clone(), self.hung_grace);
+        thread::spawn(move || {
+            let deadline = std::time::Instant::now() + grace;
+            loop {
+                if process.lock().unwrap().child.try_wait().map_or(true, |status| status.is_some()) { return; }
+                if std::time::Instant::now() >= deadline { break; }
+                thread::sleep(Duration::from_millis(100));
+            }
+            let writing = pending.lock().unwrap().values().any(|p| matches!(p, Pending::Execute { .. }));
+            if !writing { let _ = process.lock().unwrap().child.kill(); }
+        });
     }
 
     pub fn has_exited(&self) -> Result<bool, Issue> {
@@ -615,5 +654,46 @@ mod tests {
     fn the_english_exit_message_is_english_and_names_the_log() {
         assert!(!super::super::protocol::has_cjk(WORKER_EXITED_EN));
         assert!(WORKER_EXITED_EN.contains("worker.log"));
+    }
+
+    /// A process that never reads its input and never answers stands in for a hung worker.
+    #[cfg(unix)]
+    fn hung(grace_ms: u64) -> Arc<WorkerClient> {
+        let config = WorkerConfig::for_program("/bin/sh", &["-c", "sleep 30"], Duration::from_millis(300), Duration::from_millis(grace_ms));
+        WorkerClient::spawn(config, Arc::new(Mutex::new(JobManager::default()))).unwrap()
+    }
+
+    #[cfg(unix)]
+    fn exits_within(worker: &WorkerClient, limit: Duration) -> bool {
+        let deadline = std::time::Instant::now() + limit;
+        while std::time::Instant::now() < deadline {
+            if worker.has_exited().unwrap() { return true; }
+            thread::sleep(Duration::from_millis(50));
+        }
+        false
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_read_that_never_answers_ends_its_worker_after_the_grace_period() {
+        let worker = hung(200);
+        let error = worker.read("gameState", serde_json::json!({})).unwrap_err();
+        assert_eq!(error.code, ErrorCode::WorkerUnavailable);
+        assert!(exits_within(&worker, Duration::from_secs(5)), "a hung worker with no write pending is ended");
+        assert!(worker.protocol_ended() || exits_within(&worker, Duration::from_secs(1)));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_worker_with_a_write_pending_is_never_ended_by_a_read_timeout() {
+        let worker = hung(200);
+        let execute = ExecuteRequest {
+            operation_id: "op-1".into(), plan_id: "plan-1".into(),
+            confirmation: crate::installer::protocol::Confirmation::Install, allow_conflicts: false,
+        };
+        worker.execute(&execute).unwrap();
+        assert!(worker.read("gameState", serde_json::json!({})).is_err());
+        assert!(!exits_within(&worker, Duration::from_secs(1)), "a write may be running: only reconciliation decides after it exits");
+        worker.process.lock().unwrap().child.kill().unwrap();
     }
 }

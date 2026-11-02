@@ -98,26 +98,6 @@
     ],
     "local": [
       {
-        "path": "Aimloom/audio-previews/<guid#10>/PrimaryUserSettings.json",
-        "size": 8222,
-        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
-      },
-      {
-        "path": "Aimloom/audio-previews/<guid#2>/PrimaryUserSettings.json",
-        "size": 8218,
-        "sha256": "26c4ad7dc87e6a3f008d212a1ea384670bc9e700081095931ed83c24825656e9"
-      },
-      {
-        "path": "Aimloom/audio-previews/<guid#5>/PrimaryUserSettings.json",
-        "size": 8222,
-        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
-      },
-      {
-        "path": "Aimloom/audio-previews/<guid#8>/PrimaryUserSettings.json",
-        "size": 8222,
-        "sha256": "9fcc24890c04ff2a0e9fa4f90a765c92b8da987e0a195e233a68dfe5492da638"
-      },
-      {
         "path": "Aimloom/backups/<gamehash>/<guid#3>/files/7ab15f5b9b609b83bd8e99eef575d2f268f0c639c1b30e3c7fcb81f2f32f5829.bin",
         "size": 8226,
         "sha256": "a577f7821c2ccd7ff77c299fa00907d89b7909dcc10d325ecbde53f7491cd9b5"

@@ -8,6 +8,7 @@ use super::json::{Json, Number};
 use super::lists::{self, AUDIO_EVENTS};
 use super::store::{self, Context, Engine};
 use super::text::{self, eq_ignore_case, find_value, splice, utf16, TextFile};
+use super::files::Stage;
 use super::txn::{self, Plan};
 use super::{paths, EngineError, EngineResult};
 
@@ -165,7 +166,7 @@ pub fn theme_edits(theme: &Json) -> EngineResult<Vec<(String, Value)>> {
     Ok(edits)
 }
 
-pub struct ThemePlan { pub theme_path: String, pub theme_hash: String, pub plan: Plan }
+pub struct ThemePlan { pub theme_path: String, pub theme_hash: String, pub plan: Plan, pub stage: Stage }
 
 /// `Get-KvkSchemeSource`: the installed theme file by name, and every settings edit it makes.
 pub struct ThemeSource { pub theme_path: String, pub theme_hash: String, pub edits: Vec<(String, Value)> }
@@ -195,7 +196,7 @@ pub fn theme_source(engine: &Engine, context: &Context, file: &str) -> EngineRes
 
 /// Applies the edits to the settings file's text, stages the result and plans it as the one
 /// settings replacement (`New-KvkSettingsPreviewPlan`).
-pub fn settings_plan(engine: &Engine, context: &Context, edits: &[(String, Value)], folder: &str, outside: &str, stale: (&str, &str)) -> EngineResult<Plan> {
+pub fn settings_plan(engine: &Engine, context: &Context, edits: &[(String, Value)], folder: &str, outside: &str, stale: (&str, &str)) -> EngineResult<(Stage, Plan)> {
     let (target, settings_hash, settings) = read_settings(engine, context)?;
     let updated = apply_edits(&settings.text, edits)?;
     let bytes = settings.encoding.encode(&updated);
@@ -206,8 +207,8 @@ pub fn settings_plan(engine: &Engine, context: &Context, edits: &[(String, Value
 /// `New-KvkSchemePlan`.
 pub fn theme_plan(engine: &Engine, context: &Context, file: &str) -> EngineResult<ThemePlan> {
     let source = theme_source(engine, context, file)?;
-    let plan = settings_plan(engine, context, &source.edits, "scheme-previews", "Theme staging must be outside the game directory.", ("准备预览期间背景来源发生了变化。", "Theme source changed during preview preparation."))?;
-    Ok(ThemePlan { theme_path: source.theme_path, theme_hash: source.theme_hash, plan })
+    let (stage, plan) = settings_plan(engine, context, &source.edits, "scheme-previews", "Theme staging must be outside the game directory.", ("准备预览期间背景来源发生了变化。", "Theme source changed during preview preparation."))?;
+    Ok(ThemePlan { theme_path: source.theme_path, theme_hash: source.theme_hash, plan, stage })
 }
 
 /// `Invoke-KvkSchemeReplacement`.
@@ -244,7 +245,7 @@ pub fn audio_edit(engine: &Engine, context: &Context, event: &str, names: &[Stri
 }
 
 /// `New-KvkAudioPlan`.
-pub fn audio_plan(engine: &Engine, context: &Context, event: &str, names: &[String]) -> EngineResult<Plan> {
+pub fn audio_plan(engine: &Engine, context: &Context, event: &str, names: &[String]) -> EngineResult<(Stage, Plan)> {
     let edit = audio_edit(engine, context, event, names)?;
     settings_plan(engine, context, &[edit], "audio-previews", "Audio staging must be outside the game directory.", ("准备预览期间音效来源发生了变化。", "Audio source changed during preview preparation."))
 }
@@ -252,7 +253,7 @@ pub fn audio_plan(engine: &Engine, context: &Context, event: &str, names: &[Stri
 // ---- Profile apply -------------------------------------------------------------------------
 
 /// What executing a Profile apply checks again: the Profile file and every source file.
-pub struct ProfileApply { pub profile_path: String, pub profile_hash: String, pub sources: Vec<(String, String)>, pub plan: Plan }
+pub struct ProfileApply { pub profile_path: String, pub profile_hash: String, pub sources: Vec<(String, String)>, pub plan: Plan, pub stage: Stage }
 
 /// `Resolve-KvkProfileReference`: the installed file a Profile's saved path names, compared as
 /// full paths ignoring case, or `None`.
@@ -296,10 +297,10 @@ pub fn profile_apply_plan(engine: &Engine, context: &Context, id: &str) -> Engin
     }
     let mut edits: Vec<_> = theme.edits.iter().cloned().collect();
     edits.extend(audio_edits);
-    let plan = settings_plan(engine, context, &edits, "profile-apply-previews", "Profile apply staging must be outside the game directory.", ("准备预览期间 Profile 应用的来源发生了变化。", "A Profile apply source changed during preview preparation."))?;
+    let (stage, plan) = settings_plan(engine, context, &edits, "profile-apply-previews", "Profile apply staging must be outside the game directory.", ("准备预览期间 Profile 应用的来源发生了变化。", "A Profile apply source changed during preview preparation."))?;
     let mut all_sources = vec![(theme.theme_path, theme.theme_hash)];
     all_sources.extend(sources);
-    Ok(ProfileApply { profile_path, profile_hash, sources: all_sources, plan })
+    Ok(ProfileApply { profile_path, profile_hash, sources: all_sources, plan, stage })
 }
 
 /// `Invoke-KvkProfileApply`.

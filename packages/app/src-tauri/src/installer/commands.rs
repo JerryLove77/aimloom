@@ -120,6 +120,11 @@ impl InstallerRuntime {
                 if op == "planFileAdd" && !matches!(preview.rows.as_slice(), [row] if row.action == FileAction::Create) {
                     return Err(Issue::worker("a file import must plan exactly one new file"));
                 }
+                // Adding a crosshair never overwrites either; the engine enforces it, and the
+                // native layer refuses any other shape before the plan could be executed.
+                if op == "planCrosshairAdd" && !matches!(preview.rows.as_slice(), [row] if row.action == FileAction::Create && row.category == Category::Crosshairs) {
+                    return Err(Issue::worker("a crosshair add must plan exactly one new crosshair"));
+                }
                 if op == "planImport" {
                     check_import_preview(&preview, include_settings)?;
                 } else if preview.rows.iter().any(|row| row.reason.is_some() || row.detail.is_some()) {
@@ -556,6 +561,19 @@ mod tests {
             assert!(runtime.jobs.lock().unwrap().game_root_for_plan("plan-add").is_none(), "a refused preview must not be executable");
         }
         runtime.validate_read_response("planFileAdd", add_preview(json!([row("create")]))).unwrap();
+        assert_eq!(runtime.jobs.lock().unwrap().game_root_for_plan("plan-add").as_deref(), Some("D:\\Game"));
+    }
+
+    #[test]
+    fn a_crosshair_add_preview_is_recorded_only_when_it_is_exactly_one_new_crosshair() {
+        let runtime = InstallerRuntime::for_test(WorkerConfig::for_test("/missing/app"));
+        let crosshair = |action: &str| json!({"key":"crosshairs/New.png","category":"crosshairs","source":"C:\\Stage\\crosshairs\\New.png",
+            "target":"D:\\Game\\FPSAimTrainer\\crosshairs\\New.png","action":action,"conflict":false,"unowned":false});
+        for rows in [json!([crosshair("replace")]), json!([crosshair("skip")]), json!([crosshair("create"), crosshair("create")]), json!([row("create")]), json!([])] {
+            assert!(runtime.validate_read_response("planCrosshairAdd", add_preview(rows.clone())).is_err(), "{rows}");
+            assert!(runtime.jobs.lock().unwrap().game_root_for_plan("plan-add").is_none(), "a refused preview must not be executable");
+        }
+        runtime.validate_read_response("planCrosshairAdd", add_preview(json!([crosshair("create")]))).unwrap();
         assert_eq!(runtime.jobs.lock().unwrap().game_root_for_plan("plan-add").as_deref(), Some("D:\\Game"));
     }
 

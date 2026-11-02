@@ -84,14 +84,9 @@ fn crosshairs_directory(engine: &Engine, context: &Context) -> EngineResult<Stri
     Ok(join(&context.game_root, "FPSAimTrainer/crosshairs"))
 }
 
-fn stage_outside_game(context: &Context, stage: &str, message: &str) -> EngineResult<()> {
-    let prefix = format!("{}{}", context.game_root, paths::SEP);
-    if stage.to_lowercase().starts_with(&prefix.to_lowercase()) { return Err(EngineError::plain(message)); }
-    Ok(())
-}
-
 /// A staged crosshair replacement: the pack folder, its metadata's hash and the reviewed plan.
-pub struct CrosshairReplacement { pub pack_root: String, pub target_file: String, pub metadata_hash: String, pub plan: Plan }
+/// `stage` is the preview's lease on that folder (`None` for the re-read at execute time).
+pub struct CrosshairReplacement { pub pack_root: String, pub target_file: String, pub metadata_hash: String, pub plan: Plan, pub stage: Option<Stage> }
 
 /// `Read-KvkCrosshairReplacement` + `New-KvkCrosshairReplacementPlan`: the staged pack must hold
 /// exactly the declared PNG, byte for byte, replacing a crosshair that exists.
@@ -144,16 +139,16 @@ fn replacement_plan(engine: &Engine, context: &Context, pack_root: &str) -> Engi
     }
     let plan = txn::new_plan(engine, context, &root, &["crosshairs".to_string()])?;
     if plan.items.len() != 1 || plan.items[0].before.is_none() { return Err(EngineError::plain("Replacement target does not exist; use normal install for new crosshairs.")); }
-    Ok(CrosshairReplacement { pack_root: root, target_file, metadata_hash, plan })
+    Ok(CrosshairReplacement { pack_root: root, target_file, metadata_hash, plan, stage: None })
 }
 
-fn stage_png(engine: &Engine, context: &Context, file: &str, png: &[u8], message: &str) -> EngineResult<(String, String)> {
-    let stage = join(&engine.data_root(&context.local_data_root)?, &format!("crosshair-previews/{}", store::new_guid()));
-    stage_outside_game(context, &stage, message)?;
+fn stage_png(engine: &Engine, context: &Context, file: &str, png: &[u8], message: &str) -> EngineResult<(Stage, String, String)> {
+    let lease = Stage::in_folder(engine, context, "crosshair-previews", || EngineError::plain(message))?;
+    let stage = lease.path().to_string();
     store::new_directory(&join(&stage, "crosshairs"))?;
     let png_path = join(&join(&stage, "crosshairs"), file);
     store::write_durable(&png_path, png)?;
-    Ok((stage, png_path))
+    Ok((lease, stage, png_path))
 }
 
 /// `New-KvkCrosshairImagePlan`: new pixels for a crosshair that exists.
@@ -166,7 +161,7 @@ pub fn image_plan(engine: &Engine, context: &Context, file: &str, png: &[u8]) ->
     if !Path::new(&target).is_file() {
         return Err(fail(format!("游戏目录里没有这个准星文件 (target does not exist): {file}"), format!("The game folder has no such crosshair file: \"{file}\".")));
     }
-    let (stage, png_path) = stage_png(engine, context, file, png, "Crosshair preview staging must be outside the game directory.")?;
+    let (lease, stage, png_path) = stage_png(engine, context, file, png, "Crosshair preview staging must be outside the game directory.")?;
     let sha = store::hash(&png_path)?.unwrap_or_default();
     // The metadata shape the Node preview service writes, read back by the check above.
     let metadata = Json::object(vec![
@@ -178,10 +173,11 @@ pub fn image_plan(engine: &Engine, context: &Context, file: &str, png: &[u8]) ->
         ("warnings", Json::Array(Vec::new())), ("requiresConfirmation", Json::Bool(true)), ("gameSelectionChanged", Json::Bool(false)),
     ]);
     store::write_atomic_json(&join(&stage, "crosshair-replacement.json"), &metadata)?;
-    let replacement = replacement_plan(engine, context, &stage)?;
+    let mut replacement = replacement_plan(engine, context, &stage)?;
     if replacement.target_file != file || replacement.plan.items.len() != 1 || replacement.plan.items[0].key != format!("crosshairs/{file}") {
         return Err(EngineError::coded("PLAN_STALE", "准星预览没有指向所选的文件。", "Crosshair preview did not resolve to the chosen slot."));
     }
+    replacement.stage = Some(lease);
     Ok(replacement)
 }
 
@@ -197,7 +193,7 @@ pub fn image_execute(engine: &Engine, context: &Context, reviewed: &CrosshairRep
 }
 
 /// `New-KvkCrosshairAddPlan`: a new crosshair; adding never overwrites.
-pub fn add_plan(engine: &Engine, context: &Context, file: &str, png: &[u8]) -> EngineResult<Plan> {
+pub fn add_plan(engine: &Engine, context: &Context, file: &str, png: &[u8]) -> EngineResult<(Stage, Plan)> {
     engine.assert_context(context)?;
     assert_crosshair_name(file)?;
     assert_crosshair_image(png)?;
@@ -206,14 +202,14 @@ pub fn add_plan(engine: &Engine, context: &Context, file: &str, png: &[u8]) -> E
     if Path::new(&target).is_file() {
         return Err(fail(format!("crosshairs 文件夹里已经有「{file}」，新增不会覆盖它；请换一个文件名 (file already exists)。"), format!("The crosshairs folder already has \"{file}\", and adding never overwrites it. Choose another file name.")));
     }
-    let (stage, png_path) = stage_png(engine, context, file, png, "Crosshair staging must be outside the game directory.")?;
+    let (lease, stage, png_path) = stage_png(engine, context, file, png, "Crosshair staging must be outside the game directory.")?;
     let plan = txn::new_plan(engine, context, &stage, &["crosshairs".to_string()])?;
     let fresh = plan.items.len() == 1 && plan.items[0].key == format!("crosshairs/{file}") && plan.items[0].action == "create"
         && plan.items[0].before.is_none() && plan.items[0].after == store::hash(&png_path)?;
     if !fresh {
         return Err(EngineError::coded("PLAN_STALE", "准备新增时，目标文件的状态发生了变化，这次没有写入。请刷新后重试 (add plan did not resolve to a new file)。", "The target file changed while the add was being prepared, so nothing was written. Refresh and try again."));
     }
-    Ok(plan)
+    Ok((lease, plan))
 }
 
 // ---- A theme or sound added from outside ---------------------------------------------------
@@ -241,20 +237,35 @@ pub(super) fn assert_import_name(kind: &str, file: &str) -> EngineResult<()> {
 /// A reviewed file add: the staged copy's folder, removed once the add has run.
 pub struct FileAdd { pub stage: ImportStage, pub plan: Plan }
 
+/// The data-folder staging folders a preview may create, each holding `<32 hex>` stages.
+/// Every one is leased by a `Stage`, so an orphan sweep never removes a live preview's files.
+pub const STAGE_FOLDERS: [&str; 6] = ["import-previews", "scheme-previews", "audio-previews", "enemy-previews", "profile-apply-previews", "crosshair-previews"];
+
 /// A preview owns its temporary files and their cross-process lock together. Dropping it
 /// cleans up on success, refusal, cancellation and unwinding without an engine-side registry.
-pub struct ImportStage { path: String, _lock: std::fs::File }
+#[derive(Debug)]
+pub struct Stage { path: String, _lock: std::fs::File }
 
-impl ImportStage {
+/// The name Quick import and the file add have always used for their stage.
+pub type ImportStage = Stage;
+
+impl Stage {
+    /// An import or file-add stage under `import-previews`.
     pub fn new(engine: &Engine, context: &Context) -> EngineResult<Self> {
-        let path = join(&join(&engine.data_root(&context.local_data_root)?, "import-previews"), &store::new_guid());
+        Self::in_folder(engine, context, "import-previews", || fail("导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory."))
+    }
+
+    /// A stage under one of `STAGE_FOLDERS`, refused inside the game directory.
+    pub fn in_folder(engine: &Engine, context: &Context, folder: &str, outside: impl FnOnce() -> EngineError) -> EngineResult<Self> {
+        debug_assert!(STAGE_FOLDERS.contains(&folder));
+        let path = join(&join(&engine.data_root(&context.local_data_root)?, folder), &store::new_guid());
         let prefix = format!("{}{}", context.game_root, paths::SEP);
         if path.to_lowercase().starts_with(&prefix.to_lowercase()) {
-            return Err(fail("导入的暂存位置不能在游戏目录里。", "The import staging folder must be outside the game directory."));
+            return Err(outside());
         }
         // Acquire before publishing the directory; an orphan sweep must never see an
         // unlocked stage under construction. The lock also stays held during removal.
-        let lock = import_stage_lock(engine, &context.local_data_root, &path)?;
+        let lock = stage_lock(engine, &context.local_data_root, &path)?;
         let stage = Self { path, _lock: lock };
         store::new_directory(stage.path())?;
         Ok(stage)
@@ -267,27 +278,47 @@ impl ImportStage {
     }
 }
 
-impl Drop for ImportStage {
+impl Drop for Stage {
     fn drop(&mut self) { self.remove(); }
 }
 
-/// Persistent empty lock files cannot be unlinked: that could split one Unix lease across
-/// two inodes. Both creation and orphan cleanup must use the same lock identity.
-fn import_stage_lock(engine: &Engine, local: &str, stage: &str) -> EngineResult<std::fs::File> {
+/// The lease of one stage: `locks/import-<hash of the stage path>.lock`, whichever folder the
+/// stage is in. On Windows the lease is deleted when its handle closes (exclusion there is by
+/// open handle, not by file identity), so no empty lock file is left behind. On a Unix
+/// development host a lock file is never unlinked: that could split one `flock` lease across
+/// two inodes, so it stays, empty.
+fn stage_lock(engine: &Engine, local: &str, stage: &str) -> EngineResult<std::fs::File> {
     let locks = join(&engine.data_root(local)?, "locks");
     store::new_directory(&locks)?;
     let lock = join(&locks, &format!("import-{}.lock", paths::text_hash(&super::text::lower_invariant(stage))));
     paths::assert_safe_path(&lock)?;
-    super::platform::open_exclusive(Path::new(&lock)).map_err(|e| EngineError::io(&e))
+    super::platform::open_exclusive_transient(Path::new(&lock)).map_err(|e| EngineError::io(&e))
 }
 
-/// Best-effort cleanup of unowned `<data root>/import-previews/<32 hex>` directories only.
-pub fn remove_orphan_import_stage(engine: &Engine, local_data_root: &str, stage: &str) {
-    let Ok(base) = engine.data_root(local_data_root).map(|d| join(&d, "import-previews")) else { return };
-    let (Ok(base), Ok(full)) = (paths::full_path(&base), paths::full_path(stage)) else { return };
-    if paths::directory_name(&full).is_some_and(|p| eq_ignore_case(&p, &base)) && paths::is_lower_hex(&paths::file_name(&full), 32) {
-        let Ok(_lock) = import_stage_lock(engine, local_data_root, &full) else { return };
+/// Best-effort cleanup of an unowned `<data root>/<stage folder>/<32 hex>` directory only.
+pub fn remove_orphan_stage(engine: &Engine, local_data_root: &str, stage: &str) {
+    let Ok(root) = engine.data_root(local_data_root) else { return };
+    let Ok(full) = paths::full_path(stage) else { return };
+    let Some(parent) = paths::directory_name(&full) else { return };
+    let in_stage_folder = STAGE_FOLDERS.iter().any(|f| paths::full_path(&join(&root, f)).is_ok_and(|base| eq_ignore_case(&parent, &base)));
+    if in_stage_folder && paths::is_lower_hex(&paths::file_name(&full), 32) {
+        let Ok(_lock) = stage_lock(engine, local_data_root, &full) else { return };
         if paths::assert_safe_path(&full).is_ok() { let _ = std::fs::remove_dir_all(&full); }
+    }
+}
+
+/// Leases left by earlier versions (or by a Unix host) whose stage is gone: on Windows, opening
+/// one that nobody holds deletes it when the handle closes. Held leases refuse the open.
+pub fn remove_orphan_leases(engine: &Engine, local_data_root: &str) {
+    if !cfg!(windows) { return; }
+    let Ok(locks) = engine.data_root(local_data_root).map(|d| join(&d, "locks")) else { return };
+    let Ok(entries) = std::fs::read_dir(&locks) else { return };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let Some(hex) = name.strip_prefix("import-").and_then(|r| r.strip_suffix(".lock")) else { continue };
+        if !paths::is_lower_hex(hex, 64) { continue; }
+        let full = join(&locks, &name);
+        if paths::assert_safe_path(&full).is_ok() { let _ = super::platform::open_exclusive_transient(Path::new(&full)); }
     }
 }
 
@@ -365,6 +396,12 @@ pub fn file_add_execute(engine: &Engine, context: &Context, add: &FileAdd, obser
 
 /// `Export-KvkFile`: the one write outside a plan. A new file only (never an overwrite), never
 /// inside the game folder, a safe name, 1 byte to 2 MiB, verified on read-back.
+/// `path` is `root` or inside it, compared as text ignoring case.
+fn within(path: &str, root: &str) -> bool {
+    let prefix = format!("{}{}", root.trim_end_matches(paths::SEP), paths::SEP);
+    eq_ignore_case(path, root) || path.to_lowercase().starts_with(&prefix.to_lowercase())
+}
+
 pub fn export(directory: &str, file: &str, bytes: &[u8], game_root: &str) -> EngineResult<Json> {
     let unsafe_name = file.trim().is_empty() || file.encode_utf16().count() > 200 || file.chars().any(bad_name_char)
         || file.starts_with(['.', ' ']) || file.ends_with(['.', ' ']) || file.contains("..") || reserved_stem(file);
@@ -377,14 +414,20 @@ pub fn export(directory: &str, file: &str, bytes: &[u8], game_root: &str) -> Eng
     };
     if directory.trim().is_empty() || !qualified { return Err(fail("另存的文件夹必须是完整路径 (absolute path required)。", "The folder for saving a copy must be a full path.")); }
     let full = paths::full_path(&join(directory, file))?;
+    let inside = || fail("不能另存到游戏目录里；要放进游戏，请用「添加到游戏」 (refusing to export inside the game directory)。", "A copy cannot be saved inside the game directory. Use Add to game to put a file in the game.");
     if !game_root.trim().is_empty() {
         let game = paths::full_path(game_root)?;
-        let prefix = format!("{}{}", game.trim_end_matches(paths::SEP), paths::SEP);
-        if eq_ignore_case(&full, &game) || full.to_lowercase().starts_with(&prefix.to_lowercase()) {
-            return Err(fail("不能另存到游戏目录里；要放进游戏，请用「添加到游戏」 (refusing to export inside the game directory)。", "A copy cannot be saved inside the game directory. Use Add to game to put a file in the game."));
-        }
+        if within(&full, &game) { return Err(inside()); }
     }
     if !Path::new(directory).is_dir() { return Err(fail("另存的文件夹不存在 (directory does not exist)。", "The folder for saving a copy does not exist.")); }
+    // The text check above misses another spelling of the same folder: a `\\?\` prefix, an 8.3
+    // short name, a `subst` or mapped drive. Both folders exist here, so the operating system
+    // names each one in its final form and they are compared again.
+    if !game_root.trim().is_empty() {
+        if let (Ok(folder), Ok(game)) = (std::fs::canonicalize(directory), std::fs::canonicalize(game_root)) {
+            if within(&folder.to_string_lossy(), &game.to_string_lossy()) { return Err(inside()); }
+        }
+    }
     if bytes.is_empty() || bytes.len() > MAX_PNG { return Err(fail("另存内容的大小必须在 1 字节到大小上限之间 (size out of range)。", "The size of the saved copy must be between 1 byte and the size limit.")); }
     assert_safe_path(&full)?;
     if Path::new(&full).is_file() {

@@ -5,6 +5,7 @@
 
 use std::path::Path;
 
+use super::files::Stage;
 use super::json::{self, Json};
 use super::manifest;
 use super::paths::{self, assert_safe_path, full_path, join};
@@ -145,18 +146,16 @@ pub fn new_plan(engine: &Engine, context: &Context, pack_root: &str, categories:
 /// `New-KvkSettingsPreviewPlan`: stages an edited settings file in the data folder (never in
 /// the game) and plans it as the one settings replacement. `None` when the settings changed
 /// meanwhile or the plan is anything else; the caller words that as PLAN_STALE.
-pub fn settings_preview_plan(engine: &Engine, context: &Context, target: &str, settings_hash: &str, bytes: &[u8], folder: &str, outside_message: &str) -> EngineResult<Option<Plan>> {
-    let stage = join(&engine.data_root(&context.local_data_root)?, &format!("{folder}/{}", store::new_guid()));
-    let game_prefix = format!("{}{}", context.game_root, paths::SEP);
-    if stage.to_lowercase().starts_with(&game_prefix.to_lowercase()) { return Err(EngineError::plain(outside_message)); }
-    store::new_directory(&stage)?;
+pub fn settings_preview_plan(engine: &Engine, context: &Context, target: &str, settings_hash: &str, bytes: &[u8], folder: &str, outside_message: &str) -> EngineResult<Option<(Stage, Plan)>> {
+    let lease = Stage::in_folder(engine, context, folder, || EngineError::plain(outside_message))?;
+    let stage = lease.path().to_string();
     let staged = join(&stage, "PrimaryUserSettings.json");
     store::write_durable(&staged, bytes)?;
     let plan = new_plan(engine, context, &stage, &["primary".to_string()])?;
     let stale = plan.items.len() != 1 || plan.items[0].key != "primary/PrimaryUserSettings.json"
         || plan.items[0].after != hash(&staged)? || plan.items[0].before.as_deref() != Some(settings_hash)
         || hash(target)?.as_deref() != Some(settings_hash);
-    Ok(if stale { None } else { Some(plan) })
+    Ok(if stale { None } else { Some((lease, plan)) })
 }
 
 /// One `Send-KvkObservation` event. `name` is not sent on the wire.
@@ -296,6 +295,7 @@ fn file_change(engine: &Engine, context: &Context, manifest: &mut Json, index: u
 /// that fails too leaves it `recovery-required`.
 pub fn install(engine: &Engine, context: &Context, plan: &Plan, allow_running: bool, observer: Observer) -> EngineResult<Report> {
     let _locks = engine.enter_lock(context)?;
+    remove_abandoned_stages(context);
     game_closed_unless(engine, allow_running)?;
     let manifests = manifest::all(engine, context)?;
     if manifest::has_unfinished(&manifests) {
@@ -361,6 +361,9 @@ pub fn install(engine: &Engine, context: &Context, plan: &Plan, allow_running: b
             let total = items_mut(&mut m).len() as u64;
             match undo_failed_install(engine, context, &mut m, allow_running, observer) {
                 Ok(rollback) => {
+                    // Every file is back at its before-hash: a temporary copy this batch left
+                    // beside a target (a write that failed before its rename) is no longer evidence.
+                    if rollback.status == "rolled-back" { remove_batch_temps(&m); }
                     errors.extend(rollback.errors);
                     errors_en.extend(rollback.errors_en);
                     let report = Report::new(&rollback.status, Some(&id), items_mut(&mut m).clone(), errors, Some(errors_en));
@@ -410,7 +413,10 @@ fn undo_failed_install(engine: &Engine, context: &Context, m: &mut Json, allow_r
                 Some(before_hash) => {
                     let temp = format!("{target}.rollback-{}.tmp", store::new_guid());
                     let backup = join(&join(&context.backup_root, &id), &text(&x, "Backup").unwrap_or_default());
-                    copy_snapshot(engine, &backup, &temp, before_hash)?;
+                    if let Err(error) = copy_snapshot(engine, &backup, &temp, before_hash) {
+                        if Path::new(&temp).is_file() { let _ = std::fs::remove_file(&temp); }
+                        return Err(error);
+                    }
                     let replaced = (|| {
                         game_closed_unless(engine, allow_running)?;
                         if hash(&target)? != after { return Err(EngineError::plain("Target changed during rollback.")); }
@@ -496,6 +502,10 @@ pub fn restore_plan(engine: &Engine, context: &Context, id: &str) -> EngineResul
                     else if manifest::is_owned(hx) { expected = text(hx, "AfterHash"); owned = true; }
                 }
             }
+            // The last thing this installer did left no file here (it never created one, or a
+            // restore removed it), so a file there now is someone else's: deleting it needs
+            // proof this installer wrote it, which conflict consent does not give.
+            if expected.is_none() { owned = false; }
         }
         let action = if current == desired { "skip" } else if desired.is_none() { "delete" } else { "restore" };
         let conflict = action != "skip" && (current != expected || !owned);
@@ -551,8 +561,24 @@ fn remove_batch_temps(batch: &Json) {
     }
 }
 
+/// `.stage-<32 hex>` folders in the backup folder: a batch or first protection being staged.
+/// Staging and publishing both happen under the write lock, so once the lock is held any stage
+/// left there was abandoned by a worker that stopped; it holds copies only, never the record of
+/// a write. Best effort; nothing else is touched.
+fn remove_abandoned_stages(context: &Context) {
+    let Ok(entries) = std::fs::read_dir(&context.backup_root) else { return };
+    for entry in entries.flatten() {
+        let name = entry.file_name().to_string_lossy().into_owned();
+        if !name.strip_prefix(".stage-").is_some_and(|g| paths::is_lower_hex(g, 32)) { continue; }
+        let full = join(&context.backup_root, &name);
+        let is_dir = std::fs::symlink_metadata(&full).is_ok_and(|m| m.is_dir());
+        if is_dir && assert_safe_path(&full).is_ok() { let _ = std::fs::remove_dir_all(&full); }
+    }
+}
+
 pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_conflicts: bool, observer: Observer) -> EngineResult<Report> {
     let _locks = engine.enter_lock(context)?;
+    remove_abandoned_stages(context);
     engine.assert_game_closed()?;
     let fresh = restore_plan(engine, context, &plan.id)?;
     if !eq_ignore_case(&fresh.game_root, &plan.game_root) || !eq_ignore_case(&fresh.local_data_root, &plan.local_data_root) || fresh.items.len() != plan.items.len() {
@@ -651,6 +677,8 @@ pub fn restore(engine: &Engine, context: &Context, plan: &RestorePlan, allow_con
         }
         complete_restore(engine, context, &mut m)?;
         if let Some(batch) = &interrupted_install { remove_batch_temps(batch); }
+        // A retried restore may have left its own temporary copies from the attempt before.
+        remove_batch_temps(&m);
         let report = Report::new("restored", Some(&id), items_mut(&mut m).clone(), Vec::new(), None);
         observer(&Observation { name: "report", phase: "verifying", completed: Some(total), total, current_file: None, batch_id: Some(id.clone()) });
         Ok(report)

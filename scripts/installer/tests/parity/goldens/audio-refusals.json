@@ -84,12 +84,6 @@
         "sha256": "65c74c15a686187bb6bbf9958f494fc6b80068034a659a9ad44991b08c58f2d2"
       }
     ],
-    "local": [
-      {
-        "path": "Aimloom/audio-previews/<guid#2>/PrimaryUserSettings.json",
-        "size": 8211,
-        "sha256": "f495be5900a699e7beddf657b0d3d3f932bf8f28a5a8db0f03eb60033b7c8775"
-      }
-    ]
+    "local": []
   }
 }

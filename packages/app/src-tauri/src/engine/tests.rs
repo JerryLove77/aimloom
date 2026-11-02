@@ -15,7 +15,7 @@ use super::store::Host;
 use super::{platform, EngineError, EngineResult};
 
 #[derive(Default)]
-pub(super) struct HostState { pub(super) running_from_call: Cell<Option<usize>>, pub(super) calls: Cell<usize>, faults: RefCell<Vec<String>> }
+pub(super) struct HostState { pub(super) running_from_call: Cell<Option<usize>>, pub(super) running_on_call: Cell<Option<usize>>, pub(super) calls: Cell<usize>, faults: RefCell<Vec<String>> }
 
 pub(super) struct TestHost(pub(super) Rc<HostState>);
 
@@ -23,7 +23,9 @@ impl Host for TestHost {
     fn process_names(&self) -> std::io::Result<Vec<String>> {
         let call = self.0.calls.get() + 1;
         self.0.calls.set(call);
-        Ok(match self.0.running_from_call.get() { Some(from) if call >= from => vec!["FPSAimTrainer".to_string()], _ => vec!["explorer".to_string()] })
+        let from = self.0.running_from_call.get().is_some_and(|from| call >= from);
+        let only = self.0.running_on_call.get() == Some(call);
+        Ok(if from || only { vec!["FPSAimTrainer".to_string()] } else { vec!["explorer".to_string()] })
     }
 
     fn fault(&self, point: &str) -> EngineResult<()> {
@@ -480,4 +482,106 @@ fn an_abandoned_import_preview_is_swept_when_a_session_starts_and_when_the_plan_
     assert_eq!(count(), 0, "a dropped Import plan takes its staging folder with it");
     let stale = fixture.error("execute", Fixture::execute_args(preview.get("planId").and_then(Json::as_str).unwrap()));
     assert_eq!(code(&stale), "PLAN_MISSING");
+}
+
+/// The files directly in `dir` whose name ends in `.tmp`.
+fn temporaries(dir: &Path) -> Vec<String> {
+    std::fs::read_dir(dir).unwrap().flatten().map(|e| e.file_name().to_string_lossy().into_owned()).filter(|n| n.ends_with(".tmp")).collect()
+}
+
+#[test]
+fn a_write_that_fails_before_its_rename_leaves_no_temporary_copy_once_rolled_back() {
+    let mut f = Fixture::new(&original());
+    let plan_id = f.plan("cylindrical", "Ghost", "Default");
+    // Install checks once, the file change twice: the game is seen only just before the rename,
+    // after the copy beside the target was written; it is gone again when the rollback checks.
+    f.host.running_on_call.set(Some(f.host.calls.get() + 3));
+    let data = f.ok("execute", Fixture::execute_args(&plan_id));
+    assert_eq!(data.get("status").and_then(Json::as_str), Some("rolled-back"), "{}", data.to_compact());
+    assert_eq!(f.bytes(), original());
+    assert_eq!(temporaries(f.target.parent().unwrap()), Vec::<String>::new(), "the batch's temporary copy is removed with the rollback");
+}
+
+#[test]
+fn a_write_whose_rollback_cannot_run_keeps_its_temporary_copy_as_evidence() {
+    let mut f = Fixture::new(&original());
+    let plan_id = f.plan("cylindrical", "Ghost", "Default");
+    f.host.running_from_call.set(Some(f.host.calls.get() + 3));
+    let data = f.ok("execute", Fixture::execute_args(&plan_id));
+    assert_eq!(data.get("status").and_then(Json::as_str), Some("recovery-required"), "{}", data.to_compact());
+    // Recovery decides from the copy whether the write reached the file; it stays until then.
+    assert_eq!(temporaries(f.target.parent().unwrap()).len(), 1);
+}
+
+#[test]
+fn an_abandoned_stage_in_the_backup_folder_is_removed_by_the_next_write() {
+    let mut f = Fixture::new(&original());
+    let plan_id = f.plan("cylindrical", "Ghost", "Default");
+    assert_eq!(f.ok("execute", Fixture::execute_args(&plan_id)).get("status").and_then(Json::as_str), Some("completed"));
+    let backups = f.backup_root();
+    let abandoned = backups.join(".stage-0123456789abcdef0123456789abcdef");
+    std::fs::create_dir_all(abandoned.join("files")).unwrap();
+    std::fs::write(abandoned.join("files/x.bin"), b"copy").unwrap();
+    let plan_id = f.plan("cylindrical", "Stylized Ecto", "Default");
+    let execute = Json::object(vec![("operationId", Json::str("op-2")), ("planId", Json::str(plan_id)), ("confirmation", Json::str("install")), ("allowConflicts", Json::Bool(false))]);
+    assert_eq!(f.ok("execute", execute).get("status").and_then(Json::as_str), Some("completed"));
+    assert!(!abandoned.exists(), "a stage nobody publishes any more is removed under the write lock");
+}
+
+#[test]
+fn every_preview_folder_is_leased_swept_when_abandoned_and_emptied_when_its_plan_goes() {
+    let mut f = Fixture::new(&original());
+    let root = Path::new(&f.local).join("Aimloom");
+    let orphans: Vec<PathBuf> = ["scheme-previews", "audio-previews", "enemy-previews", "profile-apply-previews", "crosshair-previews"]
+        .iter().map(|folder| root.join(folder).join("0123456789abcdef0123456789abcdef")).collect();
+    for orphan in &orphans {
+        std::fs::create_dir_all(orphan).unwrap();
+        std::fs::write(orphan.join("PrimaryUserSettings.json"), b"{}").unwrap();
+    }
+    let kept = root.join("enemy-previews/keep-me");
+    std::fs::create_dir_all(&kept).unwrap();
+    f.ok("gameState", Json::object(vec![]));
+    for orphan in &orphans { assert!(!orphan.exists(), "{} is swept on the first request", orphan.display()); }
+    assert!(kept.exists(), "only 32-hex staging folders are touched");
+
+    let stages = |root: &Path| std::fs::read_dir(root.join("enemy-previews")).unwrap().flatten().filter(|e| e.file_name().len() == 32).count();
+    f.plan("cylindrical", "Ghost", "Default");
+    assert_eq!(stages(&root), 1);
+    // Another session's startup sweep leaves a live preview alone: it is leased.
+    let mut other = Session::new(Box::new(TestHost(f.host.clone())), &f.local, &f.root.to_string_lossy()).unwrap();
+    other.handle(&Json::object(vec![("v", Json::int(1)), ("requestId", Json::str("other")), ("op", Json::str("gameState")), ("args", Json::object(vec![]))]), &mut |_| {});
+    assert_eq!(stages(&root), 1, "a held preview survives another session's sweep");
+    // A replaced preview takes its staged copy with it.
+    f.plan("cylindrical", "Mummy", "Default");
+    assert_eq!(stages(&root), 1, "the replaced preview's stage is gone");
+    f.session.discard_plan();
+    assert_eq!(stages(&root), 0);
+    let leases: Vec<_> = std::fs::read_dir(root.join("locks")).unwrap().flatten().map(|e| e.file_name().to_string_lossy().into_owned()).filter(|n| n.starts_with("import-")).collect();
+    if cfg!(windows) {
+        assert!(leases.is_empty(), "a released lease is deleted with its handle on Windows: {leases:?}");
+    } else {
+        assert!(!leases.is_empty(), "on Unix a lease file is never unlinked");
+    }
+}
+
+/// Another spelling of the game folder than the one the App names must not let a saved copy in.
+#[test]
+fn a_saved_copy_is_refused_inside_the_game_under_another_spelling_of_its_folder() {
+    let mut f = Fixture::new(&original());
+    let game = f.game.clone();
+    let inside = Path::new(&game).join("FPSAimTrainer");
+    #[cfg(unix)]
+    let other_spelling = {
+        let alias = f.root.join("alias");
+        std::os::unix::fs::symlink(&game, &alias).unwrap();
+        alias.join("FPSAimTrainer")
+    };
+    #[cfg(windows)]
+    let other_spelling = PathBuf::from(format!(r"\\?\{}", inside.display()));
+    assert!(inside.is_dir());
+    let png = super::profiles::base64(&[1, 2, 3]);
+    let args = Json::object(vec![("directory", Json::str(other_spelling.to_string_lossy())), ("fileName", Json::str("copy.png")), ("base64", Json::str(png)), ("gameRoot", Json::str(&game))]);
+    let error = f.error("exportFile", args);
+    assert_eq!(english(&error), "A copy cannot be saved inside the game directory. Use Add to game to put a file in the game.");
+    assert!(!inside.join("copy.png").exists());
 }

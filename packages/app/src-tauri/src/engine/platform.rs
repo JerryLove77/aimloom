@@ -93,6 +93,32 @@ pub fn open_exclusive(path: &Path) -> io::Result<File> {
     Ok(file)
 }
 
+/// `open_exclusive` for a lease that is not meant to outlive its holder. On Windows the file
+/// is opened with `FILE_FLAG_DELETE_ON_CLOSE` and no sharing, so a second opener is refused
+/// while it is held and the file disappears when the handle closes; exclusion there is by open
+/// handle, so a later lease of the same name is the same lease. On Unix it is `open_exclusive`
+/// and the file stays: unlinking a `flock`ed file could split one lease across two inodes.
+pub fn open_exclusive_transient(path: &Path) -> io::Result<File> {
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        const GENERIC_READ: u32 = 0x8000_0000;
+        const GENERIC_WRITE: u32 = 0x4000_0000;
+        const DELETE: u32 = 0x0001_0000;
+        const FILE_FLAG_DELETE_ON_CLOSE: u32 = 0x0400_0000;
+        let mut options = OpenOptions::new();
+        options.read(true).write(true).create(true).truncate(false)
+            .access_mode(GENERIC_READ | GENERIC_WRITE | DELETE)
+            .share_mode(0)
+            .custom_flags(FILE_FLAG_DELETE_ON_CLOSE);
+        options.open(path)
+    }
+    #[cfg(not(windows))]
+    {
+        open_exclusive(path)
+    }
+}
+
 /// `File.Open(path, OpenOrCreate, ReadWrite, FileShare.ReadWrite)`: the data-root hold.
 pub fn open_shared(path: &Path) -> io::Result<File> {
     let mut options = OpenOptions::new();

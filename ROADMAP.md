@@ -279,7 +279,9 @@ quotas and review pagination, migrations 0008–0010) and the Profile page row a
 table below. Checked in tests on macOS and Windows only; a test build was opened on the test PC,
 and the release build has not been used in the real game. **Every row marked Not started below
 is still open** and moves to the next patch. One more for that list: each import or file-add
-preview leaves an empty `locks\import-<hash>.lock` in the data folder that is never removed.
+preview leaves an empty `locks\import-<hash>.lock` in the data folder that is never removed
+(**fixed** on `claude/engine-leftover-fixes`: on Windows the lease is deleted with its handle, and
+leftover ones are removed when a session starts; not yet checked on Windows outside CI).
 
 Set by the user on 2026-10-01 (「beta3当成016的补丁去发」): there is no 0.1.6-beta.3; what would have
 been in it ships as a patch after stable 0.1.6. The version is 0.1.7, because the version rules
@@ -288,10 +290,10 @@ review before stable found and left alone, none of which loses data:
 
 | Area | What | Status |
 |---|---|---|
-| Engine | A failed or interrupted write leaves `<target>.kvk-<batch>-<guid>.tmp` (and `.rollback-<guid>.tmp`) beside its target unless that batch is later restored; `.stage-<id>` folders and the `*-previews` staging folders other than `import-previews` are never swept, and each holds a copy of the settings file | Not started |
-| Engine | A first-protection restore treats a file as ours when an earlier restore removed it, so with conflict consent it can delete a file the player put back under the same name (it is backed up first) | Not started |
-| Engine | `exportFile`'s inside-the-game refusal compares path text, so another spelling of the game folder (`\\?\`, a short name, a mapped drive) passes; Quick import has no total size limit for one drop and does not count folders toward its file limit | Not started |
-| Native | A read that times out leaves a worker that is never ended; `planCrosshairAdd` has no native one-create-row check (the engine enforces it) | Not started |
+| Engine | A failed or interrupted write leaves `<target>.kvk-<batch>-<guid>.tmp` (and `.rollback-<guid>.tmp`) beside its target unless that batch is later restored; `.stage-<id>` folders and the `*-previews` staging folders other than `import-previews` are never swept, and each holds a copy of the settings file | **Fixed** on `claude/engine-leftover-fixes` (2026-11-02), tests only: every preview folder is leased and its stage goes with its plan; unleased stages are swept when a session starts; a cleanly rolled-back or completed batch removes its own temporary copies (a batch that needs recovery keeps them as evidence); `.stage-<id>` folders are removed under the write lock; a failed rollback copy is removed. 24 goldens edited, `DIVERGENCES.md` |
+| Engine | A first-protection restore treats a file as ours when an earlier restore removed it, so with conflict consent it can delete a file the player put back under the same name (it is backed up first) | **Fixed** on `claude/engine-leftover-fixes`, tests only: when the last thing Aimloom did left no file, a file there now is unowned, a hard stop even with consent |
+| Engine | `exportFile`'s inside-the-game refusal compares path text, so another spelling of the game folder (`\\?\`, a short name, a mapped drive) passes; Quick import has no total size limit for one drop and does not count folders toward its file limit | **Fixed** on `claude/engine-leftover-fixes`, tests only: the folders are compared again in the form the operating system gives them; a drop counts files and folders toward 5000 and may stage at most 1 GiB |
+| Native | A read that times out leaves a worker that is never ended; `planCrosshairAdd` has no native one-create-row check (the engine enforces it) | **Fixed** on `claude/engine-leftover-fixes`, tests only: after a read times out the worker gets 30 s to exit on its own and is then ended, unless a write is pending; the native layer refuses a crosshair add that is not exactly one new crosshair |
 | App | Quick import: unrecognised files stay collapsed when nothing will be added, focus is lost when Advanced is toggled, no re-check after recovery; favourites: the 501st gives a misleading message and a damaged file is only reported on the first star; the Profile sound sheet's "use a file" choice does nothing for kill and spawn; a Theme tile click can change page during a search | Not started |
 | App | The Profile library no longer shows its count of Profiles, and its unread-files notice drops the sentence about the 0.1.5 format (user, 2026-10-01: nobody is known to have saved an old Profile). The notice itself, its file list and 删除 on each file named like a Profile stay; the release readmes still carry the note | Shipped in 0.1.7, tests only |
 

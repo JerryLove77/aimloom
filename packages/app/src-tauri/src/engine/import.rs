@@ -39,8 +39,13 @@ const KIND_FOLDERS: [(&str, &str); 3] = [("Themes", "themes"), ("sounds", "sound
 /// inside the dropped one is two).
 const MAX_DEPTH: usize = 3;
 
-/// The most files one drop may hold, so a drop of a whole Downloads folder stops early.
+/// The most files and folders one drop may hold, so a drop of a whole Downloads folder stops
+/// early: a tree of empty folders costs a listing each, as a file does.
 const MAX_FILES: usize = 5000;
+
+/// The most bytes one drop may stage: every accepted file is copied into the data folder at
+/// preview time, so the files this drop would read must fit well within that disk.
+const MAX_TOTAL: u64 = 1024 * 1024 * 1024;
 
 /// The personal settings files, by their canonical names, and their plan categories.
 const SETTINGS: [(&str, &str); 3] = [("UI.json", "ui"), ("PrimaryUserSettings.json", "primary"), ("Palette.ini", "palette")];
@@ -108,16 +113,13 @@ fn wanted(category: &str, name: &str) -> bool {
     }
 }
 
-struct Found { candidates: Vec<Candidate>, unrecognized: Vec<String>, files: usize }
+struct Found { candidates: Vec<Candidate>, unrecognized: Vec<String>, entries: usize }
 
 impl Found {
     /// A file is read by its format, wherever it sits: `.json` a theme, `.wav` / `.ogg` a sound,
     /// `.png` a crosshair, and the three personal settings files by name.
     fn file(&mut self, full: String) -> EngineResult<()> {
-        self.files += 1;
-        if self.files > MAX_FILES {
-            return Err(EngineError::coded("ENGINE_ERROR", format!("选中的文件夹里文件太多（超过 {MAX_FILES} 个），请选小一点的文件夹。"), format!("The chosen folders hold too many files (over {MAX_FILES}). Choose a smaller folder.")));
-        }
+        self.count()?;
         let name = paths::file_name(&full);
         if let Some((canonical, category)) = settings_file(&name) {
             self.candidates.push(Candidate { category, name: canonical.to_string(), source: full });
@@ -130,13 +132,33 @@ impl Found {
         Ok(())
     }
 
+    /// One more file or folder in the drop, refused past `MAX_FILES`.
+    fn count(&mut self) -> EngineResult<()> {
+        self.entries += 1;
+        if self.entries > MAX_FILES {
+            return Err(EngineError::coded("ENGINE_ERROR", format!("选中的文件夹里文件和文件夹太多（超过 {MAX_FILES} 个），请选小一点的文件夹。"), format!("The chosen folders hold too many files and folders (over {MAX_FILES}). Choose a smaller folder.")));
+        }
+        Ok(())
+    }
+
+    /// The bytes the candidates would stage; a file over its own limit is never read, so it
+    /// does not count (it becomes an `invalid` row).
+    fn staged_bytes(&self) -> u64 {
+        self.candidates.iter().map(|c| {
+            let limit = if c.category == "crosshairs" { MAX_PNG } else { MAX_FILE } as u64;
+            std::fs::metadata(&c.source).map_or(0, |m| if m.len() > limit { 0 } else { m.len() })
+        }).sum()
+    }
+
     /// A folder's files, and its folders' files down to `MAX_DEPTH` levels; a folder deeper than
     /// that is listed as not recognised rather than searched.
     fn folder(&mut self, dir: &str, depth: usize) -> EngineResult<()> {
         for (name, is_dir) in txn::sorted_entries(dir)? {
             let full = join(dir, &name);
             assert_safe_path(&full)?;
-            if !is_dir { self.file(full)?; } else if depth < MAX_DEPTH { self.folder(&full, depth + 1)?; } else { self.unrecognized.push(full); }
+            if !is_dir { self.file(full)?; continue; }
+            self.count()?;
+            if depth < MAX_DEPTH { self.folder(&full, depth + 1)?; } else { self.unrecognized.push(full); }
         }
         Ok(())
     }
@@ -194,18 +216,23 @@ fn stage_file(stage: &str, relative: &str, bytes: &[u8]) -> EngineResult<String>
     Ok(staged)
 }
 
-/// Only collect directories no longer owned by a live preview.
+/// Only collect directories no longer owned by a live preview, in every stage folder, then the
+/// leases nobody holds any more.
 pub fn remove_orphan_stages(engine: &Engine, context: &Context) { remove_orphan_stages_in(engine, &context.local_data_root) }
 
 pub fn remove_orphan_stages_in(engine: &Engine, local_data_root: &str) {
-    let Ok(base) = engine.data_root(local_data_root).map(|d| join(&d, "import-previews")) else { return };
-    let Ok(entries) = std::fs::read_dir(&base) else { return };
-    for entry in entries.flatten() {
-        let name = entry.file_name().to_string_lossy().into_owned();
-        if paths::is_lower_hex(&name, 32) {
-            files::remove_orphan_import_stage(engine, local_data_root, &join(&base, &name));
+    let Ok(root) = engine.data_root(local_data_root) else { return };
+    for folder in files::STAGE_FOLDERS {
+        let base = join(&root, folder);
+        let Ok(entries) = std::fs::read_dir(&base) else { continue };
+        for entry in entries.flatten() {
+            let name = entry.file_name().to_string_lossy().into_owned();
+            if paths::is_lower_hex(&name, 32) {
+                files::remove_orphan_stage(engine, local_data_root, &join(&base, &name));
+            }
         }
     }
+    files::remove_orphan_leases(engine, local_data_root);
 }
 
 struct Checker<'a> {
@@ -326,8 +353,11 @@ pub fn import_plan(engine: &Engine, context: &Context, paths_in: &[String], incl
     if paths_in.is_empty() || paths_in.len() > MAX_PATHS {
         return Err(EngineError::coded("ENGINE_ERROR", format!("一次只能导入 1 到 {MAX_PATHS} 个文件或文件夹。"), format!("Import 1 to {MAX_PATHS} files or folders at a time.")));
     }
-    let mut found = Found { candidates: Vec::new(), unrecognized: Vec::new(), files: 0 };
+    let mut found = Found { candidates: Vec::new(), unrecognized: Vec::new(), entries: 0 };
     for path in paths_in { found.path(path)?; }
+    if found.staged_bytes() > MAX_TOTAL {
+        return Err(EngineError::coded("ENGINE_ERROR", "这次拖入的文件合计超过 1 GiB，请分几次导入。", "The files in this drop add up to more than 1 GiB. Import them a few at a time."));
+    }
     remove_orphan_stages(engine, context);
     let stage = ImportStage::new(engine, context)?;
     let themes = lists::installed_themes(engine, context)?;
