@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 40" role="img" aria-label="Aimloom">
+  <!-- Draft (2026-11-02), not designed in Figma. The name is set in the system UI font here; a
+       final wordmark would be outlined, so it does not depend on the fonts a machine has. -->
+  <style>
+    .warp { stroke: #182126 } .ink { fill: #182126 }
+    @media (prefers-color-scheme: dark) { .warp { stroke: #F2EFE9 } .ink { fill: #F2EFE9 } }
+    text { font: 700 24px system-ui, "Segoe UI", sans-serif; letter-spacing: -0.02em }
+  </style>
+  <g transform="translate(4 4)">
+    <g fill="none" stroke-width="3" stroke-linecap="butt">
+      <path class="warp" d="M11 3V18M11 24V29M21 3V8M21 14V29"/>
+      <path stroke="#FF8000" d="M3 11H8M14 11H29M3 21H18M24 21H29"/>
+    </g>
+    <circle class="ink" cx="16" cy="16" r="2"/>
+  </g>
+  <text class="ink" x="44" y="28.5">Aim<tspan fill="#FF8000">loom</tspan></text>
+</svg>

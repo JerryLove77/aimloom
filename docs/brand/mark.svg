@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Aimloom">
+  <!-- Draft (2026-11-02), not designed in Figma. Two warp threads (ink) and two weft threads
+       (orange) woven over and under; the square they enclose is the crosshair's gap. -->
+  <style>
+    .warp { stroke: #182126 } .dot { fill: #182126 }
+    @media (prefers-color-scheme: dark) { .warp { stroke: #F2EFE9 } .dot { fill: #F2EFE9 } }
+  </style>
+  <g fill="none" stroke-width="3" stroke-linecap="butt">
+    <path class="warp" d="M11 3V18M11 24V29M21 3V8M21 14V29"/>
+    <path stroke="#FF8000" d="M3 11H8M14 11H29M3 21H18M24 21H29"/>
+  </g>
+  <circle class="dot" cx="16" cy="16" r="2"/>
+</svg>
